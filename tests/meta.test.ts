@@ -1,0 +1,324 @@
+import { expect, test } from 'bun:test';
+import { compileQueryInput } from '@/src/index';
+import type { Query } from '@/src/types/query';
+import type { Schema } from '@/src/types/schema';
+import { RoninError } from '@/src/utils';
+import { RECORD_ID_REGEX } from '@/src/utils';
+
+test('create new schema with minimum details', () => {
+  const query: Query = {
+    create: {
+      schema: {
+        to: {
+          pluralSlug: 'accounts',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT)',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "schemas" ("pluralSlug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4) RETURNING *',
+  );
+
+  expect(values[0]).toBe('accounts');
+
+  expect(values[1]).toMatch(RECORD_ID_REGEX);
+
+  expect(values[2]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[3]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
+test('update existing schema with minimum details', () => {
+  const query: Query = {
+    set: {
+      schema: {
+        with: {
+          pluralSlug: 'accounts',
+        },
+        to: {
+          pluralSlug: 'users',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
+
+  expect(readStatement).toBe(
+    'UPDATE "schemas" SET "pluralSlug" = ?1, "ronin.updatedAt" = ?2 WHERE ("pluralSlug" = ?3) RETURNING *',
+  );
+
+  expect(values[0]).toBe('users');
+  expect(values[1]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[2]).toBe('accounts');
+});
+
+test('drop existing schema with minimum details', () => {
+  const query: Query = {
+    drop: {
+      schema: {
+        with: {
+          pluralSlug: 'accounts',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['DROP TABLE "accounts"']);
+
+  expect(readStatement).toBe(
+    'DELETE FROM "schemas" WHERE ("pluralSlug" = ?1) RETURNING *',
+  );
+
+  expect(values[0]).toBe('accounts');
+});
+
+test('try to update existing schema without minimum details (schema slug)', () => {
+  const query: Query = {
+    set: {
+      schema: {
+        with: {
+          name: 'Accounts',
+        },
+        to: {
+          pluralSlug: 'users',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueryInput(query, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When updating schemas, a `pluralSlug` field must be provided in the `with` instruction.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_FIELD');
+  expect(error).toHaveProperty('fields', ['pluralSlug']);
+});
+
+test('create new field with minimum details', () => {
+  const query: Query = {
+    create: {
+      field: {
+        to: {
+          schema: { pluralSlug: 'accounts' },
+          slug: 'email',
+          type: 'string',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['ALTER TABLE "accounts" ADD COLUMN "email" TEXT']);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "fields" ("schema", "slug", "type", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+  );
+
+  expect(values[0]).toBe('accounts');
+  expect(values[1]).toBe('email');
+  expect(values[2]).toBe('string');
+  expect(values[3]).toMatch(RECORD_ID_REGEX);
+
+  expect(values[4]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[5]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
+test('update existing field with minimum details', () => {
+  const query: Query = {
+    set: {
+      field: {
+        with: {
+          schema: { pluralSlug: 'accounts' },
+          slug: 'email',
+        },
+        to: {
+          slug: 'emailAddress',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
+  ]);
+
+  expect(readStatement).toBe(
+    'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+  );
+
+  expect(values[0]).toBe('emailAddress');
+  expect(values[1]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[2]).toBe('accounts');
+  expect(values[3]).toBe('email');
+});
+
+test('drop existing field with minimum details', () => {
+  const query: Query = {
+    drop: {
+      field: {
+        with: {
+          schema: { pluralSlug: 'accounts' },
+          slug: 'email',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['ALTER TABLE "accounts" DROP COLUMN "email"']);
+
+  expect(readStatement).toBe(
+    'DELETE FROM "fields" WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
+  );
+
+  expect(values[0]).toBe('accounts');
+  expect(values[1]).toBe('email');
+});
+
+test('try to create new field without minimum details (field slug)', () => {
+  const query: Query = {
+    create: {
+      field: {
+        to: {
+          schema: { pluralSlug: 'accounts' },
+          slug: 'email',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueryInput(query, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When creating fields, a `type` field must be provided in the `to` instruction.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_FIELD');
+  expect(error).toHaveProperty('fields', ['type']);
+});
+
+test('try to update existing field without minimum details (schema slug)', () => {
+  const query: Query = {
+    set: {
+      field: {
+        with: {
+          name: 'Email Address',
+        },
+        to: {
+          slug: 'emailAddress',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueryInput(query, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When updating fields, a `schema.pluralSlug` field must be provided in the `with` instruction.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_FIELD');
+  expect(error).toHaveProperty('fields', ['schema.pluralSlug']);
+});
+
+test('try to update existing field without minimum details (field slug)', () => {
+  const query: Query = {
+    set: {
+      field: {
+        with: {
+          schema: { pluralSlug: 'accounts' },
+          name: 'Email Address',
+        },
+        to: {
+          slug: 'emailAddress',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueryInput(query, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When updating fields, a `slug` field must be provided in the `with` instruction.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_FIELD');
+  expect(error).toHaveProperty('fields', ['slug']);
+});

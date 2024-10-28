@@ -1,0 +1,6 @@
+[test]
+coverage = true
+coverageThreshold = 1.0
+
+[install]
+exact = true
