@@ -20,27 +20,27 @@ const getMatcher = (value: unknown, negative: boolean): string => {
   return '=';
 };
 
+type WithMatcher = (value: unknown, baseValue: unknown) => string;
+
 export const WITH_CONDITIONS = {
-  being: (value: unknown, baseValue: unknown) =>
-    `${getMatcher(baseValue, false)} ${value}`,
-  notBeing: (value: unknown, baseValue: unknown) =>
-    `${getMatcher(baseValue, true)} ${value}`,
+  being: (value, baseValue) => `${getMatcher(baseValue, false)} ${value}`,
+  notBeing: (value, baseValue) => `${getMatcher(baseValue, true)} ${value}`,
 
-  startingWith: (value: unknown) => `LIKE ${value}%`,
-  notStartingWith: (value: unknown) => `NOT LIKE ${value}%`,
+  startingWith: (value) => `LIKE ${value}%`,
+  notStartingWith: (value) => `NOT LIKE ${value}%`,
 
-  endingWith: (value: unknown) => `LIKE %${value}`,
-  notEndingWith: (value: unknown) => `NOT LIKE %${value}`,
+  endingWith: (value) => `LIKE %${value}`,
+  notEndingWith: (value) => `NOT LIKE %${value}`,
 
-  containing: (value: unknown) => `LIKE %${value}%`,
-  notContaining: (value: unknown) => `NOT LIKE %${value}%`,
+  containing: (value) => `LIKE %${value}%`,
+  notContaining: (value) => `NOT LIKE %${value}%`,
 
-  greaterThan: (value: unknown) => `> ${value}`,
-  greaterOrEqual: (value: unknown) => `>= ${value}`,
+  greaterThan: (value) => `> ${value}`,
+  greaterOrEqual: (value) => `>= ${value}`,
 
-  lessThan: (value: unknown) => `< ${value}`,
-  lessOrEqual: (value: unknown) => `<= ${value}`,
-};
+  lessThan: (value) => `< ${value}`,
+  lessOrEqual: (value) => `<= ${value}`,
+} satisfies Record<string, WithMatcher>;
 
 type WithCondition = keyof typeof WITH_CONDITIONS;
 
