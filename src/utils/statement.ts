@@ -127,27 +127,7 @@ const composeFieldValues = (
   if (options.type === 'fields') return conditionSelector;
   if (options.type === 'values') return conditionValue as string;
 
-  const conditionTypes = {
-    being: [getMatcher(value, false), conditionValue],
-    notBeing: [getMatcher(value, true), conditionValue],
-
-    startingWith: ['LIKE', `${conditionValue}%`],
-    notStartingWith: ['NOT LIKE', `${conditionValue}%`],
-
-    endingWith: ['LIKE', `%${conditionValue}`],
-    notEndingWith: ['NOT LIKE', `%${conditionValue}`],
-
-    containing: ['LIKE', `%${conditionValue}%`],
-    notContaining: ['NOT LIKE', `%${conditionValue}%`],
-
-    greaterThan: ['>', conditionValue],
-    greaterOrEqual: ['>=', conditionValue],
-
-    lessThan: ['<', conditionValue],
-    lessOrEqual: ['<=', conditionValue],
-  };
-
-  return `${conditionSelector} ${conditionTypes[options.condition || 'being'].join(' ')}`;
+  return `${conditionSelector} ${WITH_CONDITIONS[options.condition || 'being'](conditionValue, value)}`;
 };
 
 /**
@@ -184,12 +164,7 @@ export const composeConditions = (
   // assert whether it contains any of the known query conditions (such as `being`). If
   // it does, we want to invoke the surrounding function again, but additionally provide
   // information about which kind of condition is being performed.
-  if (
-    isNested &&
-    Object.keys(value as object).every((key) =>
-      WITH_CONDITIONS.includes(key as WithCondition),
-    )
-  ) {
+  if (isNested && Object.keys(value as object).every((key) => key in WITH_CONDITIONS)) {
     const conditions = (
       Object.entries(value as object) as Array<[WithCondition, WithValueOptions]>
     ).map(([conditionType, checkValue]) =>
@@ -345,24 +320,6 @@ export const composeConditions = (
     code: 'INVALID_WITH_VALUE',
     queries: null,
   });
-};
-
-/**
- * Determines the right SQL assertion syntax for a given value.
- *
- * @param value - The value to be asserted.
- * @param negative - Whether the assertion should be negative.
- *
- * @returns The SQL assertion syntax for the given value.
- */
-const getMatcher = (value: unknown, negative: boolean): string => {
-  if (negative) {
-    if (value === null) return 'IS NOT';
-    return '!=';
-  }
-
-  if (value === null) return 'IS';
-  return '=';
 };
 
 /**

@@ -2,29 +2,53 @@ import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import { composeConditions } from '@/src/utils/statement';
 
-const WITH_CONDITIONS = [
-  'being',
-  'notBeing',
-  'startingWith',
-  'notStartingWith',
-  'endingWith',
-  'notEndingWith',
-  'containing',
-  'notContaining',
-  'greaterThan',
-  'greaterOrEqual',
-  'lessThan',
-  'lessOrEqual',
-] as const;
+/**
+ * Determines the right SQL assertion syntax for a given value.
+ *
+ * @param value - The value to be asserted.
+ * @param negative - Whether the assertion should be negative.
+ *
+ * @returns The SQL assertion syntax for the given value.
+ */
+const getMatcher = (value: unknown, negative: boolean): string => {
+  if (negative) {
+    if (value === null) return 'IS NOT';
+    return '!=';
+  }
 
-type WithCondition = (typeof WITH_CONDITIONS)[number];
+  if (value === null) return 'IS';
+  return '=';
+};
+
+export const WITH_CONDITIONS = {
+  being: (value: unknown, baseValue: unknown) =>
+    `${getMatcher(baseValue, false)} ${value}`,
+  notBeing: (value: unknown, baseValue: unknown) =>
+    `${getMatcher(baseValue, true)} ${value}`,
+
+  startingWith: (value: unknown) => `LIKE ${value}%`,
+  notStartingWith: (value: unknown) => `NOT LIKE ${value}%`,
+
+  endingWith: (value: unknown) => `LIKE %${value}`,
+  notEndingWith: (value: unknown) => `NOT LIKE %${value}`,
+
+  containing: (value: unknown) => `LIKE %${value}%`,
+  notContaining: (value: unknown) => `NOT LIKE %${value}%`,
+
+  greaterThan: (value: unknown) => `> ${value}`,
+  greaterOrEqual: (value: unknown) => `>= ${value}`,
+
+  lessThan: (value: unknown) => `< ${value}`,
+  lessOrEqual: (value: unknown) => `<= ${value}`,
+};
+
+type WithCondition = keyof typeof WITH_CONDITIONS;
 
 type WithValue = string | number | null;
 type WithValueOptions = WithValue | Array<WithValue>;
 type WithFilters = Record<WithCondition, WithValueOptions>;
 
 export type { WithValue, WithValueOptions, WithFilters, WithCondition };
-export { WITH_CONDITIONS };
 
 /**
  * Generates the SQL syntax for the `with` query instruction, which allows for filtering
