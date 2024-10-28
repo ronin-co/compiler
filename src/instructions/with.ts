@@ -20,8 +20,6 @@ const getMatcher = (value: unknown, negative: boolean): string => {
   return '=';
 };
 
-type WithMatcher = (value: unknown, baseValue: unknown) => string;
-
 export const WITH_CONDITIONS = {
   being: (value, baseValue) => `${getMatcher(baseValue, false)} ${value}`,
   notBeing: (value, baseValue) => `${getMatcher(baseValue, true)} ${value}`,
@@ -42,6 +40,7 @@ export const WITH_CONDITIONS = {
   lessOrEqual: (value) => `<= ${value}`,
 } satisfies Record<string, WithMatcher>;
 
+type WithMatcher = (value: unknown, baseValue: unknown) => string;
 type WithCondition = keyof typeof WITH_CONDITIONS;
 
 type WithValue = string | number | null;
