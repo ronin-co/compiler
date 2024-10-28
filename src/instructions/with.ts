@@ -2,29 +2,52 @@ import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import { composeConditions } from '@/src/utils/statement';
 
-const WITH_CONDITIONS = [
-  'being',
-  'notBeing',
-  'startingWith',
-  'notStartingWith',
-  'endingWith',
-  'notEndingWith',
-  'containing',
-  'notContaining',
-  'greaterThan',
-  'greaterOrEqual',
-  'lessThan',
-  'lessOrEqual',
-] as const;
+/**
+ * Determines the right SQL assertion syntax for a given value.
+ *
+ * @param value - The value to be asserted.
+ * @param negative - Whether the assertion should be negative.
+ *
+ * @returns The SQL assertion syntax for the given value.
+ */
+const getMatcher = (value: unknown, negative: boolean): string => {
+  if (negative) {
+    if (value === null) return 'IS NOT';
+    return '!=';
+  }
 
-type WithCondition = (typeof WITH_CONDITIONS)[number];
+  if (value === null) return 'IS';
+  return '=';
+};
+
+export const WITH_CONDITIONS = {
+  being: (value, baseValue) => `${getMatcher(baseValue, false)} ${value}`,
+  notBeing: (value, baseValue) => `${getMatcher(baseValue, true)} ${value}`,
+
+  startingWith: (value) => `LIKE ${value}%`,
+  notStartingWith: (value) => `NOT LIKE ${value}%`,
+
+  endingWith: (value) => `LIKE %${value}`,
+  notEndingWith: (value) => `NOT LIKE %${value}`,
+
+  containing: (value) => `LIKE %${value}%`,
+  notContaining: (value) => `NOT LIKE %${value}%`,
+
+  greaterThan: (value) => `> ${value}`,
+  greaterOrEqual: (value) => `>= ${value}`,
+
+  lessThan: (value) => `< ${value}`,
+  lessOrEqual: (value) => `<= ${value}`,
+} satisfies Record<string, WithMatcher>;
+
+type WithMatcher = (value: unknown, baseValue: unknown) => string;
+type WithCondition = keyof typeof WITH_CONDITIONS;
 
 type WithValue = string | number | null;
 type WithValueOptions = WithValue | Array<WithValue>;
 type WithFilters = Record<WithCondition, WithValueOptions>;
 
 export type { WithValue, WithValueOptions, WithFilters, WithCondition };
-export { WITH_CONDITIONS };
 
 /**
  * Generates the SQL syntax for the `with` query instruction, which allows for filtering

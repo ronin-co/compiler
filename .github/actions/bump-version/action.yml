@@ -39,7 +39,7 @@ runs:
         REGEX="\-$VERSION_TAG.[0-9]\{1,\}$"
 
         # Get all versions
-        ALL_VERSIONS=$(npm view $PACKAGE_NAME versions --json | jq -r '.[]')
+        ALL_VERSIONS=$(npm view $PACKAGE_NAME versions --json | jq -r '. | if type=="array" then .[] else . end')
 
         # Check if the experimental version already exists
         if ! echo "$ALL_VERSIONS" | grep -q "$REGEX"; then
