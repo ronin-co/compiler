@@ -1,6 +1,6 @@
 {
   "name": "@ronin/compiler",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Compiles RONIN queries to SQL statements.",
   "publishConfig": {
@@ -8,7 +8,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "lint": "bun run --bun lint:tsc && bun run --bun lint:biome",
     "lint:biome": "biome check",
@@ -18,7 +20,11 @@
     "build": "tsup ./src/index.ts --dts --format esm",
     "prepare": "bun run build"
   },
-  "keywords": ["query", "compiler", "sql"],
+  "keywords": [
+    "query",
+    "compiler",
+    "sql"
+  ],
   "author": "ronin",
   "license": "MIT",
   "dependencies": {
