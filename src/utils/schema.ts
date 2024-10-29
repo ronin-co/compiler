@@ -4,7 +4,7 @@ import type {
   QueryType,
   WithInstruction,
 } from '@/src/types/query';
-import type { Schema, SchemaField } from '@/src/types/schema';
+import type { Schema, SchemaField, SchemaFieldReferenceAction } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
   RoninError,
@@ -179,8 +179,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
   },
   {
     name: 'RONIN - Created By',
-    type: 'reference',
-    target: 'account',
+    type: 'string',
     slug: 'ronin.createdBy',
   },
   {
@@ -190,8 +189,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
   },
   {
     name: 'RONIN - Updated By',
-    type: 'reference',
-    target: 'account',
+    type: 'string',
     slug: 'ronin.updatedBy',
   },
 ];
@@ -229,12 +227,18 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
-      { slug: 'schema', type: 'reference', target: 'schema' },
-      { slug: 'target', type: 'reference', target: 'schema' },
+      { slug: 'schema', type: 'reference', target: { pluralSlug: 'schemas' } },
       { slug: 'required', type: 'boolean' },
       { slug: 'defaultValue', type: 'string' },
       { slug: 'unique', type: 'boolean' },
       { slug: 'autoIncrement', type: 'boolean' },
+
+      // Only allowed for fields of type "reference".
+      { slug: 'target', type: 'reference', target: { pluralSlug: 'schemas' } },
+      { slug: 'kind', type: 'string' },
+      { slug: 'actions', type: 'group' },
+      { slug: 'actions.onDelete', type: 'string' },
+      { slug: 'actions.onUpdate', type: 'string' },
     ],
   },
 ];
@@ -259,7 +263,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
     // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.target);
+        const relatedSchema = getSchemaBySlug(list, field.target.pluralSlug);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -277,12 +281,12 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
               {
                 slug: 'source',
                 type: 'reference',
-                target: schema.slug,
+                target: schema,
               },
               {
                 slug: 'target',
                 type: 'reference',
-                target: relatedSchema.slug,
+                target: relatedSchema,
               },
             ],
           });
@@ -304,7 +308,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
 
         // Additionally, add a default shortcut for resolving the child records in the
         // related schema.
-        const relatedSchemaToModify = list.find((schema) => schema.slug === field.target);
+        const relatedSchemaToModify = getSchemaBySlug(list, field.target.pluralSlug);
         if (!relatedSchemaToModify) throw new Error('Missing related schema');
 
         relatedSchemaToModify.including = {
@@ -362,6 +366,7 @@ const typesInSQLite = {
 /**
  * Composes the SQL syntax for a field in a RONIN schema.
  *
+ * @param schemas - A list of schemas.
  * @param field - The field of a RONIN schema.
  *
  * @returns The SQL syntax for the provided field.
@@ -376,6 +381,22 @@ const getFieldStatement = (field: SchemaField): string | null => {
   if (field.required === true) statement += ' NOT NULL';
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
+
+  if (field.type === 'reference') {
+    const actions = field.actions || {};
+    const targetTable = convertToSnakeCase(field.target.pluralSlug);
+
+    statement += ` REFERENCES ${targetTable}("id")`;
+
+    for (const trigger in actions) {
+      const triggerName = trigger.toUpperCase().slice(2);
+      const action = actions[
+        trigger as keyof typeof actions
+      ] as SchemaFieldReferenceAction;
+
+      statement += ` ON ${triggerName} ${action}`;
+    }
+  }
 
   return statement;
 };

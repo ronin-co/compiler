@@ -13,10 +13,24 @@ type SchemaFieldNormal = SchemaFieldBasics & {
   type: 'string' | 'number' | 'boolean' | 'date' | 'json' | 'group';
 };
 
+export type SchemaFieldReferenceAction =
+  | 'CASCADE'
+  | 'RESTRICT'
+  | 'SET NULL'
+  | 'SET DEFAULT'
+  | 'NO ACTION';
+
 export type SchemaFieldReference = SchemaFieldBasics & {
   type: 'reference';
-  target: string;
+
+  // Make the `pluralSlug` required.
+  target: Omit<Partial<Schema>, 'pluralSlug'> & Pick<Schema, 'pluralSlug'>;
+
   kind?: 'one' | 'many';
+  actions?: {
+    onDelete?: SchemaFieldReferenceAction;
+    onUpdate?: SchemaFieldReferenceAction;
+  };
 };
 
 export type SchemaField = SchemaFieldNormal | SchemaFieldReference;

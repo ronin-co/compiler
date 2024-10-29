@@ -229,7 +229,7 @@ export const composeConditions = (
         // This can be either a string or an object with conditions such as `being`.
         recordTarget = values[0];
       } else {
-        const relatedSchema = getSchemaBySlug(schemas, schemaField.target);
+        const relatedSchema = getSchemaBySlug(schemas, schemaField.target.pluralSlug);
 
         const subQuery: Query = {
           get: {
