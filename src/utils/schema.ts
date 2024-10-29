@@ -4,7 +4,7 @@ import type {
   QueryType,
   WithInstruction,
 } from '@/src/types/query';
-import type { Schema, SchemaField } from '@/src/types/schema';
+import type { Schema, SchemaField, SchemaFieldReferenceAction } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
   RoninError,
@@ -377,10 +377,21 @@ const getFieldStatement = (schemas: Array<Schema>, field: SchemaField): string |
     statement += ` DEFAULT ${field.defaultValue}`;
 
   if (field.type === 'reference') {
+    const actions = field.actions || {};
+
     const targetSchema = getSchemaBySlug(schemas, field.target);
     const targetTable = getTableForSchema(targetSchema);
 
     statement += ` REFERENCES ${targetTable}("id")`;
+
+    for (const trigger in actions) {
+      const triggerName = trigger.toUpperCase().slice(2);
+      const action = actions[
+        trigger as keyof typeof actions
+      ] as SchemaFieldReferenceAction;
+
+      statement += ` ${triggerName} ${action}`;
+    }
   }
 
   return statement;
