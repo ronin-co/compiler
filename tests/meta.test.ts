@@ -311,6 +311,32 @@ test('create new index', () => {
   );
 });
 
+test('drop existing index', () => {
+  const query: Query = {
+    drop: {
+      index: {
+        with: {
+          slug: 'index_name',
+          schema: { pluralSlug: 'accounts' },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['DROP INDEX "index_name"']);
+
+  expect(readStatement).toBe(
+    'DELETE FROM "indexes" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?2) LIMIT 1)) RETURNING *',
+  );
+
+  expect(values[0]).toBe('index_name');
+  expect(values[1]).toBe('accounts');
+});
+
 test('try to update existing schema without minimum details (schema slug)', () => {
   const query: Query = {
     set: {

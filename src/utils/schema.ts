@@ -520,7 +520,10 @@ export const addSchemaQueries = (
       });
     }
 
-    const statement = `${tableAction} INDEX "${indexSlug}" ON "${table}"`;
+    let statement = `${tableAction} INDEX "${indexSlug}"`;
+
+    if (queryType === 'create') statement += ` ON "${table}"`;
+
     writeStatements.push(statement);
     return;
   }
