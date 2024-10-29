@@ -227,7 +227,12 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
-      { slug: 'schema', type: 'reference', target: { pluralSlug: 'schemas' } },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { pluralSlug: 'schemas' },
+        required: true,
+      },
       { slug: 'required', type: 'boolean' },
       { slug: 'defaultValue', type: 'string' },
       { slug: 'unique', type: 'boolean' },
@@ -241,7 +246,37 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'actions.onUpdate', type: 'string' },
     ],
   },
+  {
+    name: 'Index',
+    pluralName: 'Indexes',
+
+    slug: 'index',
+    pluralSlug: 'indexes',
+
+    fields: [
+      ...SYSTEM_FIELDS,
+
+      { slug: 'slug', type: 'string', required: true },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { pluralSlug: 'schemas' },
+        required: true,
+      },
+      { slug: 'unique', type: 'boolean' },
+      { slug: 'filter', type: 'json' },
+    ],
+  },
 ];
+
+/**
+ * We are computing this at the root level in order to avoid computing it again with
+ * every function call.
+ */
+const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
+  slug,
+  pluralSlug,
+]);
 
 /**
  * Extends a list of schemas with automatically generated schemas that make writing
@@ -421,14 +456,14 @@ export const addSchemaQueries = (
   // Only continue if the query is a write query.
   if (!['create', 'set', 'drop'].includes(queryType)) return;
 
-  // Only continue if the query addresses the "schema" schema.
-  if (!['schema', 'schemas', 'field', 'fields'].includes(querySchema)) return;
+  // Only continue if the query addresses system schemas.
+  if (!SYSTEM_SCHEMA_SLUGS.includes(querySchema)) return;
 
   const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
 
   // Whether schemas or fields are being updated.
-  const kind = ['schema', 'schemas'].includes(querySchema) ? 'schemas' : 'fields';
+  const kind = getSchemaBySlug(SYSTEM_SCHEMAS, querySchema).pluralSlug;
 
   const instructionTarget =
     kind === 'schemas' ? instructionList : instructionList?.schema;
@@ -439,7 +474,7 @@ export const addSchemaQueries = (
 
   switch (queryType) {
     case 'create': {
-      if (kind === 'schemas') tableAction = 'CREATE';
+      if (kind === 'schemas' || kind === 'indexes') tableAction = 'CREATE';
       schemaPluralSlug = instructionTarget?.pluralSlug;
       queryTypeReadable = 'creating';
       break;
@@ -454,7 +489,7 @@ export const addSchemaQueries = (
     }
 
     case 'drop': {
-      if (kind === 'schemas') tableAction = 'DROP';
+      if (kind === 'schemas' || kind === 'indexes') tableAction = 'DROP';
       schemaPluralSlug =
         instructionTarget?.pluralSlug?.being || instructionTarget?.pluralSlug;
       queryTypeReadable = 'deleting';
@@ -473,6 +508,23 @@ export const addSchemaQueries = (
   }
 
   const table = convertToSnakeCase(schemaPluralSlug);
+
+  if (kind === 'indexes') {
+    const indexSlug = instructionTarget?.slug?.being || instructionList?.slug;
+
+    if (!indexSlug) {
+      throw new RoninError({
+        message: `When ${queryTypeReadable} indexes, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
+        code: 'MISSING_FIELD',
+        fields: ['slug'],
+      });
+    }
+
+    const statement = `${tableAction} INDEX "${indexSlug}" ON "${table}"`;
+    writeStatements.push(statement);
+    return;
+  }
+
   const fields = [...SYSTEM_FIELDS];
 
   let statement = `${tableAction} TABLE "${table}"`;

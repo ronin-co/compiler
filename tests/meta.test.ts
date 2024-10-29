@@ -276,6 +276,41 @@ test('drop existing field', () => {
   expect(values[1]).toBe('email');
 });
 
+test('create new index', () => {
+  const query: Query = {
+    create: {
+      index: {
+        to: {
+          slug: 'index_name',
+          schema: { pluralSlug: 'accounts' },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['CREATE INDEX "index_name" ON "accounts"']);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "indexes" ("slug", "schema", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?2) LIMIT 1), ?3, ?4, ?5) RETURNING *',
+  );
+
+  expect(values[0]).toBe('index_name');
+  expect(values[1]).toBe('accounts');
+
+  expect(values[2]).toMatch(RECORD_ID_REGEX);
+
+  expect(values[3]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[4]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
 test('try to update existing schema without minimum details (schema slug)', () => {
   const query: Query = {
     set: {
