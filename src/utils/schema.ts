@@ -228,11 +228,17 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
       { slug: 'schema', type: 'reference', target: { pluralSlug: 'schemas' } },
-      { slug: 'target', type: 'reference', target: { pluralSlug: 'schemas' } },
       { slug: 'required', type: 'boolean' },
       { slug: 'defaultValue', type: 'string' },
       { slug: 'unique', type: 'boolean' },
       { slug: 'autoIncrement', type: 'boolean' },
+
+      // Only allowed for fields of type "reference".
+      { slug: 'target', type: 'reference', target: { pluralSlug: 'schemas' } },
+      { slug: 'kind', type: 'string' },
+      { slug: 'actions', type: 'group' },
+      { slug: 'actions.onDelete', type: 'string' },
+      { slug: 'actions.onUpdate', type: 'string' },
     ],
   },
 ];
@@ -388,7 +394,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
         trigger as keyof typeof actions
       ] as SchemaFieldReferenceAction;
 
-      statement += ` ${triggerName} ${action}`;
+      statement += ` ON ${triggerName} ${action}`;
     }
   }
 
