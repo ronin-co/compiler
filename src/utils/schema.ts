@@ -510,7 +510,10 @@ export const addSchemaQueries = (
   const table = convertToSnakeCase(schemaPluralSlug);
 
   if (kind === 'indexes') {
-    const indexSlug = instructionTarget?.slug?.being || instructionList?.slug;
+    const indexSlug: string | undefined =
+      instructionTarget?.slug?.being || instructionList?.slug;
+    const unique: boolean | undefined =
+      instructionTarget?.unique?.being || instructionList?.unique;
 
     if (!indexSlug) {
       throw new RoninError({
@@ -520,7 +523,7 @@ export const addSchemaQueries = (
       });
     }
 
-    let statement = `${tableAction} INDEX "${indexSlug}"`;
+    let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexSlug}"`;
 
     if (queryType === 'create') statement += ` ON "${table}"`;
 

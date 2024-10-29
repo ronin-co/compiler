@@ -311,6 +311,43 @@ test('create new index', () => {
   );
 });
 
+test('create new unique index', () => {
+  const query: Query = {
+    create: {
+      index: {
+        to: {
+          slug: 'index_name',
+          schema: { pluralSlug: 'accounts' },
+          unique: true,
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['CREATE UNIQUE INDEX "index_name" ON "accounts"']);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "indexes" ("slug", "schema", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
+  );
+
+  expect(values[0]).toBe('index_name');
+  expect(values[1]).toBe('accounts');
+  expect(values[2]).toBe(1);
+
+  expect(values[3]).toMatch(RECORD_ID_REGEX);
+
+  expect(values[4]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[5]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
 test('drop existing index', () => {
   const query: Query = {
     drop: {
