@@ -180,7 +180,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
   {
     name: 'RONIN - Created By',
     type: 'reference',
-    schema: 'account',
+    target: 'account',
     slug: 'ronin.createdBy',
   },
   {
@@ -191,7 +191,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
   {
     name: 'RONIN - Updated By',
     type: 'reference',
-    schema: 'account',
+    target: 'account',
     slug: 'ronin.updatedBy',
   },
 ];
@@ -227,9 +227,10 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     fields: [
       ...SYSTEM_FIELDS,
       { slug: 'name', type: 'string' },
-      { slug: 'slug', type: 'string' },
-      { slug: 'type', type: 'string' },
-      { slug: 'schema', type: 'reference', schema: 'schema' },
+      { slug: 'slug', type: 'string', required: true },
+      { slug: 'type', type: 'string', required: true },
+      { slug: 'schema', type: 'reference', target: 'schema' },
+      { slug: 'target', type: 'reference', target: 'schema' },
       { slug: 'required', type: 'boolean' },
       { slug: 'defaultValue', type: 'string' },
       { slug: 'unique', type: 'boolean' },
@@ -258,7 +259,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
     // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.schema);
+        const relatedSchema = getSchemaBySlug(list, field.target);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -274,14 +275,14 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
             slug: fieldSlug,
             fields: [
               {
-                slug: 'origin',
+                slug: 'source',
                 type: 'reference',
-                schema: schema.slug,
+                target: schema.slug,
               },
               {
                 slug: 'target',
                 type: 'reference',
-                schema: relatedSchema.slug,
+                target: relatedSchema.slug,
               },
             ],
           });
@@ -303,7 +304,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
 
         // Additionally, add a default shortcut for resolving the child records in the
         // related schema.
-        const relatedSchemaToModify = list.find((schema) => schema.slug === field.schema);
+        const relatedSchemaToModify = list.find((schema) => schema.slug === field.target);
         if (!relatedSchemaToModify) throw new Error('Missing related schema');
 
         relatedSchemaToModify.including = {

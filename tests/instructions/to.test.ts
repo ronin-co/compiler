@@ -78,7 +78,7 @@ test('set single record to new one-cardinality reference field', () => {
         {
           slug: 'account',
           type: 'reference',
-          schema: 'account',
+          target: 'account',
         },
       ],
     },
@@ -119,7 +119,7 @@ test('set single record to new many-cardinality reference field', () => {
         {
           slug: 'comments',
           type: 'reference',
-          schema: 'comment',
+          target: 'comment',
           kind: 'many',
         },
       ],
@@ -139,8 +139,8 @@ test('set single record to new many-cardinality reference field', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'DELETE FROM "ronin_posts_comments" WHERE ("origin" = ?1)',
-    'INSERT INTO "ronin_posts_comments" ("origin", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?2, (SELECT "id" FROM "comments" WHERE ("content" = ?3) LIMIT 1), ?4, ?5, ?6)',
+    'DELETE FROM "ronin_posts_comments" WHERE ("source" = ?1)',
+    'INSERT INTO "ronin_posts_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?2, (SELECT "id" FROM "comments" WHERE ("content" = ?3) LIMIT 1), ?4, ?5, ?6)',
   ]);
 
   expect(readStatement).toBe(
@@ -187,7 +187,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
         {
           slug: 'comments',
           type: 'reference',
-          schema: 'comment',
+          target: 'comment',
           kind: 'many',
         },
       ],
@@ -207,7 +207,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'INSERT INTO "ronin_posts_comments" ("origin", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+    'INSERT INTO "ronin_posts_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
   ]);
 
   expect(readStatement).toBe(
@@ -253,7 +253,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
         {
           slug: 'comments',
           type: 'reference',
-          schema: 'comment',
+          target: 'comment',
           kind: 'many',
         },
       ],
@@ -273,7 +273,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'DELETE FROM "ronin_posts_comments" WHERE ("origin" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
+    'DELETE FROM "ronin_posts_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
   ]);
 
   expect(readStatement).toBe(
@@ -553,7 +553,7 @@ test('set single record to new grouped reference field', () => {
         {
           slug: 'billing.manager',
           type: 'reference',
-          schema: 'account',
+          target: 'account',
         },
       ],
     },

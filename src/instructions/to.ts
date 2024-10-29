@@ -150,9 +150,9 @@ export const handleTo = (
       );
 
       const composeStatement = (subQueryType: 'create' | 'drop', value?: unknown) => {
-        const origin =
+        const source =
           queryType === 'create' ? { id: toInstruction.id } : withInstruction;
-        const recordDetails: Record<string, unknown> = { origin };
+        const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
 

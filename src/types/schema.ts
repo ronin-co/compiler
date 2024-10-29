@@ -15,7 +15,7 @@ type SchemaFieldNormal = SchemaFieldBasics & {
 
 export type SchemaFieldReference = SchemaFieldBasics & {
   type: 'reference';
-  schema: string;
+  target: string;
   kind?: 'one' | 'many';
 };
 
