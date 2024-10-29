@@ -179,8 +179,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
   },
   {
     name: 'RONIN - Created By',
-    type: 'reference',
-    target: 'account',
+    type: 'string',
     slug: 'ronin.createdBy',
   },
   {
@@ -190,8 +189,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
   },
   {
     name: 'RONIN - Updated By',
-    type: 'reference',
-    target: 'account',
+    type: 'string',
     slug: 'ronin.updatedBy',
   },
 ];
@@ -362,11 +360,12 @@ const typesInSQLite = {
 /**
  * Composes the SQL syntax for a field in a RONIN schema.
  *
+ * @param schemas - A list of schemas.
  * @param field - The field of a RONIN schema.
  *
  * @returns The SQL syntax for the provided field.
  */
-const getFieldStatement = (field: SchemaField): string | null => {
+const getFieldStatement = (schemas: Array<Schema>, field: SchemaField): string | null => {
   if (field.type === 'group') return null;
 
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
@@ -377,6 +376,13 @@ const getFieldStatement = (field: SchemaField): string | null => {
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
 
+  if (field.type === 'reference') {
+    const targetSchema = getSchemaBySlug(schemas, field.target);
+    const targetTable = getTableForSchema(targetSchema);
+
+    statement += ` REFERENCES ${targetTable}("id")`;
+  }
+
   return statement;
 };
 
@@ -385,6 +391,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
  * which are used to create, update, or delete schemas and fields. The generated
  * dependency statements are used to alter the SQLite database schema.
  *
+ * @param schemas - A list of schemas.
  * @param queryDetails - The parsed details of the query that is being executed.
  * @param writeStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
@@ -392,6 +399,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
  * @returns Nothing.
  */
 export const addSchemaQueries = (
+  schemas: Array<Schema>,
   queryDetails: ReturnType<typeof splitQuery>,
   writeStatements: Array<string>,
 ) => {
@@ -458,7 +466,9 @@ export const addSchemaQueries = (
 
   if (kind === 'schemas') {
     if (queryType === 'create') {
-      const columns = fields.map(getFieldStatement).filter(Boolean);
+      const columns = fields
+        .map((field) => getFieldStatement(schemas, field))
+        .filter(Boolean);
 
       statement += ` (${columns.join(', ')})`;
     } else if (queryType === 'set') {
@@ -489,7 +499,7 @@ export const addSchemaQueries = (
         });
       }
 
-      statement += ` ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`;
+      statement += ` ADD COLUMN ${getFieldStatement(schemas, instructionList as SchemaField)}`;
     } else if (queryType === 'set') {
       const newSlug = queryInstructions.to?.slug;
 
