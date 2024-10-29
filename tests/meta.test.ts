@@ -5,7 +5,7 @@ import type { Schema } from '@/src/types/schema';
 import { RoninError } from '@/src/utils';
 import { RECORD_ID_REGEX } from '@/src/utils';
 
-test('create new schema with minimum details', () => {
+test('create new schema', () => {
   const query: Query = {
     create: {
       schema: {
@@ -40,7 +40,7 @@ test('create new schema with minimum details', () => {
   );
 });
 
-test('update existing schema with minimum details', () => {
+test('update existing schema', () => {
   const query: Query = {
     set: {
       schema: {
@@ -71,7 +71,7 @@ test('update existing schema with minimum details', () => {
   expect(values[2]).toBe('accounts');
 });
 
-test('drop existing schema with minimum details', () => {
+test('drop existing schema', () => {
   const query: Query = {
     drop: {
       schema: {
@@ -95,40 +95,7 @@ test('drop existing schema with minimum details', () => {
   expect(values[0]).toBe('accounts');
 });
 
-test('try to update existing schema without minimum details (schema slug)', () => {
-  const query: Query = {
-    set: {
-      schema: {
-        with: {
-          name: 'Accounts',
-        },
-        to: {
-          pluralSlug: 'users',
-        },
-      },
-    },
-  };
-
-  const schemas: Array<Schema> = [];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueryInput(query, schemas);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When updating schemas, a `pluralSlug` field must be provided in the `with` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['pluralSlug']);
-});
-
-test('create new field with minimum details', () => {
+test('create new field', () => {
   const query: Query = {
     create: {
       field: {
@@ -164,7 +131,7 @@ test('create new field with minimum details', () => {
   );
 });
 
-test('create new reference field with minimum details', () => {
+test('create new reference field', () => {
   const query: Query = {
     create: {
       field: {
@@ -204,7 +171,7 @@ test('create new reference field with minimum details', () => {
   );
 });
 
-test('create new reference field with minimum details and actions', () => {
+test('create new reference field with actions', () => {
   const query: Query = {
     create: {
       field: {
@@ -248,7 +215,7 @@ test('create new reference field with minimum details and actions', () => {
   );
 });
 
-test('update existing field with minimum details', () => {
+test('update existing field', () => {
   const query: Query = {
     set: {
       field: {
@@ -283,7 +250,7 @@ test('update existing field with minimum details', () => {
   expect(values[3]).toBe('email');
 });
 
-test('drop existing field with minimum details', () => {
+test('drop existing field', () => {
   const query: Query = {
     drop: {
       field: {
@@ -307,6 +274,39 @@ test('drop existing field with minimum details', () => {
 
   expect(values[0]).toBe('accounts');
   expect(values[1]).toBe('email');
+});
+
+test('try to update existing schema without minimum details (schema slug)', () => {
+  const query: Query = {
+    set: {
+      schema: {
+        with: {
+          name: 'Accounts',
+        },
+        to: {
+          pluralSlug: 'users',
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueryInput(query, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When updating schemas, a `pluralSlug` field must be provided in the `with` instruction.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_FIELD');
+  expect(error).toHaveProperty('fields', ['pluralSlug']);
 });
 
 test('try to create new field without minimum details (field slug)', () => {
