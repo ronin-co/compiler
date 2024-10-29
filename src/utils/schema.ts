@@ -227,8 +227,8 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
-      { slug: 'schema', type: 'reference', target: 'schema' },
-      { slug: 'target', type: 'reference', target: 'schema' },
+      { slug: 'schema', type: 'reference', target: { pluralSlug: 'schemas' } },
+      { slug: 'target', type: 'reference', target: { pluralSlug: 'schemas' } },
       { slug: 'required', type: 'boolean' },
       { slug: 'defaultValue', type: 'string' },
       { slug: 'unique', type: 'boolean' },
@@ -257,7 +257,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
     // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.target);
+        const relatedSchema = getSchemaBySlug(list, field.target.pluralSlug);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -275,12 +275,12 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
               {
                 slug: 'source',
                 type: 'reference',
-                target: schema.slug,
+                target: schema,
               },
               {
                 slug: 'target',
                 type: 'reference',
-                target: relatedSchema.slug,
+                target: relatedSchema,
               },
             ],
           });
@@ -302,7 +302,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
 
         // Additionally, add a default shortcut for resolving the child records in the
         // related schema.
-        const relatedSchemaToModify = list.find((schema) => schema.slug === field.target);
+        const relatedSchemaToModify = getSchemaBySlug(list, field.target.pluralSlug);
         if (!relatedSchemaToModify) throw new Error('Missing related schema');
 
         relatedSchemaToModify.including = {
@@ -365,7 +365,7 @@ const typesInSQLite = {
  *
  * @returns The SQL syntax for the provided field.
  */
-const getFieldStatement = (schemas: Array<Schema>, field: SchemaField): string | null => {
+const getFieldStatement = (field: SchemaField): string | null => {
   if (field.type === 'group') return null;
 
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
@@ -378,9 +378,7 @@ const getFieldStatement = (schemas: Array<Schema>, field: SchemaField): string |
 
   if (field.type === 'reference') {
     const actions = field.actions || {};
-
-    const targetSchema = getSchemaBySlug(schemas, field.target);
-    const targetTable = getTableForSchema(targetSchema);
+    const targetTable = convertToSnakeCase(field.target.pluralSlug);
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
@@ -402,7 +400,6 @@ const getFieldStatement = (schemas: Array<Schema>, field: SchemaField): string |
  * which are used to create, update, or delete schemas and fields. The generated
  * dependency statements are used to alter the SQLite database schema.
  *
- * @param schemas - A list of schemas.
  * @param queryDetails - The parsed details of the query that is being executed.
  * @param writeStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
@@ -410,7 +407,6 @@ const getFieldStatement = (schemas: Array<Schema>, field: SchemaField): string |
  * @returns Nothing.
  */
 export const addSchemaQueries = (
-  schemas: Array<Schema>,
   queryDetails: ReturnType<typeof splitQuery>,
   writeStatements: Array<string>,
 ) => {
@@ -477,9 +473,7 @@ export const addSchemaQueries = (
 
   if (kind === 'schemas') {
     if (queryType === 'create') {
-      const columns = fields
-        .map((field) => getFieldStatement(schemas, field))
-        .filter(Boolean);
+      const columns = fields.map(getFieldStatement).filter(Boolean);
 
       statement += ` (${columns.join(', ')})`;
     } else if (queryType === 'set') {
@@ -510,7 +504,7 @@ export const addSchemaQueries = (
         });
       }
 
-      statement += ` ADD COLUMN ${getFieldStatement(schemas, instructionList as SchemaField)}`;
+      statement += ` ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`;
     } else if (queryType === 'set') {
       const newSlug = queryInstructions.to?.slug;
 

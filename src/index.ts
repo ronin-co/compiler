@@ -67,7 +67,7 @@ export const compileQueryInput = (
 
   // Generate additional dependency statements for meta queries, meaning queries that
   // affect the database schema.
-  addSchemaQueries(schemas, parsedQuery, writeStatements);
+  addSchemaQueries(parsedQuery, writeStatements);
 
   // A list of columns that should be selected when querying records.
   const columns = handleSelecting(schema, statementValues, {

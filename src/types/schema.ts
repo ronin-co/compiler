@@ -22,7 +22,10 @@ export type SchemaFieldReferenceAction =
 
 export type SchemaFieldReference = SchemaFieldBasics & {
   type: 'reference';
-  target: string;
+
+  // Make the `pluralSlug` required.
+  target: Omit<Partial<Schema>, 'pluralSlug'> & Pick<Schema, 'pluralSlug'>;
+
   kind?: 'one' | 'many';
   actions?: {
     onDelete?: SchemaFieldReferenceAction;

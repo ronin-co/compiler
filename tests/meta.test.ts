@@ -164,6 +164,46 @@ test('create new field with minimum details', () => {
   );
 });
 
+test('create new reference field with minimum details', () => {
+  const query: Query = {
+    create: {
+      field: {
+        to: {
+          schema: { pluralSlug: 'members' },
+          slug: 'account',
+          type: 'reference',
+          target: { pluralSlug: 'accounts' },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "fields" ("schema", "slug", "type", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "schemas" WHERE ("pluralSlug" = ?4) LIMIT 1), ?5, ?6, ?7) RETURNING *',
+  );
+
+  expect(values[0]).toBe('members');
+  expect(values[1]).toBe('account');
+  expect(values[2]).toBe('reference');
+  expect(values[3]).toBe('accounts');
+  expect(values[4]).toMatch(RECORD_ID_REGEX);
+
+  expect(values[5]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[6]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
 test('update existing field with minimum details', () => {
   const query: Query = {
     set: {

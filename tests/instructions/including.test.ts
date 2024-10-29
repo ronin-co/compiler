@@ -25,7 +25,7 @@ test('get single record including parent record (many-to-one)', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: 'account',
+          target: { pluralSlug: 'accounts' },
           kind: 'one',
         },
       ],
@@ -57,7 +57,7 @@ test('get single record including child records (one-to-many, defined manually)'
         {
           slug: 'comments',
           type: 'reference',
-          target: 'comment',
+          target: { pluralSlug: 'comments' },
           kind: 'many',
         },
       ],
@@ -97,7 +97,7 @@ test('get single record including child records (one-to-many, defined automatica
         {
           slug: 'account',
           type: 'reference',
-          target: 'account',
+          target: { pluralSlug: 'accounts' },
         },
       ],
     },
