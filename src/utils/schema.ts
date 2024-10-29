@@ -525,11 +525,11 @@ export const addSchemaQueries = (
     return;
   }
 
-  const fields = [...SYSTEM_FIELDS];
-
   let statement = `${tableAction} TABLE "${table}"`;
 
   if (kind === 'schemas') {
+    const fields = [...SYSTEM_FIELDS];
+
     if (queryType === 'create') {
       const columns = fields.map(getFieldStatement).filter(Boolean);
 
@@ -542,7 +542,12 @@ export const addSchemaQueries = (
         statement += ` RENAME TO "${newTable}"`;
       }
     }
-  } else if (kind === 'fields') {
+
+    writeStatements.push(statement);
+    return;
+  }
+
+  if (kind === 'fields') {
     const fieldSlug = instructionTarget?.slug?.being || instructionList?.slug;
 
     if (!fieldSlug) {
@@ -572,7 +577,7 @@ export const addSchemaQueries = (
     } else if (queryType === 'drop') {
       statement += ` DROP COLUMN "${fieldSlug}"`;
     }
-  }
 
-  writeStatements.push(statement);
+    writeStatements.push(statement);
+  }
 };
