@@ -24,10 +24,10 @@ Once that's done, link the package to make it available to all of your local pro
 bun link
 ```
 
-Inside your project, you can then run the following command, which is similar to `bun add @ronin/cli` or `npm install @ronin/cli`, except that it doesn't install `@ronin/cli` from npm, but instead uses your local clone of the package:
+Inside your project, you can then run the following command, which is similar to `bun add @ronin/compiler` or `npm install @ronin/compiler`, except that it doesn't install `@ronin/compiler` from npm, but instead uses your local clone of the package:
 
 ```bash
-bun link @ronin/cli
+bun link @ronin/compiler
 ```
 
 If your project is not yet compatible with [Bun](https://bun.sh), feel free to replace all of the occurances of the word `bun` in the commands above with `npm` instead.
