@@ -26,7 +26,7 @@
     "sql"
   ],
   "author": "ronin",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@paralleldrive/cuid2": "2.2.2"
   },
