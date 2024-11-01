@@ -6,9 +6,9 @@ This package compiles [RONIN queries](https://ronin.co/docs/queries) to SQL stat
 
 You don't need to install this package explicitly, as it is already included in the [RONIN client](https://github.com/ronin-co/client).
 
-## Contributing
+However, we would be excited to welcome your feature suggestions or bug fixes for the RONIN compiler. Read on to learn more about how to suggest changes.
 
-We would be excited to welcome your suggestions for the RONIN compiler!
+## Contributing
 
 To start contributing code, first make sure you have [Bun](https://bun.sh) installed, which is a JavaScript runtime.
 
