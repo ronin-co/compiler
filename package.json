@@ -1,6 +1,6 @@
 {
   "name": "@ronin/compiler",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "type": "module",
   "description": "Compiles RONIN queries to SQL statements.",
   "publishConfig": {
@@ -26,7 +26,7 @@
     "sql"
   ],
   "author": "ronin",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@paralleldrive/cuid2": "2.2.2",
     "title": "3.5.3"
