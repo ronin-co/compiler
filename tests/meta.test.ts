@@ -21,7 +21,7 @@ test('create new schema', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TABLE "account" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT)',
+    'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT)',
   ]);
 
   expect(readStatement).toBe(
@@ -58,7 +58,7 @@ test('update existing schema', () => {
 
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(writeStatements).toEqual(['ALTER TABLE "account" RENAME TO "user"']);
+  expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
   expect(readStatement).toBe(
     'UPDATE "schemas" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
@@ -86,7 +86,7 @@ test('drop existing schema', () => {
 
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(writeStatements).toEqual(['DROP TABLE "account"']);
+  expect(writeStatements).toEqual(['DROP TABLE "accounts"']);
 
   expect(readStatement).toBe('DELETE FROM "schemas" WHERE ("slug" = ?1) RETURNING *');
 
@@ -110,7 +110,7 @@ test('create new field', () => {
 
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(writeStatements).toEqual(['ALTER TABLE "account" ADD COLUMN "email" TEXT']);
+  expect(writeStatements).toEqual(['ALTER TABLE "accounts" ADD COLUMN "email" TEXT']);
 
   expect(readStatement).toBe(
     'INSERT INTO "fields" ("schema", "slug", "type", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
@@ -148,7 +148,7 @@ test('create new reference field', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'ALTER TABLE "member" ADD COLUMN "account" TEXT REFERENCES account("id")',
+    'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
   ]);
 
   expect(readStatement).toBe(
@@ -191,7 +191,7 @@ test('create new reference field with actions', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'ALTER TABLE "member" ADD COLUMN "account" TEXT REFERENCES account("id") ON DELETE CASCADE',
+    'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
   ]);
 
   expect(readStatement).toBe(
@@ -233,7 +233,7 @@ test('update existing field', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'ALTER TABLE "account" RENAME COLUMN "email" TO "emailAddress"',
+    'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
   ]);
 
   expect(readStatement).toBe(
@@ -264,7 +264,7 @@ test('drop existing field', () => {
 
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(writeStatements).toEqual(['ALTER TABLE "account" DROP COLUMN "email"']);
+  expect(writeStatements).toEqual(['ALTER TABLE "accounts" DROP COLUMN "email"']);
 
   expect(readStatement).toBe(
     'DELETE FROM "fields" WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
@@ -290,7 +290,7 @@ test('create new index', () => {
 
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(writeStatements).toEqual(['CREATE INDEX "index_name" ON "account"']);
+  expect(writeStatements).toEqual(['CREATE INDEX "index_name" ON "accounts"']);
 
   expect(readStatement).toBe(
     'INSERT INTO "indexes" ("slug", "schema", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5) RETURNING *',
@@ -326,7 +326,7 @@ test('create new unique index', () => {
 
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(writeStatements).toEqual(['CREATE UNIQUE INDEX "index_name" ON "account"']);
+  expect(writeStatements).toEqual(['CREATE UNIQUE INDEX "index_name" ON "accounts"']);
 
   expect(readStatement).toBe(
     'INSERT INTO "indexes" ("slug", "schema", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',

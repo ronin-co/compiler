@@ -195,6 +195,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     fields: [
       ...SYSTEM_FIELDS,
+
       { slug: 'name', type: 'string' },
       { slug: 'pluralName', type: 'string' },
       { slug: 'slug', type: 'string' },
@@ -214,6 +215,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     fields: [
       ...SYSTEM_FIELDS,
+
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
@@ -269,6 +271,25 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
 ]);
 
 /**
+ * Add a default name, plural name, and plural slug to a provided schema.
+ *
+ * @param schema The schema that should receive defaults.
+ *
+ * @returns The updated schema.
+ */
+export const prepareSchema = (schema: Schema) => {
+  const copiedSchema = { ...schema };
+
+  if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
+
+  if (!copiedSchema.name) copiedSchema.name = slugToName(copiedSchema.slug);
+  if (!copiedSchema.pluralName)
+    copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
+
+  return copiedSchema;
+};
+
+/**
  * Extends a list of schemas with automatically generated schemas that make writing
  * queries even easier, and adds system fields to every schema.
  *
@@ -277,17 +298,7 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => {
-    const copiedSchema = { ...schema };
-
-    if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
-
-    if (!copiedSchema.name) copiedSchema.name = slugToName(copiedSchema.slug);
-    if (!copiedSchema.pluralName)
-      copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
-
-    return copiedSchema;
-  });
+  const list = [...SYSTEM_SCHEMAS, ...schemas].map(prepareSchema);
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -419,7 +430,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
 
   if (field.type === 'reference') {
     const actions = field.actions || {};
-    const targetTable = convertToSnakeCase(field.target.slug);
+    const targetTable = convertToSnakeCase(pluralize(field.target.slug));
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
@@ -509,7 +520,7 @@ export const addSchemaQueries = (
     });
   }
 
-  const tableName = convertToSnakeCase(kind === 'schemas' ? slug : schemaSlug);
+  const tableName = convertToSnakeCase(pluralize(kind === 'schemas' ? slug : schemaSlug));
 
   if (kind === 'indexes') {
     const indexName = convertToSnakeCase(slug);
@@ -535,7 +546,7 @@ export const addSchemaQueries = (
       const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
-        const newTable = convertToSnakeCase(newSlug);
+        const newTable = convertToSnakeCase(pluralize(newSlug));
         statement += ` RENAME TO "${newTable}"`;
       }
     }
@@ -628,7 +639,7 @@ export const pluralize = (word: string) => {
     word.slice(-2).toLowerCase() === 'sh' ||
     word.slice(-2).toLowerCase() === 'ex'
   ) {
-    // If the word ends with 's', 'ch', or 'sh', add 'es'
+    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
     return `${word}es`;
   }
 
