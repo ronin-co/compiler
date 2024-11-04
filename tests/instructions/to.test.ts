@@ -21,7 +21,6 @@ test('set single record to new string field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -63,7 +62,6 @@ test('set single record to new one-cardinality reference field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -73,7 +71,6 @@ test('set single record to new one-cardinality reference field', () => {
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
@@ -114,7 +111,6 @@ test('set single record to new many-cardinality reference field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'post',
-      pluralSlug: 'posts',
       fields: [
         {
           slug: 'comments',
@@ -126,7 +122,6 @@ test('set single record to new many-cardinality reference field', () => {
     },
     {
       slug: 'comment',
-      pluralSlug: 'comments',
       fields: [
         {
           slug: 'content',
@@ -182,7 +177,6 @@ test('set single record to new many-cardinality reference field (add)', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'post',
-      pluralSlug: 'posts',
       fields: [
         {
           slug: 'comments',
@@ -194,7 +188,6 @@ test('set single record to new many-cardinality reference field (add)', () => {
     },
     {
       slug: 'comment',
-      pluralSlug: 'comments',
       fields: [
         {
           slug: 'content',
@@ -248,7 +241,6 @@ test('set single record to new many-cardinality reference field (delete)', () =>
   const schemas: Array<Schema> = [
     {
       slug: 'post',
-      pluralSlug: 'posts',
       fields: [
         {
           slug: 'comments',
@@ -260,7 +252,6 @@ test('set single record to new many-cardinality reference field (delete)', () =>
     },
     {
       slug: 'comment',
-      pluralSlug: 'comments',
       fields: [
         {
           slug: 'content',
@@ -305,7 +296,6 @@ test('set single record to new json field with array', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -349,7 +339,6 @@ test('set single record to new json field with empty array', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -396,7 +385,6 @@ test('set single record to new json field with object', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -440,7 +428,6 @@ test('set single record to new json field with empty object', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -486,7 +473,6 @@ test('set single record to new grouped string field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'billing',
@@ -534,7 +520,6 @@ test('set single record to new grouped reference field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -544,7 +529,6 @@ test('set single record to new grouped reference field', () => {
     },
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'billing',
@@ -591,7 +575,6 @@ test('set single record to new grouped json field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'billing',
@@ -644,7 +627,6 @@ test('set single record to result of nested query', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'name',
@@ -654,7 +636,6 @@ test('set single record to result of nested query', () => {
     },
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -699,7 +680,6 @@ test('create multiple records with nested sub query', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'oldAccount',
-      pluralSlug: 'oldAccounts',
       fields: [
         {
           slug: 'handle',
@@ -709,7 +689,6 @@ test('create multiple records with nested sub query', () => {
     },
     {
       slug: 'newAccount',
-      pluralSlug: 'newAccounts',
       fields: [
         {
           slug: 'handle',
@@ -750,7 +729,6 @@ test('create multiple records with nested sub query including additional fields'
   const schemas: Array<Schema> = [
     {
       slug: 'oldAccount',
-      pluralSlug: 'oldAccounts',
       fields: [
         {
           slug: 'handle',
@@ -760,7 +738,6 @@ test('create multiple records with nested sub query including additional fields'
     },
     {
       slug: 'newAccount',
-      pluralSlug: 'newAccounts',
       fields: [
         {
           slug: 'handle',
@@ -803,7 +780,6 @@ test('create multiple records with nested sub query and specific fields', () => 
   const schemas: Array<Schema> = [
     {
       slug: 'oldAccount',
-      pluralSlug: 'oldAccounts',
       fields: [
         {
           slug: 'handle',
@@ -813,7 +789,6 @@ test('create multiple records with nested sub query and specific fields', () => 
     },
     {
       slug: 'newAccount',
-      pluralSlug: 'newAccounts',
       fields: [
         {
           slug: 'handle',
@@ -858,7 +833,6 @@ test('create multiple records with nested sub query and specific meta fields', (
   const schemas: Array<Schema> = [
     {
       slug: 'oldAccount',
-      pluralSlug: 'oldAccounts',
       fields: [
         {
           slug: 'handle',
@@ -868,7 +842,6 @@ test('create multiple records with nested sub query and specific meta fields', (
     },
     {
       slug: 'newAccount',
-      pluralSlug: 'newAccounts',
       fields: [
         {
           slug: 'handle',
@@ -912,7 +885,6 @@ test('try to create multiple records with nested sub query including non-existen
   const schemas: Array<Schema> = [
     {
       slug: 'oldAccount',
-      pluralSlug: 'oldAccounts',
       fields: [
         {
           slug: 'handle',
@@ -922,7 +894,6 @@ test('try to create multiple records with nested sub query including non-existen
     },
     {
       slug: 'newAccount',
-      pluralSlug: 'newAccounts',
       fields: [
         {
           slug: 'handle',
@@ -943,7 +914,7 @@ test('try to create multiple records with nested sub query including non-existen
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Field "nonExistingField" defined for `to` does not exist in schema "newAccount".',
+    'Field "nonExistingField" defined for `to` does not exist in schema "New Account".',
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
   expect(error).toHaveProperty('field', 'nonExistingField');

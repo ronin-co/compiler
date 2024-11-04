@@ -39,7 +39,7 @@ export interface Schema {
   name?: string;
   pluralName?: string;
   slug: string;
-  pluralSlug: string;
+  pluralSlug?: string;
   identifiers?: {
     title?: string;
     slug?: string;

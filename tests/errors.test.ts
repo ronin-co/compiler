@@ -18,7 +18,6 @@ test('get single record with non-existing field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -33,7 +32,7 @@ test('get single record with non-existing field', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Field "handle" defined for `with` does not exist in schema "account".',
+    'Field "handle" defined for `with` does not exist in schema "Account".',
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
@@ -81,7 +80,6 @@ test('get single record with empty `with` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -122,7 +120,6 @@ test('set single record with empty `to` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -154,7 +151,6 @@ test('create single record with empty `to` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -186,7 +182,6 @@ test('get single record with `before` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -218,7 +213,6 @@ test('get single record with `after` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -251,7 +245,6 @@ test('get multiple records with `before` and `after` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -283,7 +276,6 @@ test('get multiple records with empty `before` instruction', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -315,11 +307,9 @@ test('get single record including parent schemas (one-to-many) without shortcut'
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
     },
   ];
 
@@ -334,7 +324,7 @@ test('get single record including parent schemas (one-to-many) without shortcut'
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'The provided `including` shortcut "members" does not exist in schema "account".',
+    'The provided `including` shortcut "members" does not exist in schema "Account".',
   );
   expect(error).toHaveProperty('code', 'INVALID_INCLUDING_VALUE');
 });
@@ -353,11 +343,9 @@ test('get single record for pre-defined match without shortcut', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
     },
   ];
 
@@ -372,7 +360,7 @@ test('get single record for pre-defined match without shortcut', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'The provided `for` shortcut "active-member" does not exist in schema "account".',
+    'The provided `for` shortcut "active-member" does not exist in schema "Account".',
   );
   expect(error).toHaveProperty('code', 'INVALID_FOR_VALUE');
 });

@@ -16,11 +16,9 @@ test('get single record including parent record (many-to-one)', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
@@ -52,7 +50,6 @@ test('get single record including child records (one-to-many, defined manually)'
   const schemas: Array<Schema> = [
     {
       slug: 'post',
-      pluralSlug: 'posts',
       fields: [
         {
           slug: 'comments',
@@ -64,7 +61,6 @@ test('get single record including child records (one-to-many, defined manually)'
     },
     {
       slug: 'comment',
-      pluralSlug: 'comments',
     },
   ];
 
@@ -88,11 +84,9 @@ test('get single record including child records (one-to-many, defined automatica
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
@@ -123,11 +117,9 @@ test('get single record including unrelated record without filter', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       including: {
         team: {
           get: {
@@ -158,7 +150,6 @@ test('get single record including unrelated record with filter', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'handle',
@@ -168,7 +159,6 @@ test('get single record including unrelated record with filter', () => {
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       fields: [
         {
           slug: 'label',
@@ -209,11 +199,9 @@ test('get single record including unrelated records without filter', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       including: {
         teams: {
           get: {
@@ -244,7 +232,6 @@ test('get single record including unrelated records with filter', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'handle',
@@ -254,7 +241,6 @@ test('get single record including unrelated records with filter', () => {
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       fields: [
         {
           slug: 'label',
@@ -295,11 +281,9 @@ test('get single record including unrelated ordered record', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       including: {
         team: {
           get: {
@@ -334,11 +318,9 @@ test('get single record including unrelated ordered records', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       including: {
         teams: {
           get: {

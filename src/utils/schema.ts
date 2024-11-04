@@ -12,6 +12,7 @@ import {
   convertToSnakeCase,
   type splitQuery,
 } from '@/src/utils';
+import title from 'title';
 
 /**
  * Finds a schema by its slug or plural slug.
@@ -44,18 +45,7 @@ export const getSchemaBySlug = (schemas: Array<Schema>, slug: string): Schema =>
  * @returns A table name.
  */
 export const getTableForSchema = (schema: Schema): string => {
-  return convertToSnakeCase(schema.pluralSlug);
-};
-
-/**
- * Composes a display name for a schema.
- *
- * @param schema - The schema to compose a display name for.
- *
- * @returns A display name for the schema.
- */
-export const getSchemaName = (schema: Schema): string => {
-  return schema.name || schema.slug;
+  return convertToSnakeCase(schema.pluralSlug as string);
 };
 
 /**
@@ -143,7 +133,7 @@ export const getFieldFromSchema = (
 
   if (!schemaField) {
     throw new RoninError({
-      message: `${errorPrefix} does not exist in schema "${getSchemaName(schema)}".`,
+      message: `${errorPrefix} does not exist in schema "${schema.name}".`,
       code: 'FIELD_NOT_FOUND',
       field: fieldPath,
       queries: null,
@@ -287,7 +277,17 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => ({ ...schema }));
+  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => {
+    const copiedSchema = { ...schema };
+
+    if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
+
+    if (!copiedSchema.name) copiedSchema.name = slugToName(copiedSchema.slug);
+    if (!copiedSchema.pluralName)
+      copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
+
+    return copiedSchema;
+  });
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -347,9 +347,9 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
         if (!relatedSchemaToModify) throw new Error('Missing related schema');
 
         relatedSchemaToModify.including = {
-          [schema.pluralSlug]: {
+          [schema.pluralSlug as string]: {
             get: {
-              [schema.pluralSlug]: {
+              [schema.pluralSlug as string]: {
                 with: {
                   [field.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
                 },
@@ -568,4 +568,71 @@ export const addSchemaQueries = (
 
     writeStatements.push(statement);
   }
+};
+
+/**
+ * Converts a slug to a readable name by splitting it on uppercase characters
+ * and returning it formatted as title case.
+ *
+ * @example
+ * ```ts
+ * slugToName('activeAt'); // 'Active At'
+ * ```
+ *
+ * @param slug - The slug string to convert.
+ *
+ * @returns The formatted name in title case.
+ */
+export const slugToName = (slug: string) => {
+  // Split the slug by uppercase letters and join with a space
+  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+  // Convert the resulting string to title case using the 'title' library
+  return title(name);
+};
+
+const VOWELS = ['a', 'e', 'i', 'o', 'u'];
+
+/**
+ * Pluralizes a singular English noun according to basic English pluralization rules.
+ *
+ * This function handles the following cases:
+ * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
+ * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
+ * - **All other words**: Adds 's' to the end of the word.
+ *
+ * @example
+ * ```ts
+ * pluralize('baby');    // 'babies'
+ * pluralize('key');     // 'keys'
+ * pluralize('bus');     // 'buses'
+ * pluralize('church');  // 'churches'
+ * pluralize('cat');     // 'cats'
+ * ```
+ *
+ * @param word - The singular noun to pluralize.
+ *
+ * @returns The plural form of the input word.
+ */
+export const pluralize = (word: string) => {
+  const lastLetter = word.slice(-1).toLowerCase();
+  const secondLastLetter = word.slice(-2, -1).toLowerCase();
+
+  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
+    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
+    return `${word.slice(0, -1)}ies`;
+  }
+
+  if (
+    lastLetter === 's' ||
+    word.slice(-2).toLowerCase() === 'ch' ||
+    word.slice(-2).toLowerCase() === 'sh' ||
+    word.slice(-2).toLowerCase() === 'ex'
+  ) {
+    // If the word ends with 's', 'ch', or 'sh', add 'es'
+    return `${word}es`;
+  }
+
+  // In all other cases, simply add 's'
+  return `${word}s`;
 };
