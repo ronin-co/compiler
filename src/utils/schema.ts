@@ -516,7 +516,6 @@ export const addSchemaQueries = (
     const unique: boolean | undefined = instructionList?.unique;
 
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
-
     if (queryType === 'create') statement += ` ON "${tableName}"`;
 
     writeStatements.push(statement);
