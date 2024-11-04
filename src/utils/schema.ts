@@ -12,6 +12,7 @@ import {
   convertToSnakeCase,
   type splitQuery,
 } from '@/src/utils';
+import title from 'title';
 
 /**
  * Finds a schema by its slug or plural slug.
@@ -44,18 +45,7 @@ export const getSchemaBySlug = (schemas: Array<Schema>, slug: string): Schema =>
  * @returns A table name.
  */
 export const getTableForSchema = (schema: Schema): string => {
-  return convertToSnakeCase(schema.pluralSlug);
-};
-
-/**
- * Composes a display name for a schema.
- *
- * @param schema - The schema to compose a display name for.
- *
- * @returns A display name for the schema.
- */
-export const getSchemaName = (schema: Schema): string => {
-  return schema.name || schema.slug;
+  return convertToSnakeCase(schema.pluralSlug as string);
 };
 
 /**
@@ -143,7 +133,7 @@ export const getFieldFromSchema = (
 
   if (!schemaField) {
     throw new RoninError({
-      message: `${errorPrefix} does not exist in schema "${getSchemaName(schema)}".`,
+      message: `${errorPrefix} does not exist in schema "${schema.name}".`,
       code: 'FIELD_NOT_FOUND',
       field: fieldPath,
       queries: null,
@@ -205,6 +195,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     fields: [
       ...SYSTEM_FIELDS,
+
       { slug: 'name', type: 'string' },
       { slug: 'pluralName', type: 'string' },
       { slug: 'slug', type: 'string' },
@@ -224,24 +215,79 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     fields: [
       ...SYSTEM_FIELDS,
+
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
-      { slug: 'schema', type: 'reference', target: { pluralSlug: 'schemas' } },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { slug: 'schema' },
+        required: true,
+      },
       { slug: 'required', type: 'boolean' },
       { slug: 'defaultValue', type: 'string' },
       { slug: 'unique', type: 'boolean' },
       { slug: 'autoIncrement', type: 'boolean' },
 
       // Only allowed for fields of type "reference".
-      { slug: 'target', type: 'reference', target: { pluralSlug: 'schemas' } },
+      { slug: 'target', type: 'reference', target: { slug: 'schema' } },
       { slug: 'kind', type: 'string' },
       { slug: 'actions', type: 'group' },
       { slug: 'actions.onDelete', type: 'string' },
       { slug: 'actions.onUpdate', type: 'string' },
     ],
   },
+  {
+    name: 'Index',
+    pluralName: 'Indexes',
+
+    slug: 'index',
+    pluralSlug: 'indexes',
+
+    fields: [
+      ...SYSTEM_FIELDS,
+
+      { slug: 'slug', type: 'string', required: true },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { slug: 'schema' },
+        required: true,
+      },
+      { slug: 'unique', type: 'boolean' },
+      { slug: 'filter', type: 'json' },
+    ],
+  },
 ];
+
+/**
+ * We are computing this at the root level in order to avoid computing it again with
+ * every function call.
+ */
+const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
+  slug,
+  pluralSlug,
+]);
+
+/**
+ * Add a default name, plural name, and plural slug to a provided schema.
+ *
+ * @param schema The schema that should receive defaults.
+ *
+ * @returns The updated schema.
+ */
+export const prepareSchema = (schema: Schema) => {
+  const copiedSchema = { ...schema };
+
+  if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
+
+  if (!copiedSchema.name) copiedSchema.name = slugToName(copiedSchema.slug);
+  if (!copiedSchema.pluralName)
+    copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
+
+  return copiedSchema;
+};
 
 /**
  * Extends a list of schemas with automatically generated schemas that make writing
@@ -252,7 +298,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => ({ ...schema }));
+  const list = [...SYSTEM_SCHEMAS, ...schemas].map(prepareSchema);
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -263,7 +309,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
     // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.target.pluralSlug);
+        const relatedSchema = getSchemaBySlug(list, field.target.slug);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -308,13 +354,13 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
 
         // Additionally, add a default shortcut for resolving the child records in the
         // related schema.
-        const relatedSchemaToModify = getSchemaBySlug(list, field.target.pluralSlug);
+        const relatedSchemaToModify = getSchemaBySlug(list, field.target.slug);
         if (!relatedSchemaToModify) throw new Error('Missing related schema');
 
         relatedSchemaToModify.including = {
-          [schema.pluralSlug]: {
+          [schema.pluralSlug as string]: {
             get: {
-              [schema.pluralSlug]: {
+              [schema.pluralSlug as string]: {
                 with: {
                   [field.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
                 },
@@ -384,7 +430,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
 
   if (field.type === 'reference') {
     const actions = field.actions || {};
-    const targetTable = convertToSnakeCase(field.target.pluralSlug);
+    const targetTable = convertToSnakeCase(pluralize(field.target.slug));
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
@@ -421,86 +467,95 @@ export const addSchemaQueries = (
   // Only continue if the query is a write query.
   if (!['create', 'set', 'drop'].includes(queryType)) return;
 
-  // Only continue if the query addresses the "schema" schema.
-  if (!['schema', 'schemas', 'field', 'fields'].includes(querySchema)) return;
+  // Only continue if the query addresses system schemas.
+  if (!SYSTEM_SCHEMA_SLUGS.includes(querySchema)) return;
 
   const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
 
   // Whether schemas or fields are being updated.
-  const kind = ['schema', 'schemas'].includes(querySchema) ? 'schemas' : 'fields';
-
-  const instructionTarget =
-    kind === 'schemas' ? instructionList : instructionList?.schema;
+  const kind = getSchemaBySlug(SYSTEM_SCHEMAS, querySchema).pluralSlug;
 
   let tableAction = 'ALTER';
-  let schemaPluralSlug: string | null = null;
   let queryTypeReadable: string | null = null;
 
   switch (queryType) {
     case 'create': {
-      if (kind === 'schemas') tableAction = 'CREATE';
-      schemaPluralSlug = instructionTarget?.pluralSlug;
+      if (kind === 'schemas' || kind === 'indexes') tableAction = 'CREATE';
       queryTypeReadable = 'creating';
       break;
     }
 
     case 'set': {
       if (kind === 'schemas') tableAction = 'ALTER';
-      schemaPluralSlug =
-        instructionTarget?.pluralSlug?.being || instructionTarget?.pluralSlug;
       queryTypeReadable = 'updating';
       break;
     }
 
     case 'drop': {
-      if (kind === 'schemas') tableAction = 'DROP';
-      schemaPluralSlug =
-        instructionTarget?.pluralSlug?.being || instructionTarget?.pluralSlug;
+      if (kind === 'schemas' || kind === 'indexes') tableAction = 'DROP';
       queryTypeReadable = 'deleting';
       break;
     }
   }
 
-  if (!schemaPluralSlug) {
-    const field = kind === 'schemas' ? 'pluralSlug' : 'schema.pluralSlug';
+  const slug: string | null = instructionList?.slug?.being || instructionList?.slug;
 
+  if (!slug) {
     throw new RoninError({
-      message: `When ${queryTypeReadable} ${kind}, a \`${field}\` field must be provided in the \`${instructionName}\` instruction.`,
+      message: `When ${queryTypeReadable} ${kind}, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
       code: 'MISSING_FIELD',
-      fields: [field],
+      fields: ['slug'],
     });
   }
 
-  const table = convertToSnakeCase(schemaPluralSlug);
-  const fields = [...SYSTEM_FIELDS];
+  const schemaInstruction = instructionList?.schema;
+  const schemaSlug = schemaInstruction?.slug?.being || schemaInstruction?.slug;
 
-  let statement = `${tableAction} TABLE "${table}"`;
+  if (kind !== 'schemas' && !schemaSlug) {
+    throw new RoninError({
+      message: `When ${queryTypeReadable} ${kind}, a \`schema.slug\` field must be provided in the \`${instructionName}\` instruction.`,
+      code: 'MISSING_FIELD',
+      fields: ['schema.slug'],
+    });
+  }
+
+  const tableName = convertToSnakeCase(pluralize(kind === 'schemas' ? slug : schemaSlug));
+
+  if (kind === 'indexes') {
+    const indexName = convertToSnakeCase(slug);
+    const unique: boolean | undefined = instructionList?.unique;
+
+    let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
+    if (queryType === 'create') statement += ` ON "${tableName}"`;
+
+    writeStatements.push(statement);
+    return;
+  }
+
+  let statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'schemas') {
+    const fields = [...SYSTEM_FIELDS];
+
     if (queryType === 'create') {
       const columns = fields.map(getFieldStatement).filter(Boolean);
 
       statement += ` (${columns.join(', ')})`;
     } else if (queryType === 'set') {
-      const newSlug = queryInstructions.to?.pluralSlug;
+      const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
-        const newTable = convertToSnakeCase(newSlug);
+        const newTable = convertToSnakeCase(pluralize(newSlug));
         statement += ` RENAME TO "${newTable}"`;
       }
     }
-  } else if (kind === 'fields') {
-    const fieldSlug = instructionTarget?.slug?.being || instructionList?.slug;
 
-    if (!fieldSlug) {
-      throw new RoninError({
-        message: `When ${queryTypeReadable} fields, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
-        code: 'MISSING_FIELD',
-        fields: ['slug'],
-      });
-    }
+    writeStatements.push(statement);
+    return;
+  }
 
+  if (kind === 'fields') {
     if (queryType === 'create') {
       if (!instructionList.type) {
         throw new RoninError({
@@ -515,12 +570,79 @@ export const addSchemaQueries = (
       const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
-        statement += ` RENAME COLUMN "${fieldSlug}" TO "${newSlug}"`;
+        statement += ` RENAME COLUMN "${slug}" TO "${newSlug}"`;
       }
     } else if (queryType === 'drop') {
-      statement += ` DROP COLUMN "${fieldSlug}"`;
+      statement += ` DROP COLUMN "${slug}"`;
     }
+
+    writeStatements.push(statement);
+  }
+};
+
+/**
+ * Converts a slug to a readable name by splitting it on uppercase characters
+ * and returning it formatted as title case.
+ *
+ * @example
+ * ```ts
+ * slugToName('activeAt'); // 'Active At'
+ * ```
+ *
+ * @param slug - The slug string to convert.
+ *
+ * @returns The formatted name in title case.
+ */
+export const slugToName = (slug: string) => {
+  // Split the slug by uppercase letters and join with a space
+  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+  // Convert the resulting string to title case using the 'title' library
+  return title(name);
+};
+
+const VOWELS = ['a', 'e', 'i', 'o', 'u'];
+
+/**
+ * Pluralizes a singular English noun according to basic English pluralization rules.
+ *
+ * This function handles the following cases:
+ * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
+ * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
+ * - **All other words**: Adds 's' to the end of the word.
+ *
+ * @example
+ * ```ts
+ * pluralize('baby');    // 'babies'
+ * pluralize('key');     // 'keys'
+ * pluralize('bus');     // 'buses'
+ * pluralize('church');  // 'churches'
+ * pluralize('cat');     // 'cats'
+ * ```
+ *
+ * @param word - The singular noun to pluralize.
+ *
+ * @returns The plural form of the input word.
+ */
+export const pluralize = (word: string) => {
+  const lastLetter = word.slice(-1).toLowerCase();
+  const secondLastLetter = word.slice(-2, -1).toLowerCase();
+
+  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
+    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
+    return `${word.slice(0, -1)}ies`;
   }
 
-  writeStatements.push(statement);
+  if (
+    lastLetter === 's' ||
+    word.slice(-2).toLowerCase() === 'ch' ||
+    word.slice(-2).toLowerCase() === 'sh' ||
+    word.slice(-2).toLowerCase() === 'ex'
+  ) {
+    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
+    return `${word}es`;
+  }
+
+  // In all other cases, simply add 's'
+  return `${word}s`;
 };

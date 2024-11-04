@@ -13,7 +13,6 @@ test('get single record', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -37,7 +36,6 @@ test('drop single record', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -63,7 +61,6 @@ test('count multiple records', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 

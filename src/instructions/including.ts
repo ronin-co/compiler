@@ -3,7 +3,7 @@ import type { WithFilters } from '@/src/instructions/with';
 import type { Instructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import { RoninError, splitQuery } from '@/src/utils';
-import { getSchemaBySlug, getSchemaName, getTableForSchema } from '@/src/utils/schema';
+import { getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
 import { composeConditions } from '@/src/utils/statement';
 
 /**
@@ -40,7 +40,7 @@ export const handleIncluding = (
 
     if (!includingQuery) {
       throw new RoninError({
-        message: `The provided \`including\` shortcut "${shortcut}" does not exist in schema "${getSchemaName(schema)}".`,
+        message: `The provided \`including\` shortcut "${shortcut}" does not exist in schema "${schema.name}".`,
         code: 'INVALID_INCLUDING_VALUE',
       });
     }

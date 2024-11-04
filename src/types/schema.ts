@@ -23,8 +23,8 @@ export type SchemaFieldReferenceAction =
 export type SchemaFieldReference = SchemaFieldBasics & {
   type: 'reference';
 
-  // Make the `pluralSlug` required.
-  target: Omit<Partial<Schema>, 'pluralSlug'> & Pick<Schema, 'pluralSlug'>;
+  // Make the `slug` required.
+  target: Omit<Partial<Schema>, 'slug'> & Pick<Schema, 'slug'>;
 
   kind?: 'one' | 'many';
   actions?: {
@@ -39,7 +39,7 @@ export interface Schema {
   name?: string;
   pluralName?: string;
   slug: string;
-  pluralSlug: string;
+  pluralSlug?: string;
   identifiers?: {
     title?: string;
     slug?: string;

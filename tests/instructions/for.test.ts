@@ -18,25 +18,22 @@ test('get single record for pre-defined condition', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'space',
-      pluralSlug: 'spaces',
     },
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
         {
           slug: 'activeAt',
@@ -46,12 +43,11 @@ test('get single record for pre-defined condition', () => {
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       fields: [
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
       ],
       for: {
@@ -86,25 +82,22 @@ test('get single record for pre-defined condition containing sub query', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'space',
-      pluralSlug: 'spaces',
     },
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
         {
           slug: 'activeAt',
@@ -114,12 +107,11 @@ test('get single record for pre-defined condition containing sub query', () => {
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       fields: [
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
       ],
       for: {
@@ -164,25 +156,22 @@ test('get single record for pre-defined field containing sub query', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'space',
-      pluralSlug: 'spaces',
     },
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
         {
           slug: 'activeAt',
@@ -192,12 +181,11 @@ test('get single record for pre-defined field containing sub query', () => {
     },
     {
       slug: 'view',
-      pluralSlug: 'views',
       fields: [
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
       ],
       for: {

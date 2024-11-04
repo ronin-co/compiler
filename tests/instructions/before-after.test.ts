@@ -16,7 +16,6 @@ test('get multiple records before cursor', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 
@@ -43,7 +42,6 @@ test('get multiple records before cursor ordered by string field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -76,7 +74,6 @@ test('get multiple records before cursor ordered by boolean field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'active',
@@ -109,7 +106,6 @@ test('get multiple records before cursor ordered by number field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'position',
@@ -142,7 +138,6 @@ test('get multiple records before cursor ordered by empty string field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -175,7 +170,6 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'active',
@@ -208,7 +202,6 @@ test('get multiple records before cursor ordered by empty number field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'position',
@@ -241,7 +234,6 @@ test('get multiple records before cursor while filtering', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'email',

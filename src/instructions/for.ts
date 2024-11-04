@@ -2,7 +2,6 @@ import type { WithFilters } from '@/src/instructions/with';
 import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import { RONIN_SCHEMA_SYMBOLS, RoninError, replaceInObject } from '@/src/utils';
-import { getSchemaName } from '@/src/utils/schema';
 import { composeConditions } from '@/src/utils/statement';
 
 /**
@@ -35,7 +34,7 @@ export const handleFor = (
 
     if (!forFilter) {
       throw new RoninError({
-        message: `The provided \`for\` shortcut "${shortcut}" does not exist in schema "${getSchemaName(schema)}".`,
+        message: `The provided \`for\` shortcut "${shortcut}" does not exist in schema "${schema.name}".`,
         code: 'INVALID_FOR_VALUE',
       });
     }

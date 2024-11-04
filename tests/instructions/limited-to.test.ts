@@ -15,7 +15,6 @@ test('get multiple records limited to amount', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
   ];
 

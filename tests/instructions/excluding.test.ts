@@ -6,7 +6,7 @@ import type { Schema } from '@/src/types/schema';
 test('get single record with specific field', () => {
   const query: Query = {
     get: {
-      account: {
+      category: {
         selecting: ['id'],
       },
     },
@@ -14,21 +14,20 @@ test('get single record with specific field', () => {
 
   const schemas: Array<Schema> = [
     {
-      slug: 'account',
-      pluralSlug: 'accounts',
+      slug: 'category',
     },
   ];
 
   const { readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(readStatement).toBe('SELECT "id" FROM "accounts" LIMIT 1');
+  expect(readStatement).toBe('SELECT "id" FROM "categories" LIMIT 1');
   expect(values).toMatchObject([]);
 });
 
 test('get single record with specific fields', () => {
   const query: Query = {
     get: {
-      account: {
+      beach: {
         selecting: ['id', 'name'],
       },
     },
@@ -36,8 +35,7 @@ test('get single record with specific fields', () => {
 
   const schemas: Array<Schema> = [
     {
-      slug: 'account',
-      pluralSlug: 'accounts',
+      slug: 'beach',
       fields: [
         {
           slug: 'name',
@@ -49,6 +47,6 @@ test('get single record with specific fields', () => {
 
   const { readStatement, values } = compileQueryInput(query, schemas);
 
-  expect(readStatement).toBe('SELECT "id", "name" FROM "accounts" LIMIT 1');
+  expect(readStatement).toBe('SELECT "id", "name" FROM "beaches" LIMIT 1');
   expect(values).toMatchObject([]);
 });

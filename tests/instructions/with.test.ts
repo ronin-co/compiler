@@ -19,7 +19,6 @@ test('get single record with field being value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -51,7 +50,6 @@ test('get single record with field not being value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -83,7 +81,6 @@ test('get single record with field not being empty', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -117,7 +114,6 @@ test('get single record with field starting with value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -151,7 +147,6 @@ test('get single record with field not starting with value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -185,7 +180,6 @@ test('get single record with field ending with value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -219,7 +213,6 @@ test('get single record with field not ending with value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -253,7 +246,6 @@ test('get single record with field containing value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -287,7 +279,6 @@ test('get single record with field not containing value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -321,7 +312,6 @@ test('get single record with field greater than value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'product',
-      pluralSlug: 'products',
       fields: [
         {
           slug: 'position',
@@ -353,7 +343,6 @@ test('get single record with field greater or equal to value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'product',
-      pluralSlug: 'products',
       fields: [
         {
           slug: 'position',
@@ -385,7 +374,6 @@ test('get single record with field less than value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'product',
-      pluralSlug: 'products',
       fields: [
         {
           slug: 'position',
@@ -417,7 +405,6 @@ test('get single record with field less or equal to value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'product',
-      pluralSlug: 'products',
       fields: [
         {
           slug: 'position',
@@ -452,7 +439,6 @@ test('get single record with multiple fields being value', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -490,7 +476,6 @@ test('get single record with reference field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -500,12 +485,11 @@ test('get single record with reference field', () => {
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
@@ -535,16 +519,14 @@ test('get single record with reference field and id', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
@@ -574,16 +556,14 @@ test('get single record with reference field and id with condition', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
     },
     {
       slug: 'member',
-      pluralSlug: 'members',
       fields: [
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
@@ -611,7 +591,6 @@ test('get single record with json field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'billing',
@@ -648,7 +627,6 @@ test('get single record with one of fields', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -691,7 +669,6 @@ test('get single record with one of field conditions', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -725,7 +702,6 @@ test('get single record with one of field values', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -759,7 +735,6 @@ test('get single record with one of field values in group', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'team',
-      pluralSlug: 'teams',
       fields: [
         {
           slug: 'billing',
@@ -797,7 +772,6 @@ test('get single record with title identifier', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'name',
@@ -832,7 +806,6 @@ test('get single record with slug identifier', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',

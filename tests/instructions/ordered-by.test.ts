@@ -17,7 +17,6 @@ test('get multiple records ordered by field', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
@@ -49,7 +48,6 @@ test('get multiple records ordered by multiple fields', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
-      pluralSlug: 'accounts',
       fields: [
         {
           slug: 'handle',
