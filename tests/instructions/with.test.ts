@@ -505,7 +505,7 @@ test('get single record with reference field', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
@@ -544,7 +544,7 @@ test('get single record with reference field and id', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
@@ -583,7 +583,7 @@ test('get single record with reference field and id with condition', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },

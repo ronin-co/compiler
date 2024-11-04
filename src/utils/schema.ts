@@ -230,7 +230,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       {
         slug: 'schema',
         type: 'reference',
-        target: { pluralSlug: 'schemas' },
+        target: { slug: 'schema' },
         required: true,
       },
       { slug: 'required', type: 'boolean' },
@@ -239,7 +239,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'autoIncrement', type: 'boolean' },
 
       // Only allowed for fields of type "reference".
-      { slug: 'target', type: 'reference', target: { pluralSlug: 'schemas' } },
+      { slug: 'target', type: 'reference', target: { slug: 'schema' } },
       { slug: 'kind', type: 'string' },
       { slug: 'actions', type: 'group' },
       { slug: 'actions.onDelete', type: 'string' },
@@ -260,7 +260,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       {
         slug: 'schema',
         type: 'reference',
-        target: { pluralSlug: 'schemas' },
+        target: { slug: 'schema' },
         required: true,
       },
       { slug: 'unique', type: 'boolean' },
@@ -298,7 +298,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
     // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.target.pluralSlug);
+        const relatedSchema = getSchemaBySlug(list, field.target.slug);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -343,7 +343,7 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
 
         // Additionally, add a default shortcut for resolving the child records in the
         // related schema.
-        const relatedSchemaToModify = getSchemaBySlug(list, field.target.pluralSlug);
+        const relatedSchemaToModify = getSchemaBySlug(list, field.target.slug);
         if (!relatedSchemaToModify) throw new Error('Missing related schema');
 
         relatedSchemaToModify.including = {
@@ -419,7 +419,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
 
   if (field.type === 'reference') {
     const actions = field.actions || {};
-    const targetTable = convertToSnakeCase(field.target.pluralSlug);
+    const targetTable = convertToSnakeCase(field.target.slug);
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
@@ -465,73 +465,65 @@ export const addSchemaQueries = (
   // Whether schemas or fields are being updated.
   const kind = getSchemaBySlug(SYSTEM_SCHEMAS, querySchema).pluralSlug;
 
-  const instructionTarget =
-    kind === 'schemas' ? instructionList : instructionList?.schema;
-
   let tableAction = 'ALTER';
-  let schemaPluralSlug: string | null = null;
   let queryTypeReadable: string | null = null;
 
   switch (queryType) {
     case 'create': {
       if (kind === 'schemas' || kind === 'indexes') tableAction = 'CREATE';
-      schemaPluralSlug = instructionTarget?.pluralSlug;
       queryTypeReadable = 'creating';
       break;
     }
 
     case 'set': {
       if (kind === 'schemas') tableAction = 'ALTER';
-      schemaPluralSlug =
-        instructionTarget?.pluralSlug?.being || instructionTarget?.pluralSlug;
       queryTypeReadable = 'updating';
       break;
     }
 
     case 'drop': {
       if (kind === 'schemas' || kind === 'indexes') tableAction = 'DROP';
-      schemaPluralSlug =
-        instructionTarget?.pluralSlug?.being || instructionTarget?.pluralSlug;
       queryTypeReadable = 'deleting';
       break;
     }
   }
 
-  if (!schemaPluralSlug) {
-    const field = kind === 'schemas' ? 'pluralSlug' : 'schema.pluralSlug';
+  const slug: string | null = instructionList?.slug?.being || instructionList?.slug;
 
+  if (!slug) {
     throw new RoninError({
-      message: `When ${queryTypeReadable} ${kind}, a \`${field}\` field must be provided in the \`${instructionName}\` instruction.`,
+      message: `When ${queryTypeReadable} ${kind}, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
       code: 'MISSING_FIELD',
-      fields: [field],
+      fields: ['slug'],
     });
   }
 
-  const table = convertToSnakeCase(schemaPluralSlug);
+  const schemaInstruction = instructionList?.schema;
+  const schemaSlug = schemaInstruction?.slug?.being || schemaInstruction?.slug;
+
+  if (kind !== 'schemas' && !schemaSlug) {
+    throw new RoninError({
+      message: `When ${queryTypeReadable} ${kind}, a \`schema.slug\` field must be provided in the \`${instructionName}\` instruction.`,
+      code: 'MISSING_FIELD',
+      fields: ['schema.slug'],
+    });
+  }
+
+  const tableName = convertToSnakeCase(kind === 'schemas' ? slug : schemaSlug);
 
   if (kind === 'indexes') {
-    const indexSlug: string | undefined =
-      instructionTarget?.slug?.being || instructionList?.slug;
-    const unique: boolean | undefined =
-      instructionTarget?.unique?.being || instructionList?.unique;
+    const indexName = convertToSnakeCase(slug);
+    const unique: boolean | undefined = instructionList?.unique;
 
-    if (!indexSlug) {
-      throw new RoninError({
-        message: `When ${queryTypeReadable} indexes, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
-        code: 'MISSING_FIELD',
-        fields: ['slug'],
-      });
-    }
+    let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
-    let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexSlug}"`;
-
-    if (queryType === 'create') statement += ` ON "${table}"`;
+    if (queryType === 'create') statement += ` ON "${tableName}"`;
 
     writeStatements.push(statement);
     return;
   }
 
-  let statement = `${tableAction} TABLE "${table}"`;
+  let statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'schemas') {
     const fields = [...SYSTEM_FIELDS];
@@ -541,7 +533,7 @@ export const addSchemaQueries = (
 
       statement += ` (${columns.join(', ')})`;
     } else if (queryType === 'set') {
-      const newSlug = queryInstructions.to?.pluralSlug;
+      const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
         const newTable = convertToSnakeCase(newSlug);
@@ -554,16 +546,6 @@ export const addSchemaQueries = (
   }
 
   if (kind === 'fields') {
-    const fieldSlug = instructionTarget?.slug?.being || instructionList?.slug;
-
-    if (!fieldSlug) {
-      throw new RoninError({
-        message: `When ${queryTypeReadable} fields, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
-        code: 'MISSING_FIELD',
-        fields: ['slug'],
-      });
-    }
-
     if (queryType === 'create') {
       if (!instructionList.type) {
         throw new RoninError({
@@ -578,10 +560,10 @@ export const addSchemaQueries = (
       const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
-        statement += ` RENAME COLUMN "${fieldSlug}" TO "${newSlug}"`;
+        statement += ` RENAME COLUMN "${slug}" TO "${newSlug}"`;
       }
     } else if (queryType === 'drop') {
-      statement += ` DROP COLUMN "${fieldSlug}"`;
+      statement += ` DROP COLUMN "${slug}"`;
     }
 
     writeStatements.push(statement);

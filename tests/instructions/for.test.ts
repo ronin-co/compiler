@@ -31,12 +31,12 @@ test('get single record for pre-defined condition', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
         {
           slug: 'activeAt',
@@ -51,7 +51,7 @@ test('get single record for pre-defined condition', () => {
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
       ],
       for: {
@@ -99,12 +99,12 @@ test('get single record for pre-defined condition containing sub query', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
         {
           slug: 'activeAt',
@@ -119,7 +119,7 @@ test('get single record for pre-defined condition containing sub query', () => {
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
       ],
       for: {
@@ -177,12 +177,12 @@ test('get single record for pre-defined field containing sub query', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
         {
           slug: 'activeAt',
@@ -197,7 +197,7 @@ test('get single record for pre-defined field containing sub query', () => {
         {
           slug: 'space',
           type: 'reference',
-          target: { pluralSlug: 'spaces' },
+          target: { slug: 'space' },
         },
       ],
       for: {

@@ -15,7 +15,6 @@ const query = {
 
 const schemas = [
   {
-    pluralSlug: 'accounts',
     slug: 'account',
   },
 ];

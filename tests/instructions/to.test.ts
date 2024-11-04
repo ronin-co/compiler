@@ -78,7 +78,7 @@ test('set single record to new one-cardinality reference field', () => {
         {
           slug: 'account',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
@@ -119,7 +119,7 @@ test('set single record to new many-cardinality reference field', () => {
         {
           slug: 'comments',
           type: 'reference',
-          target: { pluralSlug: 'comments' },
+          target: { slug: 'comment' },
           kind: 'many',
         },
       ],
@@ -187,7 +187,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
         {
           slug: 'comments',
           type: 'reference',
-          target: { pluralSlug: 'comments' },
+          target: { slug: 'comment' },
           kind: 'many',
         },
       ],
@@ -253,7 +253,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
         {
           slug: 'comments',
           type: 'reference',
-          target: { pluralSlug: 'comments' },
+          target: { slug: 'comment' },
           kind: 'many',
         },
       ],
@@ -553,7 +553,7 @@ test('set single record to new grouped reference field', () => {
         {
           slug: 'billing.manager',
           type: 'reference',
-          target: { pluralSlug: 'accounts' },
+          target: { slug: 'account' },
         },
       ],
     },
