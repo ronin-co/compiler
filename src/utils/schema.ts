@@ -601,8 +601,8 @@ export const addSchemaQueries = (
       // The query that will be executed when the trigger is fired.
       const effectQuery: Query = instructionList?.effect;
 
-      // The query instructions that should be used to determine whether the trigger
-      // should be fired.
+      // The query instructions that are used to determine whether the trigger should be
+      // fired, or not.
       const filterQuery: WithInstruction = instructionList?.filter;
 
       // If filtering instructions were defined, or if the effect query references
@@ -632,7 +632,7 @@ export const addSchemaQueries = (
         statementParts.push('WHEN', `(${withStatement})`);
       }
 
-      // Compile the effect query into a SQL statement.
+      // Compile the effect query into an SQL statement.
       const { readStatement: effectStatement } = compileQueryInput(effectQuery, schemas, {
         statementValues,
         disableReturning: true,
