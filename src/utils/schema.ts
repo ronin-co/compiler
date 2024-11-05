@@ -1,4 +1,5 @@
 import { compileQueryInput } from '@/src/index';
+import { handleWith } from '@/src/instructions/with';
 import type {
   Query,
   QueryInstructionType,
@@ -83,7 +84,10 @@ export const composeAssociationSchemaSlug = (schema: Schema, field: SchemaField)
  * @returns The SQL column selector for the provided field.
  */
 const getFieldSelector = (field: SchemaField, fieldPath: string, rootTable?: string) => {
-  const tablePrefix = rootTable ? `"${rootTable}".` : '';
+  const symbol = rootTable?.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)
+    ? `${rootTable.replace(RONIN_SCHEMA_SYMBOLS.FIELD, '').slice(0, -1)}.`
+    : '';
+  const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
 
   // If nested fields are allowed and the name of the field contains a period, that means
   // we need to select a nested property from within a JSON field.
@@ -554,8 +558,29 @@ export const addSchemaQueries = (
     const indexName = convertToSnakeCase(slug);
     const unique: boolean | undefined = instructionList?.unique;
 
+    // The query instructions that should be used to filter the indexed records.
+    const filterQuery: WithInstruction = instructionList?.filter;
+
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
-    if (queryType === 'create') statement += ` ON "${tableName}"`;
+
+    if (queryType === 'create') {
+      statement += ` ON "${tableName}"`;
+
+      // If filtering instructions were defined, add them to the index. Those
+      // instructions will determine which records are included as part of the index.
+      if (filterQuery) {
+        const targetSchema = getSchemaBySlug(schemas, schemaSlug);
+
+        const withStatement = handleWith(
+          schemas,
+          targetSchema,
+          statementValues,
+          filterQuery,
+        );
+
+        statement += ` WHERE (${withStatement})`;
+      }
+    }
 
     writeStatements.push(statement);
     return;
@@ -567,21 +592,54 @@ export const addSchemaQueries = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
+      // The type of query that causes the trigger to fire.
       const cause = slugToName(instructionList?.cause).toUpperCase();
-      const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
 
-      const referencesRecord = findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD);
-      const forEach = referencesRecord ? 'FOR EACH ROW ' : '';
+      // The different parts of the final statement.
+      const statementParts: Array<string> = [cause, 'ON', `"${tableName}"`];
 
-      const { readStatement } = compileQueryInput(effectQuery, schemas, {
+      // The query that will be executed when the trigger is fired.
+      const effectQuery: Query = instructionList?.effect;
+
+      // The query instructions that are used to determine whether the trigger should be
+      // fired, or not.
+      const filterQuery: WithInstruction = instructionList?.filter;
+
+      // If filtering instructions were defined, or if the effect query references
+      // specific record fields, that means the trigger must be executed on a per-record
+      // basis, meaning "for each row", instead of on a per-query basis.
+      if (filterQuery || findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD)) {
+        statementParts.push('FOR EACH ROW');
+      }
+
+      // If filtering instructions were defined, add them to the trigger. Those
+      // instructions will be validated for every row, and only if they match, the trigger
+      // will then be fired.
+      if (filterQuery) {
+        const targetSchema = getSchemaBySlug(schemas, schemaSlug);
+        const tablePlaceholder = cause.endsWith('DELETE')
+          ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
+          : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+
+        const withStatement = handleWith(
+          schemas,
+          targetSchema,
+          statementValues,
+          filterQuery,
+          tablePlaceholder,
+        );
+
+        statementParts.push('WHEN', `(${withStatement})`);
+      }
+
+      // Compile the effect query into an SQL statement.
+      const { readStatement: effectStatement } = compileQueryInput(effectQuery, schemas, {
         statementValues,
         disableReturning: true,
       });
 
-      // Save the query as a JSON object instead of running it as a sub query.
-      instructionList.effect = effectQuery;
-
-      statement += ` ${cause} ON "${tableName}" ${forEach}BEGIN ${readStatement}`;
+      statementParts.push('BEGIN', effectStatement);
+      statement += ` ${statementParts.join(' ')}`;
     }
 
     writeStatements.push(statement);
