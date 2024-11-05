@@ -1,4 +1,5 @@
 import { compileQueryInput } from '@/src/index';
+import { handleWith } from '@/src/instructions/with';
 import type {
   Query,
   QueryInstructionType,
@@ -83,7 +84,10 @@ export const composeAssociationSchemaSlug = (schema: Schema, field: SchemaField)
  * @returns The SQL column selector for the provided field.
  */
 const getFieldSelector = (field: SchemaField, fieldPath: string, rootTable?: string) => {
-  const tablePrefix = rootTable ? `"${rootTable}".` : '';
+  const symbol = rootTable?.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)
+    ? `${rootTable.replace(RONIN_SCHEMA_SYMBOLS.FIELD, '').slice(0, -1)}.`
+    : '';
+  const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
 
   // If nested fields are allowed and the name of the field contains a period, that means
   // we need to select a nested property from within a JSON field.
@@ -570,25 +574,54 @@ export const addSchemaQueries = (
       // The type of query that causes the trigger to fire.
       const cause = slugToName(instructionList?.cause).toUpperCase();
 
+      // The different parts of the final statement.
+      const statementParts: Array<string> = [cause, 'ON', `"${tableName}"`];
+
       // The query that will be executed when the trigger is fired.
       const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
 
-      // If the effect query references specific record fields, that means the trigger
-      // must be executed on a per-record basis, meaning "for each row", instead of on a
-      // per-query basis.
-      const referencesRecord = findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD);
-      const forEach = referencesRecord ? 'FOR EACH ROW ' : '';
+      // The query instructions that should be used to determine whether the trigger
+      // should be fired.
+      const filterQuery: Query = instructionList?.filter;
+
+      // If filtering instructions were defined, or if the effect query references
+      // specific record fields, that means the trigger must be executed on a per-record
+      // basis, meaning "for each row", instead of on a per-query basis.
+      if (filterQuery || findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD)) {
+        statementParts.push('FOR EACH ROW');
+      }
+
+      // If filtering instructions were defined, add them to the trigger. Those
+      // instructions will be validated for every row, and only if they match, the trigger
+      // will then be fired.
+      if (filterQuery) {
+        const targetSchema = getSchemaBySlug(schemas, schemaSlug);
+        const tablePlaceholder = cause.endsWith('DELETE')
+          ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
+          : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+
+        const withStatement = handleWith(
+          schemas,
+          targetSchema,
+          statementValues,
+          filterQuery,
+          tablePlaceholder,
+        );
+
+        statementParts.push('WHEN', `(${withStatement})`);
+      }
 
       // Compile the effect query into a SQL statement.
-      const { readStatement } = compileQueryInput(effectQuery, schemas, {
+      const { readStatement: effectStatement } = compileQueryInput(effectQuery, schemas, {
         statementValues,
         disableReturning: true,
       });
 
+      statementParts.push('BEGIN', effectStatement);
+      statement += ` ${statementParts.join(' ')}`;
+
       // Save the query as a JSON object instead of running it as a sub query.
       instructionList.effect = effectQuery;
-
-      statement += ` ${cause} ON "${tableName}" ${forEach}BEGIN ${readStatement}`;
     }
 
     writeStatements.push(statement);

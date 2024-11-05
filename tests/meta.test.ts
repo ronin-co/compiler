@@ -470,6 +470,9 @@ test('create new per-record trigger for creating records', () => {
 
   const schemas: Array<Schema> = [
     {
+      slug: 'team',
+    },
+    {
       slug: 'account',
     },
     {
@@ -543,6 +546,9 @@ test('create new per-record trigger for deleting records', () => {
 
   const schemas: Array<Schema> = [
     {
+      slug: 'team',
+    },
+    {
       slug: 'account',
     },
     {
@@ -574,6 +580,94 @@ test('create new per-record trigger for deleting records', () => {
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
   expect(values[6]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
+test('create new per-record trigger with filters for creating records', () => {
+  const triggerQuery = {
+    create: {
+      member: {
+        to: {
+          account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+          role: 'owner',
+          pending: false,
+        },
+      },
+    },
+  };
+
+  const filterInstruction = {
+    handle: {
+      endingWith: '_hidden',
+    },
+  };
+
+  const query: Query = {
+    create: {
+      trigger: {
+        to: {
+          slug: 'trigger_name',
+          schema: { slug: 'team' },
+          cause: 'afterInsert',
+          effect: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
+          },
+          filter: filterInstruction,
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'team',
+      fields: [{ slug: 'handle', type: 'string' }],
+    },
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'role', type: 'string' },
+        { slug: 'pending', type: 'boolean' },
+      ],
+    },
+  ];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?7, (SELECT "id" FROM "schemas" WHERE ("slug" = ?8) LIMIT 1), ?9, IIF("effect" IS NULL, ?10, json_patch("effect", ?10)), IIF("filter" IS NULL, ?11, json_patch("filter", ?11)), ?12, ?13, ?14) RETURNING *',
+  );
+
+  expect(values[0]).toBe('_hidden');
+  expect(values[1]).toBe('owner');
+  expect(values[2]).toBe(0);
+  expect(values[3]).toMatch(RECORD_ID_REGEX);
+  expect(values[4]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[5]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+
+  expect(values[6]).toBe('trigger_name');
+  expect(values[7]).toBe('team');
+  expect(values[8]).toBe('afterInsert');
+  expect(values[9]).toBe(JSON.stringify(triggerQuery));
+  expect(values[10]).toBe(JSON.stringify(filterInstruction));
+  expect(values[11]).toMatch(RECORD_ID_REGEX);
+  expect(values[12]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[13]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
 });
