@@ -14,12 +14,19 @@ export const RECORD_ID_REGEX = /rec_[a-z0-9]{16}/;
  * which allows for distinguishing that nested query from an object of instructions.
  */
 export const RONIN_SCHEMA_SYMBOLS = {
+  // Represents a sub query.
   QUERY: '__RONIN_QUERY',
 
+  // Represents the value of a field in a schema.
   FIELD: '__RONIN_FIELD_',
+
+  // Represents the old value of a field in a schema. Used for triggers.
   FIELD_OLD: '__RONIN_FIELD_OLD_',
+
+  // Represents the new value of a field in a schema. Used for triggers.
   FIELD_NEW: '__RONIN_FIELD_NEW_',
 
+  // Represents a value provided to a query preset.
   VALUE: '__RONIN_VALUE',
 } as const;
 
