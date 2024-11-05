@@ -578,11 +578,11 @@ export const addSchemaQueries = (
       const statementParts: Array<string> = [cause, 'ON', `"${tableName}"`];
 
       // The query that will be executed when the trigger is fired.
-      const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
+      const effectQuery: Query = instructionList?.effect;
 
       // The query instructions that should be used to determine whether the trigger
       // should be fired.
-      const filterQuery: Query = instructionList?.filter;
+      const filterQuery: WithInstruction = instructionList?.filter;
 
       // If filtering instructions were defined, or if the effect query references
       // specific record fields, that means the trigger must be executed on a per-record
@@ -619,9 +619,6 @@ export const addSchemaQueries = (
 
       statementParts.push('BEGIN', effectStatement);
       statement += ` ${statementParts.join(' ')}`;
-
-      // Save the query as a JSON object instead of running it as a sub query.
-      instructionList.effect = effectQuery;
     }
 
     writeStatements.push(statement);

@@ -390,9 +390,7 @@ test('create new trigger for creating records', () => {
           slug: 'trigger_name',
           schema: { slug: 'account' },
           cause: 'afterInsert',
-          effect: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
-          },
+          effect: triggerQuery,
         },
       },
     },
@@ -460,9 +458,7 @@ test('create new per-record trigger for creating records', () => {
           slug: 'trigger_name',
           schema: { slug: 'team' },
           cause: 'afterInsert',
-          effect: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
-          },
+          effect: triggerQuery,
         },
       },
     },
@@ -536,9 +532,7 @@ test('create new per-record trigger for deleting records', () => {
           slug: 'trigger_name',
           schema: { slug: 'team' },
           cause: 'afterDelete',
-          effect: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
-          },
+          effect: triggerQuery,
         },
       },
     },
@@ -610,9 +604,7 @@ test('create new per-record trigger with filters for creating records', () => {
           slug: 'trigger_name',
           schema: { slug: 'team' },
           cause: 'afterInsert',
-          effect: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
-          },
+          effect: triggerQuery,
           filter: filterInstruction,
         },
       },
