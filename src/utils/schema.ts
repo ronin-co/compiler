@@ -563,22 +563,23 @@ export const addSchemaQueries = (
 
   if (kind === 'triggers') {
     const triggerName = convertToSnakeCase(slug);
-    const cause = slugToName(instructionList?.cause).toUpperCase();
-    const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
-
-    const { readStatement } = compileQueryInput(effectQuery, schemas, {
-      statementValues,
-      disableReturning: true,
-    });
 
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
+      const cause = slugToName(instructionList?.cause).toUpperCase();
+      const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
+
+      const { readStatement } = compileQueryInput(effectQuery, schemas, {
+        statementValues,
+        disableReturning: true,
+      });
+
+      // Save the query as a JSON object instead of running it as a sub query.
+      instructionList.effect = effectQuery;
+
       statement += ` ${cause} ON "${tableName}" BEGIN ${readStatement}`;
     }
-
-    // Save the query as a JSON object instead of running it as a sub query.
-    instructionList.effect = effectQuery;
 
     writeStatements.push(statement);
     return;

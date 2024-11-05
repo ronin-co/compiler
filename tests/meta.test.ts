@@ -510,6 +510,32 @@ test('create new trigger for deleting records', () => {
   );
 });
 
+test('drop existing trigger', () => {
+  const query: Query = {
+    drop: {
+      trigger: {
+        with: {
+          slug: 'trigger_name',
+          schema: { slug: 'team' },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual(['DROP TRIGGER "trigger_name"']);
+
+  expect(readStatement).toBe(
+    'DELETE FROM "triggers" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
+  );
+
+  expect(values[0]).toBe('trigger_name');
+  expect(values[1]).toBe('team');
+});
+
 test('try to update existing schema without minimum details (schema slug)', () => {
   const query: Query = {
     set: {
