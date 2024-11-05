@@ -567,12 +567,19 @@ export const addSchemaQueries = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
+      // The type of query that causes the trigger to fire.
       const cause = slugToName(instructionList?.cause).toUpperCase();
+
+      // The query that will be executed when the trigger is fired.
       const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
 
+      // If the effect query references specific record fields, that means the trigger
+      // must be executed on a per-record basis, meaning "for each row", instead of on a
+      // per-query basis.
       const referencesRecord = findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD);
       const forEach = referencesRecord ? 'FOR EACH ROW ' : '';
 
+      // Compile the effect query into a SQL statement.
       const { readStatement } = compileQueryInput(effectQuery, schemas, {
         statementValues,
         disableReturning: true,
