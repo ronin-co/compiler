@@ -558,8 +558,29 @@ export const addSchemaQueries = (
     const indexName = convertToSnakeCase(slug);
     const unique: boolean | undefined = instructionList?.unique;
 
+    // The query instructions that should be used to filter the indexed records.
+    const filterQuery: WithInstruction = instructionList?.filter;
+
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
-    if (queryType === 'create') statement += ` ON "${tableName}"`;
+
+    if (queryType === 'create') {
+      statement += ` ON "${tableName}"`;
+
+      // If filtering instructions were defined, add them to the index. Those
+      // instructions will determine which records are included as part of the index.
+      if (filterQuery) {
+        const targetSchema = getSchemaBySlug(schemas, schemaSlug);
+
+        const withStatement = handleWith(
+          schemas,
+          targetSchema,
+          statementValues,
+          filterQuery,
+        );
+
+        statement += ` WHERE (${withStatement})`;
+      }
+    }
 
     writeStatements.push(statement);
     return;

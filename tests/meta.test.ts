@@ -309,6 +309,55 @@ test('create new index', () => {
   );
 });
 
+test('create new index with filters', () => {
+  const filterInstruction = {
+    email: {
+      endingWith: '@site.co',
+    },
+  };
+
+  const query: Query = {
+    create: {
+      index: {
+        to: {
+          slug: 'index_name',
+          schema: { slug: 'account' },
+          filter: filterInstruction,
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+    },
+  ];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE INDEX "index_name" ON "accounts" WHERE (("email" LIKE %?1))',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "indexes" ("slug", "schema", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?2, (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
+  );
+
+  expect(values[0]).toBe('@site.co');
+  expect(values[1]).toBe('index_name');
+  expect(values[2]).toBe('account');
+  expect(values[3]).toBe(JSON.stringify(filterInstruction));
+  expect(values[4]).toMatch(RECORD_ID_REGEX);
+  expect(values[5]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[6]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
 test('create new unique index', () => {
   const query: Query = {
     create: {
