@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { compileQueryInput } from '@/src/index';
 import type { Query } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RoninError } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils';
 import { RECORD_ID_REGEX } from '@/src/utils';
 
 test('create new schema', () => {
@@ -370,6 +370,144 @@ test('drop existing index', () => {
 
   expect(values[0]).toBe('index_name');
   expect(values[1]).toBe('account');
+});
+
+test('create new trigger for creating records', () => {
+  const triggerQuery = {
+    create: {
+      member: {
+        to: {
+          account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+          role: 'owner',
+          pending: false,
+        },
+      },
+    },
+  };
+
+  const query: Query = {
+    create: {
+      trigger: {
+        to: {
+          slug: 'trigger_name',
+          schema: { slug: 'team' },
+          cause: 'afterInsert',
+          effect: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
+          },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'role', type: 'string' },
+        { slug: 'pending', type: 'boolean' },
+      ],
+    },
+  ];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?6, (SELECT "id" FROM "schemas" WHERE ("slug" = ?7) LIMIT 1), ?8, IIF("effect" IS NULL, ?9, json_patch("effect", ?9)), ?10, ?11, ?12) RETURNING *',
+  );
+
+  expect(values[0]).toBe('owner');
+  expect(values[1]).toBe(0);
+  expect(values[2]).toMatch(RECORD_ID_REGEX);
+  expect(values[3]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[4]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+
+  expect(values[5]).toBe('trigger_name');
+  expect(values[6]).toBe('team');
+  expect(values[7]).toBe('afterInsert');
+  expect(values[8]).toBe(JSON.stringify(triggerQuery));
+  expect(values[9]).toMatch(RECORD_ID_REGEX);
+  expect(values[10]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[10]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
+test('create new trigger for deleting records', () => {
+  const triggerQuery = {
+    drop: {
+      members: {
+        with: {
+          account: `${RONIN_SCHEMA_SYMBOLS.FIELD_OLD}createdBy`,
+        },
+      },
+    },
+  };
+
+  const query: Query = {
+    create: {
+      trigger: {
+        to: {
+          slug: 'trigger_name',
+          schema: { slug: 'team' },
+          cause: 'afterDelete',
+          effect: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
+          },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'role', type: 'string' },
+        { slug: 'pending', type: 'boolean' },
+      ],
+    },
+  ];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effect" IS NULL, ?4, json_patch("effect", ?4)), ?5, ?6, ?7) RETURNING *',
+  );
+
+  expect(values[0]).toBe('trigger_name');
+  expect(values[1]).toBe('team');
+  expect(values[2]).toBe('afterDelete');
+  expect(values[3]).toBe(JSON.stringify(triggerQuery));
+  expect(values[4]).toMatch(RECORD_ID_REGEX);
+  expect(values[5]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[6]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
 });
 
 test('try to update existing schema without minimum details (schema slug)', () => {

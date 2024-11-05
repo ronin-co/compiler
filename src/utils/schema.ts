@@ -1,3 +1,4 @@
+import { compileQueryInput } from '@/src/index';
 import type {
   Query,
   QueryInstructionType,
@@ -259,6 +260,24 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'filter', type: 'json' },
     ],
   },
+  {
+    name: 'Trigger',
+    pluralName: 'Triggers',
+
+    slug: 'trigger',
+    pluralSlug: 'triggers',
+
+    fields: [
+      ...SYSTEM_FIELDS,
+
+      { slug: 'slug', type: 'string', required: true },
+      { slug: 'schema', type: 'reference', target: { slug: 'schema' }, required: true },
+      { slug: 'cause', type: 'string', required: true },
+      { slug: 'filter', type: 'json' },
+      { slug: 'effect', type: 'json', required: true },
+      { slug: 'perRecord', type: 'boolean' },
+    ],
+  },
 ];
 
 /**
@@ -452,6 +471,9 @@ const getFieldStatement = (field: SchemaField): string | null => {
  * which are used to create, update, or delete schemas and fields. The generated
  * dependency statements are used to alter the SQLite database schema.
  *
+ * @param schemas - A list of schemas.
+ * @param statementValues - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param queryDetails - The parsed details of the query that is being executed.
  * @param writeStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
@@ -459,6 +481,8 @@ const getFieldStatement = (field: SchemaField): string | null => {
  * @returns Nothing.
  */
 export const addSchemaQueries = (
+  schemas: Array<Schema>,
+  statementValues: Array<unknown>,
   queryDetails: ReturnType<typeof splitQuery>,
   writeStatements: Array<string>,
 ) => {
@@ -481,7 +505,9 @@ export const addSchemaQueries = (
 
   switch (queryType) {
     case 'create': {
-      if (kind === 'schemas' || kind === 'indexes') tableAction = 'CREATE';
+      if (kind === 'schemas' || kind === 'indexes' || kind === 'triggers') {
+        tableAction = 'CREATE';
+      }
       queryTypeReadable = 'creating';
       break;
     }
@@ -493,7 +519,9 @@ export const addSchemaQueries = (
     }
 
     case 'drop': {
-      if (kind === 'schemas' || kind === 'indexes') tableAction = 'DROP';
+      if (kind === 'schemas' || kind === 'indexes' || kind === 'triggers') {
+        tableAction = 'DROP';
+      }
       queryTypeReadable = 'deleting';
       break;
     }
@@ -528,6 +556,29 @@ export const addSchemaQueries = (
 
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
     if (queryType === 'create') statement += ` ON "${tableName}"`;
+
+    writeStatements.push(statement);
+    return;
+  }
+
+  if (kind === 'triggers') {
+    const triggerName = convertToSnakeCase(slug);
+    const cause = slugToName(instructionList?.cause).toUpperCase();
+    const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
+
+    const { readStatement } = compileQueryInput(effectQuery, schemas, {
+      statementValues,
+      disableReturning: true,
+    });
+
+    let statement = `${tableAction} TRIGGER "${triggerName}"`;
+
+    if (queryType === 'create') {
+      statement += ` ${cause} ON "${tableName}" BEGIN ${readStatement}`;
+    }
+
+    // Save the query as a JSON object instead of running it as a sub query.
+    instructionList.effect = effectQuery;
 
     writeStatements.push(statement);
     return;
@@ -593,7 +644,7 @@ export const addSchemaQueries = (
  *
  * @returns The formatted name in title case.
  */
-export const slugToName = (slug: string) => {
+const slugToName = (slug: string) => {
   // Split the slug by uppercase letters and join with a space
   const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
 
@@ -624,7 +675,7 @@ const VOWELS = ['a', 'e', 'i', 'o', 'u'];
  *
  * @returns The plural form of the input word.
  */
-export const pluralize = (word: string) => {
+const pluralize = (word: string) => {
   const lastLetter = word.slice(-1).toLowerCase();
   const secondLastLetter = word.slice(-2, -1).toLowerCase();
 

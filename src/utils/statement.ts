@@ -106,8 +106,19 @@ const composeFieldValues = (
       ).readStatement
     })`;
   } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
-    conditionSelector = `"${options.customTable}"."${schemaField.slug}"`;
-    conditionValue = `"${options.rootTable}"."${value.replace(RONIN_SCHEMA_SYMBOLS.FIELD, '')}"`;
+    let targetTable = `"${options.rootTable}"`;
+    let toReplace: string = RONIN_SCHEMA_SYMBOLS.FIELD;
+
+    if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_OLD)) {
+      targetTable = 'OLD';
+      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_OLD;
+    } else if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_NEW)) {
+      targetTable = 'NEW';
+      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+    }
+
+    conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${schemaField.slug}"`;
+    conditionValue = `${targetTable}."${value.replace(toReplace, '')}"`;
   }
   // For columns containing JSON, special handling is required, because the properties
   // inside a JSON structure cannot be updated directly using column selectors, and must

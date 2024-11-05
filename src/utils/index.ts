@@ -15,7 +15,11 @@ export const RECORD_ID_REGEX = /rec_[a-z0-9]{16}/;
  */
 export const RONIN_SCHEMA_SYMBOLS = {
   QUERY: '__RONIN_QUERY',
+
   FIELD: '__RONIN_FIELD_',
+  FIELD_OLD: '__RONIN_FIELD_OLD_',
+  FIELD_NEW: '__RONIN_FIELD_NEW_',
+
   VALUE: '__RONIN_VALUE',
 } as const;
 
