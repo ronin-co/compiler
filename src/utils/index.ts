@@ -182,32 +182,43 @@ export const isObject = (value: unknown): boolean =>
   value != null && typeof value === 'object' && Array.isArray(value) === false;
 
 /**
- * Finds all string values that match a given pattern in an object and replaces them.
+ * Finds all string values that match a given pattern in an object. If needed, it also
+ * replaces them.
  *
- * @param obj - The object in which the string values should be replaced.
- * @param pattern - The string that values must start with.
+ * @param obj - The object in which the string values should be found.
+ * @param pattern - The string that values can start with.
  * @param replacer - A function that returns the replacement value for each match.
  *
- * @returns Nothing (the object is modified in place).
+ * @returns Whether the pattern was found in the object.
  */
-export const replaceInObject = (
+export const findInObject = (
   obj: StringObject,
   pattern: string,
-  replacer: (match: string) => string,
-) => {
+  replacer?: (match: string) => string,
+): boolean => {
+  let found = false;
+
   for (const key in obj) {
     const value = obj[key];
 
     if (isObject(value)) {
-      replaceInObject(value as StringObject, pattern, replacer);
+      found = findInObject(value as StringObject, pattern, replacer);
 
       // We're purposefully using `.startsWith` instead of a regex here, because we only
       // want to replace the value if it starts with the pattern, so a regex would be
       // unnecessary performance overhead.
     } else if (typeof value === 'string' && value.startsWith(pattern)) {
-      obj[key] = value.replace(pattern, replacer);
+      found = true;
+
+      if (replacer) {
+        obj[key] = value.replace(pattern, replacer);
+      } else {
+        return found;
+      }
     }
   }
+
+  return found;
 };
 
 type NestedObject = {

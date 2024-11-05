@@ -11,6 +11,7 @@ import {
   RoninError,
   convertToCamelCase,
   convertToSnakeCase,
+  findInObject,
   type splitQuery,
 } from '@/src/utils';
 import title from 'title';
@@ -275,7 +276,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'cause', type: 'string', required: true },
       { slug: 'filter', type: 'json' },
       { slug: 'effect', type: 'json', required: true },
-      { slug: 'perRecord', type: 'boolean' },
     ],
   },
 ];
@@ -570,6 +570,9 @@ export const addSchemaQueries = (
       const cause = slugToName(instructionList?.cause).toUpperCase();
       const effectQuery: Query = instructionList?.effect[RONIN_SCHEMA_SYMBOLS.QUERY];
 
+      const referencesRecord = findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD);
+      const forEach = referencesRecord ? 'FOR EACH ROW ' : '';
+
       const { readStatement } = compileQueryInput(effectQuery, schemas, {
         statementValues,
         disableReturning: true,
@@ -578,7 +581,7 @@ export const addSchemaQueries = (
       // Save the query as a JSON object instead of running it as a sub query.
       instructionList.effect = effectQuery;
 
-      statement += ` ${cause} ON "${tableName}" BEGIN ${readStatement}`;
+      statement += ` ${cause} ON "${tableName}" ${forEach}BEGIN ${readStatement}`;
     }
 
     writeStatements.push(statement);

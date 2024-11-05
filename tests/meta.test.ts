@@ -372,7 +372,7 @@ test('drop existing index', () => {
   expect(values[1]).toBe('account');
 });
 
-test('create new trigger for creating records', () => {
+test('create new per-record trigger for creating records', () => {
   const triggerQuery = {
     create: {
       member: {
@@ -417,7 +417,7 @@ test('create new trigger for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
   ]);
 
   expect(readStatement).toBe(
@@ -447,7 +447,7 @@ test('create new trigger for creating records', () => {
   );
 });
 
-test('create new trigger for deleting records', () => {
+test('create new per-record trigger for deleting records', () => {
   const triggerQuery = {
     drop: {
       members: {
@@ -490,7 +490,7 @@ test('create new trigger for deleting records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
+    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
   ]);
 
   expect(readStatement).toBe(
