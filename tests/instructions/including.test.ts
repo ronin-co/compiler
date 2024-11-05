@@ -170,7 +170,7 @@ test('get single record including unrelated record with filter', () => {
           get: {
             team: {
               with: {
-                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}.label`,
+                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
               },
             },
           },
@@ -182,7 +182,7 @@ test('get single record including unrelated record with filter', () => {
   const { readStatement, values } = compileQueryInput(query, schemas);
 
   expect(readStatement).toBe(
-    'SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views".".label") LIMIT 1',
+    'SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1',
   );
   expect(values).toMatchObject([]);
 });
@@ -252,7 +252,7 @@ test('get single record including unrelated records with filter', () => {
           get: {
             teams: {
               with: {
-                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}.label`,
+                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
               },
             },
           },
@@ -264,7 +264,7 @@ test('get single record including unrelated records with filter', () => {
   const { readStatement, values } = compileQueryInput(query, schemas);
 
   expect(readStatement).toBe(
-    'SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views".".label")',
+    'SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")',
   );
   expect(values).toMatchObject([]);
 });

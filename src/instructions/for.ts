@@ -1,7 +1,7 @@
 import type { WithFilters } from '@/src/instructions/with';
 import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, replaceInObject } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, RoninError, findInObject } from '@/src/utils';
 import { composeConditions } from '@/src/utils/statement';
 
 /**
@@ -41,7 +41,7 @@ export const handleFor = (
 
     const replacedForFilter = structuredClone(forFilter);
 
-    replaceInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
+    findInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
       match.replace(RONIN_SCHEMA_SYMBOLS.VALUE, args),
     );
 
