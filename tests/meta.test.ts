@@ -372,6 +372,74 @@ test('drop existing index', () => {
   expect(values[1]).toBe('account');
 });
 
+test('create new trigger for creating records', () => {
+  const triggerQuery = {
+    create: {
+      signup: {
+        to: {
+          year: 2000,
+        },
+      },
+    },
+  };
+
+  const query: Query = {
+    create: {
+      trigger: {
+        to: {
+          slug: 'trigger_name',
+          schema: { slug: 'account' },
+          cause: 'afterInsert',
+          effect: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: triggerQuery,
+          },
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'signup',
+      fields: [{ slug: 'year', type: 'number' }],
+    },
+    {
+      slug: 'account',
+    },
+  ];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, (SELECT "id" FROM "schemas" WHERE ("slug" = ?6) LIMIT 1), ?7, IIF("effect" IS NULL, ?8, json_patch("effect", ?8)), ?9, ?10, ?11) RETURNING *',
+  );
+
+  expect(values[0]).toBe(2000);
+  expect(values[1]).toMatch(RECORD_ID_REGEX);
+  expect(values[2]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[3]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+
+  expect(values[4]).toBe('trigger_name');
+  expect(values[5]).toBe('account');
+  expect(values[6]).toBe('afterInsert');
+  expect(values[7]).toBe(JSON.stringify(triggerQuery));
+  expect(values[8]).toMatch(RECORD_ID_REGEX);
+  expect(values[9]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[10]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
 test('create new per-record trigger for creating records', () => {
   const triggerQuery = {
     create: {
