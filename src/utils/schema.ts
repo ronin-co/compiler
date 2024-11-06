@@ -636,16 +636,17 @@ export const addSchemaQueries = (
       }
 
       // Compile the effect queries into SQL statements.
-      const effectStatements = effectQueries
-        .map((effectQuery) => {
-          return compileQueryInput(effectQuery, schemas, {
-            statementValues,
-            disableReturning: true,
-          }).readStatement;
-        })
-        .join('; ');
+      const effectStatements = effectQueries.map((effectQuery) => {
+        return compileQueryInput(effectQuery, schemas, {
+          statementValues,
+          disableReturning: true,
+        }).readStatement;
+      });
 
-      statementParts.push('BEGIN', effectStatements, 'END');
+      if (effectStatements.length > 1) statementParts.push('BEGIN');
+      statementParts.push(effectStatements.join('; '));
+      if (effectStatements.length > 1) statementParts.push('END');
+
       statement += ` ${statementParts.join(' ')}`;
     }
 

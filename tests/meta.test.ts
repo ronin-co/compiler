@@ -460,7 +460,7 @@ test('create new trigger for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4) END',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
   ]);
 
   expect(readStatement).toBe(
@@ -537,7 +537,7 @@ test('create new per-record trigger for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5) END',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
   ]);
 
   expect(readStatement).toBe(
@@ -613,7 +613,7 @@ test('create new per-record trigger for deleting records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy") END',
+    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
   ]);
 
   expect(readStatement).toBe(
@@ -689,7 +689,7 @@ test('create new per-record trigger with filters for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6) END',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
   ]);
 
   expect(readStatement).toBe(
