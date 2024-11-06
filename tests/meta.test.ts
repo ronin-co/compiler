@@ -489,6 +489,94 @@ test('create new trigger for creating records', () => {
   );
 });
 
+test('create new trigger for creating records with multiple effects', () => {
+  const effectQueries = [
+    {
+      create: {
+        signup: {
+          to: {
+            year: 2000,
+          },
+        },
+      },
+    },
+    {
+      create: {
+        candidate: {
+          to: {
+            year: 2020,
+          },
+        },
+      },
+    },
+  ];
+
+  const query: Query = {
+    create: {
+      trigger: {
+        to: {
+          slug: 'trigger_name',
+          schema: { slug: 'account' },
+          cause: 'afterInsert',
+          effects: effectQueries,
+        },
+      },
+    },
+  };
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'candidate',
+      fields: [{ slug: 'year', type: 'number' }],
+    },
+    {
+      slug: 'signup',
+      fields: [{ slug: 'year', type: 'number' }],
+    },
+    {
+      slug: 'account',
+    },
+  ];
+
+  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+
+  expect(writeStatements).toEqual([
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
+  ]);
+
+  expect(readStatement).toBe(
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?9, (SELECT "id" FROM "schemas" WHERE ("slug" = ?10) LIMIT 1), ?11, IIF("effects" IS NULL, ?12, json_patch("effects", ?12)), ?13, ?14, ?15) RETURNING *',
+  );
+
+  expect(values[0]).toBe(2000);
+  expect(values[1]).toMatch(RECORD_ID_REGEX);
+  expect(values[2]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[3]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[4]).toBe(2020);
+  expect(values[5]).toMatch(RECORD_ID_REGEX);
+  expect(values[6]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[7]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[8]).toBe('trigger_name');
+  expect(values[9]).toBe('account');
+  expect(values[10]).toBe('afterInsert');
+  expect(values[11]).toBe(JSON.stringify(effectQueries));
+  expect(values[12]).toMatch(RECORD_ID_REGEX);
+  expect(values[13]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+  expect(values[14]).toSatisfy(
+    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
+  );
+});
+
 test('create new per-record trigger for creating records', () => {
   const effectQueries = [
     {
