@@ -422,15 +422,17 @@ test('drop existing index', () => {
 });
 
 test('create new trigger for creating records', () => {
-  const triggerQuery = {
-    create: {
-      signup: {
-        to: {
-          year: 2000,
+  const effectQueries = [
+    {
+      create: {
+        signup: {
+          to: {
+            year: 2000,
+          },
         },
       },
     },
-  };
+  ];
 
   const query: Query = {
     create: {
@@ -439,7 +441,7 @@ test('create new trigger for creating records', () => {
           slug: 'trigger_name',
           schema: { slug: 'account' },
           cause: 'afterInsert',
-          effect: triggerQuery,
+          effects: effectQueries,
         },
       },
     },
@@ -458,11 +460,11 @@ test('create new trigger for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4) END',
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, (SELECT "id" FROM "schemas" WHERE ("slug" = ?6) LIMIT 1), ?7, IIF("effect" IS NULL, ?8, json_patch("effect", ?8)), ?9, ?10, ?11) RETURNING *',
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, (SELECT "id" FROM "schemas" WHERE ("slug" = ?6) LIMIT 1), ?7, IIF("effects" IS NULL, ?8, json_patch("effects", ?8)), ?9, ?10, ?11) RETURNING *',
   );
 
   expect(values[0]).toBe(2000);
@@ -477,7 +479,7 @@ test('create new trigger for creating records', () => {
   expect(values[4]).toBe('trigger_name');
   expect(values[5]).toBe('account');
   expect(values[6]).toBe('afterInsert');
-  expect(values[7]).toBe(JSON.stringify(triggerQuery));
+  expect(values[7]).toBe(JSON.stringify(effectQueries));
   expect(values[8]).toMatch(RECORD_ID_REGEX);
   expect(values[9]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
@@ -488,17 +490,19 @@ test('create new trigger for creating records', () => {
 });
 
 test('create new per-record trigger for creating records', () => {
-  const triggerQuery = {
-    create: {
-      member: {
-        to: {
-          account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
-          role: 'owner',
-          pending: false,
+  const effectQueries = [
+    {
+      create: {
+        member: {
+          to: {
+            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+            role: 'owner',
+            pending: false,
+          },
         },
       },
     },
-  };
+  ];
 
   const query: Query = {
     create: {
@@ -507,7 +511,7 @@ test('create new per-record trigger for creating records', () => {
           slug: 'trigger_name',
           schema: { slug: 'team' },
           cause: 'afterInsert',
-          effect: triggerQuery,
+          effects: effectQueries,
         },
       },
     },
@@ -533,11 +537,11 @@ test('create new per-record trigger for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5) END',
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?6, (SELECT "id" FROM "schemas" WHERE ("slug" = ?7) LIMIT 1), ?8, IIF("effect" IS NULL, ?9, json_patch("effect", ?9)), ?10, ?11, ?12) RETURNING *',
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?6, (SELECT "id" FROM "schemas" WHERE ("slug" = ?7) LIMIT 1), ?8, IIF("effects" IS NULL, ?9, json_patch("effects", ?9)), ?10, ?11, ?12) RETURNING *',
   );
 
   expect(values[0]).toBe('owner');
@@ -553,7 +557,7 @@ test('create new per-record trigger for creating records', () => {
   expect(values[5]).toBe('trigger_name');
   expect(values[6]).toBe('team');
   expect(values[7]).toBe('afterInsert');
-  expect(values[8]).toBe(JSON.stringify(triggerQuery));
+  expect(values[8]).toBe(JSON.stringify(effectQueries));
   expect(values[9]).toMatch(RECORD_ID_REGEX);
   expect(values[10]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
@@ -564,15 +568,17 @@ test('create new per-record trigger for creating records', () => {
 });
 
 test('create new per-record trigger for deleting records', () => {
-  const triggerQuery = {
-    drop: {
-      members: {
-        with: {
-          account: `${RONIN_SCHEMA_SYMBOLS.FIELD_OLD}createdBy`,
+  const effectQueries = [
+    {
+      drop: {
+        members: {
+          with: {
+            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_OLD}createdBy`,
+          },
         },
       },
     },
-  };
+  ];
 
   const query: Query = {
     create: {
@@ -581,7 +587,7 @@ test('create new per-record trigger for deleting records', () => {
           slug: 'trigger_name',
           schema: { slug: 'team' },
           cause: 'afterDelete',
-          effect: triggerQuery,
+          effects: effectQueries,
         },
       },
     },
@@ -607,17 +613,17 @@ test('create new per-record trigger for deleting records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
+    'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy") END',
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effect" IS NULL, ?4, json_patch("effect", ?4)), ?5, ?6, ?7) RETURNING *',
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), ?5, ?6, ?7) RETURNING *',
   );
 
   expect(values[0]).toBe('trigger_name');
   expect(values[1]).toBe('team');
   expect(values[2]).toBe('afterDelete');
-  expect(values[3]).toBe(JSON.stringify(triggerQuery));
+  expect(values[3]).toBe(JSON.stringify(effectQueries));
   expect(values[4]).toMatch(RECORD_ID_REGEX);
   expect(values[5]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
@@ -628,17 +634,19 @@ test('create new per-record trigger for deleting records', () => {
 });
 
 test('create new per-record trigger with filters for creating records', () => {
-  const triggerQuery = {
-    create: {
-      member: {
-        to: {
-          account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
-          role: 'owner',
-          pending: false,
+  const effectQueries = [
+    {
+      create: {
+        member: {
+          to: {
+            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+            role: 'owner',
+            pending: false,
+          },
         },
       },
     },
-  };
+  ];
 
   const filterInstruction = {
     handle: {
@@ -653,7 +661,7 @@ test('create new per-record trigger with filters for creating records', () => {
           slug: 'trigger_name',
           schema: { slug: 'team' },
           cause: 'afterInsert',
-          effect: triggerQuery,
+          effects: effectQueries,
           filter: filterInstruction,
         },
       },
@@ -681,11 +689,11 @@ test('create new per-record trigger with filters for creating records', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
+    'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6) END',
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "triggers" ("slug", "schema", "cause", "effect", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?7, (SELECT "id" FROM "schemas" WHERE ("slug" = ?8) LIMIT 1), ?9, IIF("effect" IS NULL, ?10, json_patch("effect", ?10)), IIF("filter" IS NULL, ?11, json_patch("filter", ?11)), ?12, ?13, ?14) RETURNING *',
+    'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?7, (SELECT "id" FROM "schemas" WHERE ("slug" = ?8) LIMIT 1), ?9, IIF("effects" IS NULL, ?10, json_patch("effects", ?10)), IIF("filter" IS NULL, ?11, json_patch("filter", ?11)), ?12, ?13, ?14) RETURNING *',
   );
 
   expect(values[0]).toBe('_hidden');
@@ -702,7 +710,7 @@ test('create new per-record trigger with filters for creating records', () => {
   expect(values[6]).toBe('trigger_name');
   expect(values[7]).toBe('team');
   expect(values[8]).toBe('afterInsert');
-  expect(values[9]).toBe(JSON.stringify(triggerQuery));
+  expect(values[9]).toBe(JSON.stringify(effectQueries));
   expect(values[10]).toBe(JSON.stringify(filterInstruction));
   expect(values[11]).toMatch(RECORD_ID_REGEX);
   expect(values[12]).toSatisfy(

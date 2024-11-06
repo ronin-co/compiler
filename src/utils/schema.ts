@@ -279,7 +279,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'schema', type: 'reference', target: { slug: 'schema' }, required: true },
       { slug: 'cause', type: 'string', required: true },
       { slug: 'filter', type: 'json' },
-      { slug: 'effect', type: 'json', required: true },
+      { slug: 'effects', type: 'json', required: true },
     ],
   },
 ];
@@ -599,7 +599,7 @@ export const addSchemaQueries = (
       const statementParts: Array<string> = [cause, 'ON', `"${tableName}"`];
 
       // The query that will be executed when the trigger is fired.
-      const effectQuery: Query = instructionList?.effect;
+      const effectQueries: Array<Query> = instructionList?.effects;
 
       // The query instructions that are used to determine whether the trigger should be
       // fired, or not.
@@ -608,7 +608,10 @@ export const addSchemaQueries = (
       // If filtering instructions were defined, or if the effect query references
       // specific record fields, that means the trigger must be executed on a per-record
       // basis, meaning "for each row", instead of on a per-query basis.
-      if (filterQuery || findInObject(effectQuery, RONIN_SCHEMA_SYMBOLS.FIELD)) {
+      if (
+        filterQuery ||
+        effectQueries.some((query) => findInObject(query, RONIN_SCHEMA_SYMBOLS.FIELD))
+      ) {
         statementParts.push('FOR EACH ROW');
       }
 
@@ -632,13 +635,17 @@ export const addSchemaQueries = (
         statementParts.push('WHEN', `(${withStatement})`);
       }
 
-      // Compile the effect query into an SQL statement.
-      const { readStatement: effectStatement } = compileQueryInput(effectQuery, schemas, {
-        statementValues,
-        disableReturning: true,
-      });
+      // Compile the effect queries into SQL statements.
+      const effectStatements = effectQueries
+        .map((effectQuery) => {
+          return compileQueryInput(effectQuery, schemas, {
+            statementValues,
+            disableReturning: true,
+          }).readStatement;
+        })
+        .join('; ');
 
-      statementParts.push('BEGIN', effectStatement);
+      statementParts.push('BEGIN', effectStatements, 'END');
       statement += ` ${statementParts.join(' ')}`;
     }
 
