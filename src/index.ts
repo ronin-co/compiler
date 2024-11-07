@@ -266,3 +266,7 @@ export const compileQueryInput = (
     values: statementValues,
   };
 };
+
+// Expose types
+export * from '@/src/types/schema';
+export * from '@/src/types/query';
