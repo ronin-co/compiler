@@ -206,10 +206,16 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'pluralName', type: 'string' },
       { slug: 'slug', type: 'string' },
       { slug: 'pluralSlug', type: 'string' },
+
       { slug: 'idPrefix', type: 'string' },
+
       { slug: 'identifiers', type: 'group' },
       { slug: 'identifiers.title', type: 'string' },
       { slug: 'identifiers.slug', type: 'string' },
+
+      { slug: 'fields', type: 'json' },
+      { slug: 'indexes', type: 'json' },
+      { slug: 'triggers', type: 'json' },
     ],
   },
   {
