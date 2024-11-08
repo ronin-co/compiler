@@ -147,7 +147,7 @@ test('drop existing schema', () => {
   ]);
 });
 
-test('use a schema that was just created', () => {
+test('query a schema that was just created', () => {
   const queries: Array<Query> = [
     {
       create: {
@@ -176,7 +176,7 @@ test('use a schema that was just created', () => {
   });
 });
 
-test('use a schema that was just updated', () => {
+test('query a schema that was just updated', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -212,7 +212,7 @@ test('use a schema that was just updated', () => {
   });
 });
 
-test('use a schema that was just dropped', () => {
+test('query a schema that was just dropped', () => {
   const queries: Array<Query> = [
     {
       drop: {
