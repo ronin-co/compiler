@@ -1,4 +1,5 @@
 import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
+import type { Schema } from '@/src/types/schema';
 
 import { init as cuid } from '@paralleldrive/cuid2';
 
@@ -93,7 +94,7 @@ const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
  *
  * @returns The generated ID.
  */
-export const generateRecordId = (prefix?: string | null) =>
+export const generateRecordId = (prefix: Schema['idPrefix']) =>
   `${prefix}_${cuid({ length: 16 })()}`;
 
 /**

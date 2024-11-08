@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
-import { compileQueryInput } from '@/src/index';
+import { type Schema, compileQueryInput } from '@/src/index';
 import type { Query } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
+
 import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils';
 
 test('get single record for pre-defined condition', () => {

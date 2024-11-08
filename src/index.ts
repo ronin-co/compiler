@@ -273,5 +273,5 @@ export const compileQueryInput = (
 };
 
 // Expose types
-export * from '@/src/types/schema';
+export type { PublicSchema as Schema } from '@/src/types/schema';
 export * from '@/src/types/query';

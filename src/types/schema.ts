@@ -95,3 +95,9 @@ export interface Schema {
   indexes?: Array<SchemaIndex>;
   triggers?: Array<SchemaTrigger>;
 }
+
+// In schemas provided to the compiler, all settings are optional, except for the `slug`,
+// which is the required bare minimum.
+export type PublicSchema = Omit<Partial<Schema>, 'slug'> & {
+  slug: Required<Schema['slug']>;
+};
