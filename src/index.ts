@@ -1,6 +1,7 @@
 import type { Query, Statement } from '@/src/types/query';
 import type { PublicSchema } from '@/src/types/schema';
 import { compileQueryInput } from '@/src/utils';
+import { addSystemSchemas } from '@/src/utils/schema';
 
 /**
  * Composes an SQL statement for a provided RONIN query.
@@ -18,11 +19,17 @@ export const compileQueries = (
     inlineValues?: boolean;
   },
 ): Array<Statement> => {
+  const schemaList = addSystemSchemas(schemas);
+
   const dependencyStatements: Array<Statement> = [];
   const mainStatements: Array<Statement> = [];
 
   for (const query of queries) {
-    const result = compileQueryInput(query, schemas, options?.inlineValues ? null : []);
+    const result = compileQueryInput(
+      query,
+      schemaList,
+      options?.inlineValues ? null : [],
+    );
 
     // Every query can only produce one main statement (which can return output), but
     // multiple dependency statements (which must be executed before the main one, but
