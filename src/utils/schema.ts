@@ -317,6 +317,8 @@ export const prepareSchema = (schema: Schema) => {
   if (!copiedSchema.pluralName)
     copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
 
+  if (!copiedSchema.idPrefix) copiedSchema.idPrefix = copiedSchema.slug.slice(0, 3);
+
   return copiedSchema;
 };
 

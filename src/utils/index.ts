@@ -3,7 +3,7 @@ import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
 import { init as cuid } from '@paralleldrive/cuid2';
 
 /** A regex for asserting RONIN record IDs. */
-export const RECORD_ID_REGEX = /rec_[a-z0-9]{16}/;
+export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
 
 /**
  * A list of placeholders that can be located inside queries after those queries were
@@ -94,7 +94,7 @@ const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
  * @returns The generated ID.
  */
 export const generateRecordId = (prefix?: string | null) =>
-  `${prefix || 'rec'}_${cuid({ length: 16 })()}`;
+  `${prefix}_${cuid({ length: 16 })()}`;
 
 /**
  * Utility function to capitalize the first letter of a string while converting all other
