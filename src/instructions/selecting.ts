@@ -9,7 +9,7 @@ import { prepareStatementValue } from '@/src/utils/statement';
  * selecting a list of columns from rows.
  *
  * @param schema - The schema associated with the current query.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
  *
@@ -17,7 +17,7 @@ import { prepareStatementValue } from '@/src/utils/statement';
  */
 export const handleSelecting = (
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];
@@ -53,7 +53,7 @@ export const handleSelecting = (
       })
       // Format the fields into a comma-separated list of SQL columns.
       .map(([key, value]) => {
-        return `${prepareStatementValue(statementValues, value)} as "${key}"`;
+        return `${prepareStatementValue(statementParams, value)} as "${key}"`;
       })
       .join(', ');
   }

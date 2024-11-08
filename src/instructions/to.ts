@@ -22,7 +22,7 @@ import { composeConditions } from '@/src/utils/statement';
  *
  * @param schemas - A list of schemas.
  * @param schema - The schema being addressed in the query.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param queryType - The type of query that is being executed.
  * @param writeStatements - A list of SQL statements to be executed before the main
@@ -35,7 +35,7 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleTo = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   queryType: 'create' | 'set',
   writeStatements: Array<Statement>,
   instructions: {
@@ -123,7 +123,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, statementValues).mainStatement.statement;
+    return compileQueryInput(subQuery, schemas, statementParams).mainStatement.statement;
   }
 
   // Assign default field values to the provided instruction.
@@ -195,7 +195,7 @@ export const handleTo = (
   let statement = composeConditions(
     schemas,
     schema,
-    statementValues,
+    statementParams,
     'to',
     toInstruction,
     {
@@ -208,7 +208,7 @@ export const handleTo = (
     const deepStatement = composeConditions(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       'to',
       toInstruction,
       {

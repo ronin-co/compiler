@@ -22,7 +22,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  *
  * @param query - The RONIN query for which an SQL statement should be composed.
  * @param defaultSchemas - A list of schemas.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param options - Additional options to adjust the behavior of the statement generation.
  *
@@ -31,7 +31,12 @@ import { formatIdentifiers } from '@/src/utils/statement';
 export const compileQueryInput = (
   query: Query,
   defaultSchemas: Array<PublicSchema>,
-  statementValues: Array<unknown> | null,
+  // In order to prevent SQL injections and allow for faster query execution, we're not
+  // inserting any values into the SQL statement directly. Instead, we will pass them to
+  // SQLite's API later on, so that it can prepare an object that the database can
+  // execute in a safe and fast manner. SQLite allows strings, numbers, and booleans to
+  // be provided as values.
+  statementParams: Array<unknown> | null,
   options?: {
     /**
      * Whether the query should explicitly return records. Defaults to `true`.
@@ -74,7 +79,7 @@ export const compileQueryInput = (
   );
 
   // A list of columns that should be selected when querying records.
-  const columns = handleSelecting(schema, statementValues, {
+  const columns = handleSelecting(schema, statementParams, {
     selecting: instructions?.selecting,
     including: instructions?.including,
   });
@@ -112,7 +117,7 @@ export const compileQueryInput = (
       statement: including,
       rootTableSubQuery,
       rootTableName,
-    } = handleIncluding(schemas, statementValues, schema, instructions?.including, table);
+    } = handleIncluding(schemas, statementParams, schema, instructions?.including, table);
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
@@ -145,7 +150,7 @@ export const compileQueryInput = (
     const toStatement = handleTo(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       queryType,
       writeStatements,
       { with: instructions.with, to: instructions.to },
@@ -163,7 +168,7 @@ export const compileQueryInput = (
     const withStatement = handleWith(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       instructions?.with,
       isJoining ? table : undefined,
     );
@@ -175,7 +180,7 @@ export const compileQueryInput = (
     const forStatement = handleFor(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       instructions?.for,
       isJoining ? table : undefined,
     );
@@ -221,7 +226,7 @@ export const compileQueryInput = (
 
     const beforeAndAfterStatement = handleBeforeOrAfter(
       schema,
-      statementValues,
+      statementParams,
       {
         before: instructions.before,
         after: instructions.after,
@@ -264,7 +269,7 @@ export const compileQueryInput = (
 
   const mainStatement: Statement = {
     statement: statement.trimEnd(),
-    params: statementValues || [],
+    params: statementParams || [],
   };
 
   // We are setting this property separately to make sure it doesn't even exist if the

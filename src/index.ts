@@ -18,32 +18,24 @@ export const compileQueries = (
     inlineValues?: boolean;
   },
 ): Array<Statement> => {
-  // In order to prevent SQL injections and allow for faster query execution, we're not
-  // inserting any values into the SQL statement directly. Instead, we will pass them to
-  // SQLite's API later on, so that it can prepare an object that the database can
-  // execute in a safe and fast manner. SQLite allows strings, numbers, and booleans to
-  // be provided as values.
-  const statementValues = options?.inlineValues ? null : [];
-
   const dependencyStatements: Array<Statement> = [];
   const mainStatements: Array<Statement> = [];
 
   for (const query of queries) {
-    const result = compileQueryInput(query, schemas, statementValues);
+    const result = compileQueryInput(query, schemas, options?.inlineValues ? null : []);
 
     // Every query can only produce one main statement (which can return output), but
     // multiple dependency statements (which must be executed before the main one, but
-    // cannot return output themselves). This is essential because of the requirements
-    // mentioned below.
+    // cannot return output themselves).
     dependencyStatements.push(...result.dependencyStatements);
     mainStatements.push(result.mainStatement);
   }
 
-  // First return all write statements, and then all read statements. This is essential
-  // because the write statements aren't expected to produce any output, so they should be
-  // executed first. The read statements, on the other hand, are expected to produce
-  // output, and that output should be a 1:1 match between RONIN queries and SQL
-  // statements, meaning one RONIN query should produce one SQL statement.
+  // First return all dependency statements, and then all main statements. This is
+  // essential since the dependency statements are expected to not produce any output, so
+  // they should be executed first. The main statements, on the other hand, are expected
+  // to produce output, and that output should be a 1:1 match between RONIN queries and
+  // SQL statements, meaning one RONIN query should produce one main SQL statement.
   return [...dependencyStatements, ...mainStatements];
 };
 
