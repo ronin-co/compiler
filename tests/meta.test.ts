@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
-import { compileQueryInput } from '@/src/index';
+import { type Schema, compileQueryInput } from '@/src/index';
 import type { Query } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
+
 import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils';
 import { RECORD_ID_REGEX } from '@/src/utils';
 
@@ -37,7 +37,7 @@ test('create new schema', () => {
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+    'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
   );
 
   expect(values[0]).toBe('account');
@@ -45,12 +45,15 @@ test('create new schema', () => {
   expect(values[2]).toBe('accounts');
   expect(values[3]).toBe('Account');
   expect(values[4]).toBe('Accounts');
-  expect(values[5]).toMatch(RECORD_ID_REGEX);
+  expect(values[5]).toBe('acc');
+  expect(values[6]).toBe('id');
+  expect(values[7]).toBe('id');
+  expect(values[8]).toMatch(RECORD_ID_REGEX);
 
-  expect(values[6]).toSatisfy(
+  expect(values[9]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[7]).toSatisfy(
+  expect(values[10]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
 });
@@ -76,17 +79,20 @@ test('update existing schema', () => {
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
   expect(readStatement).toBe(
-    'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "ronin.updatedAt" = ?5 WHERE ("slug" = ?6) RETURNING *',
+    'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "identifiers.name" = ?6, "identifiers.slug" = ?7, "ronin.updatedAt" = ?8 WHERE ("slug" = ?9) RETURNING *',
   );
 
   expect(values[0]).toBe('user');
   expect(values[1]).toBe('users');
   expect(values[2]).toBe('User');
   expect(values[3]).toBe('Users');
-  expect(values[4]).toSatisfy(
+  expect(values[4]).toBe('use');
+  expect(values[5]).toBe('id');
+  expect(values[6]).toBe('id');
+  expect(values[7]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[5]).toBe('account');
+  expect(values[8]).toBe('account');
 });
 
 test('drop existing schema', () => {

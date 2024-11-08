@@ -1,7 +1,6 @@
 import { expect, test } from 'bun:test';
-import { compileQueryInput } from '@/src/index';
+import { type Schema, compileQueryInput } from '@/src/index';
 import type { Query } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 
 test('get single record with field being value', () => {
   const query: Query = {
@@ -756,12 +755,12 @@ test('get single record with one of field values in group', () => {
   expect(values).toMatchObject(['EUR', 'USD']);
 });
 
-test('get single record with title identifier', () => {
+test('get single record with name identifier', () => {
   const query: Query = {
     get: {
       account: {
         with: {
-          titleIdentifier: {
+          nameIdentifier: {
             being: 'Elaine',
           },
         },
@@ -779,7 +778,7 @@ test('get single record with title identifier', () => {
         },
       ],
       identifiers: {
-        title: 'name',
+        name: 'name',
       },
     },
   ];

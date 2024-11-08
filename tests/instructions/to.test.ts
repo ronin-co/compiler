@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
-import { compileQueryInput } from '@/src/index';
+import { type Schema, compileQueryInput } from '@/src/index';
 import type { Query } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
+
 import { RECORD_ID_REGEX, RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils';
 
 test('set single record to new string field', () => {

@@ -44,7 +44,7 @@ type SchemaIndexField = {
   order?: 'ASC' | 'DESC';
 };
 
-type SchemaIndex = {
+export type SchemaIndex = {
   /**
    * The list of fields in the schema for which the index should be created.
    */
@@ -60,7 +60,7 @@ type SchemaIndex = {
   filter?: WithInstruction;
 };
 
-type SchemaTrigger = {
+export type SchemaTrigger = {
   /** The type of query for which the trigger should fire. */
   queryType: Uppercase<Exclude<QueryType, 'get' | 'count'>>;
   /** When the trigger should fire in the case that a maching query is executed. */
@@ -82,9 +82,9 @@ export interface Schema {
   slug: string;
   pluralSlug?: string;
 
-  identifiers?: {
-    title?: string;
-    slug?: string;
+  identifiers: {
+    name: string;
+    slug: string;
   };
   idPrefix?: string;
 
@@ -95,3 +95,13 @@ export interface Schema {
   indexes?: Array<SchemaIndex>;
   triggers?: Array<SchemaTrigger>;
 }
+
+// In schemas provided to the compiler, all settings are optional, except for the `slug`,
+// which is the required bare minimum.
+export type PublicSchema = Omit<Partial<Schema>, 'slug' | 'identifiers'> & {
+  slug: Required<Schema['slug']>;
+
+  // It should also be possible for schemas to only define one of the two identifiers,
+  // since the missing one will be generated automatically.
+  identifiers?: Partial<Schema['identifiers']>;
+};

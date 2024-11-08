@@ -1,7 +1,6 @@
 import { expect, test } from 'bun:test';
-import { compileQueryInput } from '@/src/index';
+import { type Schema, compileQueryInput } from '@/src/index';
 import type { Query } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 
 test('get multiple records ordered by field', () => {
   const query: Query = {
