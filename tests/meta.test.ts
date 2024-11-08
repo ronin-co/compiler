@@ -37,18 +37,20 @@ test('create new schema', () => {
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "schemas" ("slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5) RETURNING *',
+    'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
   );
 
   expect(values[0]).toBe('account');
   expect(values[1]).toBe(JSON.stringify(fields));
+  expect(values[2]).toBe('accounts');
+  expect(values[3]).toBe('Account');
+  expect(values[4]).toBe('Accounts');
+  expect(values[5]).toMatch(RECORD_ID_REGEX);
 
-  expect(values[2]).toMatch(RECORD_ID_REGEX);
-
-  expect(values[3]).toSatisfy(
+  expect(values[6]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[4]).toSatisfy(
+  expect(values[7]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
 });
@@ -74,14 +76,17 @@ test('update existing schema', () => {
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
   expect(readStatement).toBe(
-    'UPDATE "schemas" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
+    'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "ronin.updatedAt" = ?5 WHERE ("slug" = ?6) RETURNING *',
   );
 
   expect(values[0]).toBe('user');
-  expect(values[1]).toSatisfy(
+  expect(values[1]).toBe('users');
+  expect(values[2]).toBe('User');
+  expect(values[3]).toBe('Users');
+  expect(values[4]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[2]).toBe('account');
+  expect(values[5]).toBe('account');
 });
 
 test('drop existing schema', () => {
