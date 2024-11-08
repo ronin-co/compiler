@@ -334,11 +334,11 @@ export const composeConditions = (
 };
 
 /**
- * Finds special identifiers (Title Identifier or Slug Identifier) in the instructions of
+ * Finds special identifiers (Name Identifier or Slug Identifier) in the instructions of
  * a query and replaces them with their respective field slugs.
  *
  * For example, if the field `firstName` is configured as the Title Identifier in the
- * schema, any use of `titleIdentifier` will be replaced with `firstName` inside the
+ * schema, any use of `nameIdentifier` will be replaced with `firstName` inside the
  * query instructions.
  *
  * @param schema - The schema being addressed in the query.
@@ -367,9 +367,9 @@ export const formatIdentifiers = (
   const newNestedInstructions = { ...nestedInstructions };
 
   for (const oldKey of Object.keys(newNestedInstructions)) {
-    if (oldKey !== 'titleIdentifier' && oldKey !== 'slugIdentifier') continue;
+    if (oldKey !== 'nameIdentifier' && oldKey !== 'slugIdentifier') continue;
 
-    const identifierName = oldKey === 'titleIdentifier' ? 'title' : 'slug';
+    const identifierName = oldKey === 'nameIdentifier' ? 'name' : 'slug';
     const value = newNestedInstructions[oldKey];
     const newKey = identifiers?.[identifierName] || 'id';
 

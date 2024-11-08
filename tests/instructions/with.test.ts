@@ -778,7 +778,7 @@ test('get single record with title identifier', () => {
         },
       ],
       identifiers: {
-        title: 'name',
+        name: 'name',
       },
     },
   ];

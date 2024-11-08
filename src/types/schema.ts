@@ -83,7 +83,7 @@ export interface Schema {
   pluralSlug?: string;
 
   identifiers?: {
-    title?: string;
+    name?: string;
     slug?: string;
   };
   idPrefix?: string;

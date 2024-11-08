@@ -212,7 +212,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'idPrefix', type: 'string' },
 
       { slug: 'identifiers', type: 'group' },
-      { slug: 'identifiers.title', type: 'string' },
+      { slug: 'identifiers.name', type: 'string' },
       { slug: 'identifiers.slug', type: 'string' },
 
       { slug: 'fields', type: 'json' },
