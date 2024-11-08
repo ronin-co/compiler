@@ -714,25 +714,12 @@ export const addSchemaQueries = (
       queryInstructions.to = prepareSchema(queryInstructions.to as Schema);
     }
 
-    // Update schema list to reflect the changes.
-    if (queryType === 'create') {
-      // Add the newly created schema to the list of schemas.
-      schemas.push(queryInstructions.to as Schema);
-    } else if (queryType === 'set' || queryType === 'drop') {
-      if (queryType === 'set') {
-        // Update the existing schema in the list of schemas.
-        Object.assign(targetSchema as Schema, queryInstructions.to);
-      } else if (queryType === 'drop') {
-        // Remove the schema from the list of schemas.
-        schemas.splice(schemas.indexOf(targetSchema as Schema), 1);
-      }
-    }
-
-    // Compose an SQL statement for the schema change.
     if (queryType === 'create') {
       const columns = fields.map(getFieldStatement).filter(Boolean);
-
       statement += ` (${columns.join(', ')})`;
+
+      // Add the newly created schema to the list of schemas.
+      schemas.push(queryInstructions.to as Schema);
     } else if (queryType === 'set') {
       const newSlug = queryInstructions.to?.pluralSlug;
 
@@ -740,6 +727,12 @@ export const addSchemaQueries = (
         const newTable = convertToSnakeCase(newSlug);
         statement += ` RENAME TO "${newTable}"`;
       }
+
+      // Update the existing schema in the list of schemas.
+      Object.assign(targetSchema as Schema, queryInstructions.to);
+    } else if (queryType === 'drop') {
+      // Remove the schema from the list of schemas.
+      schemas.splice(schemas.indexOf(targetSchema as Schema), 1);
     }
 
     dependencyStatements.push({ statement, params: [] });
