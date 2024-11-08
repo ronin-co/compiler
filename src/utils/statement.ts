@@ -23,13 +23,13 @@ import { getFieldFromSchema } from '@/src/utils/schema';
 /**
  * Inserts a value into the list of statement values and returns a placeholder for it.
  *
- * @param statementValues - A list of values to be inserted into the final statements.
+ * @param statementParams - A list of values to be inserted into the final statements.
  * @param value - The value that should be prepared for insertion.
  *
  * @returns A placeholder for the inserted value.
  */
 export const prepareStatementValue = (
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   value: unknown,
 ): string => {
   // We don't need to register `null` as a statement value, because it's not a value, but
@@ -39,7 +39,7 @@ export const prepareStatementValue = (
   // If no list of statement values is available, that means we should inline the value,
   // which is desired in cases where there is no risk of SQL injection and where the
   // values must be plainly visible for manual human inspection.
-  if (!statementValues) return JSON.stringify(value);
+  if (!statementParams) return JSON.stringify(value);
 
   let formattedValue = value;
 
@@ -50,7 +50,7 @@ export const prepareStatementValue = (
     formattedValue = value ? 1 : 0;
   }
 
-  const index = statementValues.push(formattedValue);
+  const index = statementParams.push(formattedValue);
   return `?${index}`;
 };
 
@@ -59,7 +59,7 @@ export const prepareStatementValue = (
  *
  * @param schemas - A list of schemas.
  * @param schema - The specific schema being addressed in the query.
- * @param statementValues - A list of values to be inserted into the final statements.
+ * @param statementParams - A list of values to be inserted into the final statements.
  * @param instructionName - The name of the instruction that is being processed.
  * @param value - The value that the selected field should be compared with.
  * @param options - Additional options for customizing the behavior of the function.
@@ -70,7 +70,7 @@ export const prepareStatementValue = (
 const composeFieldValues = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
   options: {
@@ -102,8 +102,8 @@ const composeFieldValues = (
       compileQueryInput(
         (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
         schemas,
-        statementValues,
-      ).readStatement
+        statementParams,
+      ).main.statement
     })`;
   } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
     let targetTable = `"${options.rootTable}"`;
@@ -128,11 +128,11 @@ const composeFieldValues = (
     conditionSelector = `"${schemaField.slug}"`;
 
     if (collectStatementValue) {
-      const preparedValue = prepareStatementValue(statementValues, value);
+      const preparedValue = prepareStatementValue(statementParams, value);
       conditionValue = `IIF(${conditionSelector} IS NULL, ${preparedValue}, json_patch(${conditionSelector}, ${preparedValue}))`;
     }
   } else if (collectStatementValue) {
-    conditionValue = prepareStatementValue(statementValues, value);
+    conditionValue = prepareStatementValue(statementParams, value);
   }
 
   if (options.type === 'fields') return conditionSelector;
@@ -146,7 +146,7 @@ const composeFieldValues = (
  *
  * @param schemas - A list of schemas.
  * @param schema - The specific schema being addressed in the query.
- * @param statementValues - A list of values to be inserted into the final statements.
+ * @param statementParams - A list of values to be inserted into the final statements.
  * @param instructionName - The name of the instruction that is being processed.
  * @param value - The value that the selected field should be compared with.
  * @param options - Additional options for customizing the behavior of the function.
@@ -156,7 +156,7 @@ const composeFieldValues = (
 export const composeConditions = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value:
     | WithFilters
@@ -179,7 +179,7 @@ export const composeConditions = (
     const conditions = (
       Object.entries(value as object) as Array<[WithCondition, WithValueOptions]>
     ).map(([conditionType, checkValue]) =>
-      composeConditions(schemas, schema, statementValues, instructionName, checkValue, {
+      composeConditions(schemas, schema, statementParams, instructionName, checkValue, {
         ...options,
         condition: conditionType,
       }),
@@ -217,7 +217,7 @@ export const composeConditions = (
       return composeFieldValues(
         schemas,
         schema,
-        statementValues,
+        statementParams,
         instructionName,
         value as WithValue,
         { ...options, fieldSlug: options.fieldSlug as string },
@@ -259,7 +259,7 @@ export const composeConditions = (
       return composeConditions(
         schemas,
         schema,
-        statementValues,
+        statementParams,
         instructionName,
         recordTarget,
         options,
@@ -285,7 +285,7 @@ export const composeConditions = (
       // either contain a list of nested fields that must be matched, or a list of
       // conditions (such as `being`, `notBeing`) that must be matched, so we have to
       // start from the beginning again.
-      return composeConditions(schemas, schema, statementValues, instructionName, value, {
+      return composeConditions(schemas, schema, statementParams, instructionName, value, {
         ...options,
         fieldSlug: nestedFieldSlug,
       });
@@ -311,7 +311,7 @@ export const composeConditions = (
       composeConditions(
         schemas,
         schema,
-        statementValues,
+        statementParams,
         instructionName,
         filter,
         options,

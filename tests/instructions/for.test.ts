@@ -1,19 +1,21 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
 
 test('get single record for pre-defined condition', () => {
-  const query: Query = {
-    get: {
-      views: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        views: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -60,24 +62,30 @@ test('get single record for pre-defined condition', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
-    'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
-  );
-  expect(values).toMatchObject(['spa_m9h8oha94helaji']);
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+      params: ['spa_m9h8oha94helaji'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record for pre-defined condition containing sub query', () => {
-  const query: Query = {
-    get: {
-      views: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        views: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -134,24 +142,30 @@ test('get single record for pre-defined condition containing sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
-    `SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject(['acc_39h8fhe98hefah8']);
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+      params: ['acc_39h8fhe98hefah8'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record for pre-defined field containing sub query', () => {
-  const query: Query = {
-    get: {
-      views: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        views: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -206,10 +220,14 @@ test('get single record for pre-defined field containing sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
-    `SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject(['acc_39h8fhe98hefah8']);
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+      params: ['acc_39h8fhe98hefah8'],
+      returning: true,
+    },
+  ]);
 });

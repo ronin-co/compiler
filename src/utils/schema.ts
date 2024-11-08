@@ -5,6 +5,7 @@ import type {
   QueryInstructionType,
   QueryType,
   SetInstructions,
+  Statement,
   WithInstruction,
 } from '@/src/types/query';
 import type {
@@ -519,19 +520,16 @@ const getFieldStatement = (field: SchemaField): string | null => {
  * dependency statements are used to alter the SQLite database schema.
  *
  * @param schemas - A list of schemas.
- * @param statementValues - A collection of values that will automatically be
- * inserted into the query by SQLite.
  * @param queryDetails - The parsed details of the query that is being executed.
- * @param writeStatements - A list of SQL statements to be executed before the main
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  *
  * @returns Nothing.
  */
 export const addSchemaQueries = (
   schemas: Array<Schema>,
-  statementValues: Array<unknown> | null,
   queryDetails: ReturnType<typeof splitQuery>,
-  writeStatements: Array<string>,
+  dependencyStatements: Array<Statement>,
 ): Instructions & SetInstructions => {
   const {
     queryType,
@@ -610,6 +608,7 @@ export const addSchemaQueries = (
     // The query instructions that should be used to filter the indexed records.
     const filterQuery: WithInstruction = instructionList?.filter;
 
+    const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (queryType === 'create') {
@@ -620,24 +619,20 @@ export const addSchemaQueries = (
       if (filterQuery) {
         const targetSchema = getSchemaBySlug(schemas, schemaSlug);
 
-        const withStatement = handleWith(
-          schemas,
-          targetSchema,
-          statementValues,
-          filterQuery,
-        );
+        const withStatement = handleWith(schemas, targetSchema, params, filterQuery);
 
         statement += ` WHERE (${withStatement})`;
       }
     }
 
-    writeStatements.push(statement);
+    dependencyStatements.push({ statement, params });
     return queryInstructions;
   }
 
   if (kind === 'triggers') {
     const triggerName = convertToSnakeCase(slug);
 
+    const params: Array<unknown> = [];
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
@@ -676,7 +671,7 @@ export const addSchemaQueries = (
         const withStatement = handleWith(
           schemas,
           targetSchema,
-          statementValues,
+          params,
           filterQuery,
           tablePlaceholder,
         );
@@ -686,9 +681,9 @@ export const addSchemaQueries = (
 
       // Compile the effect queries into SQL statements.
       const effectStatements = effectQueries.map((effectQuery) => {
-        return compileQueryInput(effectQuery, schemas, statementValues, {
-          disableReturning: true,
-        }).readStatement;
+        return compileQueryInput(effectQuery, schemas, params, {
+          returning: false,
+        }).main.statement;
       });
 
       if (effectStatements.length > 1) statementParts.push('BEGIN');
@@ -698,7 +693,7 @@ export const addSchemaQueries = (
       statement += ` ${statementParts.join(' ')}`;
     }
 
-    writeStatements.push(statement);
+    dependencyStatements.push({ statement, params });
     return queryInstructions;
   }
 
@@ -726,7 +721,7 @@ export const addSchemaQueries = (
       }
     }
 
-    writeStatements.push(statement);
+    dependencyStatements.push({ statement, params: [] });
     return queryInstructions;
   }
 
@@ -751,7 +746,7 @@ export const addSchemaQueries = (
       statement += ` DROP COLUMN "${slug}"`;
     }
 
-    writeStatements.push(statement);
+    dependencyStatements.push({ statement, params: [] });
   }
 
   return queryInstructions;

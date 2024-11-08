@@ -6,7 +6,7 @@ import { handleOrderedBy } from '@/src/instructions/ordered-by';
 import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
-import type { Query } from '@/src/types/query';
+import type { Query, Statement } from '@/src/types/query';
 import type { PublicSchema } from '@/src/types/schema';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import {
@@ -22,7 +22,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  *
  * @param query - The RONIN query for which an SQL statement should be composed.
  * @param defaultSchemas - A list of schemas.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param options - Additional options to adjust the behavior of the statement generation.
  *
@@ -31,11 +31,19 @@ import { formatIdentifiers } from '@/src/utils/statement';
 export const compileQueryInput = (
   query: Query,
   defaultSchemas: Array<PublicSchema>,
-  statementValues: Array<unknown> | null,
+  // In order to prevent SQL injections and allow for faster query execution, we're not
+  // inserting any values into the SQL statement directly. Instead, we will pass them to
+  // SQLite's API later on, so that it can prepare an object that the database can
+  // execute in a safe and fast manner. SQLite allows strings, numbers, and booleans to
+  // be provided as values.
+  statementParams: Array<unknown> | null,
   options?: {
-    disableReturning?: boolean;
+    /**
+     * Whether the query should explicitly return records. Defaults to `true`.
+     */
+    returning?: boolean;
   },
-): { writeStatements: Array<string>; readStatement: string; values: Array<unknown> } => {
+): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
   const { queryType, querySchema, queryInstructions } = parsedQuery;
@@ -58,19 +66,20 @@ export const compileQueryInput = (
   // statement. Their output is not relevant for the main statement, as they are merely
   // used to update the database in a way that is required for the main read statement
   // to return the expected results.
-  const writeStatements: Array<string> = [];
+  const dependencyStatements: Array<Statement> = [];
+
+  const returning = options?.returning ?? true;
 
   // Generate additional dependency statements for meta queries, meaning queries that
   // affect the database schema.
   instructions = addSchemaQueries(
     schemas,
-    statementValues,
     { queryType, querySchema, queryInstructions: instructions },
-    writeStatements,
+    dependencyStatements,
   );
 
   // A list of columns that should be selected when querying records.
-  const columns = handleSelecting(schema, statementValues, {
+  const columns = handleSelecting(schema, statementParams, {
     selecting: instructions?.selecting,
     including: instructions?.including,
   });
@@ -108,7 +117,7 @@ export const compileQueryInput = (
       statement: including,
       rootTableSubQuery,
       rootTableName,
-    } = handleIncluding(schemas, statementValues, schema, instructions?.including, table);
+    } = handleIncluding(schemas, statementParams, schema, instructions?.including, table);
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
@@ -141,9 +150,9 @@ export const compileQueryInput = (
     const toStatement = handleTo(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       queryType,
-      writeStatements,
+      dependencyStatements,
       { with: instructions.with, to: instructions.to },
       isJoining ? table : undefined,
     );
@@ -159,7 +168,7 @@ export const compileQueryInput = (
     const withStatement = handleWith(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       instructions?.with,
       isJoining ? table : undefined,
     );
@@ -171,7 +180,7 @@ export const compileQueryInput = (
     const forStatement = handleFor(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       instructions?.for,
       isJoining ? table : undefined,
     );
@@ -217,7 +226,7 @@ export const compileQueryInput = (
 
     const beforeAndAfterStatement = handleBeforeOrAfter(
       schema,
-      statementValues,
+      statementParams,
       {
         before: instructions.before,
         after: instructions.after,
@@ -254,15 +263,23 @@ export const compileQueryInput = (
 
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
-  if (['create', 'set', 'drop'].includes(queryType) && !options?.disableReturning) {
+  if (['create', 'set', 'drop'].includes(queryType) && returning) {
     statement += 'RETURNING * ';
   }
 
-  const finalStatement = statement.trimEnd();
+  const mainStatement: Statement = {
+    statement: statement.trimEnd(),
+    params: statementParams || [],
+  };
+
+  // We are setting this property separately to make sure it doesn't even exist if the
+  // query doesn't return any output. This makes it easier for developers to visually
+  // distinguish queries that return output from those that don't, when looking at the
+  // output produced by the compiler.
+  if (returning) mainStatement.returning = true;
 
   return {
-    writeStatements,
-    readStatement: finalStatement,
-    values: statementValues || [],
+    dependencies: dependencyStatements,
+    main: mainStatement,
   };
 };

@@ -1,15 +1,17 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get single record with specific field', () => {
-  const query: Query = {
-    get: {
-      category: {
-        selecting: ['id'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        category: {
+          selecting: ['id'],
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -17,20 +19,27 @@ test('get single record with specific field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe('SELECT "id" FROM "categories" LIMIT 1');
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT "id" FROM "categories" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with specific fields', () => {
-  const query: Query = {
-    get: {
-      beach: {
-        selecting: ['id', 'name'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          selecting: ['id', 'name'],
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -44,8 +53,13 @@ test('get single record with specific fields', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe('SELECT "id", "name" FROM "beaches" LIMIT 1');
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT "id", "name" FROM "beaches" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
 });

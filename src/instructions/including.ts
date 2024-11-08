@@ -11,7 +11,7 @@ import { composeConditions } from '@/src/utils/statement';
  * joining records from other schemas.
  *
  * @param schemas - A list of schemas.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param schema - The schema being addressed in the query.
  * @param instruction - The `including` instruction provided in the current query.
@@ -21,7 +21,7 @@ import { composeConditions } from '@/src/utils/statement';
  */
 export const handleIncluding = (
   schemas: Array<Schema>,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   schema: Schema,
   instruction: Instructions['including'],
   rootTable?: string,
@@ -94,10 +94,10 @@ export const handleIncluding = (
           },
         },
         schemas,
-        statementValues,
+        statementParams,
       );
 
-      relatedTableSelector = `(${subSelect.readStatement})`;
+      relatedTableSelector = `(${subSelect.main.statement})`;
     }
 
     statement += `${joinType} JOIN ${relatedTableSelector} as ${tableAlias}`;
@@ -111,7 +111,7 @@ export const handleIncluding = (
       const subStatement = composeConditions(
         schemas,
         relatedSchema,
-        statementValues,
+        statementParams,
         'including',
         queryInstructions?.with as WithFilters,
         {

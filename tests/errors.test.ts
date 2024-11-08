@@ -1,19 +1,21 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import { RoninError } from '@/src/utils/helpers';
 
 test('get single record with non-existing field', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: 'elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -24,7 +26,7 @@ test('get single record with non-existing field', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -38,22 +40,24 @@ test('get single record with non-existing field', () => {
 });
 
 test('get single record with non-existing schema', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: 'elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -67,15 +71,17 @@ test('get single record with non-existing schema', () => {
 });
 
 test('get single record with empty `with` instruction', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {},
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {},
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -92,7 +98,7 @@ test('get single record with empty `with` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -106,16 +112,18 @@ test('get single record with empty `with` instruction', () => {
 });
 
 test('set single record with empty `to` instruction', () => {
-  const query: Query = {
-    set: {
-      account: {
-        with: {
-          handle: 'elaine',
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {},
         },
-        to: {},
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -126,7 +134,7 @@ test('set single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -140,13 +148,15 @@ test('set single record with empty `to` instruction', () => {
 });
 
 test('create single record with empty `to` instruction', () => {
-  const query: Query = {
-    create: {
-      account: {
-        to: {},
+  const queries: Array<Query> = [
+    {
+      create: {
+        account: {
+          to: {},
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -157,7 +167,7 @@ test('create single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -171,13 +181,15 @@ test('create single record with empty `to` instruction', () => {
 });
 
 test('get single record with `before` instruction', () => {
-  const query: Query = {
-    get: {
-      account: {
-        before: '1667575193779',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          before: '1667575193779',
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -188,7 +200,7 @@ test('get single record with `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -202,13 +214,15 @@ test('get single record with `before` instruction', () => {
 });
 
 test('get single record with `after` instruction', () => {
-  const query: Query = {
-    get: {
-      account: {
-        after: '1667575193779',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          after: '1667575193779',
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -219,7 +233,7 @@ test('get single record with `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -233,14 +247,16 @@ test('get single record with `after` instruction', () => {
 });
 
 test('get multiple records with `before` and `after` instruction', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        before: '1267575193779',
-        after: '1467575193779',
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          before: '1267575193779',
+          after: '1467575193779',
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -251,7 +267,7 @@ test('get multiple records with `before` and `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -265,13 +281,15 @@ test('get multiple records with `before` and `after` instruction', () => {
 });
 
 test('get multiple records with empty `before` instruction', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        before: '',
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          before: '',
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -282,7 +300,7 @@ test('get multiple records with empty `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -296,13 +314,15 @@ test('get multiple records with empty `before` instruction', () => {
 });
 
 test('get single record including parent schemas (one-to-many) without shortcut', () => {
-  const query: Query = {
-    get: {
-      account: {
-        including: ['members'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          including: ['members'],
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -316,7 +336,7 @@ test('get single record including parent schemas (one-to-many) without shortcut'
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -330,15 +350,17 @@ test('get single record including parent schemas (one-to-many) without shortcut'
 });
 
 test('get single record for pre-defined match without shortcut', () => {
-  const query: Query = {
-    get: {
-      account: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -352,7 +374,7 @@ test('get single record for pre-defined match without shortcut', () => {
   let error: Error | undefined;
 
   try {
-    compileQuery(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }

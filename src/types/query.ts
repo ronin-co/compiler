@@ -72,3 +72,9 @@ export type QueryType = z.infer<typeof QueryTypeEnum>;
 export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema>;
 
 export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
+
+export interface Statement {
+  statement: string;
+  params: Array<unknown>;
+  returning?: boolean;
+}

@@ -1,15 +1,17 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records limited to amount', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        limitedTo: 20,
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          limitedTo: 20,
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -17,10 +19,13 @@ test('get multiple records limited to amount', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
-    `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });

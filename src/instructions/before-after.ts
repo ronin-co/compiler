@@ -18,7 +18,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  * retrieved from RONIN.
  *
  * @param schema - The schema being addressed in the query.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
  * @param rootTable - The table for which the current query is being executed.
@@ -27,7 +27,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  */
 export const handleBeforeOrAfter = (
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   instructions: {
     before?: GetInstructions['before'];
     after?: GetInstructions['after'];
@@ -72,11 +72,11 @@ export const handleBeforeOrAfter = (
     const { field } = getFieldFromSchema(schema, key, 'orderedBy');
 
     if (field.type === 'boolean') {
-      return prepareStatementValue(statementValues, value === 'true');
+      return prepareStatementValue(statementParams, value === 'true');
     }
 
     if (field.type === 'number') {
-      return prepareStatementValue(statementValues, Number.parseInt(value));
+      return prepareStatementValue(statementParams, Number.parseInt(value));
     }
 
     if (field.type === 'date') {
@@ -85,7 +85,7 @@ export const handleBeforeOrAfter = (
       return `'${new Date(Number.parseInt(value)).toJSON()}'`;
     }
 
-    return prepareStatementValue(statementValues, value);
+    return prepareStatementValue(statementParams, value);
   });
 
   const compareOperators: Array<'>' | '<'> = [

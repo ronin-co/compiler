@@ -1,17 +1,19 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records ordered by field', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        orderedBy: {
-          ascending: ['handle'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          orderedBy: {
+            ascending: ['handle'],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -25,24 +27,29 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
-    `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get multiple records ordered by multiple fields', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        orderedBy: {
-          ascending: ['handle', 'name'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          orderedBy: {
+            ascending: ['handle', 'name'],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -60,10 +67,13 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
-    `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });

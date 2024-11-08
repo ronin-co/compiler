@@ -55,7 +55,7 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
  *
  * @param schemas - A list of schemas.
  * @param schema - The schema being addressed in the query.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `with` instruction included in a query.
  * @param rootTable - The table for which the current query is being executed.
@@ -65,14 +65,14 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
 export const handleWith = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   instruction: GetInstructions['with'],
   rootTable?: string,
 ): string => {
   const subStatement = composeConditions(
     schemas,
     schema,
-    statementValues,
+    statementParams,
     'with',
     instruction as WithFilters,
     { rootTable },

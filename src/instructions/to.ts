@@ -1,4 +1,4 @@
-import type { Query, SetInstructions } from '@/src/types/query';
+import type { Query, SetInstructions, Statement } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
@@ -22,10 +22,10 @@ import { composeConditions } from '@/src/utils/statement';
  *
  * @param schemas - A list of schemas.
  * @param schema - The schema being addressed in the query.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param queryType - The type of query that is being executed.
- * @param writeStatements - A list of SQL statements to be executed before the main
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  * @param instructions - The `to` and `with` instruction included in the query.
  * @param rootTable - The table for which the current query is being executed.
@@ -35,9 +35,9 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleTo = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   queryType: 'create' | 'set',
-  writeStatements: Array<string>,
+  dependencyStatements: Array<Statement>,
   instructions: {
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
@@ -123,7 +123,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, statementValues).readStatement;
+    return compileQueryInput(subQuery, schemas, statementParams).main.statement;
   }
 
   // Assign default field values to the provided instruction.
@@ -147,14 +147,17 @@ export const handleTo = (
         fieldDetails.field,
       );
 
-      const composeStatement = (subQueryType: 'create' | 'drop', value?: unknown) => {
+      const composeStatement = (
+        subQueryType: 'create' | 'drop',
+        value?: unknown,
+      ): Statement => {
         const source =
           queryType === 'create' ? { id: toInstruction.id } : withInstruction;
         const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
 
-        const { readStatement } = compileQueryInput(
+        return compileQueryInput(
           {
             [subQueryType]: {
               [associativeSchemaSlug]:
@@ -164,26 +167,24 @@ export const handleTo = (
             },
           },
           schemas,
-          statementValues,
-          { disableReturning: true },
-        );
-
-        return readStatement;
+          [],
+          { returning: false },
+        ).main;
       };
 
       if (Array.isArray(fieldValue)) {
-        writeStatements.push(composeStatement('drop'));
+        dependencyStatements.push(composeStatement('drop'));
 
         for (const record of fieldValue) {
-          writeStatements.push(composeStatement('create', record));
+          dependencyStatements.push(composeStatement('create', record));
         }
       } else if (isObject(fieldValue)) {
         for (const recordToAdd of fieldValue.containing || []) {
-          writeStatements.push(composeStatement('create', recordToAdd));
+          dependencyStatements.push(composeStatement('create', recordToAdd));
         }
 
         for (const recordToRemove of fieldValue.notContaining || []) {
-          writeStatements.push(composeStatement('drop', recordToRemove));
+          dependencyStatements.push(composeStatement('drop', recordToRemove));
         }
       }
     }
@@ -192,7 +193,7 @@ export const handleTo = (
   let statement = composeConditions(
     schemas,
     schema,
-    statementValues,
+    statementParams,
     'to',
     toInstruction,
     {
@@ -205,7 +206,7 @@ export const handleTo = (
     const deepStatement = composeConditions(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       'to',
       toInstruction,
       {

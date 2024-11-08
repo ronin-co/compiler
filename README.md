@@ -39,24 +39,30 @@ You will just need to make sure that, once you [create a pull request](https://d
 The programmatic API of the RONIN compiler looks like this:
 
 ```typescript
-import { compileQuery } from '@ronin/compiler';
+import {
+  compileQueries,
 
-const query = {
+  type Query,
+  type Schema,
+  type Statement
+} from '@ronin/compiler';
+
+const queries: Array<Query> = [{
   get: {
-    accounts: null,
-  },
-};
+    accounts: null
+  }
+}];
 
-const schemas = [
-  {
-    slug: 'account',
-  },
-];
+const schemas: Array<Schema> = [{
+  slug: 'account'
+}];
 
-const { writeStatements, readStatement } = compileQuery(query, schemas);
-
-console.log(readStatement);
-// SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101
+const statements: Array<Statements> = compileQueries(queries, schemas);
+// [{
+//   statement: 'SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101',
+//   params: [],
+//   returning: true,
+// }]
 ```
 
 #### Options
@@ -64,7 +70,7 @@ console.log(readStatement);
 To fine-tune the behavior of the compiler, you can pass the following options:
 
 ```typescript
-compileQuery(query, schemas, {
+compileQueries(queries, schemas, {
   // Instead of returning an array of values for every statement (which allows for
   // preventing SQL injections), all values are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.

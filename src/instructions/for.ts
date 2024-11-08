@@ -10,7 +10,7 @@ import { composeConditions } from '@/src/utils/statement';
  *
  * @param schemas - A list of schemas.
  * @param schema - The schema associated with the current query.
- * @param statementValues - A collection of values that will automatically be
+ * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `for` instruction provided in the current query.
  * @param rootTable - The table for which the current query is being executed.
@@ -20,7 +20,7 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleFor = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown> | null,
+  statementParams: Array<unknown> | null,
   instruction: GetInstructions['for'],
   rootTable?: string,
 ) => {
@@ -48,7 +48,7 @@ export const handleFor = (
     const subStatement = composeConditions(
       schemas,
       schema,
-      statementValues,
+      statementParams,
       'for',
       replacedForFilter as WithFilters,
       { rootTable },
