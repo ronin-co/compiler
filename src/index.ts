@@ -25,7 +25,11 @@ export const compileQueries = (
   const mainStatements: Array<Statement> = [];
 
   for (const query of queries) {
-    const result = compileQueryInput(query, schemaList, options?.inlineValues ? null : []);
+    const result = compileQueryInput(
+      query,
+      schemaList,
+      options?.inlineValues ? null : [],
+    );
 
     // Every query can only produce one main statement (which can return output), but
     // multiple dependency statements (which must be executed before the main one, but

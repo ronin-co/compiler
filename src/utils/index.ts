@@ -7,14 +7,9 @@ import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
 import type { Query, Statement } from '@/src/types/query';
-import type { PublicSchema, Schema } from '@/src/types/schema';
+import type { Schema } from '@/src/types/schema';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import {
-  addSchemaQueries,
-  addSystemSchemas,
-  getSchemaBySlug,
-  getTableForSchema,
-} from '@/src/utils/schema';
+import { addSchemaQueries, getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
