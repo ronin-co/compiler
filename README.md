@@ -39,7 +39,13 @@ You will just need to make sure that, once you [create a pull request](https://d
 The programmatic API of the RONIN compiler looks like this:
 
 ```typescript
-import { compileQueries, type Query, type Schema } from '@ronin/compiler';
+import {
+  compileQueries,
+
+  type Query,
+  type Schema,
+  type Statement
+  } from '@ronin/compiler';
 
 const queries: Array<Query> = [{
   get: {
@@ -51,7 +57,7 @@ const schemas: Array<Schema> = [{
   slug: 'account'
 }];
 
-const statements = compileQueries(queries, schemas);
+const statements: Array<Statements> = compileQueries(queries, schemas);
 
 console.log(statements);
 // [{

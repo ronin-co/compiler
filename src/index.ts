@@ -48,4 +48,4 @@ export type {
 } from '@/src/types/schema';
 
 // Expose query types
-export * from '@/src/types/query';
+export type { Query, Statement } from '@/src/types/query';
