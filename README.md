@@ -51,9 +51,9 @@ const schemas: Array<Schema> = [{
   slug: 'account'
 }];
 
-const [{ writeStatements, readStatement }] = compileQueries(queries, schemas);
+const { readStatements } = compileQueries(queries, schemas);
 
-console.log(readStatement);
+console.log(readStatements[0]);
 // SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101
 ```
 
