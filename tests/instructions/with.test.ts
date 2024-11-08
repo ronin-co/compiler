@@ -582,7 +582,8 @@ test('get single record with reference field', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'SELECT * FROM "members" WHERE ("account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1)) LIMIT 1',
+      statement:
+        'SELECT * FROM "members" WHERE ("account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1)) LIMIT 1',
       params: ['elaine'],
       returning: true,
     },
@@ -709,7 +710,7 @@ test('get single record with json field', () => {
       statement: `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
       params: ['receipts@ronin.co'],
       returning: true,
-    }
+    },
   ]);
 });
 
@@ -753,8 +754,8 @@ test('get single record with one of fields', () => {
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "email" = ?2) LIMIT 1`,
       params: ['elaine', 'elaine@site.co'],
-      returning: true
-    }
+      returning: true,
+    },
   ]);
 });
 
@@ -796,8 +797,8 @@ test('get single record with one of field conditions', () => {
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1`,
       params: ['elaine', 'david'],
-      returning: true
-    }
+      returning: true,
+    },
   ]);
 });
 
@@ -834,8 +835,8 @@ test('get single record with one of field values', () => {
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1`,
       params: ['elaine', 'david'],
-      returning: true
-    }
+      returning: true,
+    },
   ]);
 });
 
@@ -876,8 +877,8 @@ test('get single record with one of field values in group', () => {
     {
       statement: `SELECT * FROM "teams" WHERE ("billing.currency" = ?1 OR "billing.currency" = ?2) LIMIT 1`,
       params: ['EUR', 'USD'],
-      returning: true
-    }
+      returning: true,
+    },
   ]);
 });
 
@@ -917,8 +918,8 @@ test('get single record with name identifier', () => {
     {
       statement: `SELECT * FROM "accounts" WHERE ("name" = ?1) LIMIT 1`,
       params: ['Elaine'],
-      returning: true
-    }
+      returning: true,
+    },
   ]);
 });
 
@@ -958,7 +959,7 @@ test('get single record with slug identifier', () => {
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1`,
       params: ['elaine'],
-      returning: true
-    }
+      returning: true,
+    },
   ]);
 });

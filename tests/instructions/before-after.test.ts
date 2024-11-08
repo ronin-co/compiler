@@ -172,7 +172,7 @@ test('get multiple records before cursor ordered by empty string field', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE ((IFNULL("handle", -1e999) < ?1 COLLATE NOCASE) OR ("handle" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "handle" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "accounts" WHERE (("handle" IS NOT NULL) OR ("handle" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "handle" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 101`,
       params: [],
       returning: true,
     },
