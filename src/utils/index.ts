@@ -274,8 +274,8 @@ export const compileQueryInput = (
 
   // We are setting this property separately to make sure it doesn't even exist if the
   // query doesn't return any output. This makes it easier for developers to visually
-  // distinguish between queries that return output and those that don't, when looking at
-  // the output produced by the compiler.
+  // distinguish queries that return output from those that don't, when looking at the
+  // output produced by the compiler.
   if (returning) mainStatement.returning = true;
 
   return {

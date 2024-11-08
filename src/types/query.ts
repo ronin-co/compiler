@@ -78,5 +78,3 @@ export interface Statement {
   params: Array<unknown>;
   returning?: boolean;
 }
-
-export type Statements = Array<Statement>;
