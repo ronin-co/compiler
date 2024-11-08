@@ -663,7 +663,8 @@ export const addSchemaQueries = (
   let statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'schemas') {
-    const fields = [...SYSTEM_FIELDS];
+    const providedFields = instructionList?.fields || [];
+    const fields = [...SYSTEM_FIELDS, ...providedFields];
 
     if (queryType === 'create') {
       const columns = fields.map(getFieldStatement).filter(Boolean);
