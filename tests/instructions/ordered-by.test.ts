@@ -27,9 +27,9 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);
@@ -64,9 +64,9 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);

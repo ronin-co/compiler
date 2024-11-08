@@ -35,7 +35,7 @@ export const compileQueryInput = (
   options?: {
     disableReturning?: boolean;
   },
-): { writeStatements: Array<string>; readStatement: string; values: Array<unknown> } => {
+): { writeStatements: Array<string>; readStatement: string } => {
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
   const { queryType, querySchema, queryInstructions } = parsedQuery;
@@ -263,6 +263,5 @@ export const compileQueryInput = (
   return {
     writeStatements,
     readStatement: finalStatement,
-    values: statementValues || [],
   };
 };

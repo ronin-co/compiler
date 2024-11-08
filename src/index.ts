@@ -17,7 +17,11 @@ export const compileQueries = (
   options?: {
     inlineValues?: boolean;
   },
-): Array<ReturnType<typeof compileQueryInput>> => {
+): {
+  writeStatements: Array<string>;
+  readStatements: Array<string>;
+  values: Array<unknown>;
+} => {
   // In order to prevent SQL injections and allow for faster query execution, we're not
   // inserting any values into the SQL statement directly. Instead, we will pass them to
   // SQLite's API later on, so that it can prepare an object that the database can
@@ -25,7 +29,20 @@ export const compileQueries = (
   // be provided as values.
   const statementValues = options?.inlineValues ? null : [];
 
-  return queries.map((query) => compileQueryInput(query, schemas, statementValues));
+  const writeStatements: Array<string> = [];
+  const readStatements: Array<string> = [];
+
+  for (const query of queries) {
+    const result = compileQueryInput(query, schemas, statementValues);
+
+    // Every query can only produce one read statement, but multiple write statements.
+    // This is essential because the logic that transforms the output of queries must be
+    // able to associate one RONIN query with one SQL statement.
+    writeStatements.push(...result.writeStatements);
+    readStatements.push(result.readStatement);
+  }
+
+  return { writeStatements, readStatements, values: statementValues || [] };
 };
 
 // Expose schema types

@@ -20,9 +20,9 @@ test('get multiple records before cursor', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE (("ronin.createdAt" > '2022-11-04T15:19:53.779Z')) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);
@@ -54,9 +54,9 @@ test('get multiple records before cursor ordered by string field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE ((IFNULL("handle", -1e999) < ?1 COLLATE NOCASE) OR ("handle" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject(['elaine']);
@@ -88,9 +88,9 @@ test('get multiple records before cursor ordered by boolean field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE ((IFNULL("active", -1e999) < ?1) OR ("active" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "active" ASC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([1]);
@@ -122,9 +122,9 @@ test('get multiple records before cursor ordered by number field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE ((IFNULL("position", -1e999) < ?1) OR ("position" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "position" ASC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([2]);
@@ -156,9 +156,9 @@ test('get multiple records before cursor ordered by empty string field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE (("handle" IS NOT NULL) OR ("handle" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "handle" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);
@@ -190,9 +190,9 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE (("active" IS NOT NULL) OR ("active" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "active" DESC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);
@@ -224,9 +224,9 @@ test('get multiple records before cursor ordered by empty number field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE (("position" IS NOT NULL) OR ("position" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "position" DESC, "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);
@@ -258,9 +258,9 @@ test('get multiple records before cursor while filtering', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "accounts" WHERE (("email" IS NULL) AND (("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject([]);

@@ -32,9 +32,9 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1',
   );
   expect(values).toMatchObject([]);
@@ -68,9 +68,9 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_posts_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")',
   );
   expect(values).toMatchObject([]);
@@ -103,9 +103,9 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")',
   );
   expect(values).toMatchObject([]);
@@ -138,9 +138,9 @@ test('get single record including unrelated record without filter', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1',
   );
   expect(values).toMatchObject([]);
@@ -189,9 +189,9 @@ test('get single record including unrelated record with filter', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1',
   );
   expect(values).toMatchObject([]);
@@ -224,9 +224,9 @@ test('get single record including unrelated records without filter', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1',
   );
   expect(values).toMatchObject([]);
@@ -275,9 +275,9 @@ test('get single record including unrelated records with filter', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")',
   );
   expect(values).toMatchObject([]);
@@ -314,9 +314,9 @@ test('get single record including unrelated ordered record', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC LIMIT 1) as including_team LIMIT 1`,
   );
   expect(values).toMatchObject([]);
@@ -353,9 +353,9 @@ test('get single record including unrelated ordered records', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC, "ronin.createdAt" DESC LIMIT 101) as including_teams LIMIT 1`,
   );
   expect(values).toMatchObject([]);

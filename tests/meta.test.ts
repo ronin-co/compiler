@@ -32,13 +32,13 @@ test('create new schema', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT)',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
   );
 
@@ -78,11 +78,11 @@ test('update existing schema', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "identifiers.name" = ?6, "identifiers.slug" = ?7, "ronin.updatedAt" = ?8 WHERE ("slug" = ?9) RETURNING *',
   );
 
@@ -114,11 +114,11 @@ test('drop existing schema', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['DROP TABLE "accounts"']);
 
-  expect(readStatement).toBe('DELETE FROM "schemas" WHERE ("slug" = ?1) RETURNING *');
+  expect(readStatements[0]).toBe('DELETE FROM "schemas" WHERE ("slug" = ?1) RETURNING *');
 
   expect(values[0]).toBe('account');
 });
@@ -140,11 +140,11 @@ test('create new field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" ADD COLUMN "email" TEXT']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "fields" ("schema", "slug", "type", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
   );
 
@@ -179,13 +179,13 @@ test('create new reference field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "fields" ("schema", "slug", "type", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "schemas" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7) RETURNING *',
   );
 
@@ -224,13 +224,13 @@ test('create new reference field with actions', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "fields" ("schema", "slug", "type", "target", "actions.onDelete", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "schemas" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7, ?8) RETURNING *',
   );
 
@@ -268,13 +268,13 @@ test('update existing field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
   );
 
@@ -302,11 +302,11 @@ test('drop existing field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" DROP COLUMN "email"']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'DELETE FROM "fields" WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
   );
 
@@ -330,11 +330,11 @@ test('create new index', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['CREATE INDEX "index_name" ON "accounts"']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "indexes" ("slug", "schema", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5) RETURNING *',
   );
 
@@ -379,13 +379,13 @@ test('create new index with filters', () => {
     },
   ];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE INDEX "index_name" ON "accounts" WHERE (("email" LIKE %?1))',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "indexes" ("slug", "schema", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?2, (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
   );
 
@@ -419,11 +419,11 @@ test('create new unique index', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['CREATE UNIQUE INDEX "index_name" ON "accounts"']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "indexes" ("slug", "schema", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
   );
 
@@ -457,11 +457,11 @@ test('drop existing index', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['DROP INDEX "index_name"']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'DELETE FROM "indexes" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
   );
 
@@ -507,13 +507,13 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, (SELECT "id" FROM "schemas" WHERE ("slug" = ?6) LIMIT 1), ?7, IIF("effects" IS NULL, ?8, json_patch("effects", ?8)), ?9, ?10, ?11) RETURNING *',
   );
 
@@ -590,13 +590,13 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?9, (SELECT "id" FROM "schemas" WHERE ("slug" = ?10) LIMIT 1), ?11, IIF("effects" IS NULL, ?12, json_patch("effects", ?12)), ?13, ?14, ?15) RETURNING *',
   );
 
@@ -676,13 +676,13 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?6, (SELECT "id" FROM "schemas" WHERE ("slug" = ?7) LIMIT 1), ?8, IIF("effects" IS NULL, ?9, json_patch("effects", ?9)), ?10, ?11, ?12) RETURNING *',
   );
 
@@ -754,13 +754,13 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), ?5, ?6, ?7) RETURNING *',
   );
 
@@ -832,13 +832,13 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
   ]);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?7, (SELECT "id" FROM "schemas" WHERE ("slug" = ?8) LIMIT 1), ?9, IIF("effects" IS NULL, ?10, json_patch("effects", ?10)), IIF("filter" IS NULL, ?11, json_patch("filter", ?11)), ?12, ?13, ?14) RETURNING *',
   );
 
@@ -883,11 +883,11 @@ test('drop existing trigger', () => {
 
   const schemas: Array<Schema> = [];
 
-  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
+  const { writeStatements, readStatements, values } = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['DROP TRIGGER "trigger_name"']);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'DELETE FROM "triggers" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
   );
 

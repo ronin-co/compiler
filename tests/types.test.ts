@@ -17,9 +17,9 @@ test('get single record', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe('SELECT * FROM "accounts" LIMIT 1');
+  expect(readStatements[0]).toBe('SELECT * FROM "accounts" LIMIT 1');
   expect(values).toMatchObject([]);
 });
 
@@ -48,9 +48,11 @@ test('drop single record', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe('DELETE FROM "accounts" WHERE ("handle" = ?1) RETURNING *');
+  expect(readStatements[0]).toBe(
+    'DELETE FROM "accounts" WHERE ("handle" = ?1) RETURNING *',
+  );
   expect(values).toMatchObject(['elaine']);
 });
 
@@ -69,9 +71,9 @@ test('count multiple records', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT COUNT(*) FROM "accounts" ORDER BY "ronin.createdAt" DESC`,
   );
   expect(values).toMatchObject([]);

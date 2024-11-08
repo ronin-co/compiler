@@ -62,9 +62,9 @@ test('get single record for pre-defined condition', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
   );
   expect(values).toMatchObject(['spa_m9h8oha94helaji']);
@@ -138,9 +138,9 @@ test('get single record for pre-defined condition containing sub query', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject(['acc_39h8fhe98hefah8']);
@@ -212,9 +212,9 @@ test('get single record for pre-defined field containing sub query', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe(
+  expect(readStatements[0]).toBe(
     `SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
   );
   expect(values).toMatchObject(['acc_39h8fhe98hefah8']);

@@ -19,9 +19,9 @@ test('get single record with specific field', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe('SELECT "id" FROM "categories" LIMIT 1');
+  expect(readStatements[0]).toBe('SELECT "id" FROM "categories" LIMIT 1');
   expect(values).toMatchObject([]);
 });
 
@@ -48,8 +48,8 @@ test('get single record with specific fields', () => {
     },
   ];
 
-  const [{ readStatement, values }] = compileQueries(queries, schemas);
+  const { readStatements, values } = compileQueries(queries, schemas);
 
-  expect(readStatement).toBe('SELECT "id", "name" FROM "beaches" LIMIT 1');
+  expect(readStatements[0]).toBe('SELECT "id", "name" FROM "beaches" LIMIT 1');
   expect(values).toMatchObject([]);
 });
