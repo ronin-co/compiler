@@ -521,7 +521,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
  *
  * @param schemas - A list of schemas.
  * @param queryDetails - The parsed details of the query that is being executed.
- * @param writeStatements - A list of SQL statements to be executed before the main
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  *
  * @returns Nothing.
@@ -529,7 +529,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
 export const addSchemaQueries = (
   schemas: Array<Schema>,
   queryDetails: ReturnType<typeof splitQuery>,
-  writeStatements: Array<Statement>,
+  dependencyStatements: Array<Statement>,
 ): Instructions & SetInstructions => {
   const {
     queryType,
@@ -625,7 +625,7 @@ export const addSchemaQueries = (
       }
     }
 
-    writeStatements.push({ statement, params });
+    dependencyStatements.push({ statement, params });
     return queryInstructions;
   }
 
@@ -683,7 +683,7 @@ export const addSchemaQueries = (
       const effectStatements = effectQueries.map((effectQuery) => {
         return compileQueryInput(effectQuery, schemas, params, {
           returning: false,
-        }).mainStatement.statement;
+        }).main.statement;
       });
 
       if (effectStatements.length > 1) statementParts.push('BEGIN');
@@ -693,7 +693,7 @@ export const addSchemaQueries = (
       statement += ` ${statementParts.join(' ')}`;
     }
 
-    writeStatements.push({ statement, params });
+    dependencyStatements.push({ statement, params });
     return queryInstructions;
   }
 
@@ -721,7 +721,7 @@ export const addSchemaQueries = (
       }
     }
 
-    writeStatements.push({ statement, params: [] });
+    dependencyStatements.push({ statement, params: [] });
     return queryInstructions;
   }
 
@@ -746,7 +746,7 @@ export const addSchemaQueries = (
       statement += ` DROP COLUMN "${slug}"`;
     }
 
-    writeStatements.push({ statement, params: [] });
+    dependencyStatements.push({ statement, params: [] });
   }
 
   return queryInstructions;

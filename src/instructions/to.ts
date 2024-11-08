@@ -25,7 +25,7 @@ import { composeConditions } from '@/src/utils/statement';
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param queryType - The type of query that is being executed.
- * @param writeStatements - A list of SQL statements to be executed before the main
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  * @param instructions - The `to` and `with` instruction included in the query.
  * @param rootTable - The table for which the current query is being executed.
@@ -37,7 +37,7 @@ export const handleTo = (
   schema: Schema,
   statementParams: Array<unknown> | null,
   queryType: 'create' | 'set',
-  writeStatements: Array<Statement>,
+  dependencyStatements: Array<Statement>,
   instructions: {
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
@@ -123,7 +123,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, statementParams).mainStatement.statement;
+    return compileQueryInput(subQuery, schemas, statementParams).main.statement;
   }
 
   // Assign default field values to the provided instruction.
@@ -157,7 +157,7 @@ export const handleTo = (
 
         if (value) recordDetails.target = value;
 
-        const { mainStatement } = compileQueryInput(
+        return compileQueryInput(
           {
             [subQueryType]: {
               [associativeSchemaSlug]:
@@ -169,24 +169,22 @@ export const handleTo = (
           schemas,
           [],
           { returning: false },
-        );
-
-        return mainStatement;
+        ).main;
       };
 
       if (Array.isArray(fieldValue)) {
-        writeStatements.push(composeStatement('drop'));
+        dependencyStatements.push(composeStatement('drop'));
 
         for (const record of fieldValue) {
-          writeStatements.push(composeStatement('create', record));
+          dependencyStatements.push(composeStatement('create', record));
         }
       } else if (isObject(fieldValue)) {
         for (const recordToAdd of fieldValue.containing || []) {
-          writeStatements.push(composeStatement('create', recordToAdd));
+          dependencyStatements.push(composeStatement('create', recordToAdd));
         }
 
         for (const recordToRemove of fieldValue.notContaining || []) {
-          writeStatements.push(composeStatement('drop', recordToRemove));
+          dependencyStatements.push(composeStatement('drop', recordToRemove));
         }
       }
     }

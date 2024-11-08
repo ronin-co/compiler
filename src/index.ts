@@ -27,8 +27,8 @@ export const compileQueries = (
     // Every query can only produce one main statement (which can return output), but
     // multiple dependency statements (which must be executed before the main one, but
     // cannot return output themselves).
-    dependencyStatements.push(...result.dependencyStatements);
-    mainStatements.push(result.mainStatement);
+    dependencyStatements.push(...result.dependencies);
+    mainStatements.push(result.main);
   }
 
   // First return all dependency statements, and then all main statements. This is

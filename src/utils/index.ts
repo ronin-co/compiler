@@ -43,7 +43,7 @@ export const compileQueryInput = (
      */
     returning?: boolean;
   },
-): { dependencyStatements: Array<Statement>; mainStatement: Statement } => {
+): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
   const { queryType, querySchema, queryInstructions } = parsedQuery;
@@ -66,7 +66,7 @@ export const compileQueryInput = (
   // statement. Their output is not relevant for the main statement, as they are merely
   // used to update the database in a way that is required for the main read statement
   // to return the expected results.
-  const writeStatements: Array<Statement> = [];
+  const dependencyStatements: Array<Statement> = [];
 
   const returning = options?.returning ?? true;
 
@@ -75,7 +75,7 @@ export const compileQueryInput = (
   instructions = addSchemaQueries(
     schemas,
     { queryType, querySchema, queryInstructions: instructions },
-    writeStatements,
+    dependencyStatements,
   );
 
   // A list of columns that should be selected when querying records.
@@ -152,7 +152,7 @@ export const compileQueryInput = (
       schema,
       statementParams,
       queryType,
-      writeStatements,
+      dependencyStatements,
       { with: instructions.with, to: instructions.to },
       isJoining ? table : undefined,
     );
@@ -279,7 +279,7 @@ export const compileQueryInput = (
   if (returning) mainStatement.returning = true;
 
   return {
-    dependencyStatements: writeStatements,
-    mainStatement,
+    dependencies: dependencyStatements,
+    main: mainStatement,
   };
 };

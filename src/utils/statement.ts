@@ -103,7 +103,7 @@ const composeFieldValues = (
         (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
         schemas,
         statementParams,
-      ).mainStatement.statement
+      ).main.statement
     })`;
   } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
     let targetTable = `"${options.rootTable}"`;
