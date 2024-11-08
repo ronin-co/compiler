@@ -6,9 +6,8 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
 
-import { compileQueryInput } from '@/src/index';
 import {
   WITH_CONDITIONS,
   type WithCondition,
@@ -17,6 +16,7 @@ import {
   type WithValueOptions,
 } from '@/src/instructions/with';
 import type { Schema } from '@/src/types/schema';
+import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug } from '@/src/utils/schema';
 import { getFieldFromSchema } from '@/src/utils/schema';
 

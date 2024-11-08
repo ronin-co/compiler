@@ -1,6 +1,6 @@
 import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RoninError } from '@/src/utils';
+import { RoninError } from '@/src/utils/helpers';
 import { getFieldFromSchema } from '@/src/utils/schema';
 import { prepareStatementValue } from '@/src/utils/statement';
 

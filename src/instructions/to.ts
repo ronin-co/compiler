@@ -1,4 +1,3 @@
-import { compileQueryInput } from '@/src/index';
 import type { Query, SetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import {
@@ -8,7 +7,8 @@ import {
   generateRecordId,
   isObject,
   splitQuery,
-} from '@/src/utils';
+} from '@/src/utils/helpers';
+import { compileQueryInput } from '@/src/utils/index';
 import {
   composeAssociationSchemaSlug,
   getFieldFromSchema,

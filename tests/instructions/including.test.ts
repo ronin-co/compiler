@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueryInput } from '@/src/index';
+import { type Schema, compileQuery } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
 
 test('get single record including parent record (many-to-one)', () => {
   const query: Query = {
@@ -30,7 +30,7 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1',
@@ -64,7 +64,7 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_posts_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")',
@@ -97,7 +97,7 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")',
@@ -130,7 +130,7 @@ test('get single record including unrelated record without filter', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1',
@@ -179,7 +179,7 @@ test('get single record including unrelated record with filter', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1',
@@ -212,7 +212,7 @@ test('get single record including unrelated records without filter', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1',
@@ -261,7 +261,7 @@ test('get single record including unrelated records with filter', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")',
@@ -298,7 +298,7 @@ test('get single record including unrelated ordered record', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC LIMIT 1) as including_team LIMIT 1`,
@@ -335,7 +335,7 @@ test('get single record including unrelated ordered records', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC, "ronin.createdAt" DESC LIMIT 101) as including_teams LIMIT 1`,

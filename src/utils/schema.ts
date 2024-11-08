@@ -1,4 +1,3 @@
-import { compileQueryInput } from '@/src/index';
 import { handleWith } from '@/src/instructions/with';
 import type {
   Instructions,
@@ -21,7 +20,8 @@ import {
   convertToSnakeCase,
   findInObject,
   type splitQuery,
-} from '@/src/utils';
+} from '@/src/utils/helpers';
+import { compileQueryInput } from '@/src/utils/index';
 import title from 'title';
 
 /**

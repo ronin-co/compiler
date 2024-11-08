@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueryInput } from '@/src/index';
+import { type Schema, compileQuery } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RECORD_ID_REGEX, RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils';
+import { RECORD_ID_REGEX, RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('set single record to new string field', () => {
   const query: Query = {
@@ -30,7 +30,7 @@ test('set single record to new string field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -81,7 +81,7 @@ test('set single record to new one-cardinality reference field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -131,7 +131,7 @@ test('set single record to new many-cardinality reference field', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'DELETE FROM "ronin_posts_comments" WHERE ("source" = ?1)',
@@ -197,7 +197,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'INSERT INTO "ronin_posts_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
@@ -261,7 +261,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'DELETE FROM "ronin_posts_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
@@ -309,7 +309,7 @@ test('set single record to new json field with array', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -352,7 +352,7 @@ test('set single record to new json field with empty array', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -398,7 +398,7 @@ test('set single record to new json field with object', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -441,7 +441,7 @@ test('set single record to new json field with empty object', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -486,7 +486,7 @@ test('set single record to new grouped string field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -543,7 +543,7 @@ test('set single record to new grouped reference field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -588,7 +588,7 @@ test('set single record to new grouped json field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "billing.invoiceRecipients" = IIF("billing.invoiceRecipients" IS NULL, ?1, json_patch("billing.invoiceRecipients", ?1)), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -649,7 +649,7 @@ test('set single record to result of nested query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -698,7 +698,7 @@ test('create multiple records with nested sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT * FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -751,7 +751,7 @@ test('create multiple records with nested sub query including additional fields'
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -798,7 +798,7 @@ test('create multiple records with nested sub query and specific fields', () => 
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -851,7 +851,7 @@ test('create multiple records with nested sub query and specific meta fields', (
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -906,7 +906,7 @@ test('try to create multiple records with nested sub query including non-existen
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }

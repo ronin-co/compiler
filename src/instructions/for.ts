@@ -1,7 +1,7 @@
 import type { WithFilters } from '@/src/instructions/with';
 import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, findInObject } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, RoninError, findInObject } from '@/src/utils/helpers';
 import { composeConditions } from '@/src/utils/statement';
 
 /**

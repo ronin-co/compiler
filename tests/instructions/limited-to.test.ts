@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueryInput } from '@/src/index';
+import { type Schema, compileQuery } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records limited to amount', () => {
@@ -17,7 +17,7 @@ test('get multiple records limited to amount', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueryInput(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,

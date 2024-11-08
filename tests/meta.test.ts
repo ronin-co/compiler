@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueryInput } from '@/src/index';
+import { type Schema, compileQuery } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils';
-import { RECORD_ID_REGEX } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
+import { RECORD_ID_REGEX } from '@/src/utils/helpers';
 
 test('create new schema', () => {
   const fields = [
@@ -30,7 +30,7 @@ test('create new schema', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT)',
@@ -74,7 +74,7 @@ test('update existing schema', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
@@ -108,7 +108,7 @@ test('drop existing schema', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['DROP TABLE "accounts"']);
 
@@ -132,7 +132,7 @@ test('create new field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" ADD COLUMN "email" TEXT']);
 
@@ -169,7 +169,7 @@ test('create new reference field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
@@ -212,7 +212,7 @@ test('create new reference field with actions', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
@@ -254,7 +254,7 @@ test('update existing field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
@@ -286,7 +286,7 @@ test('drop existing field', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" DROP COLUMN "email"']);
 
@@ -312,7 +312,7 @@ test('create new index', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['CREATE INDEX "index_name" ON "accounts"']);
 
@@ -359,7 +359,7 @@ test('create new index with filters', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE INDEX "index_name" ON "accounts" WHERE (("email" LIKE %?1))',
@@ -397,7 +397,7 @@ test('create new unique index', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['CREATE UNIQUE INDEX "index_name" ON "accounts"']);
 
@@ -433,7 +433,7 @@ test('drop existing index', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['DROP INDEX "index_name"']);
 
@@ -481,7 +481,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
@@ -562,7 +562,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
@@ -646,7 +646,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
@@ -722,7 +722,7 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
@@ -798,7 +798,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
@@ -847,7 +847,7 @@ test('drop existing trigger', () => {
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
+  const { writeStatements, readStatement, values } = compileQuery(query, schemas);
 
   expect(writeStatements).toEqual(['DROP TRIGGER "trigger_name"']);
 
@@ -878,7 +878,7 @@ test('try to update existing schema without minimum details (schema slug)', () =
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -909,7 +909,7 @@ test('try to create new field without minimum details (field slug)', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -942,7 +942,7 @@ test('try to update existing field without minimum details (schema slug)', () =>
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -976,7 +976,7 @@ test('try to update existing field without minimum details (field slug)', () => 
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }

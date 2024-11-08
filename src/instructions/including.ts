@@ -1,8 +1,8 @@
-import { compileQueryInput } from '@/src/index';
 import type { WithFilters } from '@/src/instructions/with';
 import type { Instructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RoninError, splitQuery } from '@/src/utils';
+import { RoninError, splitQuery } from '@/src/utils/helpers';
+import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
 import { composeConditions } from '@/src/utils/statement';
 

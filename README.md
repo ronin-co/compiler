@@ -39,7 +39,7 @@ You will just need to make sure that, once you [create a pull request](https://d
 The programmatic API of the RONIN compiler looks like this:
 
 ```typescript
-import { compileQueryInput } from '@ronin/compiler';
+import { compileQuery } from '@ronin/compiler';
 
 const query = {
   get: {
@@ -53,7 +53,7 @@ const schemas = [
   },
 ];
 
-const { writeStatements, readStatement } = compileQueryInput(query, schemas);
+const { writeStatements, readStatement } = compileQuery(query, schemas);
 
 console.log(readStatement);
 // SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101
