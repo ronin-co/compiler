@@ -32,6 +32,7 @@ export const compileQueryInput = (
   options?: {
     statementValues: Array<unknown>;
     disableReturning?: boolean;
+    inlineValues?: boolean;
   },
 ): { writeStatements: Array<string>; readStatement: string; values: Array<unknown> } => {
   // Split out the individual components of the query.
