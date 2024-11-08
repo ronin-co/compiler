@@ -1,6 +1,6 @@
 import type { GetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RoninError } from '@/src/utils';
+import { RoninError } from '@/src/utils/helpers';
 import { getFieldFromSchema } from '@/src/utils/schema';
 import { prepareStatementValue } from '@/src/utils/statement';
 
@@ -27,7 +27,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  */
 export const handleBeforeOrAfter = (
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructions: {
     before?: GetInstructions['before'];
     after?: GetInstructions['after'];

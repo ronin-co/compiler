@@ -6,9 +6,8 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
 
-import { compileQueryInput } from '@/src/index';
 import {
   WITH_CONDITIONS,
   type WithCondition,
@@ -17,6 +16,7 @@ import {
   type WithValueOptions,
 } from '@/src/instructions/with';
 import type { Schema } from '@/src/types/schema';
+import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug } from '@/src/utils/schema';
 import { getFieldFromSchema } from '@/src/utils/schema';
 
@@ -25,21 +25,21 @@ import { getFieldFromSchema } from '@/src/utils/schema';
  *
  * @param statementValues - A list of values to be inserted into the final statements.
  * @param value - The value that should be prepared for insertion.
- * @param bindNull Whether `null` should be inserted into the statement as-is, or whether
- * it should be bound as a statement value. Defaults to `false`.
  *
  * @returns A placeholder for the inserted value.
  */
 export const prepareStatementValue = (
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   value: unknown,
-  bindNull = false,
 ): string => {
-  // In the case of an assertion (such as `field IS NULL`), we can't bind `null` as a
-  // statement value. Instead, we have to integrate it into the statement string directly.
-  // Only in the case that `null` is used as a value when inserting or updating records,
-  // we can skip this condition, so that it will be bound as a statement value.
-  if (!bindNull && value === null) return 'NULL';
+  // We don't need to register `null` as a statement value, because it's not a value, but
+  // rather a representation of the absence of a value. We can just inline it.
+  if (value === null) return 'NULL';
+
+  // If no list of statement values is available, that means we should inline the value,
+  // which is desired in cases where there is no risk of SQL injection and where the
+  // values must be plainly visible for manual human inspection.
+  if (!statementValues) return JSON.stringify(value);
 
   let formattedValue = value;
 
@@ -70,7 +70,7 @@ export const prepareStatementValue = (
 const composeFieldValues = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
   options: {
@@ -102,7 +102,7 @@ const composeFieldValues = (
       compileQueryInput(
         (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
         schemas,
-        { statementValues },
+        statementValues,
       ).readStatement
     })`;
   } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
@@ -128,11 +128,11 @@ const composeFieldValues = (
     conditionSelector = `"${schemaField.slug}"`;
 
     if (collectStatementValue) {
-      const preparedValue = prepareStatementValue(statementValues, value, false);
+      const preparedValue = prepareStatementValue(statementValues, value);
       conditionValue = `IIF(${conditionSelector} IS NULL, ${preparedValue}, json_patch(${conditionSelector}, ${preparedValue}))`;
     }
   } else if (collectStatementValue) {
-    conditionValue = prepareStatementValue(statementValues, value, false);
+    conditionValue = prepareStatementValue(statementValues, value);
   }
 
   if (options.type === 'fields') return conditionSelector;
@@ -156,7 +156,7 @@ const composeFieldValues = (
 export const composeConditions = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value:
     | WithFilters

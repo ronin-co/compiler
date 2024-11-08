@@ -1,6 +1,6 @@
 import type { Instructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RONIN_SCHEMA_SYMBOLS, flatten, isObject } from '@/src/utils';
+import { RONIN_SCHEMA_SYMBOLS, flatten, isObject } from '@/src/utils/helpers';
 import { getFieldFromSchema } from '@/src/utils/schema';
 import { prepareStatementValue } from '@/src/utils/statement';
 
@@ -17,7 +17,7 @@ import { prepareStatementValue } from '@/src/utils/statement';
  */
 export const handleSelecting = (
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];

@@ -2,11 +2,11 @@ import { expect, test } from 'bun:test';
 import { type Schema, compileQuery } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-test('get multiple records limited to amount', () => {
+test('inline statement values', () => {
   const query: Query = {
     get: {
-      accounts: {
-        limitedTo: 20,
+      account: {
+        with: { handle: 'elaine' },
       },
     },
   };
@@ -14,13 +14,21 @@ test('get multiple records limited to amount', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQuery(query, schemas, {
+    inlineValues: true,
+  });
 
   expect(readStatement).toBe(
-    `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,
+    'SELECT * FROM "accounts" WHERE ("handle" = "elaine") LIMIT 1',
   );
   expect(values).toMatchObject([]);
 });

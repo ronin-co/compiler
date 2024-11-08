@@ -1,290 +1,268 @@
-import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
-
-import { init as cuid } from '@paralleldrive/cuid2';
-
-/** A regex for asserting RONIN record IDs. */
-export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
-
-/**
- * A list of placeholders that can be located inside queries after those queries were
- * serialized into JSON objects.
- *
- * These placeholders are used to represent special keys and values. For example, if a
- * query is nested into a query, the nested query will be marked with `__RONIN_QUERY`,
- * which allows for distinguishing that nested query from an object of instructions.
- */
-export const RONIN_SCHEMA_SYMBOLS = {
-  // Represents a sub query.
-  QUERY: '__RONIN_QUERY',
-
-  // Represents the value of a field in a schema.
-  FIELD: '__RONIN_FIELD_',
-
-  // Represents the old value of a field in a schema. Used for triggers.
-  FIELD_OLD: '__RONIN_FIELD_OLD_',
-
-  // Represents the new value of a field in a schema. Used for triggers.
-  FIELD_NEW: '__RONIN_FIELD_NEW_',
-
-  // Represents a value provided to a query preset.
-  VALUE: '__RONIN_VALUE',
-} as const;
-
-type RoninErrorCode =
-  | 'SCHEMA_NOT_FOUND'
-  | 'FIELD_NOT_FOUND'
-  | 'INVALID_WITH_VALUE'
-  | 'INVALID_TO_VALUE'
-  | 'INVALID_INCLUDING_VALUE'
-  | 'INVALID_FOR_VALUE'
-  | 'INVALID_BEFORE_OR_AFTER_INSTRUCTION'
-  | 'MUTUALLY_EXCLUSIVE_INSTRUCTIONS'
-  | 'MISSING_INSTRUCTION'
-  | 'MISSING_FIELD';
-
-interface Issue {
-  message: string;
-  path: Array<string | number>;
-}
-
-interface Details {
-  message: string;
-  code: RoninErrorCode;
-  field?: string;
-  fields?: Array<string>;
-  issues?: Array<Issue>;
-  queries?: Array<Query> | null;
-}
-
-export class RoninError extends Error {
-  code: Details['code'];
-  field?: Details['field'];
-  fields?: Details['fields'];
-  issues?: Details['issues'];
-  queries?: Details['queries'];
-
-  constructor(details: Details) {
-    super(details.message);
-
-    this.name = 'RoninError';
-    this.code = details.code;
-    this.field = details.field;
-    this.fields = details.fields;
-    this.issues = details.issues;
-    this.queries = details.queries || null;
-  }
-}
-
-/** An object of nested objects. */
-type StringObject = {
-  [key: string]: unknown | StringObject;
-};
-
-const SINGLE_QUOTE_REGEX = /'/g;
-const DOUBLE_QUOTE_REGEX = /"/g;
-const AMPERSAND_REGEX = /\s*&+\s*/g;
-const SPECIAL_CHARACTERS_REGEX = /[^\w\s-]+/g;
-const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
+import { handleBeforeOrAfter } from '@/src/instructions/before-after';
+import { handleFor } from '@/src/instructions/for';
+import { handleIncluding } from '@/src/instructions/including';
+import { handleLimitedTo } from '@/src/instructions/limited-to';
+import { handleOrderedBy } from '@/src/instructions/ordered-by';
+import { handleSelecting } from '@/src/instructions/selecting';
+import { handleTo } from '@/src/instructions/to';
+import { handleWith } from '@/src/instructions/with';
+import type { Query } from '@/src/types/query';
+import type { PublicSchema } from '@/src/types/schema';
+import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
+import {
+  addSchemaQueries,
+  addSystemSchemas,
+  getSchemaBySlug,
+  getTableForSchema,
+} from '@/src/utils/schema';
+import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
- * Generate a unique record ID.
+ * Composes an SQL statement for a provided RONIN query.
  *
- * @param prefix - The prefix that should be used for the ID. Defaults to `rec`.
+ * @param query - The RONIN query for which an SQL statement should be composed.
+ * @param defaultSchemas - A list of schemas.
+ * @param statementValues - A collection of values that will automatically be
+ * inserted into the query by SQLite.
+ * @param options - Additional options to adjust the behavior of the statement generation.
  *
- * @returns The generated ID.
+ * @returns The composed SQL statement.
  */
-export const generateRecordId = (prefix: Schema['idPrefix']) =>
-  `${prefix}_${cuid({ length: 16 })()}`;
+export const compileQueryInput = (
+  query: Query,
+  defaultSchemas: Array<PublicSchema>,
+  statementValues: Array<unknown> | null,
+  options?: {
+    disableReturning?: boolean;
+  },
+): { writeStatements: Array<string>; readStatement: string; values: Array<unknown> } => {
+  // Split out the individual components of the query.
+  const parsedQuery = splitQuery(query);
+  const { queryType, querySchema, queryInstructions } = parsedQuery;
 
-/**
- * Utility function to capitalize the first letter of a string while converting all other
- * letters to lowercase.
- *
- * @param str - The string to capitalize.
- *
- * @returns The capitalized string.
- */
-export const capitalize = (str: string): string => {
-  if (!str || str.length === 0) return '';
+  const schemas = addSystemSchemas(defaultSchemas);
+  const schema = getSchemaBySlug(schemas, querySchema);
 
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
+  // Whether the query will interact with a single record, or multiple at the same time.
+  const single = querySchema !== schema.pluralSlug;
 
-/**
- * Utility function to sanitize a given string.
- *
- * - Removes single quotes.
- * - Removes double quotes.
- * - Replaces `&` with `and`.
- * - Replaces special characters with spaces.
- * - Strips leading and trailing whitespace.
- *
- * @param str – The string to sanitize.
- *
- * @returns The sanitized string.
- */
-const sanitize = (str: string) => {
-  if (!str || str.length === 0) return '';
+  // Walk deeper into the query, to the level on which the actual instructions (such as
+  // `with` and `including`) are located.
+  let instructions = formatIdentifiers(schema, queryInstructions);
 
-  return (
-    str
-      // Remove single quotes from the string.
-      .replace(SINGLE_QUOTE_REGEX, '')
-      // Remove double quotes from the string.
-      .replace(DOUBLE_QUOTE_REGEX, '')
-      // Replace `&` with `and`.
-      .replace(AMPERSAND_REGEX, ' and ')
-      // Replace special characters with spaces.
-      .replace(SPECIAL_CHARACTERS_REGEX, ' ')
-      // Strip leading and trailing whitespace.
-      .trim()
+  // The name of the table in SQLite that contains the records that are being addressed.
+  // This always matches the plural slug of the schema, but in snake case.
+  let table = getTableForSchema(schema);
+
+  // A list of write statements that are required to be executed before the main read
+  // statement. Their output is not relevant for the main statement, as they are merely
+  // used to update the database in a way that is required for the main read statement
+  // to return the expected results.
+  const writeStatements: Array<string> = [];
+
+  // Generate additional dependency statements for meta queries, meaning queries that
+  // affect the database schema.
+  instructions = addSchemaQueries(
+    schemas,
+    statementValues,
+    { queryType, querySchema, queryInstructions: instructions },
+    writeStatements,
   );
-};
 
-/**
- * Utility function to convert a given string to snake-case.
- *
- * @param str – The string to convert.
- *
- * @returns The converted string.
- */
-export const convertToSnakeCase = (str: string): string => {
-  if (!str || str.length === 0) return '';
+  // A list of columns that should be selected when querying records.
+  const columns = handleSelecting(schema, statementValues, {
+    selecting: instructions?.selecting,
+    including: instructions?.including,
+  });
 
-  return sanitize(str)
-    .split(SPLIT_REGEX)
-    .map((part) => part.toLowerCase())
-    .join('_');
-};
+  let statement = '';
 
-/**
- * Utility function to convert a given string to camel-case.
- *
- * @param str – The string to convert.
- *
- * @returns The converted string.
- */
-export const convertToCamelCase = (str: string): string => {
-  if (!str || str.length === 0) return '';
+  switch (queryType) {
+    case 'get':
+      statement += `SELECT ${columns} FROM `;
+      break;
 
-  return sanitize(str)
-    .split(SPLIT_REGEX)
-    .map((part, index) => (index === 0 ? part.toLowerCase() : capitalize(part)))
-    .join('');
-};
+    case 'count':
+      statement += `SELECT COUNT(${columns}) FROM `;
+      break;
 
-/**
- * Utility function to check if the given value is an object.
- *
- * @param value - Object-like value to check.
- */
-export const isObject = (value: unknown): boolean =>
-  value != null && typeof value === 'object' && Array.isArray(value) === false;
+    case 'drop':
+      statement += 'DELETE FROM ';
+      break;
 
-/**
- * Finds all string values that match a given pattern in an object. If needed, it also
- * replaces them.
- *
- * @param obj - The object in which the string values should be found.
- * @param pattern - The string that values can start with.
- * @param replacer - A function that returns the replacement value for each match.
- *
- * @returns Whether the pattern was found in the object.
- */
-export const findInObject = (
-  obj: StringObject,
-  pattern: string,
-  replacer?: (match: string) => string,
-): boolean => {
-  let found = false;
+    case 'create':
+      statement += 'INSERT INTO ';
+      break;
 
-  for (const key in obj) {
-    const value = obj[key];
-
-    if (isObject(value)) {
-      found = findInObject(value as StringObject, pattern, replacer);
-
-      // We're purposefully using `.startsWith` instead of a regex here, because we only
-      // want to replace the value if it starts with the pattern, so a regex would be
-      // unnecessary performance overhead.
-    } else if (typeof value === 'string' && value.startsWith(pattern)) {
-      found = true;
-
-      if (replacer) {
-        obj[key] = value.replace(pattern, replacer);
-      } else {
-        return found;
-      }
-    }
+    case 'set':
+      statement += 'UPDATE ';
+      break;
   }
 
-  return found;
-};
+  const isJoining =
+    typeof instructions?.including !== 'undefined' && !isObject(instructions.including);
+  let isJoiningMultipleRows = false;
 
-type NestedObject = {
-  [key: string]: unknown | NestedObject;
-};
+  if (isJoining) {
+    const {
+      statement: including,
+      rootTableSubQuery,
+      rootTableName,
+    } = handleIncluding(schemas, statementValues, schema, instructions?.including, table);
 
-/**
- * Converts an object of nested objects into a flat object, where all keys sit on the
- * same level (at the root).
- *
- * @param obj - The object that should be flattened.
- * @param prefix - An optional path of a nested field to begin the recursion from.
- * @param res - The object that the flattened object should be stored in.
- *
- * @returns A flattened object.
- */
-export const flatten = (obj: NestedObject, prefix = '', res: NestedObject = {}) => {
-  for (const key in obj) {
-    const path = prefix ? `${prefix}.${key}` : key;
-
-    if (typeof obj[key] === 'object' && obj[key] !== null) {
-      flatten(obj[key] as NestedObject, path, res);
+    // If multiple rows are being joined from a different table, even though the root
+    // query is only supposed to return a single row, we need to ensure a limit for the
+    // root query *before* joining the other rows. Otherwise, if the limit sits at the
+    // end of the full query, only one row would be available at the end.
+    if (rootTableSubQuery && rootTableName) {
+      table = rootTableName;
+      statement += `(${rootTableSubQuery}) as ${rootTableName} `;
+      isJoiningMultipleRows = true;
     } else {
-      res[path] = obj[key];
+      statement += `"${table}" `;
+    }
+
+    statement += `${including} `;
+  } else {
+    statement += `"${table}" `;
+  }
+
+  if (queryType === 'create' || queryType === 'set') {
+    // This validation must be performed before any default fields (such as `ronin`) are
+    // added to the record. Otherwise there are always fields present.
+    if (!isObject(instructions.to) || Object.keys(instructions.to).length === 0) {
+      throw new RoninError({
+        message: `When using a \`${queryType}\` query, the \`to\` instruction must be a non-empty object.`,
+        code: 'INVALID_TO_VALUE',
+        queries: [query],
+      });
+    }
+
+    const toStatement = handleTo(
+      schemas,
+      schema,
+      statementValues,
+      queryType,
+      writeStatements,
+      { with: instructions.with, to: instructions.to },
+      isJoining ? table : undefined,
+    );
+
+    statement += `${toStatement} `;
+  }
+
+  const conditions: Array<string> = [];
+
+  // Queries of type "get", "set", "drop", or "count" all support filtering records, but
+  // those of type "create" do not.
+  if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
+    const withStatement = handleWith(
+      schemas,
+      schema,
+      statementValues,
+      instructions?.with,
+      isJoining ? table : undefined,
+    );
+
+    if (withStatement.length > 0) conditions.push(withStatement);
+  }
+
+  if (instructions && Object.hasOwn(instructions, 'for')) {
+    const forStatement = handleFor(
+      schemas,
+      schema,
+      statementValues,
+      instructions?.for,
+      isJoining ? table : undefined,
+    );
+
+    if (forStatement.length > 0) conditions.push(forStatement);
+  }
+
+  // Per default, records are being ordered by the time they were created. This is
+  // necessary for our pagination to work properly as the pagination cursor is based on
+  // the time the record was created.
+  if ((queryType === 'get' || queryType === 'count') && !single) {
+    instructions = instructions || {};
+    instructions.orderedBy = instructions.orderedBy || {};
+    instructions.orderedBy.ascending = instructions.orderedBy.ascending || [];
+    instructions.orderedBy.descending = instructions.orderedBy.descending || [];
+
+    // `ronin.createdAt` always has to be present in the `orderedBy` instruction because
+    // it's used for pagination. If it's not provided by the user, we have to add it.
+    if (
+      ![
+        ...instructions.orderedBy.ascending,
+        ...instructions.orderedBy.descending,
+      ].includes('ronin.createdAt')
+    ) {
+      // It's extremely important that the item is added to the end of the array,
+      // otherwise https://github.com/ronin-co/core/issues/257 would occur.
+      instructions.orderedBy.descending.push('ronin.createdAt');
     }
   }
-  return res;
-};
 
-/**
- * Converts a flat object whose keys all sit on the same level (at the root) into an
- * object of nested objects.
- *
- * @param obj - The object that should be expanded.
- *
- * @returns The expanded object.
- */
-export const expand = (obj: NestedObject) => {
-  return Object.entries(obj).reduce((res, [key, val]) => {
-    key
-      .split('.')
-      .reduce((acc: NestedObject, part: string, i: number, arr: Array<string>) => {
-        acc[part] = i === arr.length - 1 ? val : acc[part] || {};
-        return acc[part] as NestedObject;
-      }, res);
-    return res;
-  }, {});
-};
+  if (
+    instructions &&
+    (Object.hasOwn(instructions, 'before') || Object.hasOwn(instructions, 'after'))
+  ) {
+    if (single) {
+      throw new RoninError({
+        message:
+          'The `before` and `after` instructions are not supported when querying for a single record.',
+        code: 'INVALID_BEFORE_OR_AFTER_INSTRUCTION',
+        queries: [query],
+      });
+    }
 
-/**
- * Splits a query into its type, schema, and instructions.
- *
- * @param query - The query to split.
- *
- * @returns The type, schema, and instructions of the provided query.
- */
-export const splitQuery = (query: Query) => {
-  // The type of query that is being executed (`create`, `get`, etc).
-  const queryType = Object.keys(query)[0] as QueryType;
+    const beforeAndAfterStatement = handleBeforeOrAfter(
+      schema,
+      statementValues,
+      {
+        before: instructions.before,
+        after: instructions.after,
+        with: instructions.with,
+        orderedBy: instructions.orderedBy,
+      },
+      isJoining ? table : undefined,
+    );
+    conditions.push(beforeAndAfterStatement);
+  }
 
-  // The slug or plural slug of the RONIN schema that the query will interact with.
-  const querySchema = Object.keys(query[queryType] as QuerySchemaType)[0];
+  if (conditions.length > 0) {
+    // If multiple conditions are available, wrap them in parentheses to ensure that the
+    // AND/OR comparisons are asserted correctly.
+    if (conditions.length === 1) {
+      statement += `WHERE ${conditions[0]} `;
+    } else {
+      statement += `WHERE (${conditions.join(' ')}) `;
+    }
+  }
 
-  // The instructions of the query (`with`, `including`, etc).
-  const queryInstructions = (query[queryType] as QuerySchemaType)[querySchema];
+  if (instructions?.orderedBy) {
+    const orderedByStatement = handleOrderedBy(
+      schema,
+      instructions.orderedBy,
+      isJoining ? table : undefined,
+    );
+    statement += `${orderedByStatement} `;
+  }
 
-  return { queryType, querySchema, queryInstructions };
+  if (queryType === 'get' && !isJoiningMultipleRows) {
+    statement += handleLimitedTo(single, instructions?.limitedTo);
+  }
+
+  // For queries that modify records, we want to make sure that the modified record is
+  // returned after the modification has been performed.
+  if (['create', 'set', 'drop'].includes(queryType) && !options?.disableReturning) {
+    statement += 'RETURNING * ';
+  }
+
+  const finalStatement = statement.trimEnd();
+
+  return {
+    writeStatements,
+    readStatement: finalStatement,
+    values: statementValues || [],
+  };
 };

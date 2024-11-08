@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueryInput } from '@/src/index';
+import { type Schema, compileQuery } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RoninError } from '@/src/utils';
+import { RoninError } from '@/src/utils/helpers';
 
 test('get single record with non-existing field', () => {
   const query: Query = {
@@ -24,7 +24,7 @@ test('get single record with non-existing field', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -53,7 +53,7 @@ test('get single record with non-existing schema', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -92,7 +92,7 @@ test('get single record with empty `with` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -126,7 +126,7 @@ test('set single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -157,7 +157,7 @@ test('create single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -188,7 +188,7 @@ test('get single record with `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -219,7 +219,7 @@ test('get single record with `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -251,7 +251,7 @@ test('get multiple records with `before` and `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -282,7 +282,7 @@ test('get multiple records with empty `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -316,7 +316,7 @@ test('get single record including parent schemas (one-to-many) without shortcut'
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -352,7 +352,7 @@ test('get single record for pre-defined match without shortcut', () => {
   let error: Error | undefined;
 
   try {
-    compileQueryInput(query, schemas);
+    compileQuery(query, schemas);
   } catch (err) {
     error = err as Error;
   }

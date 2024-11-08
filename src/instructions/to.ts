@@ -1,4 +1,3 @@
-import { compileQueryInput } from '@/src/index';
 import type { Query, SetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import {
@@ -8,7 +7,8 @@ import {
   generateRecordId,
   isObject,
   splitQuery,
-} from '@/src/utils';
+} from '@/src/utils/helpers';
+import { compileQueryInput } from '@/src/utils/index';
 import {
   composeAssociationSchemaSlug,
   getFieldFromSchema,
@@ -35,7 +35,7 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleTo = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   queryType: 'create' | 'set',
   writeStatements: Array<string>,
   instructions: {
@@ -123,9 +123,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, {
-      statementValues,
-    }).readStatement;
+    return compileQueryInput(subQuery, schemas, statementValues).readStatement;
   }
 
   // Assign default field values to the provided instruction.
@@ -166,7 +164,8 @@ export const handleTo = (
             },
           },
           schemas,
-          { statementValues, disableReturning: true },
+          statementValues,
+          { disableReturning: true },
         );
 
         return readStatement;
