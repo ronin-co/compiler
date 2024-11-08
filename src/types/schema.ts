@@ -44,7 +44,7 @@ type SchemaIndexField = {
   order?: 'ASC' | 'DESC';
 };
 
-type SchemaIndex = {
+export type SchemaIndex = {
   /**
    * The list of fields in the schema for which the index should be created.
    */
@@ -60,7 +60,7 @@ type SchemaIndex = {
   filter?: WithInstruction;
 };
 
-type SchemaTrigger = {
+export type SchemaTrigger = {
   /** The type of query for which the trigger should fire. */
   queryType: Uppercase<Exclude<QueryType, 'get' | 'count'>>;
   /** When the trigger should fire in the case that a maching query is executed. */

@@ -272,6 +272,13 @@ export const compileQueryInput = (
   };
 };
 
-// Expose types
-export type { PublicSchema as Schema } from '@/src/types/schema';
+// Expose schema types
+export type {
+  PublicSchema as Schema,
+  SchemaField,
+  SchemaIndex,
+  SchemaTrigger,
+} from '@/src/types/schema';
+
+// Expose query types
 export * from '@/src/types/query';
