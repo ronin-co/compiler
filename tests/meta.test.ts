@@ -37,7 +37,7 @@ test('create new schema', () => {
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+    'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
   );
 
   expect(values[0]).toBe('account');
@@ -46,12 +46,14 @@ test('create new schema', () => {
   expect(values[3]).toBe('Account');
   expect(values[4]).toBe('Accounts');
   expect(values[5]).toBe('acc');
-  expect(values[6]).toMatch(RECORD_ID_REGEX);
+  expect(values[6]).toBe('id');
+  expect(values[7]).toBe('id');
+  expect(values[8]).toMatch(RECORD_ID_REGEX);
 
-  expect(values[7]).toSatisfy(
+  expect(values[9]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[8]).toSatisfy(
+  expect(values[10]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
 });
@@ -77,7 +79,7 @@ test('update existing schema', () => {
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
   expect(readStatement).toBe(
-    'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "ronin.updatedAt" = ?6 WHERE ("slug" = ?7) RETURNING *',
+    'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "identifiers.name" = ?6, "identifiers.slug" = ?7, "ronin.updatedAt" = ?8 WHERE ("slug" = ?9) RETURNING *',
   );
 
   expect(values[0]).toBe('user');
@@ -85,10 +87,12 @@ test('update existing schema', () => {
   expect(values[2]).toBe('User');
   expect(values[3]).toBe('Users');
   expect(values[4]).toBe('use');
-  expect(values[5]).toSatisfy(
+  expect(values[5]).toBe('id');
+  expect(values[6]).toBe('id');
+  expect(values[7]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[6]).toBe('account');
+  expect(values[8]).toBe('account');
 });
 
 test('drop existing schema', () => {

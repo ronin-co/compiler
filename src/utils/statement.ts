@@ -371,7 +371,7 @@ export const formatIdentifiers = (
 
     const identifierName = oldKey === 'nameIdentifier' ? 'name' : 'slug';
     const value = newNestedInstructions[oldKey];
-    const newKey = identifiers?.[identifierName] || 'id';
+    const newKey = identifiers[identifierName];
 
     newNestedInstructions[newKey] = value;
     delete newNestedInstructions[oldKey];

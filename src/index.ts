@@ -7,7 +7,7 @@ import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
 import type { Query } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
+import type { PublicSchema } from '@/src/types/schema';
 import { RoninError, isObject, splitQuery } from '@/src/utils';
 import {
   addSchemaQueries,
@@ -28,7 +28,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  */
 export const compileQueryInput = (
   query: Query,
-  defaultSchemas: Array<Schema>,
+  defaultSchemas: Array<PublicSchema>,
   options?: {
     statementValues: Array<unknown>;
     disableReturning?: boolean;

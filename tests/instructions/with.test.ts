@@ -760,7 +760,7 @@ test('get single record with title identifier', () => {
     get: {
       account: {
         with: {
-          titleIdentifier: {
+          nameIdentifier: {
             being: 'Elaine',
           },
         },

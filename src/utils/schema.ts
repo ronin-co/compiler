@@ -8,7 +8,12 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import type { Schema, SchemaField, SchemaFieldReferenceAction } from '@/src/types/schema';
+import type {
+  PublicSchema,
+  Schema,
+  SchemaField,
+  SchemaFieldReferenceAction,
+} from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
   RoninError,
@@ -201,6 +206,11 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     slug: 'schema',
     pluralSlug: 'schemas',
 
+    identifiers: {
+      name: 'name',
+      slug: 'slug',
+    },
+
     fields: [
       ...SYSTEM_FIELDS,
 
@@ -226,6 +236,11 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     slug: 'field',
     pluralSlug: 'fields',
+
+    identifiers: {
+      name: 'name',
+      slug: 'slug',
+    },
 
     fields: [
       ...SYSTEM_FIELDS,
@@ -259,6 +274,11 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     slug: 'index',
     pluralSlug: 'indexes',
 
+    identifiers: {
+      name: 'slug',
+      slug: 'slug',
+    },
+
     fields: [
       ...SYSTEM_FIELDS,
 
@@ -279,6 +299,11 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     slug: 'trigger',
     pluralSlug: 'triggers',
+
+    identifiers: {
+      name: 'slug',
+      slug: 'slug',
+    },
 
     fields: [
       ...SYSTEM_FIELDS,
@@ -308,7 +333,7 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  *
  * @returns The updated schema.
  */
-export const prepareSchema = (schema: Schema) => {
+export const prepareSchema = (schema: PublicSchema): Schema => {
   const copiedSchema = { ...schema };
 
   if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
@@ -319,7 +344,11 @@ export const prepareSchema = (schema: Schema) => {
 
   if (!copiedSchema.idPrefix) copiedSchema.idPrefix = copiedSchema.slug.slice(0, 3);
 
-  return copiedSchema;
+  if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
+  if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
+  if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
+
+  return copiedSchema as Schema;
 };
 
 /**
@@ -330,7 +359,7 @@ export const prepareSchema = (schema: Schema) => {
  *
  * @returns The extended list of schemas.
  */
-export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
+export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
   const list = [...SYSTEM_SCHEMAS, ...schemas].map(prepareSchema);
 
   for (const schema of list) {
@@ -356,6 +385,10 @@ export const addSystemSchemas = (schemas: Array<Schema>): Array<Schema> => {
           list.push({
             pluralSlug: fieldSlug,
             slug: fieldSlug,
+            identifiers: {
+              name: 'id',
+              slug: 'id',
+            },
             fields: [
               {
                 slug: 'source',

@@ -82,9 +82,9 @@ export interface Schema {
   slug: string;
   pluralSlug?: string;
 
-  identifiers?: {
-    name?: string;
-    slug?: string;
+  identifiers: {
+    name: string;
+    slug: string;
   };
   idPrefix?: string;
 
@@ -98,6 +98,10 @@ export interface Schema {
 
 // In schemas provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicSchema = Omit<Partial<Schema>, 'slug'> & {
+export type PublicSchema = Omit<Partial<Schema>, 'slug' | 'identifiers'> & {
   slug: Required<Schema['slug']>;
+
+  // It should also be possible for schemas to only define one of the two identifiers,
+  // since the missing one will be generated automatically.
+  identifiers?: Partial<Schema['identifiers']>;
 };
