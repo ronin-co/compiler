@@ -297,7 +297,7 @@ test('get single record including unrelated records with filter', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label"`,
+      statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")`,
       params: [],
       returning: true,
     },
@@ -379,8 +379,11 @@ test('get single record including unrelated ordered records', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC, "ronin.createdAt" DESC LIMIT 101) as including_teams LIMIT 1`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC, "ronin.createdAt" DESC LIMIT 101) as including_teams LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
