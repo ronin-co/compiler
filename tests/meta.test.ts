@@ -76,14 +76,17 @@ test('update existing schema', () => {
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
   expect(readStatement).toBe(
-    'UPDATE "schemas" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
+    'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "ronin.updatedAt" = ?5 WHERE ("slug" = ?6) RETURNING *',
   );
 
   expect(values[0]).toBe('user');
-  expect(values[1]).toSatisfy(
+  expect(values[1]).toBe('users');
+  expect(values[2]).toBe('User');
+  expect(values[3]).toBe('Users');
+  expect(values[4]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[2]).toBe('account');
+  expect(values[5]).toBe('account');
 });
 
 test('drop existing schema', () => {

@@ -1,9 +1,11 @@
 import { compileQueryInput } from '@/src/index';
 import { handleWith } from '@/src/instructions/with';
 import type {
+  Instructions,
   Query,
   QueryInstructionType,
   QueryType,
+  SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
 import type { Schema, SchemaField, SchemaFieldReferenceAction } from '@/src/types/schema';
@@ -495,14 +497,20 @@ export const addSchemaQueries = (
   statementValues: Array<unknown>,
   queryDetails: ReturnType<typeof splitQuery>,
   writeStatements: Array<string>,
-) => {
-  const { queryType, querySchema, queryInstructions } = queryDetails;
+): Instructions & SetInstructions => {
+  const {
+    queryType,
+    querySchema,
+    queryInstructions: queryInstructionsRaw,
+  } = queryDetails;
+
+  const queryInstructions = queryInstructionsRaw as Instructions & SetInstructions;
 
   // Only continue if the query is a write query.
-  if (!['create', 'set', 'drop'].includes(queryType)) return;
+  if (!['create', 'set', 'drop'].includes(queryType)) return queryInstructions;
 
   // Only continue if the query addresses system schemas.
-  if (!SYSTEM_SCHEMA_SLUGS.includes(querySchema)) return;
+  if (!SYSTEM_SCHEMA_SLUGS.includes(querySchema)) return queryInstructions;
 
   const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
@@ -589,7 +597,7 @@ export const addSchemaQueries = (
     }
 
     writeStatements.push(statement);
-    return;
+    return queryInstructions;
   }
 
   if (kind === 'triggers') {
@@ -657,7 +665,7 @@ export const addSchemaQueries = (
     }
 
     writeStatements.push(statement);
-    return;
+    return queryInstructions;
   }
 
   let statement = `${tableAction} TABLE "${tableName}"`;
@@ -666,25 +674,26 @@ export const addSchemaQueries = (
     const providedFields = instructionList?.fields || [];
     const fields = [...SYSTEM_FIELDS, ...providedFields];
 
+    // Compose default settings for the schema.
+    if (queryType === 'create' || queryType === 'set') {
+      queryInstructions.to = prepareSchema(queryInstructions.to as Schema);
+    }
+
     if (queryType === 'create') {
       const columns = fields.map(getFieldStatement).filter(Boolean);
 
       statement += ` (${columns.join(', ')})`;
     } else if (queryType === 'set') {
-      const newSlug = queryInstructions.to?.slug;
+      const newSlug = queryInstructions.to?.pluralSlug;
 
       if (newSlug) {
-        const newTable = convertToSnakeCase(pluralize(newSlug));
+        const newTable = convertToSnakeCase(newSlug);
         statement += ` RENAME TO "${newTable}"`;
       }
     }
 
-    // Compose default field values for the schema, regardless of whether the schema is
-    // being created or updated.
-    queryInstructions.to = prepareSchema(instructionList as Schema);
-
     writeStatements.push(statement);
-    return;
+    return queryInstructions;
   }
 
   if (kind === 'fields') {
@@ -710,6 +719,8 @@ export const addSchemaQueries = (
 
     writeStatements.push(statement);
   }
+
+  return queryInstructions;
 };
 
 /**
