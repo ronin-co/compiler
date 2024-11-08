@@ -755,7 +755,7 @@ test('get single record with one of field values in group', () => {
   expect(values).toMatchObject(['EUR', 'USD']);
 });
 
-test('get single record with title identifier', () => {
+test('get single record with name identifier', () => {
   const query: Query = {
     get: {
       account: {
