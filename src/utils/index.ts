@@ -7,7 +7,7 @@ import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
 import type { Query, Statement } from '@/src/types/query';
-import type { PublicSchema } from '@/src/types/schema';
+import type { PublicSchema, Schema } from '@/src/types/schema';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import {
   addSchemaQueries,
@@ -30,7 +30,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  */
 export const compileQueryInput = (
   query: Query,
-  defaultSchemas: Array<PublicSchema>,
+  schemas: Array<Schema>,
   // In order to prevent SQL injections and allow for faster query execution, we're not
   // inserting any values into the SQL statement directly. Instead, we will pass them to
   // SQLite's API later on, so that it can prepare an object that the database can
@@ -48,7 +48,7 @@ export const compileQueryInput = (
   const parsedQuery = splitQuery(query);
   const { queryType, querySchema, queryInstructions } = parsedQuery;
 
-  const schemas = addSystemSchemas(defaultSchemas);
+  // Find the schema that the query is interacting with.
   const schema = getSchemaBySlug(schemas, querySchema);
 
   // Whether the query will interact with a single record, or multiple at the same time.

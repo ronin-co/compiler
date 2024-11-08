@@ -147,6 +147,47 @@ test('drop existing schema', () => {
   ]);
 });
 
+test('use a schema that was just created', () => {
+  const fields = [
+    {
+      slug: 'handle',
+      type: 'string',
+    },
+    {
+      slug: 'email',
+      type: 'string',
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        schema: {
+          to: {
+            slug: 'account',
+            fields,
+          },
+        },
+      },
+    },
+    {
+      get: {
+        account: null,
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements[2]).toEqual({
+    statement: 'SELECT * FROM "accounts" LIMIT 1',
+    params: [],
+    returning: true,
+  });
+});
+
 test('create new field', () => {
   const queries: Array<Query> = [
     {
