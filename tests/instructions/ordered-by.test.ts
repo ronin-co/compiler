@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records ordered by field', () => {
@@ -25,7 +25,7 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
@@ -60,7 +60,7 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,

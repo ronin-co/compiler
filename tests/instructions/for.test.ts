@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
@@ -60,7 +60,7 @@ test('get single record for pre-defined condition', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
@@ -134,7 +134,7 @@ test('get single record for pre-defined condition containing sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
@@ -206,7 +206,7 @@ test('get single record for pre-defined field containing sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,

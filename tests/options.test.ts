@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('inline statement values', () => {
@@ -23,7 +23,7 @@ test('inline statement values', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas, {
+  const { readStatement, values } = compileQueries(query, schemas, {
     inlineValues: true,
   });
 

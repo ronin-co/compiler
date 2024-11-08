@@ -11,7 +11,7 @@ import { compileQueryInput } from '@/src/utils';
  *
  * @returns The composed SQL statement.
  */
-export const compileQuery = (
+export const compileQueries = (
   query: Query,
   schemas: Array<PublicSchema>,
   options?: {

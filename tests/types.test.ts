@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQuery } from '@/src/index';
+import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get single record', () => {
@@ -15,7 +15,7 @@ test('get single record', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "accounts" LIMIT 1');
   expect(values).toMatchObject([]);
@@ -44,7 +44,7 @@ test('drop single record', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe('DELETE FROM "accounts" WHERE ("handle" = ?1) RETURNING *');
   expect(values).toMatchObject(['elaine']);
@@ -63,7 +63,7 @@ test('count multiple records', () => {
     },
   ];
 
-  const { readStatement, values } = compileQuery(query, schemas);
+  const { readStatement, values } = compileQueries(query, schemas);
 
   expect(readStatement).toBe(
     `SELECT COUNT(*) FROM "accounts" ORDER BY "ronin.createdAt" DESC`,
