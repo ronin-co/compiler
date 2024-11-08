@@ -708,6 +708,30 @@ export const addSchemaQueries = (
       queryInstructions.to = prepareSchema(queryInstructions.to as Schema);
     }
 
+    // Update schema list to reflect the changes.
+    if (queryType === 'create') {
+      // Add the newly created schema to the list of schemas.
+      schemas.push(queryInstructions.to as Schema);
+    } else if (queryType === 'set' || queryType === 'drop') {
+      const schemaIndex = schemas.findIndex((schema) => schema.slug === slug);
+
+      if (schemaIndex < 0) {
+        throw new RoninError({
+          message: `No schema found for slug "${slug}".`,
+          code: 'SCHEMA_NOT_FOUND',
+        });
+      }
+
+      if (queryType === 'set') {
+        // Update the existing schema in the list of schemas.
+        Object.assign(schemas[schemaIndex], queryInstructions.to);
+      } else if (queryType === 'drop') {
+        // Remove the schema from the list of schemas.
+        schemas.splice(schemaIndex, 1);
+      }
+    }
+
+    // Compose an SQL statement for the schema change.
     if (queryType === 'create') {
       const columns = fields.map(getFieldStatement).filter(Boolean);
 

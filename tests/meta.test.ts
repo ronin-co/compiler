@@ -81,7 +81,11 @@ test('update existing schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -122,7 +126,11 @@ test('drop existing schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -921,6 +929,37 @@ test('drop existing trigger', () => {
       returning: true,
     },
   ]);
+});
+
+test('try to update existing schema that does not exist', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
+          to: {
+            slug: 'user',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueries(queries, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty('message', 'No schema found for slug "account".');
+  expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
 });
 
 test('try to update existing schema without minimum details (schema slug)', () => {
