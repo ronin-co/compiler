@@ -148,24 +148,12 @@ test('drop existing schema', () => {
 });
 
 test('use a schema that was just created', () => {
-  const fields = [
-    {
-      slug: 'handle',
-      type: 'string',
-    },
-    {
-      slug: 'email',
-      type: 'string',
-    },
-  ];
-
   const queries: Array<Query> = [
     {
       create: {
         schema: {
           to: {
             slug: 'account',
-            fields,
           },
         },
       },
@@ -183,6 +171,42 @@ test('use a schema that was just created', () => {
 
   expect(statements[2]).toEqual({
     statement: 'SELECT * FROM "accounts" LIMIT 1',
+    params: [],
+    returning: true,
+  });
+});
+
+test('use a schema that was just updated', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
+          to: {
+            slug: 'user',
+          },
+        },
+      },
+    },
+    {
+      get: {
+        user: null,
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements[2]).toEqual({
+    statement: 'SELECT * FROM "users" LIMIT 1',
     params: [],
     returning: true,
   });
