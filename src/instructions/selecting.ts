@@ -17,7 +17,7 @@ import { prepareStatementValue } from '@/src/utils/statement';
  */
 export const handleSelecting = (
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];

@@ -20,7 +20,7 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleFor = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instruction: GetInstructions['for'],
   rootTable?: string,
 ) => {

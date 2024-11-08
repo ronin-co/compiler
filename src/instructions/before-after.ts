@@ -27,7 +27,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  */
 export const handleBeforeOrAfter = (
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructions: {
     before?: GetInstructions['before'];
     after?: GetInstructions['after'];

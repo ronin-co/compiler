@@ -21,7 +21,7 @@ import { composeConditions } from '@/src/utils/statement';
  */
 export const handleIncluding = (
   schemas: Array<Schema>,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   schema: Schema,
   instruction: Instructions['including'],
   rootTable?: string,
@@ -94,7 +94,7 @@ export const handleIncluding = (
           },
         },
         schemas,
-        { statementValues },
+        statementValues,
       );
 
       relatedTableSelector = `(${subSelect.readStatement})`;

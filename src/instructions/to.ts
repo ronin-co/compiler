@@ -35,7 +35,7 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleTo = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   queryType: 'create' | 'set',
   writeStatements: Array<string>,
   instructions: {
@@ -123,9 +123,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, {
-      statementValues,
-    }).readStatement;
+    return compileQueryInput(subQuery, schemas, statementValues).readStatement;
   }
 
   // Assign default field values to the provided instruction.
@@ -166,7 +164,8 @@ export const handleTo = (
             },
           },
           schemas,
-          { statementValues, disableReturning: true },
+          statementValues,
+          { disableReturning: true },
         );
 
         return readStatement;

@@ -13,14 +13,19 @@ import { compileQueryInput } from '@/src/utils';
  */
 export const compileQuery = (
   query: Query,
-  defaultSchemas: Array<PublicSchema>,
+  schemas: Array<PublicSchema>,
   options?: {
     inlineValues?: boolean;
   },
 ) => {
-  return compileQueryInput(query, defaultSchemas, {
-    inlineValues: options?.inlineValues,
-  });
+  // In order to prevent SQL injections and allow for faster query execution, we're not
+  // inserting any values into the SQL statement directly. Instead, we will pass them to
+  // SQLite's API later on, so that it can prepare an object that the database can
+  // execute in a safe and fast manner. SQLite allows strings, numbers, and booleans to
+  // be provided as values.
+  const statementValues = options?.inlineValues ? null : [];
+
+  return compileQueryInput(query, schemas, statementValues);
 };
 
 // Expose schema types

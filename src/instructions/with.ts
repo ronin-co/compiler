@@ -65,7 +65,7 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
 export const handleWith = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instruction: GetInstructions['with'],
   rootTable?: string,
 ): string => {

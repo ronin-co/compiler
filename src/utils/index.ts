@@ -21,7 +21,9 @@ import { formatIdentifiers } from '@/src/utils/statement';
  * Composes an SQL statement for a provided RONIN query.
  *
  * @param query - The RONIN query for which an SQL statement should be composed.
- * @param schemas - A list of schemas.
+ * @param defaultSchemas - A list of schemas.
+ * @param statementValues - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param options - Additional options to adjust the behavior of the statement generation.
  *
  * @returns The composed SQL statement.
@@ -29,10 +31,9 @@ import { formatIdentifiers } from '@/src/utils/statement';
 export const compileQueryInput = (
   query: Query,
   defaultSchemas: Array<PublicSchema>,
+  statementValues: Array<unknown> | null,
   options?: {
-    statementValues?: Array<unknown>;
     disableReturning?: boolean;
-    inlineValues?: boolean;
   },
 ): { writeStatements: Array<string>; readStatement: string; values: Array<unknown> } => {
   // Split out the individual components of the query.
@@ -52,13 +53,6 @@ export const compileQueryInput = (
   // The name of the table in SQLite that contains the records that are being addressed.
   // This always matches the plural slug of the schema, but in snake case.
   let table = getTableForSchema(schema);
-
-  // In order to prevent SQL injections and allow for faster query execution, we're not
-  // inserting any values into the SQL statement directly. Instead, we will pass them to
-  // SQLite's API later on, so that it can prepare an object that the database can
-  // execute in a safe and fast manner. SQLite allows strings, numbers, booleans, and
-  // `null` to be provided as values.
-  const statementValues: Array<unknown> = options?.statementValues || [];
 
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -269,6 +263,6 @@ export const compileQueryInput = (
   return {
     writeStatements,
     readStatement: finalStatement,
-    values: statementValues,
+    values: statementValues || [],
   };
 };

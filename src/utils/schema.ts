@@ -529,7 +529,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
  */
 export const addSchemaQueries = (
   schemas: Array<Schema>,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   queryDetails: ReturnType<typeof splitQuery>,
   writeStatements: Array<string>,
 ): Instructions & SetInstructions => {
@@ -686,8 +686,7 @@ export const addSchemaQueries = (
 
       // Compile the effect queries into SQL statements.
       const effectStatements = effectQueries.map((effectQuery) => {
-        return compileQueryInput(effectQuery, schemas, {
-          statementValues,
+        return compileQueryInput(effectQuery, schemas, statementValues, {
           disableReturning: true,
         }).readStatement;
       });

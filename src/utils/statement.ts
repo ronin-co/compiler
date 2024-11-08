@@ -29,12 +29,17 @@ import { getFieldFromSchema } from '@/src/utils/schema';
  * @returns A placeholder for the inserted value.
  */
 export const prepareStatementValue = (
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   value: unknown,
 ): string => {
   // We don't need to register `null` as a statement value, because it's not a value, but
   // rather a representation of the absence of a value. We can just inline it.
   if (value === null) return 'NULL';
+
+  // If no list of statement values is available, that means we should inline the value,
+  // which is desired in cases where there is no risk of SQL injection and where the
+  // values must be plainly visible for manual human inspection.
+  if (!statementValues) return JSON.stringify(value);
 
   let formattedValue = value;
 
@@ -65,7 +70,7 @@ export const prepareStatementValue = (
 const composeFieldValues = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
   options: {
@@ -97,7 +102,7 @@ const composeFieldValues = (
       compileQueryInput(
         (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
         schemas,
-        { statementValues },
+        statementValues,
       ).readStatement
     })`;
   } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
@@ -151,7 +156,7 @@ const composeFieldValues = (
 export const composeConditions = (
   schemas: Array<Schema>,
   schema: Schema,
-  statementValues: Array<unknown>,
+  statementValues: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value:
     | WithFilters
