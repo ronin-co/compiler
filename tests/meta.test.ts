@@ -6,11 +6,23 @@ import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils';
 import { RECORD_ID_REGEX } from '@/src/utils';
 
 test('create new schema', () => {
+  const fields = [
+    {
+      slug: 'handle',
+      type: 'string',
+    },
+    {
+      slug: 'email',
+      type: 'string',
+    },
+  ];
+
   const query: Query = {
     create: {
       schema: {
         to: {
           slug: 'account',
+          fields,
         },
       },
     },
@@ -21,21 +33,22 @@ test('create new schema', () => {
   const { writeStatements, readStatement, values } = compileQueryInput(query, schemas);
 
   expect(writeStatements).toEqual([
-    'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT)',
+    'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT)',
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "schemas" ("slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4) RETURNING *',
+    'INSERT INTO "schemas" ("slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5) RETURNING *',
   );
 
   expect(values[0]).toBe('account');
+  expect(values[1]).toBe(JSON.stringify(fields));
 
-  expect(values[1]).toMatch(RECORD_ID_REGEX);
+  expect(values[2]).toMatch(RECORD_ID_REGEX);
 
-  expect(values[2]).toSatisfy(
+  expect(values[3]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[3]).toSatisfy(
+  expect(values[4]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
 });
