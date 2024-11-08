@@ -5,15 +5,17 @@ import type { Query } from '@/src/types/query';
 import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
 
 test('get single record for pre-defined condition', () => {
-  const query: Query = {
-    get: {
-      views: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        views: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -60,7 +62,7 @@ test('get single record for pre-defined condition', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
@@ -69,15 +71,17 @@ test('get single record for pre-defined condition', () => {
 });
 
 test('get single record for pre-defined condition containing sub query', () => {
-  const query: Query = {
-    get: {
-      views: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        views: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -134,7 +138,7 @@ test('get single record for pre-defined condition containing sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
@@ -143,15 +147,17 @@ test('get single record for pre-defined condition containing sub query', () => {
 });
 
 test('get single record for pre-defined field containing sub query', () => {
-  const query: Query = {
-    get: {
-      views: {
-        for: {
-          'active-member': 'acc_39h8fhe98hefah8',
+  const queries: Array<Query> = [
+    {
+      get: {
+        views: {
+          for: {
+            'active-member': 'acc_39h8fhe98hefah8',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -206,7 +212,7 @@ test('get single record for pre-defined field containing sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,

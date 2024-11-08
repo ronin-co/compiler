@@ -62,7 +62,7 @@ console.log(readStatement);
 To fine-tune the behavior of the compiler, you can pass the following options:
 
 ```typescript
-compileQueries(query, schemas, {
+compileQueries(queries, schemas, {
   // Instead of returning an array of values for every statement (which allows for
   // preventing SQL injections), all values are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.

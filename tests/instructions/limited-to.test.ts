@@ -3,13 +3,15 @@ import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records limited to amount', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        limitedTo: 20,
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          limitedTo: 20,
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -17,7 +19,7 @@ test('get multiple records limited to amount', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,

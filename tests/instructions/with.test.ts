@@ -3,17 +3,19 @@ import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get single record with field being value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            being: 'elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              being: 'elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -27,24 +29,26 @@ test('get single record with field being value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1');
   expect(values).toMatchObject(['elaine']);
 });
 
 test('get single record with field not being value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            notBeing: 'elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              notBeing: 'elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -58,24 +62,26 @@ test('get single record with field not being value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "accounts" WHERE ("handle" != ?1) LIMIT 1');
   expect(values).toMatchObject(['elaine']);
 });
 
 test('get single record with field not being empty', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            notBeing: null,
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              notBeing: null,
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -89,7 +95,7 @@ test('get single record with field not being empty', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" IS NOT NULL) LIMIT 1',
@@ -98,17 +104,19 @@ test('get single record with field not being empty', () => {
 });
 
 test('get single record with field starting with value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            startingWith: 'el',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              startingWith: 'el',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -122,7 +130,7 @@ test('get single record with field starting with value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1%) LIMIT 1',
@@ -131,17 +139,19 @@ test('get single record with field starting with value', () => {
 });
 
 test('get single record with field not starting with value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            notStartingWith: 'el',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              notStartingWith: 'el',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -155,7 +165,7 @@ test('get single record with field not starting with value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1%) LIMIT 1',
@@ -164,17 +174,19 @@ test('get single record with field not starting with value', () => {
 });
 
 test('get single record with field ending with value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            endingWith: 'ne',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              endingWith: 'ne',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -188,7 +200,7 @@ test('get single record with field ending with value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1) LIMIT 1',
@@ -197,17 +209,19 @@ test('get single record with field ending with value', () => {
 });
 
 test('get single record with field not ending with value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            notEndingWith: 'ne',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              notEndingWith: 'ne',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -221,7 +235,7 @@ test('get single record with field not ending with value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1) LIMIT 1',
@@ -230,17 +244,19 @@ test('get single record with field not ending with value', () => {
 });
 
 test('get single record with field containing value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            containing: 'ain',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              containing: 'ain',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -254,7 +270,7 @@ test('get single record with field containing value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1%) LIMIT 1',
@@ -263,17 +279,19 @@ test('get single record with field containing value', () => {
 });
 
 test('get single record with field not containing value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            notContaining: 'ain',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              notContaining: 'ain',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -287,7 +305,7 @@ test('get single record with field not containing value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1%) LIMIT 1',
@@ -296,17 +314,19 @@ test('get single record with field not containing value', () => {
 });
 
 test('get single record with field greater than value', () => {
-  const query: Query = {
-    get: {
-      product: {
-        with: {
-          position: {
-            greaterThan: 5,
+  const queries: Array<Query> = [
+    {
+      get: {
+        product: {
+          with: {
+            position: {
+              greaterThan: 5,
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -320,24 +340,26 @@ test('get single record with field greater than value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "products" WHERE ("position" > ?1) LIMIT 1');
   expect(values).toMatchObject([5]);
 });
 
 test('get single record with field greater or equal to value', () => {
-  const query: Query = {
-    get: {
-      product: {
-        with: {
-          position: {
-            greaterOrEqual: 5,
+  const queries: Array<Query> = [
+    {
+      get: {
+        product: {
+          with: {
+            position: {
+              greaterOrEqual: 5,
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -351,24 +373,26 @@ test('get single record with field greater or equal to value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "products" WHERE ("position" >= ?1) LIMIT 1');
   expect(values).toMatchObject([5]);
 });
 
 test('get single record with field less than value', () => {
-  const query: Query = {
-    get: {
-      product: {
-        with: {
-          position: {
-            lessThan: 10,
+  const queries: Array<Query> = [
+    {
+      get: {
+        product: {
+          with: {
+            position: {
+              lessThan: 10,
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -382,24 +406,26 @@ test('get single record with field less than value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "products" WHERE ("position" < ?1) LIMIT 1');
   expect(values).toMatchObject([10]);
 });
 
 test('get single record with field less or equal to value', () => {
-  const query: Query = {
-    get: {
-      product: {
-        with: {
-          position: {
-            lessOrEqual: 10,
+  const queries: Array<Query> = [
+    {
+      get: {
+        product: {
+          with: {
+            position: {
+              lessOrEqual: 10,
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -413,27 +439,29 @@ test('get single record with field less or equal to value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "products" WHERE ("position" <= ?1) LIMIT 1');
   expect(values).toMatchObject([10]);
 });
 
 test('get single record with multiple fields being value', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            being: 'elaine',
-          },
-          name: {
-            being: 'Elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              being: 'elaine',
+            },
+            name: {
+              being: 'Elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -451,7 +479,7 @@ test('get single record with multiple fields being value', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" = ?1 AND "name" = ?2) LIMIT 1',
@@ -460,17 +488,19 @@ test('get single record with multiple fields being value', () => {
 });
 
 test('get single record with reference field', () => {
-  const query: Query = {
-    get: {
-      member: {
-        with: {
-          account: {
-            handle: 'elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          with: {
+            account: {
+              handle: 'elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -494,7 +524,7 @@ test('get single record with reference field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "members" WHERE ("account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1)) LIMIT 1',
@@ -503,17 +533,19 @@ test('get single record with reference field', () => {
 });
 
 test('get single record with reference field and id', () => {
-  const query: Query = {
-    get: {
-      member: {
-        with: {
-          account: {
-            id: 'mem_zgoj3xav8tpcte1s',
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          with: {
+            account: {
+              id: 'mem_zgoj3xav8tpcte1s',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -531,26 +563,28 @@ test('get single record with reference field and id', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1');
   expect(values).toMatchObject(['mem_zgoj3xav8tpcte1s']);
 });
 
 test('get single record with reference field and id with condition', () => {
-  const query: Query = {
-    get: {
-      member: {
-        with: {
-          account: {
-            id: {
-              being: 'mem_zgoj3xav8tpcte1s',
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          with: {
+            account: {
+              id: {
+                being: 'mem_zgoj3xav8tpcte1s',
+              },
             },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -568,24 +602,26 @@ test('get single record with reference field and id with condition', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1');
   expect(values).toMatchObject(['mem_zgoj3xav8tpcte1s']);
 });
 
 test('get single record with json field', () => {
-  const query: Query = {
-    get: {
-      team: {
-        with: {
-          billing: {
-            invoiceRecipient: 'receipts@ronin.co',
+  const queries: Array<Query> = [
+    {
+      get: {
+        team: {
+          with: {
+            billing: {
+              invoiceRecipient: 'receipts@ronin.co',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -599,7 +635,7 @@ test('get single record with json field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
@@ -608,20 +644,22 @@ test('get single record with json field', () => {
 });
 
 test('get single record with one of fields', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: [
-          {
-            handle: 'elaine',
-          },
-          {
-            email: 'elaine@site.co',
-          },
-        ],
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: [
+            {
+              handle: 'elaine',
+            },
+            {
+              email: 'elaine@site.co',
+            },
+          ],
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -639,7 +677,7 @@ test('get single record with one of fields', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "email" = ?2) LIMIT 1',
@@ -648,22 +686,24 @@ test('get single record with one of fields', () => {
 });
 
 test('get single record with one of field conditions', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: [
-            {
-              being: 'elaine',
-            },
-            {
-              being: 'david',
-            },
-          ],
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: [
+              {
+                being: 'elaine',
+              },
+              {
+                being: 'david',
+              },
+            ],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -677,7 +717,7 @@ test('get single record with one of field conditions', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1',
@@ -686,17 +726,19 @@ test('get single record with one of field conditions', () => {
 });
 
 test('get single record with one of field values', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          handle: {
-            being: ['elaine', 'david'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              being: ['elaine', 'david'],
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -710,7 +752,7 @@ test('get single record with one of field values', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1',
@@ -719,17 +761,19 @@ test('get single record with one of field values', () => {
 });
 
 test('get single record with one of field values in group', () => {
-  const query: Query = {
-    get: {
-      team: {
-        with: {
-          billing: {
-            currency: ['EUR', 'USD'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        team: {
+          with: {
+            billing: {
+              currency: ['EUR', 'USD'],
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -747,7 +791,7 @@ test('get single record with one of field values in group', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "teams" WHERE ("billing.currency" = ?1 OR "billing.currency" = ?2) LIMIT 1`,
@@ -756,17 +800,19 @@ test('get single record with one of field values in group', () => {
 });
 
 test('get single record with name identifier', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          nameIdentifier: {
-            being: 'Elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            nameIdentifier: {
+              being: 'Elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -783,24 +829,26 @@ test('get single record with name identifier', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "accounts" WHERE ("name" = ?1) LIMIT 1');
   expect(values).toMatchObject(['Elaine']);
 });
 
 test('get single record with slug identifier', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: {
-          slugIdentifier: {
-            being: 'elaine',
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            slugIdentifier: {
+              being: 'elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -817,7 +865,7 @@ test('get single record with slug identifier', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe('SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1');
   expect(values).toMatchObject(['elaine']);

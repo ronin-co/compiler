@@ -5,18 +5,20 @@ import type { Query } from '@/src/types/query';
 import { RECORD_ID_REGEX, RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('set single record to new string field', () => {
-  const query: Query = {
-    set: {
-      account: {
-        with: {
-          handle: 'elaine',
-        },
-        to: {
-          handle: 'mia',
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            handle: 'mia',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -30,7 +32,7 @@ test('set single record to new string field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -44,20 +46,22 @@ test('set single record to new string field', () => {
 });
 
 test('set single record to new one-cardinality reference field', () => {
-  const query: Query = {
-    set: {
-      member: {
-        with: {
-          id: 'mem_zgoj3xav8tpcte1s',
-        },
-        to: {
-          account: {
-            handle: 'elaine',
+  const queries: Array<Query> = [
+    {
+      set: {
+        member: {
+          with: {
+            id: 'mem_zgoj3xav8tpcte1s',
+          },
+          to: {
+            account: {
+              handle: 'elaine',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -81,7 +85,7 @@ test('set single record to new one-cardinality reference field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -95,18 +99,20 @@ test('set single record to new one-cardinality reference field', () => {
 });
 
 test('set single record to new many-cardinality reference field', () => {
-  const query: Query = {
-    set: {
-      post: {
-        with: {
-          id: 'pos_zgoj3xav8tpcte1s',
-        },
-        to: {
-          comments: [{ content: 'Great post!' }],
+  const queries: Array<Query> = [
+    {
+      set: {
+        post: {
+          with: {
+            id: 'pos_zgoj3xav8tpcte1s',
+          },
+          to: {
+            comments: [{ content: 'Great post!' }],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -131,7 +137,7 @@ test('set single record to new many-cardinality reference field', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'DELETE FROM "ronin_posts_comments" WHERE ("source" = ?1)',
@@ -159,20 +165,22 @@ test('set single record to new many-cardinality reference field', () => {
 });
 
 test('set single record to new many-cardinality reference field (add)', () => {
-  const query: Query = {
-    set: {
-      post: {
-        with: {
-          id: 'pos_zgoj3xav8tpcte1s',
-        },
-        to: {
-          comments: {
-            containing: [{ content: 'Great post!' }],
+  const queries: Array<Query> = [
+    {
+      set: {
+        post: {
+          with: {
+            id: 'pos_zgoj3xav8tpcte1s',
+          },
+          to: {
+            comments: {
+              containing: [{ content: 'Great post!' }],
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -197,7 +205,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'INSERT INTO "ronin_posts_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
@@ -223,20 +231,22 @@ test('set single record to new many-cardinality reference field (add)', () => {
 });
 
 test('set single record to new many-cardinality reference field (delete)', () => {
-  const query: Query = {
-    set: {
-      post: {
-        with: {
-          id: 'pos_zgoj3xav8tpcte1s',
-        },
-        to: {
-          comments: {
-            notContaining: [{ content: 'Great post!' }],
+  const queries: Array<Query> = [
+    {
+      set: {
+        post: {
+          with: {
+            id: 'pos_zgoj3xav8tpcte1s',
+          },
+          to: {
+            comments: {
+              notContaining: [{ content: 'Great post!' }],
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -261,7 +271,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'DELETE FROM "ronin_posts_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
@@ -280,18 +290,20 @@ test('set single record to new many-cardinality reference field (delete)', () =>
 });
 
 test('set single record to new json field with array', () => {
-  const query: Query = {
-    set: {
-      account: {
-        with: {
-          handle: 'elaine',
-        },
-        to: {
-          emails: ['elaine@site.co', 'elaine@company.co'],
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            emails: ['elaine@site.co', 'elaine@company.co'],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -309,7 +321,7 @@ test('set single record to new json field with array', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -323,18 +335,20 @@ test('set single record to new json field with array', () => {
 });
 
 test('set single record to new json field with empty array', () => {
-  const query: Query = {
-    set: {
-      account: {
-        with: {
-          handle: 'elaine',
-        },
-        to: {
-          emails: [],
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            emails: [],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -352,7 +366,7 @@ test('set single record to new json field with empty array', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -366,21 +380,23 @@ test('set single record to new json field with empty array', () => {
 });
 
 test('set single record to new json field with object', () => {
-  const query: Query = {
-    set: {
-      account: {
-        with: {
-          handle: 'elaine',
-        },
-        to: {
-          emails: {
-            site: 'elaine@site.co',
-            hobby: 'dancer@dancing.co',
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            emails: {
+              site: 'elaine@site.co',
+              hobby: 'dancer@dancing.co',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -398,7 +414,7 @@ test('set single record to new json field with object', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -412,18 +428,20 @@ test('set single record to new json field with object', () => {
 });
 
 test('set single record to new json field with empty object', () => {
-  const query: Query = {
-    set: {
-      account: {
-        with: {
-          handle: 'elaine',
-        },
-        to: {
-          emails: {},
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            emails: {},
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -441,7 +459,7 @@ test('set single record to new json field with empty object', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
@@ -455,20 +473,22 @@ test('set single record to new json field with empty object', () => {
 });
 
 test('set single record to new grouped string field', () => {
-  const query: Query = {
-    set: {
-      team: {
-        with: {
-          id: 'tea_zgoj3xav8tpcte1s',
-        },
-        to: {
-          billing: {
-            currency: 'USD',
+  const queries: Array<Query> = [
+    {
+      set: {
+        team: {
+          with: {
+            id: 'tea_zgoj3xav8tpcte1s',
+          },
+          to: {
+            billing: {
+              currency: 'USD',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -486,7 +506,7 @@ test('set single record to new grouped string field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -500,22 +520,24 @@ test('set single record to new grouped string field', () => {
 });
 
 test('set single record to new grouped reference field', () => {
-  const query: Query = {
-    set: {
-      team: {
-        with: {
-          id: 'tea_zgoj3xav8tpcte1s',
-        },
-        to: {
-          billing: {
-            manager: {
-              handle: 'elaine',
+  const queries: Array<Query> = [
+    {
+      set: {
+        team: {
+          with: {
+            id: 'tea_zgoj3xav8tpcte1s',
+          },
+          to: {
+            billing: {
+              manager: {
+                handle: 'elaine',
+              },
             },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -543,7 +565,7 @@ test('set single record to new grouped reference field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -557,20 +579,22 @@ test('set single record to new grouped reference field', () => {
 });
 
 test('set single record to new grouped json field', () => {
-  const query: Query = {
-    set: {
-      team: {
-        with: {
-          id: 'tea_zgoj3xav8tpcte1s',
-        },
-        to: {
-          billing: {
-            invoiceRecipients: ['receipts@test.co'],
+  const queries: Array<Query> = [
+    {
+      set: {
+        team: {
+          with: {
+            id: 'tea_zgoj3xav8tpcte1s',
+          },
+          to: {
+            billing: {
+              invoiceRecipients: ['receipts@test.co'],
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -588,7 +612,7 @@ test('set single record to new grouped json field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "billing.invoiceRecipients" = IIF("billing.invoiceRecipients" IS NULL, ?1, json_patch("billing.invoiceRecipients", ?1)), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -602,19 +626,21 @@ test('set single record to new grouped json field', () => {
 });
 
 test('set single record to result of nested query', () => {
-  const query: Query = {
-    set: {
-      team: {
-        with: {
-          id: 'tea_zgoj3xav8tpcte1s',
-        },
-        to: {
-          name: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-              get: {
-                account: {
-                  with: { handle: 'elaine' },
-                  selecting: ['name'],
+  const queries: Array<Query> = [
+    {
+      set: {
+        team: {
+          with: {
+            id: 'tea_zgoj3xav8tpcte1s',
+          },
+          to: {
+            name: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  account: {
+                    with: { handle: 'elaine' },
+                    selecting: ['name'],
+                  },
                 },
               },
             },
@@ -622,7 +648,7 @@ test('set single record to result of nested query', () => {
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -649,7 +675,7 @@ test('set single record to result of nested query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
@@ -663,19 +689,21 @@ test('set single record to result of nested query', () => {
 });
 
 test('create multiple records with nested sub query', () => {
-  const query: Query = {
-    create: {
-      newAccounts: {
-        to: {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-            get: {
-              oldAccounts: null,
+  const queries: Array<Query> = [
+    {
+      create: {
+        newAccounts: {
+          to: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                oldAccounts: null,
+              },
             },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -698,7 +726,7 @@ test('create multiple records with nested sub query', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT * FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -708,15 +736,17 @@ test('create multiple records with nested sub query', () => {
 });
 
 test('create multiple records with nested sub query including additional fields', () => {
-  const query: Query = {
-    create: {
-      newAccounts: {
-        to: {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-            get: {
-              oldAccounts: {
-                including: {
-                  firstName: 'custom-first-name',
+  const queries: Array<Query> = [
+    {
+      create: {
+        newAccounts: {
+          to: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                oldAccounts: {
+                  including: {
+                    firstName: 'custom-first-name',
+                  },
                 },
               },
             },
@@ -724,7 +754,7 @@ test('create multiple records with nested sub query including additional fields'
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -751,7 +781,7 @@ test('create multiple records with nested sub query including additional fields'
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -761,21 +791,23 @@ test('create multiple records with nested sub query including additional fields'
 });
 
 test('create multiple records with nested sub query and specific fields', () => {
-  const query: Query = {
-    create: {
-      newAccounts: {
-        to: {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-            get: {
-              oldAccounts: {
-                selecting: ['handle'],
+  const queries: Array<Query> = [
+    {
+      create: {
+        newAccounts: {
+          to: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                oldAccounts: {
+                  selecting: ['handle'],
+                },
               },
             },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -798,7 +830,7 @@ test('create multiple records with nested sub query and specific fields', () => 
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -814,21 +846,23 @@ test('create multiple records with nested sub query and specific fields', () => 
 });
 
 test('create multiple records with nested sub query and specific meta fields', () => {
-  const query: Query = {
-    create: {
-      newAccounts: {
-        to: {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-            get: {
-              oldAccounts: {
-                selecting: ['ronin.updatedAt'],
+  const queries: Array<Query> = [
+    {
+      create: {
+        newAccounts: {
+          to: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                oldAccounts: {
+                  selecting: ['ronin.updatedAt'],
+                },
               },
             },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -851,7 +885,7 @@ test('create multiple records with nested sub query and specific meta fields', (
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
@@ -864,15 +898,17 @@ test('create multiple records with nested sub query and specific meta fields', (
 });
 
 test('try to create multiple records with nested sub query including non-existent fields', () => {
-  const query: Query = {
-    create: {
-      newAccounts: {
-        to: {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-            get: {
-              oldAccounts: {
-                including: {
-                  nonExistingField: 'custom-value',
+  const queries: Array<Query> = [
+    {
+      create: {
+        newAccounts: {
+          to: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                oldAccounts: {
+                  including: {
+                    nonExistingField: 'custom-value',
+                  },
                 },
               },
             },
@@ -880,7 +916,7 @@ test('try to create multiple records with nested sub query including non-existen
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -906,7 +942,7 @@ test('try to create multiple records with nested sub query including non-existen
   let error: Error | undefined;
 
   try {
-    compileQueries(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }

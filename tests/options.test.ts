@@ -3,13 +3,15 @@ import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('inline statement values', () => {
-  const query: Query = {
-    get: {
-      account: {
-        with: { handle: 'elaine' },
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: { handle: 'elaine' },
+        },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -23,7 +25,7 @@ test('inline statement values', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas, {
+  const [{ readStatement, values }] = compileQueries(queries, schemas, {
     inlineValues: true,
   });
 

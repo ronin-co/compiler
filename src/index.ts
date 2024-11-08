@@ -5,19 +5,19 @@ import { compileQueryInput } from '@/src/utils';
 /**
  * Composes an SQL statement for a provided RONIN query.
  *
- * @param query - The RONIN query for which an SQL statement should be composed.
+ * @param queries - The RONIN queries for which an SQL statement should be composed.
  * @param schemas - A list of schemas.
  * @param options - Additional options to adjust the behavior of the statement generation.
  *
  * @returns The composed SQL statement.
  */
 export const compileQueries = (
-  query: Query,
+  queries: Array<Query>,
   schemas: Array<PublicSchema>,
   options?: {
     inlineValues?: boolean;
   },
-) => {
+): Array<ReturnType<typeof compileQueryInput>> => {
   // In order to prevent SQL injections and allow for faster query execution, we're not
   // inserting any values into the SQL statement directly. Instead, we will pass them to
   // SQLite's API later on, so that it can prepare an object that the database can
@@ -25,7 +25,7 @@ export const compileQueries = (
   // be provided as values.
   const statementValues = options?.inlineValues ? null : [];
 
-  return compileQueryInput(query, schemas, statementValues);
+  return queries.map((query) => compileQueryInput(query, schemas, statementValues));
 };
 
 // Expose schema types

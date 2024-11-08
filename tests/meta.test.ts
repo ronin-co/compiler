@@ -17,20 +17,22 @@ test('create new schema', () => {
     },
   ];
 
-  const query: Query = {
-    create: {
-      schema: {
-        to: {
-          slug: 'account',
-          fields,
+  const queries: Array<Query> = [
+    {
+      create: {
+        schema: {
+          to: {
+            slug: 'account',
+            fields,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT)',
@@ -59,22 +61,24 @@ test('create new schema', () => {
 });
 
 test('update existing schema', () => {
-  const query: Query = {
-    set: {
-      schema: {
-        with: {
-          slug: 'account',
-        },
-        to: {
-          slug: 'user',
+  const queries: Array<Query> = [
+    {
+      set: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
+          to: {
+            slug: 'user',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" RENAME TO "users"']);
 
@@ -96,19 +100,21 @@ test('update existing schema', () => {
 });
 
 test('drop existing schema', () => {
-  const query: Query = {
-    drop: {
-      schema: {
-        with: {
-          slug: 'account',
+  const queries: Array<Query> = [
+    {
+      drop: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['DROP TABLE "accounts"']);
 
@@ -118,21 +124,23 @@ test('drop existing schema', () => {
 });
 
 test('create new field', () => {
-  const query: Query = {
-    create: {
-      field: {
-        to: {
-          schema: { slug: 'account' },
-          slug: 'email',
-          type: 'string',
+  const queries: Array<Query> = [
+    {
+      create: {
+        field: {
+          to: {
+            schema: { slug: 'account' },
+            slug: 'email',
+            type: 'string',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" ADD COLUMN "email" TEXT']);
 
@@ -154,22 +162,24 @@ test('create new field', () => {
 });
 
 test('create new reference field', () => {
-  const query: Query = {
-    create: {
-      field: {
-        to: {
-          schema: { slug: 'member' },
-          slug: 'account',
-          type: 'reference',
-          target: { slug: 'account' },
+  const queries: Array<Query> = [
+    {
+      create: {
+        field: {
+          to: {
+            schema: { slug: 'member' },
+            slug: 'account',
+            type: 'reference',
+            target: { slug: 'account' },
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
@@ -194,25 +204,27 @@ test('create new reference field', () => {
 });
 
 test('create new reference field with actions', () => {
-  const query: Query = {
-    create: {
-      field: {
-        to: {
-          schema: { slug: 'member' },
-          slug: 'account',
-          type: 'reference',
-          target: { slug: 'account' },
-          actions: {
-            onDelete: 'CASCADE',
+  const queries: Array<Query> = [
+    {
+      create: {
+        field: {
+          to: {
+            schema: { slug: 'member' },
+            slug: 'account',
+            type: 'reference',
+            target: { slug: 'account' },
+            actions: {
+              onDelete: 'CASCADE',
+            },
           },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
@@ -238,23 +250,25 @@ test('create new reference field with actions', () => {
 });
 
 test('update existing field', () => {
-  const query: Query = {
-    set: {
-      field: {
-        with: {
-          schema: { slug: 'account' },
-          slug: 'email',
-        },
-        to: {
-          slug: 'emailAddress',
+  const queries: Array<Query> = [
+    {
+      set: {
+        field: {
+          with: {
+            schema: { slug: 'account' },
+            slug: 'email',
+          },
+          to: {
+            slug: 'emailAddress',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
@@ -273,20 +287,22 @@ test('update existing field', () => {
 });
 
 test('drop existing field', () => {
-  const query: Query = {
-    drop: {
-      field: {
-        with: {
-          schema: { slug: 'account' },
-          slug: 'email',
+  const queries: Array<Query> = [
+    {
+      drop: {
+        field: {
+          with: {
+            schema: { slug: 'account' },
+            slug: 'email',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['ALTER TABLE "accounts" DROP COLUMN "email"']);
 
@@ -299,20 +315,22 @@ test('drop existing field', () => {
 });
 
 test('create new index', () => {
-  const query: Query = {
-    create: {
-      index: {
-        to: {
-          slug: 'index_name',
-          schema: { slug: 'account' },
+  const queries: Array<Query> = [
+    {
+      create: {
+        index: {
+          to: {
+            slug: 'index_name',
+            schema: { slug: 'account' },
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['CREATE INDEX "index_name" ON "accounts"']);
 
@@ -340,17 +358,19 @@ test('create new index with filters', () => {
     },
   };
 
-  const query: Query = {
-    create: {
-      index: {
-        to: {
-          slug: 'index_name',
-          schema: { slug: 'account' },
-          filter: filterInstruction,
+  const queries: Array<Query> = [
+    {
+      create: {
+        index: {
+          to: {
+            slug: 'index_name',
+            schema: { slug: 'account' },
+            filter: filterInstruction,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -359,7 +379,7 @@ test('create new index with filters', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE INDEX "index_name" ON "accounts" WHERE (("email" LIKE %?1))',
@@ -383,21 +403,23 @@ test('create new index with filters', () => {
 });
 
 test('create new unique index', () => {
-  const query: Query = {
-    create: {
-      index: {
-        to: {
-          slug: 'index_name',
-          schema: { slug: 'account' },
-          unique: true,
+  const queries: Array<Query> = [
+    {
+      create: {
+        index: {
+          to: {
+            slug: 'index_name',
+            schema: { slug: 'account' },
+            unique: true,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['CREATE UNIQUE INDEX "index_name" ON "accounts"']);
 
@@ -420,20 +442,22 @@ test('create new unique index', () => {
 });
 
 test('drop existing index', () => {
-  const query: Query = {
-    drop: {
-      index: {
-        with: {
-          slug: 'index_name',
-          schema: { slug: 'account' },
+  const queries: Array<Query> = [
+    {
+      drop: {
+        index: {
+          with: {
+            slug: 'index_name',
+            schema: { slug: 'account' },
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['DROP INDEX "index_name"']);
 
@@ -458,18 +482,20 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const query: Query = {
-    create: {
-      trigger: {
-        to: {
-          slug: 'trigger_name',
-          schema: { slug: 'account' },
-          cause: 'afterInsert',
-          effects: effectQueries,
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'account' },
+            cause: 'afterInsert',
+            effects: effectQueries,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -481,7 +507,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
@@ -535,18 +561,20 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const query: Query = {
-    create: {
-      trigger: {
-        to: {
-          slug: 'trigger_name',
-          schema: { slug: 'account' },
-          cause: 'afterInsert',
-          effects: effectQueries,
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'account' },
+            cause: 'afterInsert',
+            effects: effectQueries,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -562,7 +590,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
@@ -616,18 +644,20 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const query: Query = {
-    create: {
-      trigger: {
-        to: {
-          slug: 'trigger_name',
-          schema: { slug: 'team' },
-          cause: 'afterInsert',
-          effects: effectQueries,
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'team' },
+            cause: 'afterInsert',
+            effects: effectQueries,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -646,7 +676,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
@@ -692,18 +722,20 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const query: Query = {
-    create: {
-      trigger: {
-        to: {
-          slug: 'trigger_name',
-          schema: { slug: 'team' },
-          cause: 'afterDelete',
-          effects: effectQueries,
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'team' },
+            cause: 'afterDelete',
+            effects: effectQueries,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -722,7 +754,7 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
@@ -766,19 +798,21 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   };
 
-  const query: Query = {
-    create: {
-      trigger: {
-        to: {
-          slug: 'trigger_name',
-          schema: { slug: 'team' },
-          cause: 'afterInsert',
-          effects: effectQueries,
-          filter: filterInstruction,
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'team' },
+            cause: 'afterInsert',
+            effects: effectQueries,
+            filter: filterInstruction,
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -798,7 +832,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual([
     'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
@@ -834,20 +868,22 @@ test('create new per-record trigger with filters for creating records', () => {
 });
 
 test('drop existing trigger', () => {
-  const query: Query = {
-    drop: {
-      trigger: {
-        with: {
-          slug: 'trigger_name',
-          schema: { slug: 'team' },
+  const queries: Array<Query> = [
+    {
+      drop: {
+        trigger: {
+          with: {
+            slug: 'trigger_name',
+            schema: { slug: 'team' },
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
-  const { writeStatements, readStatement, values } = compileQueries(query, schemas);
+  const [{ writeStatements, readStatement, values }] = compileQueries(queries, schemas);
 
   expect(writeStatements).toEqual(['DROP TRIGGER "trigger_name"']);
 
@@ -860,25 +896,27 @@ test('drop existing trigger', () => {
 });
 
 test('try to update existing schema without minimum details (schema slug)', () => {
-  const query: Query = {
-    set: {
-      schema: {
-        with: {
-          name: 'Accounts',
-        },
-        to: {
-          slug: 'user',
+  const queries: Array<Query> = [
+    {
+      set: {
+        schema: {
+          with: {
+            name: 'Accounts',
+          },
+          to: {
+            slug: 'user',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -893,23 +931,25 @@ test('try to update existing schema without minimum details (schema slug)', () =
 });
 
 test('try to create new field without minimum details (field slug)', () => {
-  const query: Query = {
-    create: {
-      field: {
-        to: {
-          schema: { slug: 'account' },
-          slug: 'email',
+  const queries: Array<Query> = [
+    {
+      create: {
+        field: {
+          to: {
+            schema: { slug: 'account' },
+            slug: 'email',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -924,25 +964,27 @@ test('try to create new field without minimum details (field slug)', () => {
 });
 
 test('try to update existing field without minimum details (schema slug)', () => {
-  const query: Query = {
-    set: {
-      field: {
-        with: {
-          slug: 'email',
-        },
-        to: {
-          slug: 'emailAddress',
+  const queries: Array<Query> = [
+    {
+      set: {
+        field: {
+          with: {
+            slug: 'email',
+          },
+          to: {
+            slug: 'emailAddress',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }
@@ -957,26 +999,28 @@ test('try to update existing field without minimum details (schema slug)', () =>
 });
 
 test('try to update existing field without minimum details (field slug)', () => {
-  const query: Query = {
-    set: {
-      field: {
-        with: {
-          schema: { slug: 'account' },
-          name: 'Email Address',
-        },
-        to: {
-          slug: 'emailAddress',
+  const queries: Array<Query> = [
+    {
+      set: {
+        field: {
+          with: {
+            schema: { slug: 'account' },
+            name: 'Email Address',
+          },
+          to: {
+            slug: 'emailAddress',
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(query, schemas);
+    compileQueries(queries, schemas);
   } catch (err) {
     error = err as Error;
   }

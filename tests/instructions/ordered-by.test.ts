@@ -3,15 +3,17 @@ import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records ordered by field', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        orderedBy: {
-          ascending: ['handle'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          orderedBy: {
+            ascending: ['handle'],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -25,7 +27,7 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
@@ -34,15 +36,17 @@ test('get multiple records ordered by field', () => {
 });
 
 test('get multiple records ordered by multiple fields', () => {
-  const query: Query = {
-    get: {
-      accounts: {
-        orderedBy: {
-          ascending: ['handle', 'name'],
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          orderedBy: {
+            ascending: ['handle', 'name'],
+          },
         },
       },
     },
-  };
+  ];
 
   const schemas: Array<Schema> = [
     {
@@ -60,7 +64,7 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const { readStatement, values } = compileQueries(query, schemas);
+  const [{ readStatement, values }] = compileQueries(queries, schemas);
 
   expect(readStatement).toBe(
     `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
