@@ -34,10 +34,13 @@ test('get single record including parent record (many-to-one)', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including child records (one-to-many, defined manually)', () => {
@@ -70,10 +73,13 @@ test('get single record including child records (one-to-many, defined manually)'
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_posts_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_posts_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including child records (one-to-many, defined automatically)', () => {
@@ -105,10 +111,13 @@ test('get single record including child records (one-to-many, defined automatica
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including unrelated record without filter', () => {
@@ -140,10 +149,13 @@ test('get single record including unrelated record without filter', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including unrelated record with filter', () => {
@@ -191,10 +203,13 @@ test('get single record including unrelated record with filter', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including unrelated records without filter', () => {
