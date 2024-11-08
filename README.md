@@ -45,7 +45,7 @@ import {
   type Query,
   type Schema,
   type Statement
-  } from '@ronin/compiler';
+} from '@ronin/compiler';
 
 const queries: Array<Query> = [{
   get: {
