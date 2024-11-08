@@ -1,4 +1,4 @@
-import type { Query, SetInstructions } from '@/src/types/query';
+import type { Query, SetInstructions, Statement } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
@@ -37,7 +37,7 @@ export const handleTo = (
   schema: Schema,
   statementValues: Array<unknown> | null,
   queryType: 'create' | 'set',
-  writeStatements: Array<string>,
+  writeStatements: Array<Statement>,
   instructions: {
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
@@ -123,7 +123,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, statementValues).readStatement;
+    return compileQueryInput(subQuery, schemas, statementValues).mainStatement.statement;
   }
 
   // Assign default field values to the provided instruction.
@@ -147,14 +147,17 @@ export const handleTo = (
         fieldDetails.field,
       );
 
-      const composeStatement = (subQueryType: 'create' | 'drop', value?: unknown) => {
+      const composeStatement = (
+        subQueryType: 'create' | 'drop',
+        value?: unknown,
+      ): Statement => {
         const source =
           queryType === 'create' ? { id: toInstruction.id } : withInstruction;
         const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
 
-        const { readStatement } = compileQueryInput(
+        const { mainStatement } = compileQueryInput(
           {
             [subQueryType]: {
               [associativeSchemaSlug]:
@@ -164,11 +167,11 @@ export const handleTo = (
             },
           },
           schemas,
-          statementValues,
-          { disableReturning: true },
+          [],
+          { returning: false },
         );
 
-        return readStatement;
+        return mainStatement;
       };
 
       if (Array.isArray(fieldValue)) {

@@ -25,12 +25,15 @@ test('inline statement values', () => {
     },
   ];
 
-  const { readStatements, values } = compileQueries(queries, schemas, {
+  const statements = compileQueries(queries, schemas, {
     inlineValues: true,
   });
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = "elaine") LIMIT 1',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" = "elaine") LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
 });

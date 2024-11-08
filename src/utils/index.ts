@@ -6,7 +6,7 @@ import { handleOrderedBy } from '@/src/instructions/ordered-by';
 import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
-import type { Query } from '@/src/types/query';
+import type { Query, Statement } from '@/src/types/query';
 import type { PublicSchema } from '@/src/types/schema';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import {
@@ -33,9 +33,12 @@ export const compileQueryInput = (
   defaultSchemas: Array<PublicSchema>,
   statementValues: Array<unknown> | null,
   options?: {
-    disableReturning?: boolean;
+    /**
+     * Whether the query should explicitly return records. Defaults to `true`.
+     */
+    returning?: boolean;
   },
-): { writeStatements: Array<string>; readStatement: string } => {
+): { dependencyStatements: Array<Statement>; mainStatement: Statement } => {
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
   const { queryType, querySchema, queryInstructions } = parsedQuery;
@@ -58,13 +61,14 @@ export const compileQueryInput = (
   // statement. Their output is not relevant for the main statement, as they are merely
   // used to update the database in a way that is required for the main read statement
   // to return the expected results.
-  const writeStatements: Array<string> = [];
+  const writeStatements: Array<Statement> = [];
+
+  const returning = options?.returning ?? true;
 
   // Generate additional dependency statements for meta queries, meaning queries that
   // affect the database schema.
   instructions = addSchemaQueries(
     schemas,
-    statementValues,
     { queryType, querySchema, queryInstructions: instructions },
     writeStatements,
   );
@@ -254,14 +258,23 @@ export const compileQueryInput = (
 
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
-  if (['create', 'set', 'drop'].includes(queryType) && !options?.disableReturning) {
+  if (['create', 'set', 'drop'].includes(queryType) && returning) {
     statement += 'RETURNING * ';
   }
 
-  const finalStatement = statement.trimEnd();
+  const mainStatement: Statement = {
+    statement: statement.trimEnd(),
+    params: statementValues || [],
+  };
+
+  // We are setting this property separately to make sure it doesn't even exist if the
+  // query doesn't return any output. This makes it easier for developers to visually
+  // distinguish between queries that return output and those that don't, when looking at
+  // the output produced by the compiler.
+  if (returning) mainStatement.returning = true;
 
   return {
-    writeStatements,
-    readStatement: finalStatement,
+    dependencyStatements: writeStatements,
+    mainStatement,
   };
 };

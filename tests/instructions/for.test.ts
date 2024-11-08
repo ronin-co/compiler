@@ -62,12 +62,16 @@ test('get single record for pre-defined condition', () => {
     },
   ];
 
-  const { readStatements, values } = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
-  );
-  expect(values).toMatchObject(['spa_m9h8oha94helaji']);
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+      params: ['spa_m9h8oha94helaji'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record for pre-defined condition containing sub query', () => {
@@ -138,12 +142,16 @@ test('get single record for pre-defined condition containing sub query', () => {
     },
   ];
 
-  const { readStatements, values } = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject(['acc_39h8fhe98hefah8']);
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+      params: ['acc_39h8fhe98hefah8'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record for pre-defined field containing sub query', () => {
@@ -212,10 +220,14 @@ test('get single record for pre-defined field containing sub query', () => {
     },
   ];
 
-  const { readStatements, values } = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject(['acc_39h8fhe98hefah8']);
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+      params: ['acc_39h8fhe98hefah8'],
+      returning: true,
+    },
+  ]);
 });

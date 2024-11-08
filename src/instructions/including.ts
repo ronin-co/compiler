@@ -97,7 +97,7 @@ export const handleIncluding = (
         statementValues,
       );
 
-      relatedTableSelector = `(${subSelect.readStatement})`;
+      relatedTableSelector = `(${subSelect.mainStatement.statement})`;
     }
 
     statement += `${joinType} JOIN ${relatedTableSelector} as ${tableAlias}`;
