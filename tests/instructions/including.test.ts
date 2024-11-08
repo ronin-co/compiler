@@ -241,10 +241,13 @@ test('get single record including unrelated records without filter', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including unrelated records with filter', () => {
@@ -292,10 +295,13 @@ test('get single record including unrelated records with filter', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label"`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including unrelated ordered record', () => {
@@ -331,10 +337,13 @@ test('get single record including unrelated ordered record', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC LIMIT 1) as including_team LIMIT 1`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC LIMIT 1) as including_team LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record including unrelated ordered records', () => {
