@@ -59,6 +59,21 @@ console.log(readStatement);
 // SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101
 ```
 
+#### Options
+
+To fine-tune the behavior of the compiler, you can pass the following options:
+
+```typescript
+compileQuery(query, schemas, {
+  // Instead of returning an array of values for every statement (which allows for
+  // preventing SQL injections), all values are inlined directly into the SQL strings.
+  // This option should only be used if the generated SQL will be manually verified.
+  inlineValues: true
+});
+```
+
+#### Transpilation
+
 In order to be compatible with a wide range of projects, the source code of the `compiler` repo needs to be compiled (transpiled) whenever you make changes to it. To automate this, you can keep this command running in your terminal:
 
 ```bash
