@@ -29,10 +29,13 @@ test('get multiple records ordered by field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get multiple records ordered by multiple fields', () => {
@@ -66,8 +69,11 @@ test('get multiple records ordered by multiple fields', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });

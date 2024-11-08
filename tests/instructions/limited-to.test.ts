@@ -21,8 +21,11 @@ test('get multiple records limited to amount', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
