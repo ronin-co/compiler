@@ -599,7 +599,12 @@ export const addSchemaQueries = (
     });
   }
 
-  const tableName = convertToSnakeCase(pluralize(kind === 'schemas' ? slug : schemaSlug));
+  const usableSlug = kind === 'schemas' ? slug : schemaSlug;
+  const tableName = convertToSnakeCase(pluralize(usableSlug));
+  const targetSchema =
+    kind === 'schemas' && queryType === 'create'
+      ? null
+      : getSchemaBySlug(schemas, usableSlug);
 
   if (kind === 'indexes') {
     const indexName = convertToSnakeCase(slug);
@@ -617,10 +622,12 @@ export const addSchemaQueries = (
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
       if (filterQuery) {
-        const targetSchema = getSchemaBySlug(schemas, schemaSlug);
-
-        const withStatement = handleWith(schemas, targetSchema, params, filterQuery);
-
+        const withStatement = handleWith(
+          schemas,
+          targetSchema as Schema,
+          params,
+          filterQuery,
+        );
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -663,14 +670,13 @@ export const addSchemaQueries = (
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
       if (filterQuery) {
-        const targetSchema = getSchemaBySlug(schemas, schemaSlug);
         const tablePlaceholder = cause.endsWith('DELETE')
           ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
           : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
 
         const withStatement = handleWith(
           schemas,
-          targetSchema,
+          targetSchema as Schema,
           params,
           filterQuery,
           tablePlaceholder,
@@ -713,21 +719,12 @@ export const addSchemaQueries = (
       // Add the newly created schema to the list of schemas.
       schemas.push(queryInstructions.to as Schema);
     } else if (queryType === 'set' || queryType === 'drop') {
-      const schemaIndex = schemas.findIndex((schema) => schema.slug === slug);
-
-      if (schemaIndex < 0) {
-        throw new RoninError({
-          message: `No schema found for slug "${slug}".`,
-          code: 'SCHEMA_NOT_FOUND',
-        });
-      }
-
       if (queryType === 'set') {
         // Update the existing schema in the list of schemas.
-        Object.assign(schemas[schemaIndex], queryInstructions.to);
+        Object.assign(targetSchema as Schema, queryInstructions.to);
       } else if (queryType === 'drop') {
         // Remove the schema from the list of schemas.
-        schemas.splice(schemaIndex, 1);
+        schemas.splice(schemas.indexOf(targetSchema as Schema), 1);
       }
     }
 

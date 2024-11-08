@@ -212,6 +212,46 @@ test('use a schema that was just updated', () => {
   });
 });
 
+test('use a schema that was just dropped', () => {
+  const queries: Array<Query> = [
+    {
+      drop: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
+        },
+      },
+    },
+    {
+      get: {
+        account: null,
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueries(queries, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'No matching schema with either Slug or Plural Slug of "account" could be found.',
+  );
+  expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
+});
+
 test('create new field', () => {
   const queries: Array<Query> = [
     {
@@ -227,7 +267,11 @@ test('create new field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -268,7 +312,14 @@ test('create new reference field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'member',
+    },
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -314,7 +365,14 @@ test('create new reference field with actions', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'member',
+    },
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -359,7 +417,11 @@ test('update existing field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -396,7 +458,11 @@ test('drop existing field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -428,7 +494,11 @@ test('create new index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -518,7 +588,11 @@ test('create new unique index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -557,7 +631,11 @@ test('drop existing index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -978,7 +1056,11 @@ test('drop existing trigger', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'team',
+    },
+  ];
 
   const statements = compileQueries(queries, schemas);
 
@@ -1023,7 +1105,10 @@ test('try to update existing schema that does not exist', () => {
   }
 
   expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty('message', 'No schema found for slug "account".');
+  expect(error).toHaveProperty(
+    'message',
+    'No matching schema with either Slug or Plural Slug of "account" could be found.',
+  );
   expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
 });
 
@@ -1076,7 +1161,11 @@ test('try to create new field without minimum details (field slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
 
   let error: Error | undefined;
 
