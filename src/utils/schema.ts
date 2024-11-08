@@ -679,6 +679,10 @@ export const addSchemaQueries = (
       }
     }
 
+    // Compose default field values for the schema, regardless of whether the schema is
+    // being created or updated.
+    queryInstructions.to = prepareSchema(instructionList as Schema);
+
     writeStatements.push(statement);
     return;
   }

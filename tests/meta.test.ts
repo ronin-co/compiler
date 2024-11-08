@@ -37,18 +37,20 @@ test('create new schema', () => {
   ]);
 
   expect(readStatement).toBe(
-    'INSERT INTO "schemas" ("slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5) RETURNING *',
+    'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
   );
 
   expect(values[0]).toBe('account');
   expect(values[1]).toBe(JSON.stringify(fields));
+  expect(values[2]).toBe('accounts');
+  expect(values[3]).toBe('Account');
+  expect(values[4]).toBe('Accounts');
+  expect(values[5]).toMatch(RECORD_ID_REGEX);
 
-  expect(values[2]).toMatch(RECORD_ID_REGEX);
-
-  expect(values[3]).toSatisfy(
+  expect(values[6]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
-  expect(values[4]).toSatisfy(
+  expect(values[7]).toSatisfy(
     (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
   );
 });
