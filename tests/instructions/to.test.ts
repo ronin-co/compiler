@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RECORD_ID_REGEX, RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
+import { RECORD_ID_REGEX, RECORD_TIMESTAMP_REGEX, RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('set single record to new string field', () => {
   const queries: Array<Query> = [
@@ -34,15 +34,13 @@ test('set single record to new string field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('mia');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('elaine');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      params: ['mia', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('set single record to new one-cardinality reference field', () => {
@@ -87,15 +85,13 @@ test('set single record to new one-cardinality reference field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('elaine');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('mem_zgoj3xav8tpcte1s');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      params: ['elaine', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'mem_zgoj3xav8tpcte1s'],
+      returning: true,
+    },
+  ]);
 });
 
 test('set single record to new many-cardinality reference field', () => {
@@ -368,15 +364,13 @@ test('set single record to new json field with empty array', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('[]');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('elaine');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      params: ['[]', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      returning: true,
+    },
+  ])
 });
 
 test('set single record to new json field with object', () => {
@@ -416,15 +410,13 @@ test('set single record to new json field with object', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('{"site":"elaine@site.co","hobby":"dancer@dancing.co"}');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('elaine');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      params: ['{"site":"elaine@site.co","hobby":"dancer@dancing.co"}', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('set single record to new json field with empty object', () => {
@@ -461,15 +453,13 @@ test('set single record to new json field with empty object', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('{}');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('elaine');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      params: ['{}', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('set single record to new grouped string field', () => {
@@ -508,15 +498,13 @@ test('set single record to new grouped string field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('USD');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('tea_zgoj3xav8tpcte1s');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      params: ['USD', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'tea_zgoj3xav8tpcte1s'],
+      returning: true,
+    },
+  ]);
 });
 
 test('set single record to new grouped reference field', () => {
@@ -567,15 +555,13 @@ test('set single record to new grouped reference field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('elaine');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('tea_zgoj3xav8tpcte1s');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      params: ['elaine', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'tea_zgoj3xav8tpcte1s'],
+      returning: true,
+    },
+  ]);
 });
 
 test('set single record to new grouped json field', () => {
@@ -614,15 +600,13 @@ test('set single record to new grouped json field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "teams" SET "billing.invoiceRecipients" = IIF("billing.invoiceRecipients" IS NULL, ?1, json_patch("billing.invoiceRecipients", ?1)), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('["receipts@test.co"]');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('tea_zgoj3xav8tpcte1s');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = IIF("billing.invoiceRecipients" IS NULL, ?1, json_patch("billing.invoiceRecipients", ?1)), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      params: ['["receipts@test.co"]', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'tea_zgoj3xav8tpcte1s'],
+      returning: true
+    },
+  ]);
 });
 
 test('set single record to result of nested query', () => {
@@ -677,15 +661,13 @@ test('set single record to result of nested query', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-  );
-
-  expect(values[0]).toBe('elaine');
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toBe('tea_zgoj3xav8tpcte1s');
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      params: ['elaine', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'tea_zgoj3xav8tpcte1s'],
+      returning: true,
+    },
+  ]);
 });
 
 test('create multiple records with nested sub query', () => {
@@ -728,11 +710,13 @@ test('create multiple records with nested sub query', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'INSERT INTO "new_accounts" SELECT * FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
-  );
-
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement:`INSERT INTO "new_accounts" SELECT * FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('create multiple records with nested sub query including additional fields', () => {
@@ -783,11 +767,12 @@ test('create multiple records with nested sub query including additional fields'
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
-  );
-
-  expect(values[0]).toBe('custom-first-name');
+  expect(statements).toEqual([
+    {
+      statement: 'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
+      params: ['custom-first-name'],
+      returning: true,
+    }]);
 });
 
 test('create multiple records with nested sub query and specific fields', () => {
@@ -832,17 +817,13 @@ test('create multiple records with nested sub query and specific fields', () => 
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
-  );
-
-  expect(values[0]).toMatch(RECORD_ID_REGEX);
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
-  expect(values[2]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
+  expect(statements).toEqual([
+    {
+      statement: 'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
+      params: [expect.stringMatching(RECORD_ID_REGEX), expect.stringMatching(RECORD_TIMESTAMP_REGEX), expect.stringMatching(RECORD_TIMESTAMP_REGEX)],
+      returning: true,
+    },
+  ]);
 });
 
 test('create multiple records with nested sub query and specific meta fields', () => {
@@ -887,14 +868,13 @@ test('create multiple records with nested sub query and specific meta fields', (
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
-  );
-
-  expect(values[0]).toMatch(RECORD_ID_REGEX);
-  expect(values[1]).toSatisfy(
-    (value) => typeof value === 'string' && typeof Date.parse(value) === 'number',
-  );
+  expect(statements).toEqual([
+    {
+      statement: 'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
+      params: [expect.stringMatching(RECORD_ID_REGEX), expect.stringMatching(RECORD_TIMESTAMP_REGEX)],
+      returning: true,
+    },
+  ]);
 });
 
 test('try to create multiple records with nested sub query including non-existent fields', () => {

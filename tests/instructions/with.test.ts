@@ -31,10 +31,13 @@ test('get single record with field being value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1',
+      params: ['elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field not being value', () => {
@@ -66,10 +69,13 @@ test('get single record with field not being value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" != ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" != ?1) LIMIT 1',
+      params: ['elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field not being empty', () => {
@@ -101,10 +107,13 @@ test('get single record with field not being empty', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" IS NOT NULL) LIMIT 1',
-  );
-  expect(values).toMatchObject([]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" IS NOT NULL) LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field starting with value', () => {
@@ -136,10 +145,13 @@ test('get single record with field starting with value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1%) LIMIT 1',
-  );
-  expect(values).toMatchObject(['el']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1%) LIMIT 1',
+      params: ['el'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field not starting with value', () => {
@@ -171,10 +183,13 @@ test('get single record with field not starting with value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1%) LIMIT 1',
-  );
-  expect(values).toMatchObject(['el']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1%) LIMIT 1',
+      params: ['el'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field ending with value', () => {
@@ -206,10 +221,13 @@ test('get single record with field ending with value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['ne']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1) LIMIT 1',
+      params: ['ne'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field not ending with value', () => {
@@ -241,10 +259,13 @@ test('get single record with field not ending with value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['ne']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1) LIMIT 1',
+      params: ['ne'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field containing value', () => {
@@ -276,10 +297,13 @@ test('get single record with field containing value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1%) LIMIT 1',
-  );
-  expect(values).toMatchObject(['ain']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1%) LIMIT 1',
+      params: ['ain'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field not containing value', () => {
@@ -311,10 +335,13 @@ test('get single record with field not containing value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1%) LIMIT 1',
-  );
-  expect(values).toMatchObject(['ain']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1%) LIMIT 1',
+      params: ['ain'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field greater than value', () => {
@@ -346,10 +373,13 @@ test('get single record with field greater than value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "products" WHERE ("position" > ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject([5]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "products" WHERE ("position" > ?1) LIMIT 1',
+      params: [5],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field greater or equal to value', () => {
@@ -381,10 +411,13 @@ test('get single record with field greater or equal to value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "products" WHERE ("position" >= ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject([5]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "products" WHERE ("position" >= ?1) LIMIT 1',
+      params: [5],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field less than value', () => {
@@ -416,10 +449,13 @@ test('get single record with field less than value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "products" WHERE ("position" < ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject([10]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "products" WHERE ("position" < ?1) LIMIT 1',
+      params: [10],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with field less or equal to value', () => {
@@ -451,10 +487,13 @@ test('get single record with field less or equal to value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "products" WHERE ("position" <= ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject([10]);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "products" WHERE ("position" <= ?1) LIMIT 1',
+      params: [10],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with multiple fields being value', () => {
@@ -493,10 +532,13 @@ test('get single record with multiple fields being value', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = ?1 AND "name" = ?2) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine', 'Elaine']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" = ?1 AND "name" = ?2) LIMIT 1',
+      params: ['elaine', 'Elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with reference field', () => {
@@ -538,10 +580,13 @@ test('get single record with reference field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "members" WHERE ("account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1)) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "members" WHERE ("account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1)) LIMIT 1',
+      params: ['elaine'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with reference field and id', () => {
@@ -577,10 +622,13 @@ test('get single record with reference field and id', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['mem_zgoj3xav8tpcte1s']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
+      params: ['mem_zgoj3xav8tpcte1s'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with reference field and id with condition', () => {
@@ -618,10 +666,13 @@ test('get single record with reference field and id with condition', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['mem_zgoj3xav8tpcte1s']);
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
+      params: ['mem_zgoj3xav8tpcte1s'],
+      returning: true,
+    },
+  ]);
 });
 
 test('get single record with json field', () => {
@@ -653,10 +704,13 @@ test('get single record with json field', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
-  );
-  expect(values).toMatchObject(['receipts@ronin.co']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
+      params: ['receipts@ronin.co'],
+      returning: true,
+    }
+  ]);
 });
 
 test('get single record with one of fields', () => {
@@ -695,10 +749,13 @@ test('get single record with one of fields', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "email" = ?2) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine', 'elaine@site.co']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "email" = ?2) LIMIT 1`,
+      params: ['elaine', 'elaine@site.co'],
+      returning: true
+    }
+  ]);
 });
 
 test('get single record with one of field conditions', () => {
@@ -735,10 +792,13 @@ test('get single record with one of field conditions', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine', 'david']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1`,
+      params: ['elaine', 'david'],
+      returning: true
+    }
+  ]);
 });
 
 test('get single record with one of field values', () => {
@@ -770,10 +830,13 @@ test('get single record with one of field values', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine', 'david']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1`,
+      params: ['elaine', 'david'],
+      returning: true
+    }
+  ]);
 });
 
 test('get single record with one of field values in group', () => {
@@ -809,10 +872,13 @@ test('get single record with one of field values in group', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    `SELECT * FROM "teams" WHERE ("billing.currency" = ?1 OR "billing.currency" = ?2) LIMIT 1`,
-  );
-  expect(values).toMatchObject(['EUR', 'USD']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "teams" WHERE ("billing.currency" = ?1 OR "billing.currency" = ?2) LIMIT 1`,
+      params: ['EUR', 'USD'],
+      returning: true
+    }
+  ]);
 });
 
 test('get single record with name identifier', () => {
@@ -847,8 +913,13 @@ test('get single record with name identifier', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe('SELECT * FROM "accounts" WHERE ("name" = ?1) LIMIT 1');
-  expect(values).toMatchObject(['Elaine']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("name" = ?1) LIMIT 1`,
+      params: ['Elaine'],
+      returning: true
+    }
+  ]);
 });
 
 test('get single record with slug identifier', () => {
@@ -883,8 +954,11 @@ test('get single record with slug identifier', () => {
 
   const statements = compileQueries(queries, schemas);
 
-  expect(readStatements[0]).toBe(
-    'SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1',
-  );
-  expect(values).toMatchObject(['elaine']);
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1`,
+      params: ['elaine'],
+      returning: true
+    }
+  ]);
 });
