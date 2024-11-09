@@ -273,8 +273,33 @@ export const addDefaultSchemaFields = (schema: PublicSchema, isNew: boolean): Sc
   // fields to the schema.
   if (isNew || newFields.length > 0) {
     if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
-    if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
-    if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
+
+    // Intelligently select a reasonable default for which field should be used as the
+    // display name of the records in the schema (e.g. used in lists on the dashboard).
+    if (!copiedSchema.identifiers.name) {
+      const suitableField = newFields.find(
+        (field) =>
+          field.type === 'string' &&
+          field.required === true &&
+          ['name'].includes(field.slug),
+      );
+
+      copiedSchema.identifiers.name = suitableField?.slug || 'id';
+    }
+
+    // Intelligently select a reasonable default for which field should be used as the
+    // slug of the records in the schema (e.g. used in URLs on the dashboard).
+    if (!copiedSchema.identifiers.slug) {
+      const suitableField = newFields.find(
+        (field) =>
+          field.type === 'string' &&
+          field.unique === true &&
+          field.required === true &&
+          ['slug', 'handle'].includes(field.slug),
+      );
+
+      copiedSchema.identifiers.slug = suitableField?.slug || 'id';
+    }
 
     copiedSchema.fields = [...SYSTEM_FIELDS, ...newFields];
   }
