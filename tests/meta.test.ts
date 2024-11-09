@@ -66,7 +66,9 @@ test('create new schema', () => {
   ]);
 });
 
-test('update existing schema slug', () => {
+// Ensure that, if the `slug` of a schema changes during an update, an `ALTER TABLE`
+// statement is generated for it.
+test('update existing schema (slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -112,7 +114,9 @@ test('update existing schema slug', () => {
   ]);
 });
 
-test('update existing schema plural name', () => {
+// Ensure that, if the `slug` of a schema does not change during an update, no
+// unnecessary `ALTER TABLE` statement is generated for it.
+test('update existing schema (plural name)', () => {
   const queries: Array<Query> = [
     {
       set: {
