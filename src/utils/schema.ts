@@ -158,6 +158,127 @@ export const getFieldFromSchema = (
   return { field: schemaField, fieldSelector };
 };
 
+/**
+ * Converts a slug to a readable name by splitting it on uppercase characters
+ * and returning it formatted as title case.
+ *
+ * @example
+ * ```ts
+ * slugToName('activeAt'); // 'Active At'
+ * ```
+ *
+ * @param slug - The slug string to convert.
+ *
+ * @returns The formatted name in title case.
+ */
+const slugToName = (slug: string) => {
+  // Split the slug by uppercase letters and join with a space
+  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+  // Convert the resulting string to title case using the 'title' library
+  return title(name);
+};
+
+const VOWELS = ['a', 'e', 'i', 'o', 'u'];
+
+/**
+ * Pluralizes a singular English noun according to basic English pluralization rules.
+ *
+ * This function handles the following cases:
+ * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
+ * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
+ * - **All other words**: Adds 's' to the end of the word.
+ *
+ * @example
+ * ```ts
+ * pluralize('baby');    // 'babies'
+ * pluralize('key');     // 'keys'
+ * pluralize('bus');     // 'buses'
+ * pluralize('church');  // 'churches'
+ * pluralize('cat');     // 'cats'
+ * ```
+ *
+ * @param word - The singular noun to pluralize.
+ *
+ * @returns The plural form of the input word.
+ */
+const pluralize = (word: string) => {
+  const lastLetter = word.slice(-1).toLowerCase();
+  const secondLastLetter = word.slice(-2, -1).toLowerCase();
+
+  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
+    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
+    return `${word.slice(0, -1)}ies`;
+  }
+
+  if (
+    lastLetter === 's' ||
+    word.slice(-2).toLowerCase() === 'ch' ||
+    word.slice(-2).toLowerCase() === 'sh' ||
+    word.slice(-2).toLowerCase() === 'ex'
+  ) {
+    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
+    return `${word}es`;
+  }
+
+  // In all other cases, simply add 's'
+  return `${word}s`;
+};
+
+type ComposableSettings = 'slug' | 'pluralSlug' | 'name' | 'pluralName' | 'idPrefix';
+
+/**
+ * A list of settings that can be automatically generated based on other settings.
+ *
+ * The first item in each tuple is the setting that should be generated, the second item
+ * is the setting that should be used as a base, and the third item is the function that
+ * should be used to generate the new setting.
+ */
+const schemaSettings: Array<
+  [ComposableSettings, ComposableSettings, (arg: string) => string]
+> = [
+  ['pluralSlug', 'slug', pluralize],
+  ['name', 'slug', slugToName],
+  ['pluralName', 'pluralSlug', slugToName],
+  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+];
+
+/**
+ * Add a default name, plural name, and plural slug to a provided schema.
+ *
+ * @param schema - The schema that should receive defaults.
+ * @param isNew - Whether the schema is being newly created.
+ *
+ * @returns The updated schema.
+ */
+export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
+  const copiedSchema = { ...schema };
+
+  for (const [setting, base, generator] of schemaSettings) {
+    // If a custom value was provided for the setting, or the setting from which the current
+    // one can be generated is not available, skip the generation.
+    if (copiedSchema[setting] || !copiedSchema[base]) continue;
+
+    // Otherwise, if possible, generate the setting.
+    copiedSchema[setting] = generator(copiedSchema[base]);
+  }
+
+  const newFields = copiedSchema.fields || [];
+
+  // If the schema is being newly created or if new fields were provided for an existing
+  // schema, we would like to re-generate the list of `identifiers` and attach the system
+  // fields to the schema.
+  if (isNew || newFields.length > 0) {
+    if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
+    if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
+    if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
+
+    copiedSchema.fields = [...SYSTEM_FIELDS, ...newFields];
+  }
+
+  return copiedSchema as Schema;
+};
+
 /** These fields are required by the system and automatically added to every schema. */
 export const SYSTEM_FIELDS: Array<SchemaField> = [
   {
@@ -201,11 +322,7 @@ export const SYSTEM_FIELDS: Array<SchemaField> = [
 /** These schemas are required by the system and are automatically made available. */
 const SYSTEM_SCHEMAS: Array<Schema> = [
   {
-    name: 'Schema',
-    pluralName: 'Schemas',
-
     slug: 'schema',
-    pluralSlug: 'schemas',
 
     identifiers: {
       name: 'name',
@@ -230,11 +347,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     ],
   },
   {
-    name: 'Field',
-    pluralName: 'Fields',
-
     slug: 'field',
-    pluralSlug: 'fields',
 
     identifiers: {
       name: 'name',
@@ -265,11 +378,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     ],
   },
   {
-    name: 'Index',
-    pluralName: 'Indexes',
-
     slug: 'index',
-    pluralSlug: 'indexes',
 
     identifiers: {
       name: 'slug',
@@ -289,11 +398,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     ],
   },
   {
-    name: 'Trigger',
-    pluralName: 'Triggers',
-
     slug: 'trigger',
-    pluralSlug: 'triggers',
 
     identifiers: {
       name: 'slug',
@@ -308,7 +413,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'effects', type: 'json', required: true },
     ],
   },
-];
+].map((schema) => prepareSchema(schema as PublicSchema, true));
 
 /**
  * We are computing this at the root level in order to avoid computing it again with
@@ -320,42 +425,6 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
 ]);
 
 /**
- * Add a default name, plural name, and plural slug to a provided schema.
- *
- * @param schema - The schema that should receive defaults.
- * @param isNew - Whether the schema is being newly created.
- *
- * @returns The updated schema.
- */
-export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
-  const copiedSchema = { ...schema };
-
-  for (const [setting, base, generator] of schemaSettings) {
-    // If a custom value was provided for the setting, or the setting from which the current
-    // one can be generated is not available, skip the generation.
-    if (copiedSchema[setting] || !copiedSchema[base]) continue;
-
-    // Otherwise, if possible, generate the setting.
-    copiedSchema[setting] = generator(copiedSchema[base]);
-  }
-
-  const newFields = copiedSchema.fields || [];
-
-  // If the schema is being newly created or if new fields were provided for an existing
-  // schema, we would like to re-generate the list of `identifiers` and attach the system
-  // fields to the schema.
-  if (isNew || newFields.length > 0) {
-    if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
-    if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
-    if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
-
-    copiedSchema.fields = [...SYSTEM_FIELDS, ...newFields];
-  }
-
-  return copiedSchema as Schema;
-};
-
-/**
  * Extends a list of schemas with automatically generated schemas that make writing
  * queries even easier, and adds system fields to every schema.
  *
@@ -364,9 +433,10 @@ export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => {
-    return prepareSchema(schema, true);
-  });
+  const list = [
+    ...SYSTEM_SCHEMAS,
+    ...schemas.map((schema) => prepareSchema(schema, true)),
+  ];
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -782,88 +852,3 @@ export const addSchemaQueries = (
 
   return queryInstructions;
 };
-
-/**
- * Converts a slug to a readable name by splitting it on uppercase characters
- * and returning it formatted as title case.
- *
- * @example
- * ```ts
- * slugToName('activeAt'); // 'Active At'
- * ```
- *
- * @param slug - The slug string to convert.
- *
- * @returns The formatted name in title case.
- */
-const slugToName = (slug: string) => {
-  // Split the slug by uppercase letters and join with a space
-  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
-
-  // Convert the resulting string to title case using the 'title' library
-  return title(name);
-};
-
-const VOWELS = ['a', 'e', 'i', 'o', 'u'];
-
-/**
- * Pluralizes a singular English noun according to basic English pluralization rules.
- *
- * This function handles the following cases:
- * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
- * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
- * - **All other words**: Adds 's' to the end of the word.
- *
- * @example
- * ```ts
- * pluralize('baby');    // 'babies'
- * pluralize('key');     // 'keys'
- * pluralize('bus');     // 'buses'
- * pluralize('church');  // 'churches'
- * pluralize('cat');     // 'cats'
- * ```
- *
- * @param word - The singular noun to pluralize.
- *
- * @returns The plural form of the input word.
- */
-const pluralize = (word: string) => {
-  const lastLetter = word.slice(-1).toLowerCase();
-  const secondLastLetter = word.slice(-2, -1).toLowerCase();
-
-  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
-    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
-    return `${word.slice(0, -1)}ies`;
-  }
-
-  if (
-    lastLetter === 's' ||
-    word.slice(-2).toLowerCase() === 'ch' ||
-    word.slice(-2).toLowerCase() === 'sh' ||
-    word.slice(-2).toLowerCase() === 'ex'
-  ) {
-    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
-    return `${word}es`;
-  }
-
-  // In all other cases, simply add 's'
-  return `${word}s`;
-};
-
-type ComposableSettings = 'slug' | 'pluralSlug' | 'name' | 'pluralName' | 'idPrefix';
-
-/**
- * A list of settings that can be automatically generated based on other settings.
- *
- * The first item in each tuple is the setting that should be generated, the second item
- * is the setting that should be used as a base, and the third item is the function that
- * should be used to generate the new setting.
- */
-const schemaSettings: Array<
-  [ComposableSettings, ComposableSettings, (arg: string) => string]
-> = [
-  ['pluralSlug', 'slug', pluralize],
-  ['name', 'slug', slugToName],
-  ['pluralName', 'pluralSlug', slugToName],
-  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
-];
