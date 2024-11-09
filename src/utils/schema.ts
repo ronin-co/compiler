@@ -33,7 +33,10 @@ import title from 'title';
  *
  * @returns A schema for the provided slug or plural slug.
  */
-export const getSchemaBySlug = (schemas: Array<Schema>, slug: string): Schema => {
+export const getSchemaBySlug = <T extends Schema | PublicSchema>(
+  schemas: Array<T>,
+  slug: string,
+): T => {
   const schema = schemas.find((schema) => {
     return schema.slug === slug || schema.pluralSlug === slug;
   });
@@ -78,8 +81,8 @@ const composeMetaSchemaSlug = (suffix: string) => convertToCamelCase(`ronin_${su
  *
  * @returns A slug for the associative schema.
  */
-export const composeAssociationSchemaSlug = (schema: Schema, field: SchemaField) =>
-  composeMetaSchemaSlug(`${schema.pluralSlug}_${field.slug}`);
+export const composeAssociationSchemaSlug = (schema: PublicSchema, field: SchemaField) =>
+  composeMetaSchemaSlug(`${schema.slug}_${field.slug}`);
 
 /**
  * Constructs the SQL selector for a given field in a schema.
@@ -158,8 +161,154 @@ export const getFieldFromSchema = (
   return { field: schemaField, fieldSelector };
 };
 
+/**
+ * Converts a slug to a readable name by splitting it on uppercase characters
+ * and returning it formatted as title case.
+ *
+ * @example
+ * ```ts
+ * slugToName('activeAt'); // 'Active At'
+ * ```
+ *
+ * @param slug - The slug string to convert.
+ *
+ * @returns The formatted name in title case.
+ */
+const slugToName = (slug: string) => {
+  // Split the slug by uppercase letters and join with a space
+  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+  // Convert the resulting string to title case using the 'title' library
+  return title(name);
+};
+
+const VOWELS = ['a', 'e', 'i', 'o', 'u'];
+
+/**
+ * Pluralizes a singular English noun according to basic English pluralization rules.
+ *
+ * This function handles the following cases:
+ * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
+ * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
+ * - **All other words**: Adds 's' to the end of the word.
+ *
+ * @example
+ * ```ts
+ * pluralize('baby');    // 'babies'
+ * pluralize('key');     // 'keys'
+ * pluralize('bus');     // 'buses'
+ * pluralize('church');  // 'churches'
+ * pluralize('cat');     // 'cats'
+ * ```
+ *
+ * @param word - The singular noun to pluralize.
+ *
+ * @returns The plural form of the input word.
+ */
+const pluralize = (word: string) => {
+  const lastLetter = word.slice(-1).toLowerCase();
+  const secondLastLetter = word.slice(-2, -1).toLowerCase();
+
+  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
+    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
+    return `${word.slice(0, -1)}ies`;
+  }
+
+  if (
+    lastLetter === 's' ||
+    word.slice(-2).toLowerCase() === 'ch' ||
+    word.slice(-2).toLowerCase() === 'sh' ||
+    word.slice(-2).toLowerCase() === 'ex'
+  ) {
+    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
+    return `${word}es`;
+  }
+
+  // In all other cases, simply add 's'
+  return `${word}s`;
+};
+
+type ComposableSettings = 'slug' | 'pluralSlug' | 'name' | 'pluralName' | 'idPrefix';
+
+/**
+ * A list of settings that can be automatically generated based on other settings.
+ *
+ * The first item in each tuple is the setting that should be generated, the second item
+ * is the setting that should be used as a base, and the third item is the function that
+ * should be used to generate the new setting.
+ */
+const schemaSettings: Array<
+  [ComposableSettings, ComposableSettings, (arg: string) => string]
+> = [
+  ['pluralSlug', 'slug', pluralize],
+  ['name', 'slug', slugToName],
+  ['pluralName', 'pluralSlug', slugToName],
+  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+];
+
+/**
+ * Add a default name, plural name, and plural slug to a provided schema.
+ *
+ * @param schema - The schema that should receive defaults.
+ * @param isNew - Whether the schema is being newly created.
+ *
+ * @returns The updated schema.
+ */
+export const addDefaultSchemaFields = (schema: PublicSchema, isNew: boolean): Schema => {
+  const copiedSchema = { ...schema };
+
+  for (const [setting, base, generator] of schemaSettings) {
+    // If a custom value was provided for the setting, or the setting from which the current
+    // one can be generated is not available, skip the generation.
+    if (copiedSchema[setting] || !copiedSchema[base]) continue;
+
+    // Otherwise, if possible, generate the setting.
+    copiedSchema[setting] = generator(copiedSchema[base]);
+  }
+
+  const newFields = copiedSchema.fields || [];
+
+  // If the schema is being newly created or if new fields were provided for an existing
+  // schema, we would like to re-generate the list of `identifiers` and attach the system
+  // fields to the schema.
+  if (isNew || newFields.length > 0) {
+    if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
+
+    // Intelligently select a reasonable default for which field should be used as the
+    // display name of the records in the schema (e.g. used in lists on the dashboard).
+    if (!copiedSchema.identifiers.name) {
+      const suitableField = newFields.find(
+        (field) =>
+          field.type === 'string' &&
+          field.required === true &&
+          ['name'].includes(field.slug),
+      );
+
+      copiedSchema.identifiers.name = suitableField?.slug || 'id';
+    }
+
+    // Intelligently select a reasonable default for which field should be used as the
+    // slug of the records in the schema (e.g. used in URLs on the dashboard).
+    if (!copiedSchema.identifiers.slug) {
+      const suitableField = newFields.find(
+        (field) =>
+          field.type === 'string' &&
+          field.unique === true &&
+          field.required === true &&
+          ['slug', 'handle'].includes(field.slug),
+      );
+
+      copiedSchema.identifiers.slug = suitableField?.slug || 'id';
+    }
+
+    copiedSchema.fields = [...SYSTEM_FIELDS, ...newFields];
+  }
+
+  return copiedSchema as Schema;
+};
+
 /** These fields are required by the system and automatically added to every schema. */
-const SYSTEM_FIELDS: Array<SchemaField> = [
+export const SYSTEM_FIELDS: Array<SchemaField> = [
   {
     name: 'ID',
     type: 'string',
@@ -201,11 +350,7 @@ const SYSTEM_FIELDS: Array<SchemaField> = [
 /** These schemas are required by the system and are automatically made available. */
 const SYSTEM_SCHEMAS: Array<Schema> = [
   {
-    name: 'Schema',
-    pluralName: 'Schemas',
-
     slug: 'schema',
-    pluralSlug: 'schemas',
 
     identifiers: {
       name: 'name',
@@ -213,8 +358,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'name', type: 'string' },
       { slug: 'pluralName', type: 'string' },
       { slug: 'slug', type: 'string' },
@@ -229,14 +372,13 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'fields', type: 'json' },
       { slug: 'indexes', type: 'json' },
       { slug: 'triggers', type: 'json' },
+
+      { slug: 'including', type: 'json' },
+      { slug: 'for', type: 'json' },
     ],
   },
   {
-    name: 'Field',
-    pluralName: 'Fields',
-
     slug: 'field',
-    pluralSlug: 'fields',
 
     identifiers: {
       name: 'name',
@@ -244,8 +386,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
@@ -269,11 +409,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     ],
   },
   {
-    name: 'Index',
-    pluralName: 'Indexes',
-
     slug: 'index',
-    pluralSlug: 'indexes',
 
     identifiers: {
       name: 'slug',
@@ -281,8 +417,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'slug', type: 'string', required: true },
       {
         slug: 'schema',
@@ -295,11 +429,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     ],
   },
   {
-    name: 'Trigger',
-    pluralName: 'Triggers',
-
     slug: 'trigger',
-    pluralSlug: 'triggers',
 
     identifiers: {
       name: 'slug',
@@ -307,8 +437,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'slug', type: 'string', required: true },
       { slug: 'schema', type: 'reference', target: { slug: 'schema' }, required: true },
       { slug: 'cause', type: 'string', required: true },
@@ -316,7 +444,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'effects', type: 'json', required: true },
     ],
   },
-];
+].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
 
 /**
  * We are computing this at the root level in order to avoid computing it again with
@@ -328,51 +456,20 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
 ]);
 
 /**
- * Add a default name, plural name, and plural slug to a provided schema.
- *
- * @param schema The schema that should receive defaults.
- *
- * @returns The updated schema.
- */
-export const prepareSchema = (schema: PublicSchema): Schema => {
-  const copiedSchema = { ...schema };
-
-  if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
-
-  if (!copiedSchema.name) copiedSchema.name = slugToName(copiedSchema.slug);
-  if (!copiedSchema.pluralName)
-    copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
-
-  if (!copiedSchema.idPrefix) copiedSchema.idPrefix = copiedSchema.slug.slice(0, 3);
-
-  if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
-  if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
-  if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
-
-  return copiedSchema as Schema;
-};
-
-/**
  * Extends a list of schemas with automatically generated schemas that make writing
- * queries even easier, and adds system fields to every schema.
+ * queries even easier.
  *
  * @param schemas - The list of schemas to extend.
  *
  * @returns The extended list of schemas.
  */
-export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map(prepareSchema);
+export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<PublicSchema> => {
+  const associativeSchemas = schemas.flatMap((schema) => {
+    const addedSchemas: Array<PublicSchema> = [];
 
-  for (const schema of list) {
-    const defaultIncluding: Record<string, Query> = {};
-
-    // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
-    // used to provide concise ways of writing advanced queries, by allowing for defining
-    // complex queries inside the schema definitions and re-using them across many
-    // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.target.slug);
+        const relatedSchema = getSchemaBySlug(schemas, field.target.slug);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -383,67 +480,110 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
         if (field.kind === 'many') {
           fieldSlug = composeAssociationSchemaSlug(schema, field);
 
-          list.push({
+          addedSchemas.push({
             pluralSlug: fieldSlug,
             slug: fieldSlug,
-            identifiers: {
-              name: 'id',
-              slug: 'id',
-            },
             fields: [
               {
                 slug: 'source',
                 type: 'reference',
-                target: schema,
+                target: { slug: schema.slug },
               },
               {
                 slug: 'target',
                 type: 'reference',
-                target: relatedSchema,
+                target: { slug: relatedSchema.slug },
               },
             ],
           });
         }
-
-        // For every reference field, add a default shortcut for resolving the referenced
-        // record in the schema that contains the reference field.
-        defaultIncluding[field.slug] = {
-          get: {
-            [fieldSlug]: {
-              with: {
-                // Compare the `id` field of the related schema to the reference field on
-                // the root schema (`field.slug`).
-                id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
-              },
-            },
-          },
-        };
-
-        // Additionally, add a default shortcut for resolving the child records in the
-        // related schema.
-        const relatedSchemaToModify = getSchemaBySlug(list, field.target.slug);
-        if (!relatedSchemaToModify) throw new Error('Missing related schema');
-
-        relatedSchemaToModify.including = {
-          [schema.pluralSlug as string]: {
-            get: {
-              [schema.pluralSlug as string]: {
-                with: {
-                  [field.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
-                },
-              },
-            },
-          },
-          ...relatedSchemaToModify.including,
-        };
       }
     }
 
-    schema.fields = [...SYSTEM_FIELDS, ...(schema.fields || [])];
+    return addedSchemas;
+  });
+
+  return [...SYSTEM_SCHEMAS, ...associativeSchemas, ...schemas];
+};
+
+/**
+ * Adds useful default shortcuts to a schema, which can be used to write simpler queries.
+ *
+ * @param list - The list of all schemas.
+ * @param schema - The schema for which default shortcuts should be added.
+ *
+ * @returns The schema with default shortcuts added.
+ */
+export const addDefaultSchemaShortcuts = (
+  list: Array<Schema>,
+  schema: Schema,
+): Schema => {
+  const defaultIncluding: Record<string, Query> = {};
+
+  // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
+  // used to provide concise ways of writing advanced queries, by allowing for defining
+  // complex queries inside the schema definitions and re-using them across many
+  // different queries in the codebase of an application.
+  for (const field of schema.fields || []) {
+    if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
+      const relatedSchema = getSchemaBySlug(list, field.target.slug);
+
+      let fieldSlug = relatedSchema.slug;
+
+      if (field.kind === 'many') {
+        fieldSlug = composeAssociationSchemaSlug(schema, field);
+      }
+
+      // For every reference field, add a default shortcut for resolving the referenced
+      // record in the schema that contains the reference field.
+      defaultIncluding[field.slug] = {
+        get: {
+          [fieldSlug]: {
+            with: {
+              // Compare the `id` field of the related schema to the reference field on
+              // the root schema (`field.slug`).
+              id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
+            },
+          },
+        },
+      };
+    }
+  }
+
+  // Find potential child schemas that are referencing the current parent schema. For
+  // each of them, we then add a default shortcut for resolving the child records from
+  // the parent schema.
+  const childSchemas = list
+    .map((subSchema) => {
+      const field = subSchema.fields?.find((field) => {
+        return field.type === 'reference' && field.target.slug === schema.slug;
+      });
+
+      if (!field) return null;
+      return { schema: subSchema, field };
+    })
+    .filter((match) => match !== null);
+
+  for (const childMatch of childSchemas) {
+    const { schema: childSchema, field: childField } = childMatch;
+    const pluralSlug = childSchema.pluralSlug as string;
+
+    defaultIncluding[pluralSlug] = {
+      get: {
+        [pluralSlug]: {
+          with: {
+            [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+          },
+        },
+      },
+    };
+  }
+
+  if (Object.keys(defaultIncluding).length > 0) {
     schema.including = { ...defaultIncluding, ...schema.including };
   }
 
-  return list;
+  return schema;
 };
 
 /** A union type of all query instructions, but without nested instructions. */
@@ -703,20 +843,28 @@ export const addSchemaQueries = (
     return queryInstructions;
   }
 
-  let statement = `${tableAction} TABLE "${tableName}"`;
+  const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'schemas') {
-    const providedFields = instructionList?.fields || [];
-    const fields = [...SYSTEM_FIELDS, ...providedFields];
-
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
-      queryInstructions.to = prepareSchema(queryInstructions.to as Schema);
+      const schemaWithFields = addDefaultSchemaFields(
+        queryInstructions.to as PublicSchema,
+        queryType === 'create',
+      );
+
+      const schemaWithShortcuts = addDefaultSchemaShortcuts(schemas, schemaWithFields);
+      queryInstructions.to = schemaWithShortcuts;
     }
 
     if (queryType === 'create') {
+      const { fields } = queryInstructions.to;
       const columns = fields.map(getFieldStatement).filter(Boolean);
-      statement += ` (${columns.join(', ')})`;
+
+      dependencyStatements.push({
+        statement: `${statement} (${columns.join(', ')})`,
+        params: [],
+      });
 
       // Add the newly created schema to the list of schemas.
       schemas.push(queryInstructions.to as Schema);
@@ -725,7 +873,13 @@ export const addSchemaQueries = (
 
       if (newSlug) {
         const newTable = convertToSnakeCase(newSlug);
-        statement += ` RENAME TO "${newTable}"`;
+
+        // Only push the statement if the table name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME TO "${newTable}"`,
+          params: [],
+        });
       }
 
       // Update the existing schema in the list of schemas.
@@ -733,9 +887,9 @@ export const addSchemaQueries = (
     } else if (queryType === 'drop') {
       // Remove the schema from the list of schemas.
       schemas.splice(schemas.indexOf(targetSchema as Schema), 1);
-    }
 
-    dependencyStatements.push({ statement, params: [] });
+      dependencyStatements.push({ statement, params: [] });
+    }
     return queryInstructions;
   }
 
@@ -749,86 +903,28 @@ export const addSchemaQueries = (
         });
       }
 
-      statement += ` ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`;
+      dependencyStatements.push({
+        statement: `${statement} ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`,
+        params: [],
+      });
     } else if (queryType === 'set') {
       const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
-        statement += ` RENAME COLUMN "${slug}" TO "${newSlug}"`;
+        // Only push the statement if the column name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
+          params: [],
+        });
       }
     } else if (queryType === 'drop') {
-      statement += ` DROP COLUMN "${slug}"`;
+      dependencyStatements.push({
+        statement: `${statement} DROP COLUMN "${slug}"`,
+        params: [],
+      });
     }
-
-    dependencyStatements.push({ statement, params: [] });
   }
 
   return queryInstructions;
-};
-
-/**
- * Converts a slug to a readable name by splitting it on uppercase characters
- * and returning it formatted as title case.
- *
- * @example
- * ```ts
- * slugToName('activeAt'); // 'Active At'
- * ```
- *
- * @param slug - The slug string to convert.
- *
- * @returns The formatted name in title case.
- */
-const slugToName = (slug: string) => {
-  // Split the slug by uppercase letters and join with a space
-  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
-
-  // Convert the resulting string to title case using the 'title' library
-  return title(name);
-};
-
-const VOWELS = ['a', 'e', 'i', 'o', 'u'];
-
-/**
- * Pluralizes a singular English noun according to basic English pluralization rules.
- *
- * This function handles the following cases:
- * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
- * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
- * - **All other words**: Adds 's' to the end of the word.
- *
- * @example
- * ```ts
- * pluralize('baby');    // 'babies'
- * pluralize('key');     // 'keys'
- * pluralize('bus');     // 'buses'
- * pluralize('church');  // 'churches'
- * pluralize('cat');     // 'cats'
- * ```
- *
- * @param word - The singular noun to pluralize.
- *
- * @returns The plural form of the input word.
- */
-const pluralize = (word: string) => {
-  const lastLetter = word.slice(-1).toLowerCase();
-  const secondLastLetter = word.slice(-2, -1).toLowerCase();
-
-  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
-    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
-    return `${word.slice(0, -1)}ies`;
-  }
-
-  if (
-    lastLetter === 's' ||
-    word.slice(-2).toLowerCase() === 'ch' ||
-    word.slice(-2).toLowerCase() === 'sh' ||
-    word.slice(-2).toLowerCase() === 'ex'
-  ) {
-    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
-    return `${word}es`;
-  }
-
-  // In all other cases, simply add 's'
-  return `${word}s`;
 };

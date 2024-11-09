@@ -1,7 +1,11 @@
 import type { Query, Statement } from '@/src/types/query';
 import type { PublicSchema } from '@/src/types/schema';
 import { compileQueryInput } from '@/src/utils';
-import { addSystemSchemas } from '@/src/utils/schema';
+import {
+  addDefaultSchemaFields,
+  addDefaultSchemaShortcuts,
+  addSystemSchemas,
+} from '@/src/utils/schema';
 
 /**
  * Composes an SQL statement for a provided RONIN query.
@@ -19,7 +23,13 @@ export const compileQueries = (
     inlineValues?: boolean;
   },
 ): Array<Statement> => {
-  const schemaList = addSystemSchemas(schemas);
+  const schemaList = addSystemSchemas(schemas).map((schema) => {
+    return addDefaultSchemaFields(schema, true);
+  });
+
+  const schemaListWithShortcuts = schemaList.map((schema) => {
+    return addDefaultSchemaShortcuts(schemaList, schema);
+  });
 
   const dependencyStatements: Array<Statement> = [];
   const mainStatements: Array<Statement> = [];
@@ -27,7 +37,7 @@ export const compileQueries = (
   for (const query of queries) {
     const result = compileQueryInput(
       query,
-      schemaList,
+      schemaListWithShortcuts,
       options?.inlineValues ? null : [],
     );
 

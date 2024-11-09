@@ -8,6 +8,7 @@ import {
   RoninError,
 } from '@/src/utils/helpers';
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
+import { SYSTEM_FIELDS } from '@/src/utils/schema';
 
 test('create new schema', () => {
   const fields = [
@@ -49,7 +50,7 @@ test('create new schema', () => {
         'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
       params: [
         'account',
-        JSON.stringify(fields),
+        JSON.stringify([...SYSTEM_FIELDS, ...fields]),
         'accounts',
         'Account',
         'Accounts',
@@ -65,7 +66,47 @@ test('create new schema', () => {
   ]);
 });
 
-test('update existing schema', () => {
+// Ensure that a reasonable display name and URL slug are automatically selected for the
+// schema, based on which fields are available.
+test('create new schema with suitable default identifiers', () => {
+  const fields = [
+    {
+      slug: 'name',
+      type: 'string',
+      required: true,
+    },
+    {
+      slug: 'handle',
+      type: 'string',
+      required: true,
+      unique: true,
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        schema: {
+          to: {
+            slug: 'account',
+            fields,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements[1].params[6]).toEqual('name');
+  expect(statements[1].params[7]).toEqual('handle');
+});
+
+// Ensure that, if the `slug` of a schema changes during an update, an `ALTER TABLE`
+// statement is generated for it.
+test('update existing schema (slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -96,18 +137,52 @@ test('update existing schema', () => {
     },
     {
       statement:
-        'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "identifiers.name" = ?6, "identifiers.slug" = ?7, "ronin.updatedAt" = ?8 WHERE ("slug" = ?9) RETURNING *',
+        'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "ronin.updatedAt" = ?6 WHERE ("slug" = ?7) RETURNING *',
       params: [
         'user',
         'users',
         'User',
         'Users',
         'use',
-        'id',
-        'id',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
+      returning: true,
+    },
+  ]);
+});
+
+// Ensure that, if the `slug` of a schema does not change during an update, no
+// unnecessary `ALTER TABLE` statement is generated for it.
+test('update existing schema (plural name)', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
+          to: {
+            pluralName: 'Signups',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'UPDATE "schemas" SET "pluralName" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
+      params: ['Signups', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);
@@ -400,7 +475,9 @@ test('create new reference field with actions', () => {
   ]);
 });
 
-test('update existing field', () => {
+// Ensure that, if the `slug` of a field changes during a schema update, an `ALTER TABLE`
+// statement is generated for it.
+test('update existing field (slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -435,6 +512,48 @@ test('update existing field', () => {
         'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
       params: [
         'emailAddress',
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'account',
+        'email',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
+// Ensure that, if the `slug` of a field does not change during a schema update, no
+// unnecessary `ALTER TABLE` statement is generated for it.
+test('update existing field (name)', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        field: {
+          with: {
+            schema: { slug: 'account' },
+            slug: 'email',
+          },
+          to: {
+            name: 'Email Address',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'UPDATE "fields" SET "name" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      params: [
+        'Email Address',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
         'email',
