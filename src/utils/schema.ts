@@ -254,7 +254,7 @@ const schemaSettings: Array<
  *
  * @returns The updated schema.
  */
-export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
+export const addDefaultSchemaFields = (schema: PublicSchema, isNew: boolean): Schema => {
   const copiedSchema = { ...schema };
 
   for (const [setting, base, generator] of schemaSettings) {
@@ -416,7 +416,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'effects', type: 'json', required: true },
     ],
   },
-].map((schema) => prepareSchema(schema as PublicSchema, true));
+].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
 
 /**
  * We are computing this at the root level in order to avoid computing it again with
@@ -435,7 +435,7 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  *
  * @returns The extended list of schemas.
  */
-export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
+export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<PublicSchema> => {
   const associativeSchemas = schemas.flatMap((schema) => {
     const addedSchemas: Array<PublicSchema> = [];
 
@@ -475,76 +475,85 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
     return addedSchemas;
   });
 
-  const finalList = [...SYSTEM_SCHEMAS, ...associativeSchemas, ...schemas].map((schema) =>
-    prepareSchema(schema, true),
-  );
+  return [...SYSTEM_SCHEMAS, ...associativeSchemas, ...schemas];
+};
 
-  for (const schema of finalList) {
-    const defaultIncluding: Record<string, Query> = {};
+/**
+ * Adds useful default shortcuts to a schema, which can be used to write simpler queries.
+ *
+ * @param list - The list of all schemas.
+ * @param schema - The schema for which default shortcuts should be added.
+ *
+ * @returns The schema with default shortcuts added.
+ */
+export const addDefaultSchemaShortcuts = (
+  list: Array<Schema>,
+  schema: Schema,
+): Schema => {
+  const defaultIncluding: Record<string, Query> = {};
 
-    // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
-    // used to provide concise ways of writing advanced queries, by allowing for defining
-    // complex queries inside the schema definitions and re-using them across many
-    // different queries in the codebase of an application.
-    for (const field of schema.fields || []) {
-      if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(finalList, field.target.slug);
+  // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
+  // used to provide concise ways of writing advanced queries, by allowing for defining
+  // complex queries inside the schema definitions and re-using them across many
+  // different queries in the codebase of an application.
+  for (const field of schema.fields || []) {
+    if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
+      const relatedSchema = getSchemaBySlug(list, field.target.slug);
 
-        let fieldSlug = relatedSchema.slug;
+      let fieldSlug = relatedSchema.slug;
 
-        if (field.kind === 'many') {
-          fieldSlug = composeAssociationSchemaSlug(schema, field);
-        }
-
-        // For every reference field, add a default shortcut for resolving the referenced
-        // record in the schema that contains the reference field.
-        defaultIncluding[field.slug] = {
-          get: {
-            [fieldSlug]: {
-              with: {
-                // Compare the `id` field of the related schema to the reference field on
-                // the root schema (`field.slug`).
-                id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
-              },
-            },
-          },
-        };
+      if (field.kind === 'many') {
+        fieldSlug = composeAssociationSchemaSlug(schema, field);
       }
-    }
 
-    // Find potential child schemas that are referencing the current parent schema. For
-    // each of them, we then add a default shortcut for resolving the child records from
-    // the parent schema.
-    const childSchemas = finalList
-      .map((subSchema) => {
-        const field = subSchema.fields?.find((field) => {
-          return field.type === 'reference' && field.target.slug === schema.slug;
-        });
-
-        if (!field) return null;
-        return { schema: subSchema, field };
-      })
-      .filter((match) => match !== null);
-
-    for (const childMatch of childSchemas) {
-      const { schema: childSchema, field: childField } = childMatch;
-      const pluralSlug = childSchema.pluralSlug as string;
-
-      defaultIncluding[pluralSlug] = {
+      // For every reference field, add a default shortcut for resolving the referenced
+      // record in the schema that contains the reference field.
+      defaultIncluding[field.slug] = {
         get: {
-          [pluralSlug]: {
+          [fieldSlug]: {
             with: {
-              [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+              // Compare the `id` field of the related schema to the reference field on
+              // the root schema (`field.slug`).
+              id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
             },
           },
         },
       };
     }
-
-    schema.including = { ...defaultIncluding, ...schema.including };
   }
 
-  return finalList;
+  // Find potential child schemas that are referencing the current parent schema. For
+  // each of them, we then add a default shortcut for resolving the child records from
+  // the parent schema.
+  const childSchemas = list
+    .map((subSchema) => {
+      const field = subSchema.fields?.find((field) => {
+        return field.type === 'reference' && field.target.slug === schema.slug;
+      });
+
+      if (!field) return null;
+      return { schema: subSchema, field };
+    })
+    .filter((match) => match !== null);
+
+  for (const childMatch of childSchemas) {
+    const { schema: childSchema, field: childField } = childMatch;
+    const pluralSlug = childSchema.pluralSlug as string;
+
+    defaultIncluding[pluralSlug] = {
+      get: {
+        [pluralSlug]: {
+          with: {
+            [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+          },
+        },
+      },
+    };
+  }
+
+  schema.including = { ...defaultIncluding, ...schema.including };
+
+  return schema;
 };
 
 /** A union type of all query instructions, but without nested instructions. */
@@ -809,7 +818,7 @@ export const addSchemaQueries = (
   if (kind === 'schemas') {
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
-      queryInstructions.to = prepareSchema(
+      queryInstructions.to = addDefaultSchemaFields(
         queryInstructions.to as Schema,
         queryType === 'create',
       );
