@@ -66,6 +66,45 @@ test('create new schema', () => {
   ]);
 });
 
+// Ensure that a reasonable display name and URL slug are automatically selected for the
+// schema, based on which fields are available.
+test('create new schema with suitable default identifiers', () => {
+  const fields = [
+    {
+      slug: 'name',
+      type: 'string',
+      required: true,
+    },
+    {
+      slug: 'handle',
+      type: 'string',
+      required: true,
+      unique: true
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        schema: {
+          to: {
+            slug: 'account',
+            fields,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements[1].params[6]).toEqual('name');
+  expect(statements[1].params[7]).toEqual('handle');
+});
+
+
 // Ensure that, if the `slug` of a schema changes during an update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing schema (slug)', () => {
