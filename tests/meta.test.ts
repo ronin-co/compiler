@@ -8,6 +8,7 @@ import {
   RoninError,
 } from '@/src/utils/helpers';
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
+import { SYSTEM_FIELDS } from '@/src/utils/schema';
 
 test('create new schema', () => {
   const fields = [
@@ -49,7 +50,7 @@ test('create new schema', () => {
         'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
       params: [
         'account',
-        JSON.stringify(fields),
+        JSON.stringify([...SYSTEM_FIELDS, ...fields]),
         'accounts',
         'Account',
         'Accounts',

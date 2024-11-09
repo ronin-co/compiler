@@ -159,7 +159,7 @@ export const getFieldFromSchema = (
 };
 
 /** These fields are required by the system and automatically added to every schema. */
-const SYSTEM_FIELDS: Array<SchemaField> = [
+export const SYSTEM_FIELDS: Array<SchemaField> = [
   {
     name: 'ID',
     type: 'string',
@@ -213,8 +213,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'name', type: 'string' },
       { slug: 'pluralName', type: 'string' },
       { slug: 'slug', type: 'string' },
@@ -244,8 +242,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'name', type: 'string' },
       { slug: 'slug', type: 'string', required: true },
       { slug: 'type', type: 'string', required: true },
@@ -281,8 +277,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'slug', type: 'string', required: true },
       {
         slug: 'schema',
@@ -307,8 +301,6 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     },
 
     fields: [
-      ...SYSTEM_FIELDS,
-
       { slug: 'slug', type: 'string', required: true },
       { slug: 'schema', type: 'reference', target: { slug: 'schema' }, required: true },
       { slug: 'cause', type: 'string', required: true },
@@ -347,12 +339,17 @@ export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
     copiedSchema[setting] = generator(copiedSchema[base]);
   }
 
+  const newFields = copiedSchema.fields || [];
+
   // If the schema is being newly created or if new fields were provided for an existing
-  // schema, we would like to re-generate the list of `identifiers`.
-  if (isNew || (copiedSchema.fields || []).length > 0) {
+  // schema, we would like to re-generate the list of `identifiers` and attach the system
+  // fields to the schema.
+  if (isNew || newFields.length > 0) {
     if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
     if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
     if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
+
+    copiedSchema.fields = [...SYSTEM_FIELDS, ...newFields];
   }
 
   return copiedSchema as Schema;
@@ -367,9 +364,9 @@ export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) =>
-    prepareSchema(schema, true),
-  );
+  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => {
+    return prepareSchema(schema, true);
+  });
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -391,26 +388,27 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
         if (field.kind === 'many') {
           fieldSlug = composeAssociationSchemaSlug(schema, field);
 
-          list.push({
-            pluralSlug: fieldSlug,
-            slug: fieldSlug,
-            identifiers: {
-              name: 'id',
-              slug: 'id',
-            },
-            fields: [
+          list.push(
+            prepareSchema(
               {
-                slug: 'source',
-                type: 'reference',
-                target: schema,
+                pluralSlug: fieldSlug,
+                slug: fieldSlug,
+                fields: [
+                  {
+                    slug: 'source',
+                    type: 'reference',
+                    target: schema,
+                  },
+                  {
+                    slug: 'target',
+                    type: 'reference',
+                    target: relatedSchema,
+                  },
+                ],
               },
-              {
-                slug: 'target',
-                type: 'reference',
-                target: relatedSchema,
-              },
-            ],
-          });
+              true,
+            ),
+          );
         }
 
         // For every reference field, add a default shortcut for resolving the referenced
@@ -447,7 +445,6 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
       }
     }
 
-    schema.fields = [...SYSTEM_FIELDS, ...(schema.fields || [])];
     schema.including = { ...defaultIncluding, ...schema.including };
   }
 
@@ -714,9 +711,6 @@ export const addSchemaQueries = (
   let statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'schemas') {
-    const providedFields = instructionList?.fields || [];
-    const fields = [...SYSTEM_FIELDS, ...providedFields];
-
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
       queryInstructions.to = prepareSchema(
@@ -726,6 +720,7 @@ export const addSchemaQueries = (
     }
 
     if (queryType === 'create') {
+      const { fields } = queryInstructions.to;
       const columns = fields.map(getFieldStatement).filter(Boolean);
       statement += ` (${columns.join(', ')})`;
 
