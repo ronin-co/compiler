@@ -75,7 +75,7 @@ test('get single record including child records (one-to-many, defined manually)'
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_posts_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")`,
+      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_post_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")`,
       params: [],
       returning: true,
     },

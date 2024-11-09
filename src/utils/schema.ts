@@ -33,7 +33,10 @@ import title from 'title';
  *
  * @returns A schema for the provided slug or plural slug.
  */
-export const getSchemaBySlug = (schemas: Array<Schema>, slug: string): Schema => {
+export const getSchemaBySlug = <T extends Schema | PublicSchema>(
+  schemas: Array<T>,
+  slug: string,
+): T => {
   const schema = schemas.find((schema) => {
     return schema.slug === slug || schema.pluralSlug === slug;
   });
@@ -78,8 +81,8 @@ const composeMetaSchemaSlug = (suffix: string) => convertToCamelCase(`ronin_${su
  *
  * @returns A slug for the associative schema.
  */
-export const composeAssociationSchemaSlug = (schema: Schema, field: SchemaField) =>
-  composeMetaSchemaSlug(`${schema.pluralSlug}_${field.slug}`);
+export const composeAssociationSchemaSlug = (schema: PublicSchema, field: SchemaField) =>
+  composeMetaSchemaSlug(`${schema.slug}_${field.slug}`);
 
 /**
  * Constructs the SQL selector for a given field in a schema.
@@ -433,14 +436,12 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = schemas.map((schema) => prepareSchema(schema, true));
-
-  const associativeSchemas = list.flatMap((schema) => {
-    const addedSchemas: Array<Schema> = [];
+  const associativeSchemas = schemas.flatMap((schema) => {
+    const addedSchemas: Array<PublicSchema> = [];
 
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
-        const relatedSchema = getSchemaBySlug(list, field.target.slug);
+        const relatedSchema = getSchemaBySlug(schemas, field.target.slug);
 
         let fieldSlug = relatedSchema.slug;
 
@@ -451,27 +452,22 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
         if (field.kind === 'many') {
           fieldSlug = composeAssociationSchemaSlug(schema, field);
 
-          addedSchemas.push(
-            prepareSchema(
+          addedSchemas.push({
+            pluralSlug: fieldSlug,
+            slug: fieldSlug,
+            fields: [
               {
-                pluralSlug: fieldSlug,
-                slug: fieldSlug,
-                fields: [
-                  {
-                    slug: 'source',
-                    type: 'reference',
-                    target: schema,
-                  },
-                  {
-                    slug: 'target',
-                    type: 'reference',
-                    target: relatedSchema,
-                  },
-                ],
+                slug: 'source',
+                type: 'reference',
+                target: { slug: schema.slug },
               },
-              true,
-            ),
-          );
+              {
+                slug: 'target',
+                type: 'reference',
+                target: { slug: relatedSchema.slug },
+              },
+            ],
+          });
         }
       }
     }
@@ -479,7 +475,9 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
     return addedSchemas;
   });
 
-  const finalList = [...SYSTEM_SCHEMAS, ...associativeSchemas, ...list];
+  const finalList = [...SYSTEM_SCHEMAS, ...associativeSchemas, ...schemas].map((schema) =>
+    prepareSchema(schema, true),
+  );
 
   for (const schema of finalList) {
     const defaultIncluding: Record<string, Query> = {};
