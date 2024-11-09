@@ -835,7 +835,11 @@ export const addSchemaQueries = (
     if (queryType === 'create') {
       const { fields } = queryInstructions.to;
       const columns = fields.map(getFieldStatement).filter(Boolean);
-      statement += ` (${columns.join(', ')})`;
+
+      dependencyStatements.push({
+        statement: `${statement} (${columns.join(', ')})`,
+        params: [],
+      });
 
       // Add the newly created schema to the list of schemas.
       schemas.push(queryInstructions.to as Schema);
@@ -844,7 +848,13 @@ export const addSchemaQueries = (
 
       if (newSlug) {
         const newTable = convertToSnakeCase(newSlug);
-        statement += ` RENAME TO "${newTable}"`;
+
+        // Only push the statement if the table name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME TO "${newTable}"`,
+          params: [],
+        });
       }
 
       // Update the existing schema in the list of schemas.
@@ -852,9 +862,9 @@ export const addSchemaQueries = (
     } else if (queryType === 'drop') {
       // Remove the schema from the list of schemas.
       schemas.splice(schemas.indexOf(targetSchema as Schema), 1);
-    }
 
-    dependencyStatements.push({ statement, params: [] });
+      dependencyStatements.push({ statement, params: [] });
+    }
     return queryInstructions;
   }
 

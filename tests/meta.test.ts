@@ -66,7 +66,7 @@ test('create new schema', () => {
   ]);
 });
 
-test('update existing schema', () => {
+test('update existing schema slug', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -107,6 +107,40 @@ test('update existing schema', () => {
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
+      returning: true,
+    },
+  ]);
+});
+
+test('update existing schema plural name', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        schema: {
+          with: {
+            slug: 'account',
+          },
+          to: {
+            pluralName: 'Signups',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'UPDATE "schemas" SET "pluralName" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
+      params: ['Signups', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);
