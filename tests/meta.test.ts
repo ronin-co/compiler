@@ -79,7 +79,7 @@ test('create new schema with suitable default identifiers', () => {
       slug: 'handle',
       type: 'string',
       required: true,
-      unique: true
+      unique: true,
     },
   ];
 
@@ -103,7 +103,6 @@ test('create new schema with suitable default identifiers', () => {
   expect(statements[1].params[6]).toEqual('name');
   expect(statements[1].params[7]).toEqual('handle');
 });
-
 
 // Ensure that, if the `slug` of a schema changes during an update, an `ALTER TABLE`
 // statement is generated for it.
