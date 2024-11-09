@@ -327,8 +327,6 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
   pluralSlug,
 ]);
 
-
-
 /**
  * Add a default name, plural name, and plural slug to a provided schema.
  *
@@ -346,7 +344,7 @@ export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
     if (copiedSchema[setting] || !copiedSchema[base]) continue;
 
     // Otherwise, if possible, generate the setting.
-    copiedSchema[setting] = generator(copiedSchema[base] as string);
+    copiedSchema[setting] = generator(copiedSchema[base]);
   }
 
   // If the schema is being newly created or if new fields were provided for an existing
@@ -846,6 +844,8 @@ const pluralize = (word: string) => {
   return `${word}s`;
 };
 
+type ComposableSettings = 'slug' | 'pluralSlug' | 'name' | 'pluralName' | 'idPrefix';
+
 /**
  * A list of settings that can be automatically generated based on other settings.
  *
@@ -854,7 +854,7 @@ const pluralize = (word: string) => {
  * should be used to generate the new setting.
  */
 const schemaSettings: Array<
-  [keyof PublicSchema, keyof PublicSchema, (arg: string) => any]
+  [ComposableSettings, ComposableSettings, (arg: string) => string]
 > = [
   ['pluralSlug', 'slug', pluralize],
   ['name', 'slug', slugToName],
