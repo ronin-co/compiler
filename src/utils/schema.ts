@@ -347,6 +347,9 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'fields', type: 'json' },
       { slug: 'indexes', type: 'json' },
       { slug: 'triggers', type: 'json' },
+
+      { slug: 'including', type: 'json' },
+      { slug: 'for', type: 'json' },
     ],
   },
   {
@@ -429,7 +432,7 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
 
 /**
  * Extends a list of schemas with automatically generated schemas that make writing
- * queries even easier, and adds system fields to every schema.
+ * queries even easier.
  *
  * @param schemas - The list of schemas to extend.
  *
@@ -551,7 +554,9 @@ export const addDefaultSchemaShortcuts = (
     };
   }
 
-  schema.including = { ...defaultIncluding, ...schema.including };
+  if (Object.keys(defaultIncluding).length > 0) {
+    schema.including = { ...defaultIncluding, ...schema.including };
+  }
 
   return schema;
 };
@@ -818,10 +823,13 @@ export const addSchemaQueries = (
   if (kind === 'schemas') {
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
-      queryInstructions.to = addDefaultSchemaFields(
-        queryInstructions.to as Schema,
+      const schemaWithFields = addDefaultSchemaFields(
+        queryInstructions.to as PublicSchema,
         queryType === 'create',
       );
+
+      const schemaWithShortcuts = addDefaultSchemaShortcuts(schemas, schemaWithFields);
+      queryInstructions.to = schemaWithShortcuts;
     }
 
     if (queryType === 'create') {
