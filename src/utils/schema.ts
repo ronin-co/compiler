@@ -330,11 +330,12 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
 /**
  * Add a default name, plural name, and plural slug to a provided schema.
  *
- * @param schema The schema that should receive defaults.
+ * @param schema - The schema that should receive defaults.
+ * @param isNew - Whether the schema is being newly created.
  *
  * @returns The updated schema.
  */
-export const prepareSchema = (schema: PublicSchema): Schema => {
+export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
   const copiedSchema = { ...schema };
 
   if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
@@ -345,9 +346,13 @@ export const prepareSchema = (schema: PublicSchema): Schema => {
 
   if (!copiedSchema.idPrefix) copiedSchema.idPrefix = copiedSchema.slug.slice(0, 3);
 
-  if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
-  if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
-  if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
+  // If the schema is being newly created or if new fields were provided for an existing
+  // schema, we would like to re-generate the list of `identifiers`.
+  if (isNew && (copiedSchema.fields || []).length > 0) {
+    if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
+    if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
+    if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
+  }
 
   return copiedSchema as Schema;
 };
@@ -361,7 +366,7 @@ export const prepareSchema = (schema: PublicSchema): Schema => {
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map(prepareSchema);
+  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => prepareSchema(schema, true));
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -711,7 +716,7 @@ export const addSchemaQueries = (
 
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
-      queryInstructions.to = prepareSchema(queryInstructions.to as Schema);
+      queryInstructions.to = prepareSchema(queryInstructions.to as Schema, queryType === 'create');
     }
 
     if (queryType === 'create') {

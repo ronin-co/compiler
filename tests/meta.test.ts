@@ -96,15 +96,13 @@ test('update existing schema', () => {
     },
     {
       statement:
-        'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "identifiers.name" = ?6, "identifiers.slug" = ?7, "ronin.updatedAt" = ?8 WHERE ("slug" = ?9) RETURNING *',
+        'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "ronin.updatedAt" = ?6 WHERE ("slug" = ?7) RETURNING *',
       params: [
         'user',
         'users',
         'User',
         'Users',
         'use',
-        'id',
-        'id',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
