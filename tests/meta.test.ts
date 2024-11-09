@@ -437,7 +437,9 @@ test('create new reference field with actions', () => {
   ]);
 });
 
-test('update existing field', () => {
+// Ensure that, if the `slug` of a field changes during a schema update, an `ALTER TABLE`
+// statement is generated for it.
+test('update existing field (slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -472,6 +474,48 @@ test('update existing field', () => {
         'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
       params: [
         'emailAddress',
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'account',
+        'email',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
+// Ensure that, if the `slug` of a field does not change during a schema update, no
+// unnecessary `ALTER TABLE` statement is generated for it.
+test('update existing field (name)', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        field: {
+          with: {
+            schema: { slug: 'account' },
+            slug: 'email',
+          },
+          to: {
+            name: 'Email Address',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'UPDATE "fields" SET "name" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      params: [
+        'Email Address',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
         'email',

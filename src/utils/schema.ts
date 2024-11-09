@@ -818,7 +818,7 @@ export const addSchemaQueries = (
     return queryInstructions;
   }
 
-  let statement = `${tableAction} TABLE "${tableName}"`;
+  const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'schemas') {
     // Compose default settings for the schema.
@@ -878,18 +878,27 @@ export const addSchemaQueries = (
         });
       }
 
-      statement += ` ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`;
+      dependencyStatements.push({
+        statement: `${statement} ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`,
+        params: [],
+      });
     } else if (queryType === 'set') {
       const newSlug = queryInstructions.to?.slug;
 
       if (newSlug) {
-        statement += ` RENAME COLUMN "${slug}" TO "${newSlug}"`;
+        // Only push the statement if the column name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
+          params: [],
+        });
       }
     } else if (queryType === 'drop') {
-      statement += ` DROP COLUMN "${slug}"`;
+      dependencyStatements.push({
+        statement: `${statement} DROP COLUMN "${slug}"`,
+        params: [],
+      });
     }
-
-    dependencyStatements.push({ statement, params: [] });
   }
 
   return queryInstructions;
