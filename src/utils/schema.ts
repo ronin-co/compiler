@@ -424,25 +424,36 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
             },
           },
         };
+      }
+    }
 
-        // Additionally, add a default shortcut for resolving the child records in the
-        // related schema.
-        const relatedSchemaToModify = getSchemaBySlug(list, field.target.slug);
-        if (!relatedSchemaToModify) throw new Error('Missing related schema');
+    // Find potential child schemas that are referencing the current parent schema. For
+    // each of them, we then add a default shortcut for resolving the child records from
+    // the parent schema.
+    const childSchemas = list
+      .map((subSchema) => {
+        const field = subSchema.fields?.find((field) => {
+          return field.type === 'reference' && field.target.slug === schema.slug;
+        });
 
-        relatedSchemaToModify.including = {
-          [schema.pluralSlug as string]: {
-            get: {
-              [schema.pluralSlug as string]: {
-                with: {
-                  [field.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
-                },
-              },
+        if (!field) return null;
+        return { schema: subSchema, field };
+      })
+      .filter((match) => match !== null);
+
+    for (const childMatch of childSchemas) {
+      const { schema: childSchema, field: childField } = childMatch;
+      const pluralSlug = childSchema.pluralSlug as string;
+
+      defaultIncluding[pluralSlug] = {
+        get: {
+          [pluralSlug]: {
+            with: {
+              [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
             },
           },
-          ...relatedSchemaToModify.including,
-        };
-      }
+        },
+      };
     }
 
     schema.including = { ...defaultIncluding, ...schema.including };
