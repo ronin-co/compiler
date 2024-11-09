@@ -327,6 +327,8 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
   pluralSlug,
 ]);
 
+
+
 /**
  * Add a default name, plural name, and plural slug to a provided schema.
  *
@@ -338,17 +340,18 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
 export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
   const copiedSchema = { ...schema };
 
-  if (!copiedSchema.pluralSlug) copiedSchema.pluralSlug = pluralize(copiedSchema.slug);
+  for (const [setting, base, generator] of schemaSettings) {
+    // If a custom value was provided for the setting, or the setting from which the current
+    // one can be generated is not available, skip the generation.
+    if (copiedSchema[setting] || !copiedSchema[base]) continue;
 
-  if (!copiedSchema.name) copiedSchema.name = slugToName(copiedSchema.slug);
-  if (!copiedSchema.pluralName)
-    copiedSchema.pluralName = slugToName(copiedSchema.pluralSlug);
-
-  if (!copiedSchema.idPrefix) copiedSchema.idPrefix = copiedSchema.slug.slice(0, 3);
+    // Otherwise, if possible, generate the setting.
+    copiedSchema[setting] = generator(copiedSchema[base] as string);
+  }
 
   // If the schema is being newly created or if new fields were provided for an existing
   // schema, we would like to re-generate the list of `identifiers`.
-  if (isNew && (copiedSchema.fields || []).length > 0) {
+  if (isNew || (copiedSchema.fields || []).length > 0) {
     if (!copiedSchema.identifiers) copiedSchema.identifiers = {};
     if (!copiedSchema.identifiers.name) copiedSchema.identifiers.name = 'id';
     if (!copiedSchema.identifiers.slug) copiedSchema.identifiers.slug = 'id';
@@ -366,7 +369,9 @@ export const prepareSchema = (schema: PublicSchema, isNew: boolean): Schema => {
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) => prepareSchema(schema, true));
+  const list = [...SYSTEM_SCHEMAS, ...schemas].map((schema) =>
+    prepareSchema(schema, true),
+  );
 
   for (const schema of list) {
     const defaultIncluding: Record<string, Query> = {};
@@ -716,7 +721,10 @@ export const addSchemaQueries = (
 
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
-      queryInstructions.to = prepareSchema(queryInstructions.to as Schema, queryType === 'create');
+      queryInstructions.to = prepareSchema(
+        queryInstructions.to as Schema,
+        queryType === 'create',
+      );
     }
 
     if (queryType === 'create') {
@@ -837,3 +845,19 @@ const pluralize = (word: string) => {
   // In all other cases, simply add 's'
   return `${word}s`;
 };
+
+/**
+ * A list of settings that can be automatically generated based on other settings.
+ *
+ * The first item in each tuple is the setting that should be generated, the second item
+ * is the setting that should be used as a base, and the third item is the function that
+ * should be used to generate the new setting.
+ */
+const schemaSettings: Array<
+  [keyof PublicSchema, keyof PublicSchema, (arg: string) => any]
+> = [
+  ['pluralSlug', 'slug', pluralize],
+  ['name', 'slug', slugToName],
+  ['pluralName', 'pluralSlug', slugToName],
+  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+];
