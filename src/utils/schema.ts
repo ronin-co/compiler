@@ -433,18 +433,11 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  * @returns The extended list of schemas.
  */
 export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> => {
-  const list = [
-    ...SYSTEM_SCHEMAS,
-    ...schemas.map((schema) => prepareSchema(schema, true)),
-  ];
+  const list = schemas.map((schema) => prepareSchema(schema, true));
 
-  for (const schema of list) {
-    const defaultIncluding: Record<string, Query> = {};
+  const associativeSchemas = list.flatMap((schema) => {
+    const addedSchemas: Array<Schema> = [];
 
-    // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
-    // used to provide concise ways of writing advanced queries, by allowing for defining
-    // complex queries inside the schema definitions and re-using them across many
-    // different queries in the codebase of an application.
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
         const relatedSchema = getSchemaBySlug(list, field.target.slug);
@@ -458,7 +451,7 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
         if (field.kind === 'many') {
           fieldSlug = composeAssociationSchemaSlug(schema, field);
 
-          list.push(
+          addedSchemas.push(
             prepareSchema(
               {
                 pluralSlug: fieldSlug,
@@ -480,6 +473,30 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
             ),
           );
         }
+      }
+    }
+
+    return addedSchemas;
+  });
+
+  const finalList = [...SYSTEM_SCHEMAS, ...associativeSchemas, ...list];
+
+  for (const schema of finalList) {
+    const defaultIncluding: Record<string, Query> = {};
+
+    // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
+    // used to provide concise ways of writing advanced queries, by allowing for defining
+    // complex queries inside the schema definitions and re-using them across many
+    // different queries in the codebase of an application.
+    for (const field of schema.fields || []) {
+      if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
+        const relatedSchema = getSchemaBySlug(finalList, field.target.slug);
+
+        let fieldSlug = relatedSchema.slug;
+
+        if (field.kind === 'many') {
+          fieldSlug = composeAssociationSchemaSlug(schema, field);
+        }
 
         // For every reference field, add a default shortcut for resolving the referenced
         // record in the schema that contains the reference field.
@@ -500,7 +517,7 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
     // Find potential child schemas that are referencing the current parent schema. For
     // each of them, we then add a default shortcut for resolving the child records from
     // the parent schema.
-    const childSchemas = list
+    const childSchemas = finalList
       .map((subSchema) => {
         const field = subSchema.fields?.find((field) => {
           return field.type === 'reference' && field.target.slug === schema.slug;
@@ -529,7 +546,7 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<Schema> =>
     schema.including = { ...defaultIncluding, ...schema.including };
   }
 
-  return list;
+  return finalList;
 };
 
 /** A union type of all query instructions, but without nested instructions. */
