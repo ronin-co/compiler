@@ -183,17 +183,22 @@ export const compileQueryInput = (
     if (forStatement.length > 0) conditions.push(forStatement);
   }
 
-  // Per default, records are being ordered by the time they were created. This is
-  // necessary for our pagination to work properly as the pagination cursor is based on
-  // the time the record was created.
-  if ((queryType === 'get' || queryType === 'count') && !single) {
+  // If a `limitedTo` instruction was provided, that means the amount of records returned
+  // by the query will be limited to a specific amount, which, in turn, means that
+  // pagination is activated automatically, so a cursor will be provided to the client
+  // that can be used to retrieve the next page of records.
+  //
+  // Since `limitedTo` automatically activates pagination, we have to make sure that, if
+  // the instruction is provided, we also automatically provide an `orderedBy`
+  // instruction, as pagination requires the records to be ordered by at least one
+  // specific column, otherwise the cursor wouldn't work, since the order of the rows
+  // might differ between pages.
+  if ((queryType === 'get' || queryType === 'count') && !single && instructions?.limitedTo) {
     instructions = instructions || {};
     instructions.orderedBy = instructions.orderedBy || {};
     instructions.orderedBy.ascending = instructions.orderedBy.ascending || [];
     instructions.orderedBy.descending = instructions.orderedBy.descending || [];
 
-    // `ronin.createdAt` always has to be present in the `orderedBy` instruction because
-    // it's used for pagination. If it's not provided by the user, we have to add it.
     if (
       ![
         ...instructions.orderedBy.ascending,
@@ -201,7 +206,7 @@ export const compileQueryInput = (
       ].includes('ronin.createdAt')
     ) {
       // It's extremely important that the item is added to the end of the array,
-      // otherwise https://github.com/ronin-co/core/issues/257 would occur.
+      // otherwise https://linear.app/ronin/issue/RON-1084 would occur.
       instructions.orderedBy.descending.push('ronin.createdAt');
     }
   }

@@ -381,7 +381,7 @@ test('get single record including unrelated ordered records', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC, "ronin.createdAt" DESC) as including_teams LIMIT 1`,
+      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams LIMIT 1`,
       params: [],
       returning: true,
     },
