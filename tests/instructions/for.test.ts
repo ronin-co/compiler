@@ -66,8 +66,7 @@ test('get single record for pre-defined condition', () => {
 
   expect(statements).toEqual([
     {
-      statement:
-        'SELECT * FROM "views" WHERE ("space" = ?1) LIMIT 1',
+      statement: 'SELECT * FROM "views" WHERE ("space" = ?1) LIMIT 1',
       params: ['spa_m9h8oha94helaji'],
       returning: true,
     },

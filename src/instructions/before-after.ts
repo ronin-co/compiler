@@ -52,13 +52,13 @@ export const handleBeforeOrAfter = (
   }
 
   if (!instructions.limitedTo) {
-    let message = 'If a pagination cursor is provided in the `before` or `after`';
-    message += ' instruction, a `limitedTo` instruction must be provided as well, in';
-    message += ' order to define the page size.';
+    let message = 'When providing a pagination cursor in the `before` or `after`';
+    message += ' instruction, a `limitedTo` instruction must be provided as well, to';
+    message += ' define the page size.';
 
     throw new RoninError({
       message,
-      code: 'MISSING_INSTRUCTION'
+      code: 'MISSING_INSTRUCTION',
     });
   }
 

@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { type Schema, compileQueries } from '@/src/index';
 import { CURSOR_NULL_PLACEHOLDER } from '@/src/instructions/before-after';
 import type { Query } from '@/src/types/query';
+import { RoninError } from '@/src/utils/helpers';
 
 test('get multiple records before cursor', () => {
   const queries: Array<Query> = [
@@ -9,7 +10,7 @@ test('get multiple records before cursor', () => {
       get: {
         accounts: {
           before: '1667575193779',
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -41,7 +42,7 @@ test('get multiple records before cursor ordered by string field', () => {
           orderedBy: {
             ascending: ['handle'],
           },
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -79,7 +80,7 @@ test('get multiple records before cursor ordered by boolean field', () => {
           orderedBy: {
             ascending: ['active'],
           },
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -117,7 +118,7 @@ test('get multiple records before cursor ordered by number field', () => {
           orderedBy: {
             ascending: ['position'],
           },
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -155,7 +156,7 @@ test('get multiple records before cursor ordered by empty string field', () => {
           orderedBy: {
             descending: ['handle'],
           },
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -193,7 +194,7 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
           orderedBy: {
             descending: ['active'],
           },
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -231,7 +232,7 @@ test('get multiple records before cursor ordered by empty number field', () => {
           orderedBy: {
             descending: ['position'],
           },
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -269,7 +270,7 @@ test('get multiple records before cursor while filtering', () => {
             email: null,
           },
           before: '1667575193779',
-          limitedTo: 100
+          limitedTo: 100,
         },
       },
     },
@@ -296,4 +297,37 @@ test('get multiple records before cursor while filtering', () => {
       returning: true,
     },
   ]);
+});
+
+test('try to paginate without providing page size', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          before: '1667575193779',
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueries(queries, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When providing a pagination cursor in the `before` or `after` instruction, a `limitedTo` instruction must be provided as well, to define the page size.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_INSTRUCTION');
 });
