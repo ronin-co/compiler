@@ -740,7 +740,7 @@ test('create multiple records with nested sub query', () => {
 
   expect(statements).toEqual([
     {
-      statement: `INSERT INTO "new_accounts" SELECT * FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *`,
+      statement: `INSERT INTO "new_accounts" SELECT * FROM "old_accounts" RETURNING *`,
       params: [],
       returning: true,
     },
@@ -798,7 +798,7 @@ test('create multiple records with nested sub query including additional fields'
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
+        'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" RETURNING *',
       params: ['custom-first-name'],
       returning: true,
     },
@@ -850,7 +850,7 @@ test('create multiple records with nested sub query and specific fields', () => 
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
+        'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" RETURNING *',
       params: [
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -906,7 +906,7 @@ test('create multiple records with nested sub query and specific meta fields', (
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101 RETURNING *',
+        'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" RETURNING *',
       params: [
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),

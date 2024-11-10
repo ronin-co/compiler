@@ -31,7 +31,7 @@ test('get multiple records ordered by field', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC`,
       params: [],
       returning: true,
     },
@@ -71,7 +71,7 @@ test('get multiple records ordered by multiple fields', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC`,
       params: [],
       returning: true,
     },

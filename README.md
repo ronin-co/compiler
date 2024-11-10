@@ -59,7 +59,7 @@ const schemas: Array<Schema> = [{
 
 const statements: Array<Statements> = compileQueries(queries, schemas);
 // [{
-//   statement: 'SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 101',
+//   statement: 'SELECT * FROM "accounts"',
 //   params: [],
 //   returning: true,
 // }]

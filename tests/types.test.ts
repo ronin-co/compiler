@@ -83,7 +83,7 @@ test('count multiple records', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT COUNT(*) FROM "accounts" ORDER BY "ronin.createdAt" DESC`,
+      statement: `SELECT COUNT(*) FROM "accounts"`,
       params: [],
       returning: true,
     },

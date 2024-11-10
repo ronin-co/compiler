@@ -33,6 +33,7 @@ export const handleBeforeOrAfter = (
     after?: GetInstructions['after'];
     with?: GetInstructions['with'];
     orderedBy: GetInstructions['orderedBy'];
+    limitedTo?: GetInstructions['limitedTo'];
   },
   rootTable?: string,
 ): string => {
@@ -40,7 +41,6 @@ export const handleBeforeOrAfter = (
     throw new RoninError({
       message: 'The `before` or `after` instruction must not be empty.',
       code: 'MISSING_INSTRUCTION',
-      queries: null,
     });
   }
 
@@ -48,7 +48,17 @@ export const handleBeforeOrAfter = (
     throw new RoninError({
       message: 'The `before` and `after` instructions cannot co-exist. Choose one.',
       code: 'MUTUALLY_EXCLUSIVE_INSTRUCTIONS',
-      queries: null,
+    });
+  }
+
+  if (!instructions.limitedTo) {
+    let message = 'When providing a pagination cursor in the `before` or `after`';
+    message += ' instruction, a `limitedTo` instruction must be provided as well, to';
+    message += ' define the page size.';
+
+    throw new RoninError({
+      message,
+      code: 'MISSING_INSTRUCTION',
     });
   }
 
