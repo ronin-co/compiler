@@ -9,6 +9,7 @@ test('get multiple records before cursor', () => {
       get: {
         accounts: {
           before: '1667575193779',
+          limitedTo: 100
         },
       },
     },
@@ -40,6 +41,7 @@ test('get multiple records before cursor ordered by string field', () => {
           orderedBy: {
             ascending: ['handle'],
           },
+          limitedTo: 100
         },
       },
     },
@@ -77,6 +79,7 @@ test('get multiple records before cursor ordered by boolean field', () => {
           orderedBy: {
             ascending: ['active'],
           },
+          limitedTo: 100
         },
       },
     },
@@ -114,6 +117,7 @@ test('get multiple records before cursor ordered by number field', () => {
           orderedBy: {
             ascending: ['position'],
           },
+          limitedTo: 100
         },
       },
     },
@@ -151,6 +155,7 @@ test('get multiple records before cursor ordered by empty string field', () => {
           orderedBy: {
             descending: ['handle'],
           },
+          limitedTo: 100
         },
       },
     },
@@ -188,6 +193,7 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
           orderedBy: {
             descending: ['active'],
           },
+          limitedTo: 100
         },
       },
     },
@@ -225,6 +231,7 @@ test('get multiple records before cursor ordered by empty number field', () => {
           orderedBy: {
             descending: ['position'],
           },
+          limitedTo: 100
         },
       },
     },
@@ -262,6 +269,7 @@ test('get multiple records before cursor while filtering', () => {
             email: null,
           },
           before: '1667575193779',
+          limitedTo: 100
         },
       },
     },

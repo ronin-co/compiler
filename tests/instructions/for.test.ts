@@ -8,7 +8,7 @@ test('get single record for pre-defined condition', () => {
   const queries: Array<Query> = [
     {
       get: {
-        views: {
+        view: {
           for: {
             'active-member': 'acc_39h8fhe98hefah8',
           },
@@ -67,7 +67,7 @@ test('get single record for pre-defined condition', () => {
   expect(statements).toEqual([
     {
       statement:
-        'SELECT * FROM "views" WHERE ("space" = ?1) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+        'SELECT * FROM "views" WHERE ("space" = ?1) LIMIT 1',
       params: ['spa_m9h8oha94helaji'],
       returning: true,
     },
@@ -78,7 +78,7 @@ test('get single record for pre-defined condition containing sub query', () => {
   const queries: Array<Query> = [
     {
       get: {
-        views: {
+        view: {
           for: {
             'active-member': 'acc_39h8fhe98hefah8',
           },
@@ -147,7 +147,7 @@ test('get single record for pre-defined condition containing sub query', () => {
   expect(statements).toEqual([
     {
       statement:
-        'SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+        'SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8'],
       returning: true,
     },
@@ -158,7 +158,7 @@ test('get single record for pre-defined field containing sub query', () => {
   const queries: Array<Query> = [
     {
       get: {
-        views: {
+        view: {
           for: {
             'active-member': 'acc_39h8fhe98hefah8',
           },
@@ -225,7 +225,7 @@ test('get single record for pre-defined field containing sub query', () => {
   expect(statements).toEqual([
     {
       statement:
-        'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) ORDER BY "ronin.createdAt" DESC LIMIT 101',
+        'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8'],
       returning: true,
     },

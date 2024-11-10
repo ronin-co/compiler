@@ -227,6 +227,7 @@ export const compileQueryInput = (
         after: instructions.after,
         with: instructions.with,
         orderedBy: instructions.orderedBy,
+        limitedTo: instructions.limitedTo,
       },
       isJoining ? table : undefined,
     );
@@ -252,7 +253,11 @@ export const compileQueryInput = (
     statement += `${orderedByStatement} `;
   }
 
-  if (queryType === 'get' && !isJoiningMultipleRows) {
+  if (
+    queryType === 'get' &&
+    !isJoiningMultipleRows &&
+    (single || instructions?.limitedTo)
+  ) {
     statement += handleLimitedTo(single, instructions?.limitedTo);
   }
 
