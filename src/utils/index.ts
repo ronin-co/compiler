@@ -193,7 +193,11 @@ export const compileQueryInput = (
   // instruction, as pagination requires the records to be ordered by at least one
   // specific column, otherwise the cursor wouldn't work, since the order of the rows
   // might differ between pages.
-  if ((queryType === 'get' || queryType === 'count') && !single && instructions?.limitedTo) {
+  if (
+    (queryType === 'get' || queryType === 'count') &&
+    !single &&
+    instructions?.limitedTo
+  ) {
     instructions = instructions || {};
     instructions.orderedBy = instructions.orderedBy || {};
     instructions.orderedBy.ascending = instructions.orderedBy.ascending || [];
