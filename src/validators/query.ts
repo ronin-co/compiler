@@ -14,14 +14,14 @@ export const FieldValue = z.union(
 export const FieldSelector = z.record(FieldValue);
 
 // With Instructions.
-export const WithInstructionRefinementTypes = z.union([
-  z.literal('being'),
-  z.literal('notBeing'),
-  z.literal('startingWith'),
-  z.literal('endingWith'),
-  z.literal('containing'),
-  z.literal('greaterThan'),
-  z.literal('lessThan'),
+export const WithInstructionRefinementTypes = z.enum([
+  'being',
+  'notBeing',
+  'startingWith',
+  'endingWith',
+  'containing',
+  'greaterThan',
+  'lessThan',
 ]);
 
 export const WithInstructionRefinementSchema = z.union([
@@ -49,7 +49,7 @@ export const WithInstructionRefinementSchema = z.union([
     .partial()
     .strict(
       `A \`with\` instruction can only contain the following refinements: ${WithInstructionRefinementTypes.options
-        .map(({ value }) => `\`${value}\``)
+        .map((value) => `\`${value}\``)
         .join(', ')}.`,
     )
     .refine((value) => Object.keys(value).length > 0, {
