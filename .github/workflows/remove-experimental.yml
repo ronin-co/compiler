@@ -18,11 +18,43 @@ jobs:
         uses: actions/setup-node@v3.5.1
       - run: echo '//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN_READ_AND_WRITE }}' > ~/.npmrc
 
-      # This converts the branch name into dash-case, so it can be used as a
-      # valid dist-tag.
-      - name: Extract Branch Name
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | sed -r 's/([a-z0-9])([A-Z])/\1-\L\2/g' | sed 's/_/-/g' | sed 's/\//-/g')" >> $GITHUB_ENV
+      - name: Get Branch Name
+        id: get_branch_name
+        run: echo "branch_name=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
 
-      - name: Remove Experimental Packages
-        run: npm dist-tag rm @ronin/compiler $BRANCH_NAME-experimental
+      - name: Get Versions to Unpublish
+        id: get_versions
+        run: |
+          PACKAGE_NAME="@ronin/compiler"
+          BRANCH_NAME="${{ steps.get_branch_name.outputs.branch_name }}"
+          echo "Branch Name: $BRANCH_NAME"
+      
+          # Retrieve all versions
+          VERSIONS=$(npm view $PACKAGE_NAME versions --json)
+      
+          # Check if VERSIONS is empty
+          if [ -z "$VERSIONS" ]; then
+            echo "No versions found for $PACKAGE_NAME."
+            exit 0
+          fi
+      
+          # Filter versions that match the pattern
+          MATCHING_VERSIONS=$(echo "$VERSIONS" | tr -d '[]" ' | tr ',' '\n' | grep -F -- "-${BRANCH_NAME}-experimental")
+      
+          # Check if any versions match
+          if [ -z "$MATCHING_VERSIONS" ]; then
+            echo "No versions to unpublish for branch $BRANCH_NAME."
+            exit 0
+          fi
+      
+          # Output the versions to unpublish
+          echo "versions=$MATCHING_VERSIONS" >> $GITHUB_OUTPUT
+
+      - name: Unpublish Versions
+        if: ${{ steps.get_versions.outputs.versions != '' }}
+        run: |
+          PACKAGE_NAME="@ronin/compiler"
+          for VERSION in ${{ steps.get_versions.outputs.versions }}; do
+            echo "Unpublishing $PACKAGE_NAME@$VERSION"
+            npm unpublish "$PACKAGE_NAME@$VERSION" || echo "Failed to unpublish $PACKAGE_NAME@$VERSION"
+          done
