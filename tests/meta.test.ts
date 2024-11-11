@@ -650,7 +650,7 @@ test('create new index', () => {
   ]);
 });
 
-test('create new index with filters', () => {
+test('create new index with filter', () => {
   const fields = [
     {
       slug: 'email',
@@ -701,6 +701,66 @@ test('create new index with filters', () => {
         'account',
         JSON.stringify(fields),
         JSON.stringify(filterInstruction),
+        expect.stringMatching(RECORD_ID_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      ],
+      returning: true,
+    },
+  ]);
+});
+
+test('create new index with field expressions', () => {
+  const fields = [
+    {
+      expression: `LOWER(${RONIN_SCHEMA_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_SCHEMA_SYMBOLS.FIELD}lastName)`,
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        index: {
+          to: {
+            slug: 'index_name',
+            schema: { slug: 'account' },
+            fields,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `CREATE INDEX "index_name" ON "accounts" (LOWER("firstName" || ' ' || "lastName"))`,
+      params: [],
+    },
+    {
+      statement:
+        'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+      params: [
+        'index_name',
+        'account',
+        JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),

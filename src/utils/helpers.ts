@@ -34,6 +34,14 @@ export const RONIN_SCHEMA_SYMBOLS = {
   VALUE: '__RONIN_VALUE',
 } as const;
 
+/**
+ * A regular expression for matching the symbol that represents a field of a schema.
+ */
+export const RONIN_SCHEMA_FIELD_REGEX = new RegExp(
+  `${RONIN_SCHEMA_SYMBOLS.FIELD}[a-zA-Z0-9]+`,
+  'g',
+);
+
 type RoninErrorCode =
   | 'SCHEMA_NOT_FOUND'
   | 'FIELD_NOT_FOUND'
