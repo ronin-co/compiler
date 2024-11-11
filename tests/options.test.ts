@@ -26,7 +26,7 @@ test('inline statement values', () => {
   ];
 
   const statements = compileQueries(queries, schemas, {
-    inlineValues: true,
+    inlineParams: true,
   });
 
   expect(statements).toEqual([
