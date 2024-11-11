@@ -255,7 +255,7 @@ export const CombinedInstructionsSchema = z.union([
   DropInstructionsSchema,
   GetInstructionsSchema,
 ]);
-export const Instructionschema = z.union([
+export const InstructionSchema = z.union([
   z.literal('with'),
   z.literal('to'),
   z.literal('including'),
