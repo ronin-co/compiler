@@ -1542,3 +1542,60 @@ test('try to update existing field without minimum details (field slug)', () => 
   expect(error).toHaveProperty('code', 'MISSING_FIELD');
   expect(error).toHaveProperty('fields', ['slug']);
 });
+
+test('try to create new trigger with targeted fields and wrong action', () => {
+  const effectQueries = [
+    {
+      create: {
+        signup: {
+          to: {
+            year: 2000,
+          },
+        },
+      },
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'account' },
+            when: 'AFTER',
+            action: 'INSERT',
+            fields: [{ slug: 'email' }],
+            effects: effectQueries,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'signup',
+      fields: [{ slug: 'year', type: 'number' }],
+    },
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueries(queries, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When creating triggers, targeting specific fields requires the `UPDATE` action.',
+  );
+  expect(error).toHaveProperty('code', 'INVALID_SCHEMA_VALUE');
+  expect(error).toHaveProperty('fields', ['action']);
+});

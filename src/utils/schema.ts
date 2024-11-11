@@ -828,6 +828,14 @@ export const addSchemaQueries = (
       const fields: Array<SchemaTriggerField> | undefined = instructionList?.fields;
 
       if (fields) {
+        if (action !== 'UPDATE') {
+          throw new RoninError({
+            message: `When ${queryTypeReadable} ${kind}, targeting specific fields requires the \`UPDATE\` action.`,
+            code: 'INVALID_SCHEMA_VALUE',
+            fields: ['action'],
+          });
+        }
+
         const fieldSelectors = fields.map((field) => {
           return getFieldFromSchema(targetSchema as Schema, field.slug, 'to')
             .fieldSelector;

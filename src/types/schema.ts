@@ -46,7 +46,7 @@ export type SchemaIndexField = {
       slug: string;
     }
   | {
-      /** The expression for which the index should be created. */
+      /** The field expression for which the index should be created. */
       expression: string;
     }
 );
@@ -68,7 +68,10 @@ export type SchemaIndex = {
 };
 
 export type SchemaTriggerField = {
-  /** The field slug for which the index should be created. */
+  /**
+   * The slug of the field that should cause the trigger to fire if the value of the
+   * field has changed.
+   */
   slug: string;
 };
 
