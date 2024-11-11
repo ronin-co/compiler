@@ -79,11 +79,6 @@ export class RoninError extends Error {
   }
 }
 
-/** An object of nested objects. */
-type StringObject = {
-  [key: string]: unknown | StringObject;
-};
-
 const SINGLE_QUOTE_REGEX = /'/g;
 const DOUBLE_QUOTE_REGEX = /"/g;
 const AMPERSAND_REGEX = /\s*&+\s*/g;
@@ -196,7 +191,7 @@ export const isObject = (value: unknown): boolean =>
  * @returns Whether the pattern was found in the object.
  */
 export const findInObject = (
-  obj: StringObject,
+  obj: NestedObject,
   pattern: string,
   replacer?: (match: string) => string,
 ): boolean => {
@@ -206,7 +201,7 @@ export const findInObject = (
     const value = obj[key];
 
     if (isObject(value)) {
-      found = findInObject(value as StringObject, pattern, replacer);
+      found = findInObject(value as NestedObject, pattern, replacer);
 
       // We're purposefully using `.startsWith` instead of a regex here, because we only
       // want to replace the value if it starts with the pattern, so a regex would be
