@@ -359,6 +359,122 @@ test('get single record for preset on existing array instruction', () => {
   ]);
 });
 
+test('get single record including parent record (many-to-one)', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          for: ['account'],
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'reference',
+          target: { slug: 'account' },
+          kind: 'one',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record including child records (one-to-many, defined manually)', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        post: {
+          for: ['comments'],
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'post',
+      fields: [
+        {
+          slug: 'comments',
+          type: 'reference',
+          target: { slug: 'comment' },
+          kind: 'many',
+        },
+      ],
+    },
+    {
+      slug: 'comment',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_post_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record including child records (one-to-many, defined automatically)', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          for: ['members'],
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'reference',
+          target: { slug: 'account' },
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+});
+
 test('try get single record with non-existing preset', () => {
   const queries: Array<Query> = [
     {
