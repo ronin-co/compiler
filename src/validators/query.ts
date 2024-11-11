@@ -255,18 +255,18 @@ export const CombinedInstructionsSchema = z.union([
   DropInstructionsSchema,
   GetInstructionsSchema,
 ]);
-export const InstructionSchema = z.union([
-  z.literal('with'),
-  z.literal('to'),
-  z.literal('including'),
-  z.literal('selecting'),
-  z.literal('orderedBy'),
-  z.literal('orderedBy.ascending'),
-  z.literal('orderedBy.descending'),
-  z.literal('before'),
-  z.literal('after'),
-  z.literal('limitedTo'),
-  z.literal('for'),
+export const InstructionSchema = z.enum([
+  'with',
+  'to',
+  'including',
+  'selecting',
+  'orderedBy',
+  'orderedBy.ascending',
+  'orderedBy.descending',
+  'before',
+  'after',
+  'limitedTo',
+  'for',
 ]);
 
 export const QuerySchemaSchema = z.record(InstructionsSchema.partial());
