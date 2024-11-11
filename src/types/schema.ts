@@ -111,7 +111,6 @@ export interface Schema {
   idPrefix?: string;
 
   including?: Record<string, Query>;
-  for?: Record<string, WithInstruction>;
 
   fields?: Array<SchemaField>;
   indexes?: Array<SchemaIndex>;
