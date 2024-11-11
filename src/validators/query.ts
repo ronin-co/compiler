@@ -49,7 +49,7 @@ export const WithInstructionRefinementSchema = z.union([
     .partial()
     .strict(
       `A \`with\` instruction can only contain the following refinements: ${WithInstructionRefinementTypes.options
-        .map((value) => `\`${value}\``)
+        .map((refinementType) => `\`${refinementType}\``)
         .join(', ')}.`,
     )
     .refine((value) => Object.keys(value).length > 0, {
