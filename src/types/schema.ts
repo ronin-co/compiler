@@ -1,4 +1,4 @@
-import type { Query, QueryType, WithInstruction } from '@/src/types/query';
+import type { Query, WithInstruction } from '@/src/types/query';
 
 type SchemaFieldBasics = {
   name?: string;
@@ -69,9 +69,9 @@ export type SchemaIndex = {
 
 export type SchemaTrigger = {
   /** The type of query for which the trigger should fire. */
-  queryType: Uppercase<Exclude<QueryType, 'get' | 'count'>>;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a maching query is executed. */
-  timing: 'BEFORE' | 'DURING' | 'AFTER';
+  when: 'BEFORE' | 'DURING' | 'AFTER';
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
   /** A list of field slugs for which the trigger should fire. */

@@ -872,7 +872,8 @@ test('create new trigger for creating records', () => {
           to: {
             slug: 'trigger_name',
             schema: { slug: 'account' },
-            cause: 'afterInsert',
+            when: 'AFTER',
+            action: 'INSERT',
             effects: effectQueries,
           },
         },
@@ -905,11 +906,12 @@ test('create new trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_name',
         'account',
-        'afterInsert',
+        'AFTER',
+        'INSERT',
         JSON.stringify(effectQueries),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -949,7 +951,8 @@ test('create new trigger for creating records with multiple effects', () => {
           to: {
             slug: 'trigger_name',
             schema: { slug: 'account' },
-            cause: 'afterInsert',
+            when: 'AFTER',
+            action: 'INSERT',
             effects: effectQueries,
           },
         },
@@ -990,11 +993,12 @@ test('create new trigger for creating records with multiple effects', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_name',
         'account',
-        'afterInsert',
+        'AFTER',
+        'INSERT',
         JSON.stringify(effectQueries),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1027,7 +1031,8 @@ test('create new per-record trigger for creating records', () => {
           to: {
             slug: 'trigger_name',
             schema: { slug: 'team' },
-            cause: 'afterInsert',
+            when: 'AFTER',
+            action: 'INSERT',
             effects: effectQueries,
           },
         },
@@ -1068,11 +1073,12 @@ test('create new per-record trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_name',
         'team',
-        'afterInsert',
+        'AFTER',
+        'INSERT',
         JSON.stringify(effectQueries),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1103,7 +1109,8 @@ test('create new per-record trigger for deleting records', () => {
           to: {
             slug: 'trigger_name',
             schema: { slug: 'team' },
-            cause: 'afterDelete',
+            when: 'AFTER',
+            action: 'DELETE',
             effects: effectQueries,
           },
         },
@@ -1138,11 +1145,12 @@ test('create new per-record trigger for deleting records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_name',
         'team',
-        'afterDelete',
+        'AFTER',
+        'DELETE',
         JSON.stringify(effectQueries),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1181,7 +1189,8 @@ test('create new per-record trigger with filters for creating records', () => {
           to: {
             slug: 'trigger_name',
             schema: { slug: 'team' },
-            cause: 'afterInsert',
+            when: 'AFTER',
+            action: 'INSERT',
             effects: effectQueries,
             filter: filterInstruction,
           },
@@ -1225,11 +1234,12 @@ test('create new per-record trigger with filters for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "cause", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, IIF("effects" IS NULL, ?4, json_patch("effects", ?4)), IIF("filter" IS NULL, ?5, json_patch("filter", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("filter" IS NULL, ?6, json_patch("filter", ?6)), ?7, ?8, ?9) RETURNING *',
       params: [
         'trigger_name',
         'team',
-        'afterInsert',
+        'AFTER',
+        'INSERT',
         JSON.stringify(effectQueries),
         JSON.stringify(filterInstruction),
         expect.stringMatching(RECORD_ID_REGEX),

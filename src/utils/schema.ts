@@ -441,9 +441,11 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
     fields: [
       { slug: 'slug', type: 'string', required: true },
       { slug: 'schema', type: 'reference', target: { slug: 'schema' }, required: true },
-      { slug: 'cause', type: 'string', required: true },
+      { slug: 'when', type: 'string', required: true },
+      { slug: 'action', type: 'string', required: true },
       { slug: 'filter', type: 'json' },
       { slug: 'effects', type: 'json', required: true },
+      { slug: 'fields', type: 'json' },
     ],
   },
 ].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
@@ -807,11 +809,11 @@ export const addSchemaQueries = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
-      // The type of query that causes the trigger to fire.
-      const cause = slugToName(instructionList?.cause).toUpperCase();
+      // When the trigger should fire and what type of query should cause it to fire.
+      const { when, action } = instructionList;
 
       // The different parts of the final statement.
-      const statementParts: Array<string> = [cause, 'ON', `"${tableName}"`];
+      const statementParts: Array<string> = [`${when} ${action}`, 'ON', `"${tableName}"`];
 
       // The query that will be executed when the trigger is fired.
       const effectQueries: Array<Query> = instructionList?.effects;
@@ -834,9 +836,10 @@ export const addSchemaQueries = (
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
       if (filterQuery) {
-        const tablePlaceholder = cause.endsWith('DELETE')
-          ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
-          : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+        const tablePlaceholder =
+          action === 'DELETE'
+            ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
+            : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
 
         const withStatement = handleWith(
           schemas,
