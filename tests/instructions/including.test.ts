@@ -393,3 +393,35 @@ test('get single record including unrelated ordered records', () => {
     },
   ]);
 });
+
+test('get single record including deeply nested ephemeral field', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        space: {
+          including: {
+            invoice: {
+              recipient: 'receipts@site.co',
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'space',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT *, ?1 as "invoice.recipient" FROM "spaces" LIMIT 1`,
+      params: ['receipts@site.co'],
+      returning: true,
+    },
+  ]);
+});
