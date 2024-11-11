@@ -20,7 +20,7 @@ export const compileQueries = (
   queries: Array<Query>,
   schemas: Array<PublicSchema>,
   options?: {
-    inlineValues?: boolean;
+    inlineParams?: boolean;
   },
 ): Array<Statement> => {
   const schemaList = addSystemSchemas(schemas).map((schema) => {
@@ -38,7 +38,7 @@ export const compileQueries = (
     const result = compileQueryInput(
       query,
       schemaListWithPresets,
-      options?.inlineValues ? null : [],
+      options?.inlineParams ? null : [],
     );
 
     // Every query can only produce one main statement (which can return output), but
