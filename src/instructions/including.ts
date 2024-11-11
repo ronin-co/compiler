@@ -4,7 +4,7 @@ import type { Schema } from '@/src/types/schema';
 import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
-import { composeConditions } from '@/src/utils/statement';
+import { composeConditions, hasSubQuery } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `including` query instruction, which allows for
@@ -34,7 +34,15 @@ export const handleIncluding = (
   let rootTableName = rootTable;
 
   for (const ephemeralFieldSlug in instruction) {
-    const includingQuery = instruction[ephemeralFieldSlug]
+    const includingQuery = hasSubQuery(instruction[ephemeralFieldSlug]);
+
+    // The `including` instruction might contain values that are not queries, which are
+    // taken care of by the `handleSelecting` function. Specifically, those values are
+    // static values that must be added to the resulting SQL statement as custom columns.
+    //
+    // Only in the case that the `including` instruction contains a query, we want to
+    // continue with this function and process the query as an SQL JOIN.
+    if (!includingQuery) continue;
 
     const { queryType, querySchema, queryInstructions } = splitQuery(includingQuery);
     let modifiableQueryInstructions = queryInstructions;

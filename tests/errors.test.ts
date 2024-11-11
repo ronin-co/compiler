@@ -312,5 +312,3 @@ test('get multiple records with empty `before` instruction', () => {
   );
   expect(error).toHaveProperty('code', 'MISSING_INSTRUCTION');
 });
-
-

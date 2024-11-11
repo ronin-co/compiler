@@ -88,16 +88,13 @@ const composeFieldValues = (
     options.rootTable,
   );
 
-  const isSubQuery =
-    isObject(value) && Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY);
-
   // If only the field selectors are being requested, do not register any values.
   const collectStatementValue = options.type !== 'fields';
 
   let conditionSelector = selector;
   let conditionValue = value;
 
-  if (isSubQuery && collectStatementValue) {
+  if (hasSubQuery(value) && collectStatementValue) {
     conditionValue = `(${
       compileQueryInput(
         (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
@@ -210,10 +207,7 @@ export const composeConditions = (
     // If the `to` instruction is used, JSON should be written as-is.
     const consumeJSON = schemaField.type === 'json' && instructionName === 'to';
 
-    const isSubQuery =
-      isNested && Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY);
-
-    if (!(isObject(value) || Array.isArray(value)) || isSubQuery || consumeJSON) {
+    if (!(isObject(value) || Array.isArray(value)) || hasSubQuery(value) || consumeJSON) {
       return composeFieldValues(
         schemas,
         schema,
@@ -381,4 +375,22 @@ export const formatIdentifiers = (
     ...queryInstructions,
     [type]: newNestedInstructions,
   } as Instructions & SetInstructions;
+};
+
+/**
+ * Determines whether the provided value contains a sub query. If it does, the sub query
+ * is then provided.
+ *
+ * @param value - The value that should be checked.
+ *
+ * @returns A sub query, if the provided value contains one.
+ */
+export const hasSubQuery = (value: unknown): Query | null => {
+  if (isObject(value)) {
+    return (
+      (value as Record<string, Query | undefined>)[RONIN_SCHEMA_SYMBOLS.QUERY] || null
+    );
+  }
+
+  return null;
 };

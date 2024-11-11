@@ -1,7 +1,6 @@
-import type { Query, SetInstructions, Statement } from '@/src/types/query';
+import type { SetInstructions, Statement } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
 import {
-  RONIN_SCHEMA_SYMBOLS,
   expand,
   flatten,
   generateRecordId,
@@ -14,7 +13,7 @@ import {
   getFieldFromSchema,
   getSchemaBySlug,
 } from '@/src/utils/schema';
-import { composeConditions } from '@/src/utils/statement';
+import { composeConditions, hasSubQuery } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `to` query instruction, which allows for providing
@@ -64,13 +63,12 @@ export const handleTo = (
     ...toInstruction.ronin,
   };
 
-  const hasSubQuery = Object.hasOwn(toInstruction, RONIN_SCHEMA_SYMBOLS.QUERY);
+  const subQuery = hasSubQuery(toInstruction);
 
   // If a sub query is provided as the `to` instruction, we don't need to compute a list
   // of fields and/or values for the SQL query, since the fields and values are all
   // derived from the sub query. This allows us to keep the SQL statement lean.
-  if (hasSubQuery) {
-    const subQuery: Query = toInstruction[RONIN_SCHEMA_SYMBOLS.QUERY];
+  if (subQuery) {
     let { querySchema: subQuerySchemaSlug, queryInstructions: subQueryInstructions } =
       splitQuery(subQuery);
     const subQuerySchema = getSchemaBySlug(schemas, subQuerySchemaSlug);

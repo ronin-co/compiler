@@ -10,7 +10,7 @@ test('get single record including parent record (many-to-one)', () => {
       get: {
         member: {
           for: {
-            account: null
+            account: null,
           },
         },
       },
@@ -50,7 +50,9 @@ test('get single record including child records (one-to-many, defined manually)'
     {
       get: {
         post: {
-          including: ['comments'],
+          for: {
+            comments: null,
+          },
         },
       },
     },
@@ -89,7 +91,9 @@ test('get single record including child records (one-to-many, defined automatica
     {
       get: {
         account: {
-          including: ['members'],
+          for: {
+            members: null,
+          },
         },
       },
     },
@@ -127,7 +131,15 @@ test('get single record including unrelated record without filter', () => {
     {
       get: {
         view: {
-          including: ['team'],
+          including: {
+            team: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  team: null,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -139,13 +151,6 @@ test('get single record including unrelated record without filter', () => {
     },
     {
       slug: 'view',
-      including: {
-        team: {
-          get: {
-            team: null,
-          },
-        },
-      },
     },
   ];
 
@@ -165,7 +170,19 @@ test('get single record including unrelated record with filter', () => {
     {
       get: {
         view: {
-          including: ['team'],
+          including: {
+            team: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  team: {
+                    with: {
+                      handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -189,17 +206,6 @@ test('get single record including unrelated record with filter', () => {
           type: 'string',
         },
       ],
-      including: {
-        team: {
-          get: {
-            team: {
-              with: {
-                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -219,7 +225,15 @@ test('get single record including unrelated records without filter', () => {
     {
       get: {
         view: {
-          including: ['teams'],
+          including: {
+            teams: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  teams: null,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -231,13 +245,6 @@ test('get single record including unrelated records without filter', () => {
     },
     {
       slug: 'view',
-      including: {
-        teams: {
-          get: {
-            teams: null,
-          },
-        },
-      },
     },
   ];
 
@@ -257,7 +264,19 @@ test('get single record including unrelated records with filter', () => {
     {
       get: {
         view: {
-          including: ['teams'],
+          including: {
+            teams: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  teams: {
+                    with: {
+                      handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -281,17 +300,6 @@ test('get single record including unrelated records with filter', () => {
           type: 'string',
         },
       ],
-      including: {
-        teams: {
-          get: {
-            teams: {
-              with: {
-                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -311,7 +319,19 @@ test('get single record including unrelated ordered record', () => {
     {
       get: {
         view: {
-          including: ['team'],
+          including: {
+            team: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  team: {
+                    orderedBy: {
+                      descending: ['ronin.updatedAt'],
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -323,17 +343,6 @@ test('get single record including unrelated ordered record', () => {
     },
     {
       slug: 'view',
-      including: {
-        team: {
-          get: {
-            team: {
-              orderedBy: {
-                descending: ['ronin.updatedAt'],
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -353,7 +362,19 @@ test('get single record including unrelated ordered records', () => {
     {
       get: {
         view: {
-          including: ['teams'],
+          including: {
+            teams: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  teams: {
+                    orderedBy: {
+                      descending: ['ronin.updatedAt'],
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -365,17 +386,6 @@ test('get single record including unrelated ordered records', () => {
     },
     {
       slug: 'view',
-      including: {
-        teams: {
-          get: {
-            teams: {
-              orderedBy: {
-                descending: ['ronin.updatedAt'],
-              },
-            },
-          },
-        },
-      },
     },
   ];
 

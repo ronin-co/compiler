@@ -14,6 +14,7 @@ import type {
   SchemaField,
   SchemaFieldReferenceAction,
   SchemaIndexField,
+  SchemaPreset,
   SchemaTriggerField,
 } from '@/src/types/schema';
 import {
@@ -537,11 +538,8 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<PublicSche
  *
  * @returns The schema with default presets added.
  */
-export const addDefaultSchemaPresets = (
-  list: Array<Schema>,
-  schema: Schema,
-): Schema => {
-  const defaultIncluding: Record<string, Query> = {};
+export const addDefaultSchemaPresets = (list: Array<Schema>, schema: Schema): Schema => {
+  const defaultPresets: Array<SchemaPreset> = [];
 
   // Add default presets, which people can overwrite if they want to. Presets are
   // used to provide concise ways of writing advanced queries, by allowing for defining
@@ -559,17 +557,26 @@ export const addDefaultSchemaPresets = (
 
       // For every reference field, add a default preset for resolving the referenced
       // record in the schema that contains the reference field.
-      defaultIncluding[field.slug] = {
-        get: {
-          [fieldSlug]: {
-            with: {
-              // Compare the `id` field of the related schema to the reference field on
-              // the root schema (`field.slug`).
-              id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
+      defaultPresets.push({
+        instructions: {
+          including: {
+            [field.slug]: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  [fieldSlug]: {
+                    with: {
+                      // Compare the `id` field of the related schema to the reference field on
+                      // the root schema (`field.slug`).
+                      id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
+                    },
+                  },
+                },
+              },
             },
           },
         },
-      };
+        slug: field.slug,
+      });
     }
   }
 
@@ -591,19 +598,28 @@ export const addDefaultSchemaPresets = (
     const { schema: childSchema, field: childField } = childMatch;
     const pluralSlug = childSchema.pluralSlug as string;
 
-    defaultIncluding[pluralSlug] = {
-      get: {
-        [pluralSlug]: {
-          with: {
-            [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+    defaultPresets.push({
+      instructions: {
+        including: {
+          [pluralSlug]: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                [pluralSlug]: {
+                  with: {
+                    [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+                  },
+                },
+              },
+            },
           },
         },
       },
-    };
+      slug: pluralSlug,
+    });
   }
 
-  if (Object.keys(defaultIncluding).length > 0) {
-    schema.including = { ...defaultIncluding, ...schema.including };
+  if (Object.keys(defaultPresets).length > 0) {
+    schema.presets = [...defaultPresets, ...(schema.presets || [])];
   }
 
   return schema;

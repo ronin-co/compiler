@@ -106,7 +106,9 @@ export const WithInstructionSchema = z.record(
 );
 
 // Including Instructions.
-export const IncludingInstructionSchema = z.record(z.lazy((): z.ZodTypeAny => GetQuerySchema));
+export const IncludingInstructionSchema = z.record(
+  z.union([z.string(), z.lazy((): z.ZodTypeAny => GetQuerySchema)]),
+);
 
 // Ordering Instructions.
 export const OrderedByInstructionSchema = z

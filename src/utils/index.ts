@@ -78,7 +78,7 @@ export const compileQueryInput = (
   }
 
   // A list of columns that should be selected when querying records.
-  const columns = handleSelecting(schema, statementParams, {
+  const { columns, isJoining } = handleSelecting(schema, statementParams, {
     selecting: instructions?.selecting,
     including: instructions?.including,
   });
@@ -107,8 +107,6 @@ export const compileQueryInput = (
       break;
   }
 
-  const isJoining =
-    typeof instructions?.including !== 'undefined' && !isObject(instructions.including);
   let isJoiningMultipleRows = false;
 
   if (isJoining) {

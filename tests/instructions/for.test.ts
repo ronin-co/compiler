@@ -371,7 +371,7 @@ test('try get single record with non-existing preset', () => {
       get: {
         account: {
           for: {
-            'activeMember': 'acc_39h8fhe98hefah8',
+            activeMember: 'acc_39h8fhe98hefah8',
           },
         },
       },
@@ -398,7 +398,7 @@ test('try get single record with non-existing preset', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Preset "active-member" does not exist in schema "Account".',
+    'Preset "activeMember" does not exist in schema "Account".',
   );
   expect(error).toHaveProperty('code', 'PRESET_NOT_FOUND');
 });
