@@ -600,6 +600,12 @@ test('drop existing field', () => {
 });
 
 test('create new index', () => {
+  const fields = [
+    {
+      slug: 'email',
+    },
+  ];
+
   const queries: Array<Query> = [
     {
       create: {
@@ -607,6 +613,7 @@ test('create new index', () => {
           to: {
             slug: 'index_name',
             schema: { slug: 'account' },
+            fields,
           },
         },
       },
@@ -616,6 +623,7 @@ test('create new index', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -623,15 +631,16 @@ test('create new index', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'CREATE INDEX "index_name" ON "accounts"',
+      statement: 'CREATE INDEX "index_name" ON "accounts" ("email")',
       params: [],
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
         'index_name',
         'account',
+        JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -642,6 +651,12 @@ test('create new index', () => {
 });
 
 test('create new index with filters', () => {
+  const fields = [
+    {
+      slug: 'email',
+    },
+  ];
+
   const filterInstruction = {
     email: {
       endingWith: '@site.co',
@@ -655,6 +670,7 @@ test('create new index with filters', () => {
           to: {
             slug: 'index_name',
             schema: { slug: 'account' },
+            fields,
             filter: filterInstruction,
           },
         },
@@ -673,15 +689,17 @@ test('create new index with filters', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'CREATE INDEX "index_name" ON "accounts" WHERE (("email" LIKE %?1))',
+      statement:
+        'CREATE INDEX "index_name" ON "accounts" ("email") WHERE (("email" LIKE %?1))',
       params: ['@site.co'],
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("filter" IS NULL, ?3, json_patch("filter", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "schema", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
       params: [
         'index_name',
         'account',
+        JSON.stringify(fields),
         JSON.stringify(filterInstruction),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -693,6 +711,12 @@ test('create new index with filters', () => {
 });
 
 test('create new unique index', () => {
+  const fields = [
+    {
+      slug: 'email',
+    },
+  ];
+
   const queries: Array<Query> = [
     {
       create: {
@@ -700,6 +724,7 @@ test('create new unique index', () => {
           to: {
             slug: 'index_name',
             schema: { slug: 'account' },
+            fields,
             unique: true,
           },
         },
@@ -710,6 +735,7 @@ test('create new unique index', () => {
   const schemas: Array<Schema> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -717,15 +743,16 @@ test('create new unique index', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'CREATE UNIQUE INDEX "index_name" ON "accounts"',
+      statement: 'CREATE UNIQUE INDEX "index_name" ON "accounts" ("email")',
       params: [],
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "schema", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6, ?7) RETURNING *',
       params: [
         'index_name',
         'account',
+        JSON.stringify(fields),
         1,
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),

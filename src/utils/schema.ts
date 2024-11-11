@@ -13,6 +13,7 @@ import type {
   Schema,
   SchemaField,
   SchemaFieldReferenceAction,
+  SchemaIndexField,
 } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
@@ -426,6 +427,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       },
       { slug: 'unique', type: 'boolean' },
       { slug: 'filter', type: 'json' },
+      { slug: 'fields', type: 'json', required: true },
     ],
   },
   {
@@ -748,16 +750,35 @@ export const addSchemaQueries = (
 
   if (kind === 'indexes') {
     const indexName = convertToSnakeCase(slug);
+
+    // Whether the index should only allow one record with a unique value for its fields.
     const unique: boolean | undefined = instructionList?.unique;
 
     // The query instructions that should be used to filter the indexed records.
     const filterQuery: WithInstruction = instructionList?.filter;
 
+    // The specific fields that should be indexed.
+    const fields: Array<SchemaIndexField> = instructionList?.fields;
+
     const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (queryType === 'create') {
-      statement += ` ON "${tableName}"`;
+      const columns = fields.map((field) => {
+        let fieldSelector = '';
+
+        if ('slug' in field) {
+          ({ fieldSelector } = getFieldFromSchema(
+            targetSchema as Schema,
+            field.slug,
+            'to',
+          ));
+        }
+
+        return fieldSelector;
+      });
+
+      statement += ` ON "${tableName}" (${columns.join(', ')})`;
 
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.

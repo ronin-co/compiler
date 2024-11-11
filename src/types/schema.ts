@@ -35,14 +35,21 @@ export type SchemaFieldReference = SchemaFieldBasics & {
 
 export type SchemaField = SchemaFieldNormal | SchemaFieldReference;
 
-type SchemaIndexField = {
-  /** The field slug or expression for which the index should be created. */
-  expression: string;
+export type SchemaIndexField = {
   /** The collating sequence used for text placed inside the field. */
   collation?: 'BINARY' | 'NOCASE' | 'RTRIM';
   /** How the records in the index should be ordered. */
   order?: 'ASC' | 'DESC';
-};
+} & (
+  | {
+      /** The field slug for which the index should be created. */
+      slug: string;
+    }
+  | {
+      /** The expression for which the index should be created. */
+      expression: string;
+    }
+);
 
 export type SchemaIndex = {
   /**
