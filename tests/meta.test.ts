@@ -611,7 +611,7 @@ test('create new index', () => {
       create: {
         index: {
           to: {
-            slug: 'index_name',
+            slug: 'index_slug',
             schema: { slug: 'account' },
             fields,
           },
@@ -631,14 +631,14 @@ test('create new index', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'CREATE INDEX "index_name" ON "accounts" ("email")',
+      statement: 'CREATE INDEX "index_slug" ON "accounts" ("email")',
       params: [],
     },
     {
       statement:
         'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
-        'index_name',
+        'index_slug',
         'account',
         JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
@@ -668,7 +668,7 @@ test('create new index with filter', () => {
       create: {
         index: {
           to: {
-            slug: 'index_name',
+            slug: 'index_slug',
             schema: { slug: 'account' },
             fields,
             filter: filterInstruction,
@@ -690,14 +690,14 @@ test('create new index with filter', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE INDEX "index_name" ON "accounts" ("email") WHERE (("email" LIKE %?1))',
+        'CREATE INDEX "index_slug" ON "accounts" ("email") WHERE (("email" LIKE %?1))',
       params: ['@site.co'],
     },
     {
       statement:
         'INSERT INTO "indexes" ("slug", "schema", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
       params: [
-        'index_name',
+        'index_slug',
         'account',
         JSON.stringify(fields),
         JSON.stringify(filterInstruction),
@@ -722,7 +722,7 @@ test('create new index with field expressions', () => {
       create: {
         index: {
           to: {
-            slug: 'index_name',
+            slug: 'index_slug',
             schema: { slug: 'account' },
             fields,
           },
@@ -751,14 +751,14 @@ test('create new index with field expressions', () => {
 
   expect(statements).toEqual([
     {
-      statement: `CREATE INDEX "index_name" ON "accounts" (LOWER("firstName" || ' ' || "lastName"))`,
+      statement: `CREATE INDEX "index_slug" ON "accounts" (LOWER("firstName" || ' ' || "lastName"))`,
       params: [],
     },
     {
       statement:
         'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
-        'index_name',
+        'index_slug',
         'account',
         JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
@@ -784,7 +784,7 @@ test('create new index with ordered and collated fields', () => {
       create: {
         index: {
           to: {
-            slug: 'index_name',
+            slug: 'index_slug',
             schema: { slug: 'account' },
             fields,
           },
@@ -804,14 +804,14 @@ test('create new index with ordered and collated fields', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'CREATE INDEX "index_name" ON "accounts" ("email" COLLATE NOCASE ASC)',
+      statement: 'CREATE INDEX "index_slug" ON "accounts" ("email" COLLATE NOCASE ASC)',
       params: [],
     },
     {
       statement:
         'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
-        'index_name',
+        'index_slug',
         'account',
         JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
@@ -835,7 +835,7 @@ test('create new unique index', () => {
       create: {
         index: {
           to: {
-            slug: 'index_name',
+            slug: 'index_slug',
             schema: { slug: 'account' },
             fields,
             unique: true,
@@ -856,14 +856,14 @@ test('create new unique index', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'CREATE UNIQUE INDEX "index_name" ON "accounts" ("email")',
+      statement: 'CREATE UNIQUE INDEX "index_slug" ON "accounts" ("email")',
       params: [],
     },
     {
       statement:
         'INSERT INTO "indexes" ("slug", "schema", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6, ?7) RETURNING *',
       params: [
-        'index_name',
+        'index_slug',
         'account',
         JSON.stringify(fields),
         1,
@@ -882,7 +882,7 @@ test('drop existing index', () => {
       drop: {
         index: {
           with: {
-            slug: 'index_name',
+            slug: 'index_slug',
             schema: { slug: 'account' },
           },
         },
@@ -900,13 +900,13 @@ test('drop existing index', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'DROP INDEX "index_name"',
+      statement: 'DROP INDEX "index_slug"',
       params: [],
     },
     {
       statement:
         'DELETE FROM "indexes" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
-      params: ['index_name', 'account'],
+      params: ['index_slug', 'account'],
       returning: true,
     },
   ]);
@@ -930,7 +930,7 @@ test('create new trigger for creating records', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',
@@ -956,7 +956,7 @@ test('create new trigger for creating records', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -968,7 +968,7 @@ test('create new trigger for creating records', () => {
       statement:
         'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_name',
+        'trigger_slug',
         'account',
         'AFTER',
         'INSERT',
@@ -1006,7 +1006,7 @@ test('create new trigger for creating records with targeted fields', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'account' },
             when: 'AFTER',
             action: 'UPDATE',
@@ -1034,7 +1034,7 @@ test('create new trigger for creating records with targeted fields', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_name" AFTER UPDATE OF ("email") ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+        'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -1046,7 +1046,7 @@ test('create new trigger for creating records with targeted fields', () => {
       statement:
         'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("fields" IS NULL, ?6, json_patch("fields", ?6)), ?7, ?8, ?9) RETURNING *',
       params: [
-        'trigger_name',
+        'trigger_slug',
         'account',
         'AFTER',
         'UPDATE',
@@ -1088,7 +1088,7 @@ test('create new trigger for creating records with multiple effects', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',
@@ -1118,7 +1118,7 @@ test('create new trigger for creating records with multiple effects', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_name" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -1134,7 +1134,7 @@ test('create new trigger for creating records with multiple effects', () => {
       statement:
         'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_name',
+        'trigger_slug',
         'account',
         'AFTER',
         'INSERT',
@@ -1168,7 +1168,7 @@ test('create new per-record trigger for creating records', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'team' },
             when: 'AFTER',
             action: 'INSERT',
@@ -1201,7 +1201,7 @@ test('create new per-record trigger for creating records', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
       params: [
         'owner',
         0,
@@ -1214,7 +1214,7 @@ test('create new per-record trigger for creating records', () => {
       statement:
         'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_name',
+        'trigger_slug',
         'team',
         'AFTER',
         'INSERT',
@@ -1246,7 +1246,7 @@ test('create new per-record trigger for deleting records', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'team' },
             when: 'AFTER',
             action: 'DELETE',
@@ -1279,14 +1279,14 @@ test('create new per-record trigger for deleting records', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_name" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
+        'CREATE TRIGGER "trigger_slug" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
       params: [],
     },
     {
       statement:
         'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_name',
+        'trigger_slug',
         'team',
         'AFTER',
         'DELETE',
@@ -1326,7 +1326,7 @@ test('create new per-record trigger with filters for creating records', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'team' },
             when: 'AFTER',
             action: 'INSERT',
@@ -1361,7 +1361,7 @@ test('create new per-record trigger with filters for creating records', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_name" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
       params: [
         '_hidden',
         'owner',
@@ -1375,7 +1375,7 @@ test('create new per-record trigger with filters for creating records', () => {
       statement:
         'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("filter" IS NULL, ?6, json_patch("filter", ?6)), ?7, ?8, ?9) RETURNING *',
       params: [
-        'trigger_name',
+        'trigger_slug',
         'team',
         'AFTER',
         'INSERT',
@@ -1396,7 +1396,7 @@ test('drop existing trigger', () => {
       drop: {
         trigger: {
           with: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'team' },
           },
         },
@@ -1414,13 +1414,94 @@ test('drop existing trigger', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'DROP TRIGGER "trigger_name"',
+      statement: 'DROP TRIGGER "trigger_slug"',
       params: [],
     },
     {
       statement:
         'DELETE FROM "triggers" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
-      params: ['trigger_name', 'team'],
+      params: ['trigger_slug', 'team'],
+      returning: true,
+    },
+  ]);
+});
+
+test('create new preset', () => {
+  const instructions = {
+    with: {
+      email: {
+        endingWith: '@company.co',
+      },
+    },
+  };
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        preset: {
+          to: {
+            slug: 'company_employees',
+            schema: { slug: 'account' },
+            instructions,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'INSERT INTO "presets" ("slug", "schema", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("instructions" IS NULL, ?3, json_patch("instructions", ?3)), ?4, ?5, ?6) RETURNING *',
+      params: [
+        'company_employees',
+        'account',
+        JSON.stringify(instructions),
+        expect.stringMatching(RECORD_ID_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      ],
+      returning: true,
+    },
+  ]);
+});
+
+test('drop existing preset', () => {
+  const queries: Array<Query> = [
+    {
+      drop: {
+        preset: {
+          with: {
+            slug: 'company_employees',
+            schema: { slug: 'account' },
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'DELETE FROM "presets" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
+      params: ['company_employees', 'account'],
       returning: true,
     },
   ]);
@@ -1621,7 +1702,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
       create: {
         trigger: {
           to: {
-            slug: 'trigger_name',
+            slug: 'trigger_slug',
             schema: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',

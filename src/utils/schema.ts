@@ -455,6 +455,20 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'fields', type: 'json' },
     ],
   },
+  {
+    slug: 'preset',
+
+    fields: [
+      { slug: 'slug', type: 'string', required: true },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { slug: 'schema' },
+        required: true,
+      },
+      { slug: 'instructions', type: 'json', required: true },
+    ],
+  },
 ].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
 
 /**
