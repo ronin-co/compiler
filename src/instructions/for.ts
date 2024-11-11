@@ -21,7 +21,7 @@ export const handleFor = (
   instructions: Instructions & SetInstructions,
 ): Instructions & SetInstructions => {
   for (const presetSlug in instructions.for) {
-    const args = instructions.for[presetSlug];
+    const arg = instructions.for[presetSlug];
     const preset = schema.presets?.find((preset) => preset.slug === presetSlug);
 
     if (!preset) {
@@ -33,9 +33,13 @@ export const handleFor = (
 
     const replacedForFilter = structuredClone(preset.instructions);
 
-    findInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
-      match.replace(RONIN_SCHEMA_SYMBOLS.VALUE, args),
-    );
+    // If an argument was provided for the preset, find the respective placeholders
+    // inside the preset and replace them with the value of the actual argument.
+    if (arg !== null) {
+      findInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
+        match.replace(RONIN_SCHEMA_SYMBOLS.VALUE, arg),
+      );
+    }
 
     for (const subInstruction in replacedForFilter) {
       const instructionName = subInstruction as keyof Instructions;

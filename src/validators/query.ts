@@ -142,7 +142,7 @@ export const OrderedByInstructionSchema = z
   .optional();
 
 // For Instructions.
-export const ForInstructionSchema = z.record(z.string());
+export const ForInstructionSchema = z.record(z.string().nullable());
 
 // Query Instructions.
 export const InstructionsSchema = z.object({

@@ -10,7 +10,7 @@ test('get single record for preset', () => {
       get: {
         view: {
           for: {
-            specificSpace: null
+            specificSpace: null,
           },
         },
       },
@@ -241,6 +241,125 @@ test('get single record for preset containing field without condition', () => {
       statement:
         'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8'],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record for preset on existing object instruction', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          with: {
+            account: 'acc_39h8fhe98hefah8',
+          },
+          for: {
+            specificSpace: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'space',
+    },
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'reference',
+          target: { slug: 'account' },
+        },
+        {
+          slug: 'space',
+          type: 'reference',
+          target: { slug: 'space' },
+        },
+      ],
+      presets: [
+        {
+          instructions: {
+            with: {
+              space: 'spa_m9h8oha94helaji',
+            },
+          },
+          slug: 'specificSpace',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'SELECT * FROM "members" WHERE ("space" = ?1 AND "account" = ?2) LIMIT 1',
+      params: ['spa_m9h8oha94helaji', 'acc_39h8fhe98hefah8'],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record for preset on existing array instruction', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          selecting: ['account'],
+          for: {
+            selectedSpace: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'space',
+    },
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'reference',
+          target: { slug: 'account' },
+        },
+        {
+          slug: 'space',
+          type: 'reference',
+          target: { slug: 'space' },
+        },
+      ],
+      presets: [
+        {
+          instructions: {
+            selecting: ['space'],
+          },
+          slug: 'selectedSpace',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: 'SELECT "space", "account" FROM "members" LIMIT 1',
+      params: [],
       returning: true,
     },
   ]);
