@@ -25,7 +25,7 @@ jobs:
       - name: Get Versions to Unpublish
         id: get_versions
         run: |
-          PACKAGE_NAME="@taschendieb/npm-actions"
+          PACKAGE_NAME="@ronin/compiler"
           BRANCH_NAME="${{ steps.get_branch_name.outputs.branch_name }}"
           echo "Original Branch Name: $BRANCH_NAME"
           
@@ -57,7 +57,7 @@ jobs:
       - name: Unpublish Versions
         if: ${{ steps.get_versions.outputs.versions != '' }}
         run: |
-          PACKAGE_NAME="@taschendieb/npm-actions"
+          PACKAGE_NAME="@ronin/compiler"
           for VERSION in ${{ steps.get_versions.outputs.versions }}; do
             echo "Unpublishing $PACKAGE_NAME@$VERSION"
             npm unpublish "$PACKAGE_NAME@$VERSION" || echo "Failed to unpublish $PACKAGE_NAME@$VERSION"
