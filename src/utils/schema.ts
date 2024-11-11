@@ -375,9 +375,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'fields', type: 'json' },
       { slug: 'indexes', type: 'json' },
       { slug: 'triggers', type: 'json' },
-
-      { slug: 'including', type: 'json' },
-      { slug: 'for', type: 'json' },
+      { slug: 'presets', type: 'json' },
     ],
   },
   {
