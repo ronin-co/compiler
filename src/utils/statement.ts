@@ -94,7 +94,7 @@ const composeFieldValues = (
   let conditionSelector = selector;
   let conditionValue = value;
 
-  if (hasSubQuery(value) && collectStatementValue) {
+  if (getSubQuery(value) && collectStatementValue) {
     conditionValue = `(${
       compileQueryInput(
         (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
@@ -207,7 +207,7 @@ export const composeConditions = (
     // If the `to` instruction is used, JSON should be written as-is.
     const consumeJSON = schemaField.type === 'json' && instructionName === 'to';
 
-    if (!(isObject(value) || Array.isArray(value)) || hasSubQuery(value) || consumeJSON) {
+    if (!(isObject(value) || Array.isArray(value)) || getSubQuery(value) || consumeJSON) {
       return composeFieldValues(
         schemas,
         schema,
@@ -378,19 +378,14 @@ export const formatIdentifiers = (
 };
 
 /**
- * Determines whether the provided value contains a sub query. If it does, the sub query
- * is then provided.
+ * Obtains a sub query from a value, if the value contains one.
  *
  * @param value - The value that should be checked.
  *
  * @returns A sub query, if the provided value contains one.
  */
-export const hasSubQuery = (value: unknown): Query | null => {
-  if (isObject(value)) {
-    return (
-      (value as Record<string, Query | undefined>)[RONIN_SCHEMA_SYMBOLS.QUERY] || null
-    );
-  }
-
-  return null;
+export const getSubQuery = (value: unknown): Query | null => {
+  return isObject(value)
+    ? (value as Record<string, Query | undefined>)[RONIN_SCHEMA_SYMBOLS.QUERY] || null
+    : null;
 };

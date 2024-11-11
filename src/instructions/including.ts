@@ -4,7 +4,7 @@ import type { Schema } from '@/src/types/schema';
 import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
-import { composeConditions, hasSubQuery } from '@/src/utils/statement';
+import { composeConditions, getSubQuery } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `including` query instruction, which allows for
@@ -34,7 +34,7 @@ export const handleIncluding = (
   let rootTableName = rootTable;
 
   for (const ephemeralFieldSlug in instruction) {
-    const includingQuery = hasSubQuery(instruction[ephemeralFieldSlug]);
+    const includingQuery = getSubQuery(instruction[ephemeralFieldSlug]);
 
     // The `including` instruction might contain values that are not queries, which are
     // taken care of by the `handleSelecting` function. Specifically, those values are

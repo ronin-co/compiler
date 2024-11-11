@@ -13,7 +13,7 @@ import {
   getFieldFromSchema,
   getSchemaBySlug,
 } from '@/src/utils/schema';
-import { composeConditions, hasSubQuery } from '@/src/utils/statement';
+import { composeConditions, getSubQuery } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `to` query instruction, which allows for providing
@@ -63,7 +63,7 @@ export const handleTo = (
     ...toInstruction.ronin,
   };
 
-  const subQuery = hasSubQuery(toInstruction);
+  const subQuery = getSubQuery(toInstruction);
 
   // If a sub query is provided as the `to` instruction, we don't need to compute a list
   // of fields and/or values for the SQL query, since the fields and values are all
