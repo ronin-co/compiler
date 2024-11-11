@@ -284,7 +284,7 @@ test('get single record including ephemeral field', () => {
       get: {
         space: {
           including: {
-            name: 'Example Space'
+            name: 'Example Space',
           },
         },
       },
