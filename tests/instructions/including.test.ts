@@ -278,6 +278,36 @@ test('get single record including unrelated ordered records', () => {
   ]);
 });
 
+test('get single record including ephemeral field', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        space: {
+          including: {
+            name: 'Example Space'
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'space',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT *, ?1 as "name" FROM "spaces" LIMIT 1`,
+      params: ['Example Space'],
+      returning: true,
+    },
+  ]);
+});
+
 test('get single record including deeply nested ephemeral field', () => {
   const queries: Array<Query> = [
     {
