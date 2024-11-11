@@ -236,7 +236,7 @@ export const DropInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
 export const DropQuerySchema = z.object({
-  drop: z.record(z.string(), InstructionsSchema.partial().omit({ to: true })),
+  drop: z.record(z.string(), DropInstructionsSchema),
 });
 
 // Count Queries.
