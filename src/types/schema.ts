@@ -1,4 +1,4 @@
-import type { Query, QueryType, WithInstruction } from '@/src/types/query';
+import type { Query, WithInstruction } from '@/src/types/query';
 
 type SchemaFieldBasics = {
   name?: string;
@@ -35,14 +35,21 @@ export type SchemaFieldReference = SchemaFieldBasics & {
 
 export type SchemaField = SchemaFieldNormal | SchemaFieldReference;
 
-type SchemaIndexField = {
-  /** The field slug or expression for which the index should be created. */
-  expression: string;
+export type SchemaIndexField = {
   /** The collating sequence used for text placed inside the field. */
   collation?: 'BINARY' | 'NOCASE' | 'RTRIM';
   /** How the records in the index should be ordered. */
   order?: 'ASC' | 'DESC';
-};
+} & (
+  | {
+      /** The field slug for which the index should be created. */
+      slug: string;
+    }
+  | {
+      /** The field expression for which the index should be created. */
+      expression: string;
+    }
+);
 
 export type SchemaIndex = {
   /**
@@ -60,15 +67,23 @@ export type SchemaIndex = {
   filter?: WithInstruction;
 };
 
+export type SchemaTriggerField = {
+  /**
+   * The slug of the field that should cause the trigger to fire if the value of the
+   * field has changed.
+   */
+  slug: string;
+};
+
 export type SchemaTrigger = {
   /** The type of query for which the trigger should fire. */
-  queryType: Uppercase<Exclude<QueryType, 'get' | 'count'>>;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a maching query is executed. */
-  timing: 'BEFORE' | 'DURING' | 'AFTER';
+  when: 'BEFORE' | 'DURING' | 'AFTER';
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
   /** A list of field slugs for which the trigger should fire. */
-  fields?: Array<string>;
+  fields?: Array<SchemaTriggerField>;
   /**
    * An object containing query instructions used to determine whether the trigger should
    * fire, or not.

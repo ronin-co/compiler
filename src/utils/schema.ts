@@ -13,6 +13,8 @@ import type {
   Schema,
   SchemaField,
   SchemaFieldReferenceAction,
+  SchemaIndexField,
+  SchemaTriggerField,
 } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
@@ -426,6 +428,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       },
       { slug: 'unique', type: 'boolean' },
       { slug: 'filter', type: 'json' },
+      { slug: 'fields', type: 'json', required: true },
     ],
   },
   {
@@ -444,9 +447,11 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
         target: { slug: 'schema' },
         required: true,
       },
-      { slug: 'cause', type: 'string', required: true },
+      { slug: 'when', type: 'string', required: true },
+      { slug: 'action', type: 'string', required: true },
       { slug: 'filter', type: 'json' },
       { slug: 'effects', type: 'json', required: true },
+      { slug: 'fields', type: 'json' },
     ],
   },
 ].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
@@ -752,16 +757,38 @@ export const addSchemaQueries = (
 
   if (kind === 'indexes') {
     const indexName = convertToSnakeCase(slug);
+
+    // Whether the index should only allow one record with a unique value for its fields.
     const unique: boolean | undefined = instructionList?.unique;
 
     // The query instructions that should be used to filter the indexed records.
     const filterQuery: WithInstruction = instructionList?.filter;
 
+    // The specific fields that should be indexed.
+    const fields: Array<SchemaIndexField> = instructionList?.fields;
+
     const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (queryType === 'create') {
-      statement += ` ON "${tableName}"`;
+      const columns = fields.map((field) => {
+        let fieldSelector = '';
+
+        if ('slug' in field) {
+          ({ fieldSelector } = getFieldFromSchema(
+            targetSchema as Schema,
+            field.slug,
+            'to',
+          ));
+        }
+
+        if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
+        if (field.order) fieldSelector += ` ${field.order}`;
+
+        return fieldSelector;
+      });
+
+      statement += ` ON "${tableName}" (${columns.join(', ')})`;
 
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
@@ -787,11 +814,11 @@ export const addSchemaQueries = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
-      // The type of query that causes the trigger to fire.
-      const cause = slugToName(instructionList?.cause).toUpperCase();
+      // When the trigger should fire and what type of query should cause it to fire.
+      const { when, action } = instructionList;
 
       // The different parts of the final statement.
-      const statementParts: Array<string> = [cause, 'ON', `"${tableName}"`];
+      const statementParts: Array<string> = [`${when} ${action}`];
 
       // The query that will be executed when the trigger is fired.
       const effectQueries: Array<Query> = instructionList?.effects;
@@ -799,6 +826,29 @@ export const addSchemaQueries = (
       // The query instructions that are used to determine whether the trigger should be
       // fired, or not.
       const filterQuery: WithInstruction = instructionList?.filter;
+
+      // The specific fields that should be targeted by the trigger. If those fields have
+      // changed, the trigger will be fired.
+      const fields: Array<SchemaTriggerField> | undefined = instructionList?.fields;
+
+      if (fields) {
+        if (action !== 'UPDATE') {
+          throw new RoninError({
+            message: `When ${queryTypeReadable} ${kind}, targeting specific fields requires the \`UPDATE\` action.`,
+            code: 'INVALID_SCHEMA_VALUE',
+            fields: ['action'],
+          });
+        }
+
+        const fieldSelectors = fields.map((field) => {
+          return getFieldFromSchema(targetSchema as Schema, field.slug, 'to')
+            .fieldSelector;
+        });
+
+        statementParts.push(`OF (${fieldSelectors.join(', ')})`);
+      }
+
+      statementParts.push('ON', `"${tableName}"`);
 
       // If filtering instructions were defined, or if the effect query references
       // specific record fields, that means the trigger must be executed on a per-record
@@ -814,9 +864,10 @@ export const addSchemaQueries = (
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
       if (filterQuery) {
-        const tablePlaceholder = cause.endsWith('DELETE')
-          ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
-          : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+        const tablePlaceholder =
+          action === 'DELETE'
+            ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
+            : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
 
         const withStatement = handleWith(
           schemas,
