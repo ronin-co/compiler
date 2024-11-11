@@ -27,7 +27,11 @@ jobs:
         run: |
           PACKAGE_NAME="@ronin/compiler"
           BRANCH_NAME="${{ steps.get_branch_name.outputs.branch_name }}"
-          echo "Branch Name: $BRANCH_NAME"
+          echo "Original Branch Name: $BRANCH_NAME"
+          
+          # Sanitize branch name by replacing slashes with hyphens
+          BRANCH_NAME_SANITIZED=$(echo "$BRANCH_NAME" | tr '/' '-')
+          echo "Sanitized Branch Name: $BRANCH_NAME_SANITIZED"
       
           # Retrieve all versions
           VERSIONS=$(npm view $PACKAGE_NAME versions --json)
@@ -39,7 +43,7 @@ jobs:
           fi
       
           # Filter versions that match the pattern
-          MATCHING_VERSIONS=$(echo "$VERSIONS" | tr -d '[]" ' | tr ',' '\n' | grep -F -- "-${BRANCH_NAME}-experimental")
+          MATCHING_VERSIONS=$(echo "$VERSIONS" | tr -d '[]" ' | tr ',' '\n' | grep -F -- "-${BRANCH_NAME_SANITIZED}-experimental")
       
           # Check if any versions match
           if [ -z "$MATCHING_VERSIONS" ]; then
