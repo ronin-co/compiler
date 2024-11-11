@@ -67,6 +67,11 @@ export type SchemaIndex = {
   filter?: WithInstruction;
 };
 
+export type SchemaTriggerField = {
+  /** The field slug for which the index should be created. */
+  slug: string;
+};
+
 export type SchemaTrigger = {
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -75,7 +80,7 @@ export type SchemaTrigger = {
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
   /** A list of field slugs for which the trigger should fire. */
-  fields?: Array<string>;
+  fields?: Array<SchemaTriggerField>;
   /**
    * An object containing query instructions used to determine whether the trigger should
    * fire, or not.

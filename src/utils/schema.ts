@@ -14,6 +14,7 @@ import type {
   SchemaField,
   SchemaFieldReferenceAction,
   SchemaIndexField,
+  SchemaTriggerField,
 } from '@/src/types/schema';
 import {
   RONIN_SCHEMA_SYMBOLS,
@@ -813,7 +814,7 @@ export const addSchemaQueries = (
       const { when, action } = instructionList;
 
       // The different parts of the final statement.
-      const statementParts: Array<string> = [`${when} ${action}`, 'ON', `"${tableName}"`];
+      const statementParts: Array<string> = [`${when} ${action}`];
 
       // The query that will be executed when the trigger is fired.
       const effectQueries: Array<Query> = instructionList?.effects;
@@ -821,6 +822,21 @@ export const addSchemaQueries = (
       // The query instructions that are used to determine whether the trigger should be
       // fired, or not.
       const filterQuery: WithInstruction = instructionList?.filter;
+
+      // The specific fields that should be targeted by the trigger. If those fields have
+      // changed, the trigger will be fired.
+      const fields: Array<SchemaTriggerField> | undefined = instructionList?.fields;
+
+      if (fields) {
+        const fieldSelectors = fields.map((field) => {
+          return getFieldFromSchema(targetSchema as Schema, field.slug, 'to')
+            .fieldSelector;
+        });
+
+        statementParts.push(`OF (${fieldSelectors.join(', ')})`);
+      }
+
+      statementParts.push('ON', `"${tableName}"`);
 
       // If filtering instructions were defined, or if the effect query references
       // specific record fields, that means the trigger must be executed on a per-record

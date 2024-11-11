@@ -922,6 +922,85 @@ test('create new trigger for creating records', () => {
   ]);
 });
 
+test('create new trigger for creating records with targeted fields', () => {
+  const effectQueries = [
+    {
+      create: {
+        signup: {
+          to: {
+            year: 2000,
+          },
+        },
+      },
+    },
+  ];
+
+  const fields = [
+    {
+      slug: 'email',
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        trigger: {
+          to: {
+            slug: 'trigger_name',
+            schema: { slug: 'account' },
+            when: 'AFTER',
+            action: 'UPDATE',
+            effects: effectQueries,
+            fields,
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'signup',
+      fields: [{ slug: 'year', type: 'number' }],
+    },
+    {
+      slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'CREATE TRIGGER "trigger_name" AFTER UPDATE OF ("email") ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+      params: [
+        2000,
+        expect.stringMatching(RECORD_ID_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      ],
+    },
+    {
+      statement:
+        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("fields" IS NULL, ?6, json_patch("fields", ?6)), ?7, ?8, ?9) RETURNING *',
+      params: [
+        'trigger_name',
+        'account',
+        'AFTER',
+        'UPDATE',
+        JSON.stringify(effectQueries),
+        JSON.stringify(fields),
+        expect.stringMatching(RECORD_ID_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      ],
+      returning: true,
+    },
+  ]);
+});
+
 test('create new trigger for creating records with multiple effects', () => {
   const effectQueries = [
     {
