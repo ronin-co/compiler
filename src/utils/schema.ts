@@ -17,6 +17,7 @@ import type {
   SchemaTriggerField,
 } from '@/src/types/schema';
 import {
+  RONIN_SCHEMA_FIELD_REGEX,
   RONIN_SCHEMA_SYMBOLS,
   RoninError,
   convertToCamelCase,
@@ -771,15 +772,24 @@ export const addSchemaQueries = (
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (queryType === 'create') {
+      const schema = targetSchema as Schema;
       const columns = fields.map((field) => {
         let fieldSelector = '';
 
+        // If the slug of a field is provided, find the field in the schema, obtain its
+        // column selector, and place it in the SQL statement.
         if ('slug' in field) {
-          ({ fieldSelector } = getFieldFromSchema(
-            targetSchema as Schema,
-            field.slug,
-            'to',
-          ));
+          ({ fieldSelector } = getFieldFromSchema(schema, field.slug, 'to'));
+        }
+        // Alternatively, if an expression is provided instead of the slug of a field,
+        // find all fields inside the expression, obtain their column selectors, and
+        // insert them into the expression, after which the expression can be used in the
+        // SQL statement.
+        else if ('expression' in field) {
+          fieldSelector = field.expression.replace(RONIN_SCHEMA_FIELD_REGEX, (match) => {
+            const fieldSlug = match.replace(RONIN_SCHEMA_SYMBOLS.FIELD, '');
+            return getFieldFromSchema(schema, fieldSlug, 'to').fieldSelector;
+          });
         }
 
         if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
