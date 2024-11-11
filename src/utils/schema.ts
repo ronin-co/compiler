@@ -441,7 +441,12 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
 
     fields: [
       { slug: 'slug', type: 'string', required: true },
-      { slug: 'schema', type: 'reference', target: { slug: 'schema' }, required: true },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { slug: 'schema' },
+        required: true,
+      },
       { slug: 'when', type: 'string', required: true },
       { slug: 'action', type: 'string', required: true },
       { slug: 'filter', type: 'json' },
@@ -624,7 +629,6 @@ const typesInSQLite = {
 /**
  * Composes the SQL syntax for a field in a RONIN schema.
  *
- * @param schemas - A list of schemas.
  * @param field - The field of a RONIN schema.
  *
  * @returns The SQL syntax for the provided field.
@@ -669,7 +673,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  *
- * @returns Nothing.
+ * @returns The (possibly modified) query instructions.
  */
 export const addSchemaQueries = (
   schemas: Array<Schema>,

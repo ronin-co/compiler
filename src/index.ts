@@ -8,13 +8,13 @@ import {
 } from '@/src/utils/schema';
 
 /**
- * Composes an SQL statement for a provided RONIN query.
+ * Composes SQL statements for the provided RONIN queries.
  *
- * @param queries - The RONIN queries for which an SQL statement should be composed.
+ * @param queries - The RONIN queries for which SQL statements should be composed.
  * @param schemas - A list of schemas.
  * @param options - Additional options to adjust the behavior of the statement generation.
  *
- * @returns The composed SQL statement.
+ * @returns The composed SQL statements.
  */
 export const compileQueries = (
   queries: Array<Query>,

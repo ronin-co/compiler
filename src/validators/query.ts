@@ -14,14 +14,14 @@ export const FieldValue = z.union(
 export const FieldSelector = z.record(FieldValue);
 
 // With Instructions.
-export const WithInstructionRefinementTypes = z.union([
-  z.literal('being'),
-  z.literal('notBeing'),
-  z.literal('startingWith'),
-  z.literal('endingWith'),
-  z.literal('containing'),
-  z.literal('greaterThan'),
-  z.literal('lessThan'),
+export const WithInstructionRefinementTypes = z.enum([
+  'being',
+  'notBeing',
+  'startingWith',
+  'endingWith',
+  'containing',
+  'greaterThan',
+  'lessThan',
 ]);
 
 export const WithInstructionRefinementSchema = z.union([
@@ -49,7 +49,7 @@ export const WithInstructionRefinementSchema = z.union([
     .partial()
     .strict(
       `A \`with\` instruction can only contain the following refinements: ${WithInstructionRefinementTypes.options
-        .map(({ value }) => `\`${value}\``)
+        .map((refinementType) => `\`${refinementType}\``)
         .join(', ')}.`,
     )
     .refine((value) => Object.keys(value).length > 0, {
@@ -236,7 +236,7 @@ export const DropInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
 export const DropQuerySchema = z.object({
-  drop: z.record(z.string(), InstructionsSchema.partial().omit({ to: true })),
+  drop: z.record(z.string(), DropInstructionsSchema),
 });
 
 // Count Queries.
@@ -255,18 +255,18 @@ export const CombinedInstructionsSchema = z.union([
   DropInstructionsSchema,
   GetInstructionsSchema,
 ]);
-export const Instructionschema = z.union([
-  z.literal('with'),
-  z.literal('to'),
-  z.literal('including'),
-  z.literal('selecting'),
-  z.literal('orderedBy'),
-  z.literal('orderedBy.ascending'),
-  z.literal('orderedBy.descending'),
-  z.literal('before'),
-  z.literal('after'),
-  z.literal('limitedTo'),
-  z.literal('for'),
+export const InstructionSchema = z.enum([
+  'with',
+  'to',
+  'including',
+  'selecting',
+  'orderedBy',
+  'orderedBy.ascending',
+  'orderedBy.descending',
+  'before',
+  'after',
+  'limitedTo',
+  'for',
 ]);
 
 export const QuerySchemaSchema = z.record(InstructionsSchema.partial());

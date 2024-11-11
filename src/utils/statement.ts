@@ -151,7 +151,7 @@ const composeFieldValues = (
  * @param value - The value that the selected field should be compared with.
  * @param options - Additional options for customizing the behavior of the function.
  *
- * @returns A list of SQL conditions for the provided query instructions.
+ * @returns An SQL string representing the conditions for the provided query instructions.
  */
 export const composeConditions = (
   schemas: Array<Schema>,

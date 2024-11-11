@@ -16,7 +16,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  * Composes an SQL statement for a provided RONIN query.
  *
  * @param query - The RONIN query for which an SQL statement should be composed.
- * @param defaultSchemas - A list of schemas.
+ * @param schemas - A list of schemas.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param options - Additional options to adjust the behavior of the statement generation.

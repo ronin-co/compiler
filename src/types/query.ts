@@ -9,8 +9,8 @@ import type {
   GetInstructionsSchema,
   GetQuerySchema,
   IncludingInstructionSchema,
+  InstructionSchema,
   InstructionsSchema,
-  Instructionschema,
   OrderedByInstructionSchema,
   QueryPaginationOptionsSchema,
   QuerySchema,
@@ -59,7 +59,7 @@ export type OrderedByInstrucion = z.infer<typeof OrderedByInstructionSchema>;
  * if the query type is not `set`, `to` is not allowed.
  */
 export type Instructions = z.infer<typeof CombinedInstructionsSchema>;
-export type QueryInstructionType = z.infer<typeof Instructionschema>;
+export type QueryInstructionType = z.infer<typeof InstructionSchema>;
 
 /**
  * Type containing all possible query instructions, regardless of the type of
