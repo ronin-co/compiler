@@ -73,6 +73,7 @@ export const compileQueryInput = (
     dependencyStatements,
   );
 
+  // Apply any presets that are potentially being selected by the query.
   if (instructions && Object.hasOwn(instructions, 'for')) {
     instructions = handleFor(schema, instructions);
   }

@@ -50,6 +50,8 @@ export const handleSelecting = (
         return !hasQuery;
       });
 
+    // Flatten the object to handle deeply nested ephemeral fields, which are the result
+    // of developers providing objects as values in the `including` instruction.
     const newObjectEntries = Object.entries(flatten(Object.fromEntries(filteredObject)));
 
     if (newObjectEntries.length > 0) {

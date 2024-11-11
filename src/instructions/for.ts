@@ -21,8 +21,8 @@ export const handleFor = (
   instructions: Instructions & SetInstructions,
 ): Instructions & SetInstructions => {
   // The `for` instruction might either contain an array of preset slugs, or an object
-  // where the keys are preset slugs and the values are arguments that should be passed
-  // to the respective presets.
+  // in which the keys are preset slugs and the values are arguments that should be
+  // passed to the respective presets.
   const normalizedFor = Array.isArray(instructions.for)
     ? Object.fromEntries(instructions.for.map((presetSlug) => [presetSlug, null]))
     : instructions.for;

@@ -41,7 +41,7 @@ export const handleIncluding = (
     // static values that must be added to the resulting SQL statement as custom columns.
     //
     // Only in the case that the `including` instruction contains a query, we want to
-    // continue with this function and process the query as an SQL JOIN.
+    // continue with the current function and process the query as an SQL JOIN.
     if (!includingQuery) continue;
 
     const { queryType, querySchema, queryInstructions } = splitQuery(includingQuery);
