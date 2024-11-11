@@ -52,13 +52,18 @@ test('get single record for pre-defined condition', () => {
           target: { slug: 'space' },
         },
       ],
-      for: {
-        'active-member': {
-          space: {
-            being: 'spa_m9h8oha94helaji',
+      presets: [
+        {
+          instructions: {
+            with: {
+              space: {
+                being: 'spa_m9h8oha94helaji',
+              },
+            },
           },
+          slug: 'active-member',
         },
-      },
+      ],
     },
   ];
 
@@ -121,23 +126,28 @@ test('get single record for pre-defined condition containing sub query', () => {
           target: { slug: 'space' },
         },
       ],
-      for: {
-        'active-member': {
-          space: {
-            notBeing: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-                get: {
-                  member: {
-                    with: { account: RONIN_SCHEMA_SYMBOLS.VALUE },
-                    orderedBy: { descending: ['activeAt'] },
-                    selecting: ['space'],
+      presets: [
+        {
+          instructions: {
+            with: {
+              space: {
+                notBeing: {
+                  [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                    get: {
+                      member: {
+                        with: { account: RONIN_SCHEMA_SYMBOLS.VALUE },
+                        orderedBy: { descending: ['activeAt'] },
+                        selecting: ['space'],
+                      },
+                    },
                   },
                 },
               },
             },
           },
+          slug: 'active-member',
         },
-      },
+      ],
     },
   ];
 
@@ -201,21 +211,26 @@ test('get single record for pre-defined field containing sub query', () => {
           target: { slug: 'space' },
         },
       ],
-      for: {
-        'active-member': {
-          space: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
-              get: {
-                member: {
-                  with: { account: RONIN_SCHEMA_SYMBOLS.VALUE },
-                  orderedBy: { descending: ['activeAt'] },
-                  selecting: ['space'],
+      presets: [
+        {
+          instructions: {
+            with: {
+              space: {
+                [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                  get: {
+                    member: {
+                      with: { account: RONIN_SCHEMA_SYMBOLS.VALUE },
+                      orderedBy: { descending: ['activeAt'] },
+                      selecting: ['space'],
+                    },
+                  },
                 },
               },
             },
           },
+          slug: 'active-member',
         },
-      },
+      ],
     },
   ];
 

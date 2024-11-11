@@ -73,6 +73,10 @@ export const compileQueryInput = (
     dependencyStatements,
   );
 
+  if (instructions && Object.hasOwn(instructions, 'for')) {
+    instructions = handleFor(schema, instructions);
+  }
+
   // A list of columns that should be selected when querying records.
   const columns = handleSelecting(schema, statementParams, {
     selecting: instructions?.selecting,
@@ -169,18 +173,6 @@ export const compileQueryInput = (
     );
 
     if (withStatement.length > 0) conditions.push(withStatement);
-  }
-
-  if (instructions && Object.hasOwn(instructions, 'for')) {
-    const forStatement = handleFor(
-      schemas,
-      schema,
-      statementParams,
-      instructions?.for,
-      isJoining ? table : undefined,
-    );
-
-    if (forStatement.length > 0) conditions.push(forStatement);
   }
 
   // If a `limitedTo` instruction was provided, that means the amount of records returned

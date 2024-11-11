@@ -382,7 +382,7 @@ test('get single record for pre-defined match without shortcut', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'The provided `for` shortcut "active-member" does not exist in schema "Account".',
+    'Preset "active-member" does not exist in schema "Account".',
   );
-  expect(error).toHaveProperty('code', 'INVALID_FOR_VALUE');
+  expect(error).toHaveProperty('code', 'PRESET_NOT_FOUND');
 });

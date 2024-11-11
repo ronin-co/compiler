@@ -96,7 +96,7 @@ export type SchemaPreset = {
   slug: string;
   /** The query instructions that should be applied when the preset is used. */
   instructions: GetInstructions;
-}
+};
 
 export interface Schema {
   name?: string;
@@ -116,7 +116,7 @@ export interface Schema {
   fields?: Array<SchemaField>;
   indexes?: Array<SchemaIndex>;
   triggers?: Array<SchemaTrigger>;
-  presets?: Array<SchemaPreset>
+  presets?: Array<SchemaPreset>;
 }
 
 // In schemas provided to the compiler, all settings are optional, except for the `slug`,
