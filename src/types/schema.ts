@@ -110,8 +110,6 @@ export interface Schema {
   };
   idPrefix?: string;
 
-  including?: Record<string, Query>;
-
   fields?: Array<SchemaField>;
   indexes?: Array<SchemaIndex>;
   triggers?: Array<SchemaTrigger>;
