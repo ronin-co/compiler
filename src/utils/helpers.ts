@@ -1,14 +1,13 @@
-import type { Query, QuerySchemaType, QueryType } from "@/src/types/query";
-import type { Schema } from "@/src/types/schema";
+import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
+import type { Schema } from '@/src/types/schema';
 
-import { init as cuid } from "@paralleldrive/cuid2";
+import { init as cuid } from '@paralleldrive/cuid2';
 
 /** A regex for asserting RONIN record IDs. */
 export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
 
 /** A regex for asserting RONIN record timestamps. */
-export const RECORD_TIMESTAMP_REGEX =
-	/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+export const RECORD_TIMESTAMP_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 
 /**
  * A list of placeholders that can be located inside queries after those queries were
@@ -19,65 +18,65 @@ export const RECORD_TIMESTAMP_REGEX =
  * which allows for distinguishing that nested query from an object of instructions.
  */
 export const RONIN_SCHEMA_SYMBOLS = {
-	// Represents a sub query.
-	QUERY: "__RONIN_QUERY",
+  // Represents a sub query.
+  QUERY: '__RONIN_QUERY',
 
-	// Represents the value of a field in a schema.
-	FIELD: "__RONIN_FIELD_",
+  // Represents the value of a field in a schema.
+  FIELD: '__RONIN_FIELD_',
 
-	// Represents the old value of a field in a schema. Used for triggers.
-	FIELD_OLD: "__RONIN_FIELD_OLD_",
+  // Represents the old value of a field in a schema. Used for triggers.
+  FIELD_OLD: '__RONIN_FIELD_OLD_',
 
-	// Represents the new value of a field in a schema. Used for triggers.
-	FIELD_NEW: "__RONIN_FIELD_NEW_",
+  // Represents the new value of a field in a schema. Used for triggers.
+  FIELD_NEW: '__RONIN_FIELD_NEW_',
 
-	// Represents a value provided to a query preset.
-	VALUE: "__RONIN_VALUE",
+  // Represents a value provided to a query preset.
+  VALUE: '__RONIN_VALUE',
 } as const;
 
 type RoninErrorCode =
-	| "SCHEMA_NOT_FOUND"
-	| "FIELD_NOT_FOUND"
-	| "INVALID_WITH_VALUE"
-	| "INVALID_TO_VALUE"
-	| "INVALID_INCLUDING_VALUE"
-	| "INVALID_FOR_VALUE"
-	| "INVALID_BEFORE_OR_AFTER_INSTRUCTION"
-	| "MUTUALLY_EXCLUSIVE_INSTRUCTIONS"
-	| "MISSING_INSTRUCTION"
-	| "MISSING_FIELD";
+  | 'SCHEMA_NOT_FOUND'
+  | 'FIELD_NOT_FOUND'
+  | 'INVALID_WITH_VALUE'
+  | 'INVALID_TO_VALUE'
+  | 'INVALID_INCLUDING_VALUE'
+  | 'INVALID_FOR_VALUE'
+  | 'INVALID_BEFORE_OR_AFTER_INSTRUCTION'
+  | 'MUTUALLY_EXCLUSIVE_INSTRUCTIONS'
+  | 'MISSING_INSTRUCTION'
+  | 'MISSING_FIELD';
 
 interface Issue {
-	message: string;
-	path: Array<string | number>;
+  message: string;
+  path: Array<string | number>;
 }
 
 interface Details {
-	message: string;
-	code: RoninErrorCode;
-	field?: string;
-	fields?: Array<string>;
-	issues?: Array<Issue>;
-	queries?: Array<Query> | null;
+  message: string;
+  code: RoninErrorCode;
+  field?: string;
+  fields?: Array<string>;
+  issues?: Array<Issue>;
+  queries?: Array<Query> | null;
 }
 
 export class RoninError extends Error {
-	code: Details["code"];
-	field?: Details["field"];
-	fields?: Details["fields"];
-	issues?: Details["issues"];
-	queries?: Details["queries"];
+  code: Details['code'];
+  field?: Details['field'];
+  fields?: Details['fields'];
+  issues?: Details['issues'];
+  queries?: Details['queries'];
 
-	constructor(details: Details) {
-		super(details.message);
+  constructor(details: Details) {
+    super(details.message);
 
-		this.name = "RoninError";
-		this.code = details.code;
-		this.field = details.field;
-		this.fields = details.fields;
-		this.issues = details.issues;
-		this.queries = details.queries || null;
-	}
+    this.name = 'RoninError';
+    this.code = details.code;
+    this.field = details.field;
+    this.fields = details.fields;
+    this.issues = details.issues;
+    this.queries = details.queries || null;
+  }
 }
 
 const SINGLE_QUOTE_REGEX = /'/g;
@@ -93,8 +92,8 @@ const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
  *
  * @returns The generated ID.
  */
-export const generateRecordId = (prefix: Schema["idPrefix"]) =>
-	`${prefix}_${cuid({ length: 16 })()}`;
+export const generateRecordId = (prefix: Schema['idPrefix']) =>
+  `${prefix}_${cuid({ length: 16 })()}`;
 
 /**
  * Utility function to capitalize the first letter of a string while converting all other
@@ -105,9 +104,9 @@ export const generateRecordId = (prefix: Schema["idPrefix"]) =>
  * @returns The capitalized string.
  */
 export const capitalize = (str: string): string => {
-	if (!str || str.length === 0) return "";
+  if (!str || str.length === 0) return '';
 
-	return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
 /**
@@ -124,21 +123,21 @@ export const capitalize = (str: string): string => {
  * @returns The sanitized string.
  */
 const sanitize = (str: string) => {
-	if (!str || str.length === 0) return "";
+  if (!str || str.length === 0) return '';
 
-	return (
-		str
-			// Remove single quotes from the string.
-			.replace(SINGLE_QUOTE_REGEX, "")
-			// Remove double quotes from the string.
-			.replace(DOUBLE_QUOTE_REGEX, "")
-			// Replace `&` with `and`.
-			.replace(AMPERSAND_REGEX, " and ")
-			// Replace special characters with spaces.
-			.replace(SPECIAL_CHARACTERS_REGEX, " ")
-			// Strip leading and trailing whitespace.
-			.trim()
-	);
+  return (
+    str
+      // Remove single quotes from the string.
+      .replace(SINGLE_QUOTE_REGEX, '')
+      // Remove double quotes from the string.
+      .replace(DOUBLE_QUOTE_REGEX, '')
+      // Replace `&` with `and`.
+      .replace(AMPERSAND_REGEX, ' and ')
+      // Replace special characters with spaces.
+      .replace(SPECIAL_CHARACTERS_REGEX, ' ')
+      // Strip leading and trailing whitespace.
+      .trim()
+  );
 };
 
 /**
@@ -149,12 +148,12 @@ const sanitize = (str: string) => {
  * @returns The converted string.
  */
 export const convertToSnakeCase = (str: string): string => {
-	if (!str || str.length === 0) return "";
+  if (!str || str.length === 0) return '';
 
-	return sanitize(str)
-		.split(SPLIT_REGEX)
-		.map((part) => part.toLowerCase())
-		.join("_");
+  return sanitize(str)
+    .split(SPLIT_REGEX)
+    .map((part) => part.toLowerCase())
+    .join('_');
 };
 
 /**
@@ -165,12 +164,12 @@ export const convertToSnakeCase = (str: string): string => {
  * @returns The converted string.
  */
 export const convertToCamelCase = (str: string): string => {
-	if (!str || str.length === 0) return "";
+  if (!str || str.length === 0) return '';
 
-	return sanitize(str)
-		.split(SPLIT_REGEX)
-		.map((part, index) => (index === 0 ? part.toLowerCase() : capitalize(part)))
-		.join("");
+  return sanitize(str)
+    .split(SPLIT_REGEX)
+    .map((part, index) => (index === 0 ? part.toLowerCase() : capitalize(part)))
+    .join('');
 };
 
 /**
@@ -179,7 +178,7 @@ export const convertToCamelCase = (str: string): string => {
  * @param value - Object-like value to check.
  */
 export const isObject = (value: unknown): boolean =>
-	value != null && typeof value === "object" && Array.isArray(value) === false;
+  value != null && typeof value === 'object' && Array.isArray(value) === false;
 
 /**
  * Finds all string values that match a given pattern in an object. If needed, it also
@@ -192,37 +191,37 @@ export const isObject = (value: unknown): boolean =>
  * @returns Whether the pattern was found in the object.
  */
 export const findInObject = (
-	obj: NestedObject,
-	pattern: string,
-	replacer?: (match: string) => string,
+  obj: NestedObject,
+  pattern: string,
+  replacer?: (match: string) => string,
 ): boolean => {
-	let found = false;
+  let found = false;
 
-	for (const key in obj) {
-		const value = obj[key];
+  for (const key in obj) {
+    const value = obj[key];
 
-		if (isObject(value)) {
-			found = findInObject(value as NestedObject, pattern, replacer);
+    if (isObject(value)) {
+      found = findInObject(value as NestedObject, pattern, replacer);
 
-			// We're purposefully using `.startsWith` instead of a regex here, because we only
-			// want to replace the value if it starts with the pattern, so a regex would be
-			// unnecessary performance overhead.
-		} else if (typeof value === "string" && value.startsWith(pattern)) {
-			found = true;
+      // We're purposefully using `.startsWith` instead of a regex here, because we only
+      // want to replace the value if it starts with the pattern, so a regex would be
+      // unnecessary performance overhead.
+    } else if (typeof value === 'string' && value.startsWith(pattern)) {
+      found = true;
 
-			if (replacer) {
-				obj[key] = value.replace(pattern, replacer);
-			} else {
-				return found;
-			}
-		}
-	}
+      if (replacer) {
+        obj[key] = value.replace(pattern, replacer);
+      } else {
+        return found;
+      }
+    }
+  }
 
-	return found;
+  return found;
 };
 
 type NestedObject = {
-	[key: string]: unknown | NestedObject;
+  [key: string]: unknown | NestedObject;
 };
 
 /**
@@ -235,21 +234,17 @@ type NestedObject = {
  *
  * @returns A flattened object.
  */
-export const flatten = (
-	obj: NestedObject,
-	prefix = "",
-	res: NestedObject = {},
-) => {
-	for (const key in obj) {
-		const path = prefix ? `${prefix}.${key}` : key;
+export const flatten = (obj: NestedObject, prefix = '', res: NestedObject = {}) => {
+  for (const key in obj) {
+    const path = prefix ? `${prefix}.${key}` : key;
 
-		if (typeof obj[key] === "object" && obj[key] !== null) {
-			flatten(obj[key] as NestedObject, path, res);
-		} else {
-			res[path] = obj[key];
-		}
-	}
-	return res;
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      flatten(obj[key] as NestedObject, path, res);
+    } else {
+      res[path] = obj[key];
+    }
+  }
+  return res;
 };
 
 /**
@@ -261,18 +256,15 @@ export const flatten = (
  * @returns The expanded object.
  */
 export const expand = (obj: NestedObject) => {
-	return Object.entries(obj).reduce((res, [key, val]) => {
-		key
-			.split(".")
-			.reduce(
-				(acc: NestedObject, part: string, i: number, arr: Array<string>) => {
-					acc[part] = i === arr.length - 1 ? val : acc[part] || {};
-					return acc[part] as NestedObject;
-				},
-				res,
-			);
-		return res;
-	}, {});
+  return Object.entries(obj).reduce((res, [key, val]) => {
+    key
+      .split('.')
+      .reduce((acc: NestedObject, part: string, i: number, arr: Array<string>) => {
+        acc[part] = i === arr.length - 1 ? val : acc[part] || {};
+        return acc[part] as NestedObject;
+      }, res);
+    return res;
+  }, {});
 };
 
 /**
@@ -283,14 +275,14 @@ export const expand = (obj: NestedObject) => {
  * @returns The type, schema, and instructions of the provided query.
  */
 export const splitQuery = (query: Query) => {
-	// The type of query that is being executed (`create`, `get`, etc).
-	const queryType = Object.keys(query)[0] as QueryType;
+  // The type of query that is being executed (`create`, `get`, etc).
+  const queryType = Object.keys(query)[0] as QueryType;
 
-	// The slug or plural slug of the RONIN schema that the query will interact with.
-	const querySchema = Object.keys(query[queryType] as QuerySchemaType)[0];
+  // The slug or plural slug of the RONIN schema that the query will interact with.
+  const querySchema = Object.keys(query[queryType] as QuerySchemaType)[0];
 
-	// The instructions of the query (`with`, `including`, etc).
-	const queryInstructions = (query[queryType] as QuerySchemaType)[querySchema];
+  // The instructions of the query (`with`, `including`, etc).
+  const queryInstructions = (query[queryType] as QuerySchemaType)[querySchema];
 
-	return { queryType, querySchema, queryInstructions };
+  return { queryType, querySchema, queryInstructions };
 };
