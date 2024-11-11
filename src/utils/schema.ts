@@ -775,6 +775,9 @@ export const addSchemaQueries = (
           ));
         }
 
+        if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
+        if (field.order) fieldSelector += ` ${field.order}`;
+
         return fieldSelector;
       });
 
