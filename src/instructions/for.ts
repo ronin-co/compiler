@@ -20,8 +20,15 @@ export const handleFor = (
   schema: Schema,
   instructions: Instructions & SetInstructions,
 ): Instructions & SetInstructions => {
-  for (const presetSlug in instructions.for) {
-    const arg = instructions.for[presetSlug];
+  // The `for` instruction might either contain an array of preset slugs, or an object
+  // where the keys are preset slugs and the values are arguments that should be passed
+  // to the respective presets.
+  const normalizedFor = Array.isArray(instructions.for)
+    ? Object.fromEntries(instructions.for.map((presetSlug) => [presetSlug, null]))
+    : instructions.for;
+
+  for (const presetSlug in normalizedFor) {
+    const arg = normalizedFor[presetSlug];
     const preset = schema.presets?.find((preset) => preset.slug === presetSlug);
 
     if (!preset) {

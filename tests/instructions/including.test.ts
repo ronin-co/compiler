@@ -9,9 +9,7 @@ test('get single record including parent record (many-to-one)', () => {
     {
       get: {
         member: {
-          for: {
-            account: null,
-          },
+          for: ['account'],
         },
       },
     },
@@ -50,9 +48,7 @@ test('get single record including child records (one-to-many, defined manually)'
     {
       get: {
         post: {
-          for: {
-            comments: null,
-          },
+          for: ['comments'],
         },
       },
     },
@@ -91,9 +87,7 @@ test('get single record including child records (one-to-many, defined automatica
     {
       get: {
         account: {
-          for: {
-            members: null,
-          },
+          for: ['members'],
         },
       },
     },

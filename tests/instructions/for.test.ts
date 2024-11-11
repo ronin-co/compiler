@@ -9,9 +9,7 @@ test('get single record for preset', () => {
     {
       get: {
         view: {
-          for: {
-            specificSpace: null,
-          },
+          for: ['specificSpace'],
         },
       },
     },
@@ -254,9 +252,7 @@ test('get single record for preset on existing object instruction', () => {
           with: {
             account: 'acc_39h8fhe98hefah8',
           },
-          for: {
-            specificSpace: null,
-          },
+          for: ['specificSpace'],
         },
       },
     },
@@ -314,9 +310,7 @@ test('get single record for preset on existing array instruction', () => {
       get: {
         member: {
           selecting: ['account'],
-          for: {
-            selectedSpace: null,
-          },
+          for: ['selectedSpace'],
         },
       },
     },
