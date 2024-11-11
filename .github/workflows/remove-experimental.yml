@@ -25,9 +25,13 @@ jobs:
       - name: Get Versions to Unpublish
         id: get_versions
         run: |
-          PACKAGE_NAME="@ronin/compiler"
+          PACKAGE_NAME="@taschendieb/npm-actions"
           BRANCH_NAME="${{ steps.get_branch_name.outputs.branch_name }}"
-          echo "Branch Name: $BRANCH_NAME"
+          echo "Original Branch Name: $BRANCH_NAME"
+          
+          # Sanitize branch name by replacing slashes with hyphens
+          BRANCH_NAME_SANITIZED=$(echo "$BRANCH_NAME" | tr '/' '-')
+          echo "Sanitized Branch Name: $BRANCH_NAME_SANITIZED"
       
           # Retrieve all versions
           VERSIONS=$(npm view $PACKAGE_NAME versions --json)
@@ -39,7 +43,7 @@ jobs:
           fi
       
           # Filter versions that match the pattern
-          MATCHING_VERSIONS=$(echo "$VERSIONS" | tr -d '[]" ' | tr ',' '\n' | grep -F -- "-${BRANCH_NAME}-experimental")
+          MATCHING_VERSIONS=$(echo "$VERSIONS" | tr -d '[]" ' | tr ',' '\n' | grep -F -- "-${BRANCH_NAME_SANITIZED}-experimental")
       
           # Check if any versions match
           if [ -z "$MATCHING_VERSIONS" ]; then
@@ -53,7 +57,7 @@ jobs:
       - name: Unpublish Versions
         if: ${{ steps.get_versions.outputs.versions != '' }}
         run: |
-          PACKAGE_NAME="@ronin/compiler"
+          PACKAGE_NAME="@taschendieb/npm-actions"
           for VERSION in ${{ steps.get_versions.outputs.versions }}; do
             echo "Unpublishing $PACKAGE_NAME@$VERSION"
             npm unpublish "$PACKAGE_NAME@$VERSION" || echo "Failed to unpublish $PACKAGE_NAME@$VERSION"
