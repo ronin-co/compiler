@@ -4,13 +4,13 @@ import type { Query } from '@/src/types/query';
 
 import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
 
-test('get single record for pre-defined condition', () => {
+test('get single record for preset', () => {
   const queries: Array<Query> = [
     {
       get: {
         view: {
           for: {
-            'active-member': 'acc_39h8fhe98hefah8',
+            specificSpace: null
           },
         },
       },
@@ -61,7 +61,7 @@ test('get single record for pre-defined condition', () => {
               },
             },
           },
-          slug: 'active-member',
+          slug: 'specificSpace',
         },
       ],
     },
@@ -78,13 +78,13 @@ test('get single record for pre-defined condition', () => {
   ]);
 });
 
-test('get single record for pre-defined condition containing sub query', () => {
+test('get single record for preset containing field with condition', () => {
   const queries: Array<Query> = [
     {
       get: {
         view: {
           for: {
-            'active-member': 'acc_39h8fhe98hefah8',
+            activeMember: 'acc_39h8fhe98hefah8',
           },
         },
       },
@@ -145,7 +145,7 @@ test('get single record for pre-defined condition containing sub query', () => {
               },
             },
           },
-          slug: 'active-member',
+          slug: 'activeMember',
         },
       ],
     },
@@ -163,13 +163,13 @@ test('get single record for pre-defined condition containing sub query', () => {
   ]);
 });
 
-test('get single record for pre-defined field containing sub query', () => {
+test('get single record for preset containing field without condition', () => {
   const queries: Array<Query> = [
     {
       get: {
         view: {
           for: {
-            'active-member': 'acc_39h8fhe98hefah8',
+            activeMember: 'acc_39h8fhe98hefah8',
           },
         },
       },
@@ -228,7 +228,7 @@ test('get single record for pre-defined field containing sub query', () => {
               },
             },
           },
-          slug: 'active-member',
+          slug: 'activeMember',
         },
       ],
     },
