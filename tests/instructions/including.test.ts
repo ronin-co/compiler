@@ -4,128 +4,20 @@ import type { Query } from '@/src/types/query';
 
 import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
 
-test('get single record including parent record (many-to-one)', () => {
-  const queries: Array<Query> = [
-    {
-      get: {
-        member: {
-          including: ['account'],
-        },
-      },
-    },
-  ];
-
-  const schemas: Array<Schema> = [
-    {
-      slug: 'account',
-    },
-    {
-      slug: 'member',
-      fields: [
-        {
-          slug: 'account',
-          type: 'reference',
-          target: { slug: 'account' },
-          kind: 'one',
-        },
-      ],
-    },
-  ];
-
-  const statements = compileQueries(queries, schemas);
-
-  expect(statements).toEqual([
-    {
-      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
-      params: [],
-      returning: true,
-    },
-  ]);
-});
-
-test('get single record including child records (one-to-many, defined manually)', () => {
-  const queries: Array<Query> = [
-    {
-      get: {
-        post: {
-          including: ['comments'],
-        },
-      },
-    },
-  ];
-
-  const schemas: Array<Schema> = [
-    {
-      slug: 'post',
-      fields: [
-        {
-          slug: 'comments',
-          type: 'reference',
-          target: { slug: 'comment' },
-          kind: 'many',
-        },
-      ],
-    },
-    {
-      slug: 'comment',
-    },
-  ];
-
-  const statements = compileQueries(queries, schemas);
-
-  expect(statements).toEqual([
-    {
-      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_post_comments" as including_comments ON ("including_comments"."id" = "sub_posts"."comments")`,
-      params: [],
-      returning: true,
-    },
-  ]);
-});
-
-test('get single record including child records (one-to-many, defined automatically)', () => {
-  const queries: Array<Query> = [
-    {
-      get: {
-        account: {
-          including: ['members'],
-        },
-      },
-    },
-  ];
-
-  const schemas: Array<Schema> = [
-    {
-      slug: 'account',
-    },
-    {
-      slug: 'member',
-      fields: [
-        {
-          slug: 'account',
-          type: 'reference',
-          target: { slug: 'account' },
-        },
-      ],
-    },
-  ];
-
-  const statements = compileQueries(queries, schemas);
-
-  expect(statements).toEqual([
-    {
-      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
-      params: [],
-      returning: true,
-    },
-  ]);
-});
-
 test('get single record including unrelated record without filter', () => {
   const queries: Array<Query> = [
     {
       get: {
         view: {
-          including: ['team'],
+          including: {
+            team: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  team: null,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -137,13 +29,6 @@ test('get single record including unrelated record without filter', () => {
     },
     {
       slug: 'view',
-      including: {
-        team: {
-          get: {
-            team: null,
-          },
-        },
-      },
     },
   ];
 
@@ -163,7 +48,19 @@ test('get single record including unrelated record with filter', () => {
     {
       get: {
         view: {
-          including: ['team'],
+          including: {
+            team: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  team: {
+                    with: {
+                      handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -187,17 +84,6 @@ test('get single record including unrelated record with filter', () => {
           type: 'string',
         },
       ],
-      including: {
-        team: {
-          get: {
-            team: {
-              with: {
-                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -217,7 +103,15 @@ test('get single record including unrelated records without filter', () => {
     {
       get: {
         view: {
-          including: ['teams'],
+          including: {
+            teams: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  teams: null,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -229,13 +123,6 @@ test('get single record including unrelated records without filter', () => {
     },
     {
       slug: 'view',
-      including: {
-        teams: {
-          get: {
-            teams: null,
-          },
-        },
-      },
     },
   ];
 
@@ -255,7 +142,19 @@ test('get single record including unrelated records with filter', () => {
     {
       get: {
         view: {
-          including: ['teams'],
+          including: {
+            teams: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  teams: {
+                    with: {
+                      handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -279,17 +178,6 @@ test('get single record including unrelated records with filter', () => {
           type: 'string',
         },
       ],
-      including: {
-        teams: {
-          get: {
-            teams: {
-              with: {
-                handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -309,7 +197,19 @@ test('get single record including unrelated ordered record', () => {
     {
       get: {
         view: {
-          including: ['team'],
+          including: {
+            team: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  team: {
+                    orderedBy: {
+                      descending: ['ronin.updatedAt'],
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -321,17 +221,6 @@ test('get single record including unrelated ordered record', () => {
     },
     {
       slug: 'view',
-      including: {
-        team: {
-          get: {
-            team: {
-              orderedBy: {
-                descending: ['ronin.updatedAt'],
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -351,7 +240,19 @@ test('get single record including unrelated ordered records', () => {
     {
       get: {
         view: {
-          including: ['teams'],
+          including: {
+            teams: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  teams: {
+                    orderedBy: {
+                      descending: ['ronin.updatedAt'],
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -363,17 +264,6 @@ test('get single record including unrelated ordered records', () => {
     },
     {
       slug: 'view',
-      including: {
-        teams: {
-          get: {
-            teams: {
-              orderedBy: {
-                descending: ['ronin.updatedAt'],
-              },
-            },
-          },
-        },
-      },
     },
   ];
 
@@ -383,6 +273,68 @@ test('get single record including unrelated ordered records', () => {
     {
       statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams LIMIT 1`,
       params: [],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record including ephemeral field', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        space: {
+          including: {
+            name: 'Example Space',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'space',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT *, ?1 as "name" FROM "spaces" LIMIT 1`,
+      params: ['Example Space'],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record including deeply nested ephemeral field', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        space: {
+          including: {
+            invoice: {
+              recipient: 'receipts@site.co',
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'space',
+    },
+  ];
+
+  const statements = compileQueries(queries, schemas);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT *, ?1 as "invoice.recipient" FROM "spaces" LIMIT 1`,
+      params: ['receipts@site.co'],
       returning: true,
     },
   ]);

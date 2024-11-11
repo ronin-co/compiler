@@ -1,4 +1,4 @@
-import type { Query, WithInstruction } from '@/src/types/query';
+import type { GetInstructions, Query, WithInstruction } from '@/src/types/query';
 
 type SchemaFieldBasics = {
   name?: string;
@@ -91,6 +91,13 @@ export type SchemaTrigger = {
   filter?: WithInstruction;
 };
 
+export type SchemaPreset = {
+  /** The identifier that can be used for adding the preset to a query. */
+  slug: string;
+  /** The query instructions that should be applied when the preset is used. */
+  instructions: GetInstructions;
+};
+
 export interface Schema {
   name?: string;
   pluralName?: string;
@@ -103,12 +110,10 @@ export interface Schema {
   };
   idPrefix?: string;
 
-  including?: Record<string, Query>;
-  for?: Record<string, WithInstruction>;
-
   fields?: Array<SchemaField>;
   indexes?: Array<SchemaIndex>;
   triggers?: Array<SchemaTrigger>;
+  presets?: Array<SchemaPreset>;
 }
 
 // In schemas provided to the compiler, all settings are optional, except for the `slug`,

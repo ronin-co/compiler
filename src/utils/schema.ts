@@ -14,6 +14,7 @@ import type {
   SchemaField,
   SchemaFieldReferenceAction,
   SchemaIndexField,
+  SchemaPreset,
   SchemaTriggerField,
 } from '@/src/types/schema';
 import {
@@ -375,9 +376,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'fields', type: 'json' },
       { slug: 'indexes', type: 'json' },
       { slug: 'triggers', type: 'json' },
-
-      { slug: 'including', type: 'json' },
-      { slug: 'for', type: 'json' },
+      { slug: 'presets', type: 'json' },
     ],
   },
   {
@@ -455,6 +454,20 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'fields', type: 'json' },
     ],
   },
+  {
+    slug: 'preset',
+
+    fields: [
+      { slug: 'slug', type: 'string', required: true },
+      {
+        slug: 'schema',
+        type: 'reference',
+        target: { slug: 'schema' },
+        required: true,
+      },
+      { slug: 'instructions', type: 'json', required: true },
+    ],
+  },
 ].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
 
 /**
@@ -518,20 +531,17 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<PublicSche
 };
 
 /**
- * Adds useful default shortcuts to a schema, which can be used to write simpler queries.
+ * Adds useful default presets to a schema, which can be used to write simpler queries.
  *
  * @param list - The list of all schemas.
- * @param schema - The schema for which default shortcuts should be added.
+ * @param schema - The schema for which default presets should be added.
  *
- * @returns The schema with default shortcuts added.
+ * @returns The schema with default presets added.
  */
-export const addDefaultSchemaShortcuts = (
-  list: Array<Schema>,
-  schema: Schema,
-): Schema => {
-  const defaultIncluding: Record<string, Query> = {};
+export const addDefaultSchemaPresets = (list: Array<Schema>, schema: Schema): Schema => {
+  const defaultPresets: Array<SchemaPreset> = [];
 
-  // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
+  // Add default presets, which people can overwrite if they want to. Presets are
   // used to provide concise ways of writing advanced queries, by allowing for defining
   // complex queries inside the schema definitions and re-using them across many
   // different queries in the codebase of an application.
@@ -545,25 +555,34 @@ export const addDefaultSchemaShortcuts = (
         fieldSlug = composeAssociationSchemaSlug(schema, field);
       }
 
-      // For every reference field, add a default shortcut for resolving the referenced
+      // For every reference field, add a default preset for resolving the referenced
       // record in the schema that contains the reference field.
-      defaultIncluding[field.slug] = {
-        get: {
-          [fieldSlug]: {
-            with: {
-              // Compare the `id` field of the related schema to the reference field on
-              // the root schema (`field.slug`).
-              id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
+      defaultPresets.push({
+        instructions: {
+          including: {
+            [field.slug]: {
+              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                get: {
+                  [fieldSlug]: {
+                    with: {
+                      // Compare the `id` field of the related schema to the reference field on
+                      // the root schema (`field.slug`).
+                      id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
+                    },
+                  },
+                },
+              },
             },
           },
         },
-      };
+        slug: field.slug,
+      });
     }
   }
 
   // Find potential child schemas that are referencing the current parent schema. For
-  // each of them, we then add a default shortcut for resolving the child records from
-  // the parent schema.
+  // each of them, we then add a default preset for resolving the child records from the
+  // parent schema.
   const childSchemas = list
     .map((subSchema) => {
       const field = subSchema.fields?.find((field) => {
@@ -579,19 +598,28 @@ export const addDefaultSchemaShortcuts = (
     const { schema: childSchema, field: childField } = childMatch;
     const pluralSlug = childSchema.pluralSlug as string;
 
-    defaultIncluding[pluralSlug] = {
-      get: {
-        [pluralSlug]: {
-          with: {
-            [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+    defaultPresets.push({
+      instructions: {
+        including: {
+          [pluralSlug]: {
+            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              get: {
+                [pluralSlug]: {
+                  with: {
+                    [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+                  },
+                },
+              },
+            },
           },
         },
       },
-    };
+      slug: pluralSlug,
+    });
   }
 
-  if (Object.keys(defaultIncluding).length > 0) {
-    schema.including = { ...defaultIncluding, ...schema.including };
+  if (Object.keys(defaultPresets).length > 0) {
+    schema.presets = [...defaultPresets, ...(schema.presets || [])];
   }
 
   return schema;
@@ -918,8 +946,8 @@ export const addSchemaQueries = (
         queryType === 'create',
       );
 
-      const schemaWithShortcuts = addDefaultSchemaShortcuts(schemas, schemaWithFields);
-      queryInstructions.to = schemaWithShortcuts;
+      const schemaWithPresets = addDefaultSchemaPresets(schemas, schemaWithFields);
+      queryInstructions.to = schemaWithPresets;
     }
 
     if (queryType === 'create') {

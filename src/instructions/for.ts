@@ -1,61 +1,84 @@
-import type { WithFilters } from '@/src/instructions/with';
-import type { GetInstructions } from '@/src/types/query';
+import type { Instructions, SetInstructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, findInObject } from '@/src/utils/helpers';
-import { composeConditions } from '@/src/utils/statement';
+import {
+  RONIN_SCHEMA_SYMBOLS,
+  RoninError,
+  findInObject,
+  isObject,
+} from '@/src/utils/helpers';
 
 /**
  * Generates the SQL syntax for the `for` query instruction, which allows for quickly
- * adding a number of extra `with` filters to a query.
+ * adding a list of pre-defined instructions to a query.
  *
- * @param schemas - A list of schemas.
  * @param schema - The schema associated with the current query.
- * @param statementParams - A collection of values that will automatically be
- * inserted into the query by SQLite.
- * @param instruction - The `for` instruction provided in the current query.
- * @param rootTable - The table for which the current query is being executed.
+ * @param instructions - The instructions of the current query.
  *
  * @returns The SQL syntax for the provided `for` instruction.
  */
 export const handleFor = (
-  schemas: Array<Schema>,
   schema: Schema,
-  statementParams: Array<unknown> | null,
-  instruction: GetInstructions['for'],
-  rootTable?: string,
-) => {
-  let statement = '';
+  instructions: Instructions & SetInstructions,
+): Instructions & SetInstructions => {
+  // The `for` instruction might either contain an array of preset slugs, or an object
+  // in which the keys are preset slugs and the values are arguments that should be
+  // passed to the respective presets.
+  const normalizedFor = Array.isArray(instructions.for)
+    ? Object.fromEntries(instructions.for.map((presetSlug) => [presetSlug, null]))
+    : instructions.for;
 
-  if (!instruction) return statement;
+  for (const presetSlug in normalizedFor) {
+    const arg = normalizedFor[presetSlug];
+    const preset = schema.presets?.find((preset) => preset.slug === presetSlug);
 
-  for (const shortcut in instruction) {
-    const args = instruction[shortcut];
-    const forFilter = schema.for?.[shortcut];
-
-    if (!forFilter) {
+    if (!preset) {
       throw new RoninError({
-        message: `The provided \`for\` shortcut "${shortcut}" does not exist in schema "${schema.name}".`,
-        code: 'INVALID_FOR_VALUE',
+        message: `Preset "${presetSlug}" does not exist in schema "${schema.name}".`,
+        code: 'PRESET_NOT_FOUND',
       });
     }
 
-    const replacedForFilter = structuredClone(forFilter);
+    const replacedForFilter = structuredClone(preset.instructions);
 
-    findInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
-      match.replace(RONIN_SCHEMA_SYMBOLS.VALUE, args),
-    );
+    // If an argument was provided for the preset, find the respective placeholders
+    // inside the preset and replace them with the value of the actual argument.
+    if (arg !== null) {
+      findInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
+        match.replace(RONIN_SCHEMA_SYMBOLS.VALUE, arg),
+      );
+    }
 
-    const subStatement = composeConditions(
-      schemas,
-      schema,
-      statementParams,
-      'for',
-      replacedForFilter as WithFilters,
-      { rootTable },
-    );
+    for (const subInstruction in replacedForFilter) {
+      const instructionName = subInstruction as keyof Instructions;
+      const currentValue = instructions[instructionName];
 
-    statement += `(${subStatement})`;
+      // If the instruction is already present in the query, merge its existing value with
+      // the value of the instruction that is being added.
+      if (currentValue) {
+        let newValue: unknown;
+
+        if (Array.isArray(currentValue)) {
+          newValue = [
+            ...(replacedForFilter[instructionName] as Array<unknown>),
+            ...(currentValue as Array<unknown>),
+          ];
+        } else if (isObject(currentValue)) {
+          newValue = {
+            ...(replacedForFilter[instructionName] as object),
+            ...(currentValue as object),
+          };
+        }
+
+        Object.assign(instructions, { [instructionName]: newValue });
+        continue;
+      }
+
+      // If the instruction isn't already present in the query, add it.
+      Object.assign(instructions, {
+        [instructionName]: replacedForFilter[instructionName],
+      });
+    }
   }
 
-  return statement;
+  return instructions;
 };

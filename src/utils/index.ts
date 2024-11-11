@@ -73,8 +73,13 @@ export const compileQueryInput = (
     dependencyStatements,
   );
 
+  // Apply any presets that are potentially being selected by the query.
+  if (instructions && Object.hasOwn(instructions, 'for')) {
+    instructions = handleFor(schema, instructions);
+  }
+
   // A list of columns that should be selected when querying records.
-  const columns = handleSelecting(schema, statementParams, {
+  const { columns, isJoining } = handleSelecting(schema, statementParams, {
     selecting: instructions?.selecting,
     including: instructions?.including,
   });
@@ -103,8 +108,6 @@ export const compileQueryInput = (
       break;
   }
 
-  const isJoining =
-    typeof instructions?.including !== 'undefined' && !isObject(instructions.including);
   let isJoiningMultipleRows = false;
 
   if (isJoining) {
@@ -112,7 +115,7 @@ export const compileQueryInput = (
       statement: including,
       rootTableSubQuery,
       rootTableName,
-    } = handleIncluding(schemas, statementParams, schema, instructions?.including, table);
+    } = handleIncluding(schemas, statementParams, instructions?.including, table);
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
@@ -169,18 +172,6 @@ export const compileQueryInput = (
     );
 
     if (withStatement.length > 0) conditions.push(withStatement);
-  }
-
-  if (instructions && Object.hasOwn(instructions, 'for')) {
-    const forStatement = handleFor(
-      schemas,
-      schema,
-      statementParams,
-      instructions?.for,
-      isJoining ? table : undefined,
-    );
-
-    if (forStatement.length > 0) conditions.push(forStatement);
   }
 
   // If a `limitedTo` instruction was provided, that means the amount of records returned

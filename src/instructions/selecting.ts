@@ -1,8 +1,8 @@
 import type { Instructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RONIN_SCHEMA_SYMBOLS, flatten, isObject } from '@/src/utils/helpers';
+import { flatten } from '@/src/utils/helpers';
 import { getFieldFromSchema } from '@/src/utils/schema';
-import { prepareStatementValue } from '@/src/utils/statement';
+import { getSubQuery, prepareStatementValue } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `selecting` query instruction, which allows for
@@ -22,7 +22,9 @@ export const handleSelecting = (
     selecting: Instructions['selecting'];
     including: Instructions['including'];
   },
-): string => {
+): { columns: string; isJoining: boolean } => {
+  let isJoining = false;
+
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
   let statement = instructions.selecting
@@ -35,28 +37,34 @@ export const handleSelecting = (
 
   // If additional fields (that are not part of the schema) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
-  if (isObject(instructions.including)) {
-    statement += ', ';
-
-    statement += Object.entries(
-      flatten(instructions.including as unknown as Record<string, unknown>),
-    )
+  if (instructions.including) {
+    const filteredObject = Object.entries(instructions.including)
       // Filter out any fields whose value is a sub query, as those fields are instead
       // converted into SQL JOINs in the `handleIncluding` function, which, in the case of
       // sub queries resulting in a single record, is more performance-efficient, and in
       // the case of sub queries resulting in multiple records, it's the only way to
       // include multiple rows of another table.
       .filter(([_, value]) => {
-        return !(
-          isObject(value) && Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY)
-        );
-      })
-      // Format the fields into a comma-separated list of SQL columns.
-      .map(([key, value]) => {
-        return `${prepareStatementValue(statementParams, value)} as "${key}"`;
-      })
-      .join(', ');
+        const hasQuery = getSubQuery(value);
+        if (hasQuery) isJoining = true;
+        return !hasQuery;
+      });
+
+    // Flatten the object to handle deeply nested ephemeral fields, which are the result
+    // of developers providing objects as values in the `including` instruction.
+    const newObjectEntries = Object.entries(flatten(Object.fromEntries(filteredObject)));
+
+    if (newObjectEntries.length > 0) {
+      statement += ', ';
+
+      statement += newObjectEntries
+        // Format the fields into a comma-separated list of SQL columns.
+        .map(([key, value]) => {
+          return `${prepareStatementValue(statementParams, value)} as "${key}"`;
+        })
+        .join(', ');
+    }
   }
 
-  return statement;
+  return { columns: statement, isJoining };
 };
