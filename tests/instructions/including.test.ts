@@ -9,7 +9,9 @@ test('get single record including parent record (many-to-one)', () => {
     {
       get: {
         member: {
-          including: ['account'],
+          for: {
+            account: null
+          },
         },
       },
     },

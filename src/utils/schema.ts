@@ -530,20 +530,20 @@ export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<PublicSche
 };
 
 /**
- * Adds useful default shortcuts to a schema, which can be used to write simpler queries.
+ * Adds useful default presets to a schema, which can be used to write simpler queries.
  *
  * @param list - The list of all schemas.
- * @param schema - The schema for which default shortcuts should be added.
+ * @param schema - The schema for which default presets should be added.
  *
- * @returns The schema with default shortcuts added.
+ * @returns The schema with default presets added.
  */
-export const addDefaultSchemaShortcuts = (
+export const addDefaultSchemaPresets = (
   list: Array<Schema>,
   schema: Schema,
 ): Schema => {
   const defaultIncluding: Record<string, Query> = {};
 
-  // Add default shortcuts, which people can overwrite if they want to. Shortcuts are
+  // Add default presets, which people can overwrite if they want to. Presets are
   // used to provide concise ways of writing advanced queries, by allowing for defining
   // complex queries inside the schema definitions and re-using them across many
   // different queries in the codebase of an application.
@@ -557,7 +557,7 @@ export const addDefaultSchemaShortcuts = (
         fieldSlug = composeAssociationSchemaSlug(schema, field);
       }
 
-      // For every reference field, add a default shortcut for resolving the referenced
+      // For every reference field, add a default preset for resolving the referenced
       // record in the schema that contains the reference field.
       defaultIncluding[field.slug] = {
         get: {
@@ -574,8 +574,8 @@ export const addDefaultSchemaShortcuts = (
   }
 
   // Find potential child schemas that are referencing the current parent schema. For
-  // each of them, we then add a default shortcut for resolving the child records from
-  // the parent schema.
+  // each of them, we then add a default preset for resolving the child records from the
+  // parent schema.
   const childSchemas = list
     .map((subSchema) => {
       const field = subSchema.fields?.find((field) => {
@@ -930,8 +930,8 @@ export const addSchemaQueries = (
         queryType === 'create',
       );
 
-      const schemaWithShortcuts = addDefaultSchemaShortcuts(schemas, schemaWithFields);
-      queryInstructions.to = schemaWithShortcuts;
+      const schemaWithPresets = addDefaultSchemaPresets(schemas, schemaWithFields);
+      queryInstructions.to = schemaWithPresets;
     }
 
     if (queryType === 'create') {

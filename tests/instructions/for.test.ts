@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { type Schema, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
+import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('get single record for preset', () => {
   const queries: Array<Query> = [
@@ -363,4 +363,42 @@ test('get single record for preset on existing array instruction', () => {
       returning: true,
     },
   ]);
+});
+
+test('try get single record with non-existing preset', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          for: {
+            'activeMember': 'acc_39h8fhe98hefah8',
+          },
+        },
+      },
+    },
+  ];
+
+  const schemas: Array<Schema> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueries(queries, schemas);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'Preset "active-member" does not exist in schema "Account".',
+  );
+  expect(error).toHaveProperty('code', 'PRESET_NOT_FOUND');
 });

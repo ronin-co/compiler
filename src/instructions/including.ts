@@ -1,7 +1,7 @@
 import type { WithFilters } from '@/src/instructions/with';
 import type { Instructions } from '@/src/types/query';
 import type { Schema } from '@/src/types/schema';
-import { RoninError, splitQuery } from '@/src/utils/helpers';
+import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
 import { composeConditions } from '@/src/utils/statement';
@@ -13,7 +13,6 @@ import { composeConditions } from '@/src/utils/statement';
  * @param schemas - A list of schemas.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
- * @param schema - The schema being addressed in the query.
  * @param instruction - The `including` instruction provided in the current query.
  * @param rootTable - The table for which the current query is being executed.
  *
@@ -22,7 +21,6 @@ import { composeConditions } from '@/src/utils/statement';
 export const handleIncluding = (
   schemas: Array<Schema>,
   statementParams: Array<unknown> | null,
-  schema: Schema,
   instruction: Instructions['including'],
   rootTable?: string,
 ): {
@@ -35,15 +33,8 @@ export const handleIncluding = (
   let rootTableSubQuery: string | undefined;
   let rootTableName = rootTable;
 
-  for (const shortcut of instruction || []) {
-    const includingQuery = schema.including?.[shortcut];
-
-    if (!includingQuery) {
-      throw new RoninError({
-        message: `The provided \`including\` shortcut "${shortcut}" does not exist in schema "${schema.name}".`,
-        code: 'INVALID_INCLUDING_VALUE',
-      });
-    }
+  for (const ephemeralFieldSlug in instruction) {
+    const includingQuery = instruction[ephemeralFieldSlug]
 
     const { queryType, querySchema, queryInstructions } = splitQuery(includingQuery);
     let modifiableQueryInstructions = queryInstructions;
@@ -53,7 +44,7 @@ export const handleIncluding = (
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
     let relatedTableSelector = `"${getTableForSchema(relatedSchema)}"`;
 
-    const tableAlias = `including_${shortcut}`;
+    const tableAlias = `including_${ephemeralFieldSlug}`;
     const single = querySchema !== relatedSchema.pluralSlug;
 
     // If no `with` query instruction is provided, we want to perform a CROSS

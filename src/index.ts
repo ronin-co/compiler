@@ -3,7 +3,7 @@ import type { PublicSchema } from '@/src/types/schema';
 import { compileQueryInput } from '@/src/utils';
 import {
   addDefaultSchemaFields,
-  addDefaultSchemaShortcuts,
+  addDefaultSchemaPresets,
   addSystemSchemas,
 } from '@/src/utils/schema';
 
@@ -27,8 +27,8 @@ export const compileQueries = (
     return addDefaultSchemaFields(schema, true);
   });
 
-  const schemaListWithShortcuts = schemaList.map((schema) => {
-    return addDefaultSchemaShortcuts(schemaList, schema);
+  const schemaListWithPresets = schemaList.map((schema) => {
+    return addDefaultSchemaPresets(schemaList, schema);
   });
 
   const dependencyStatements: Array<Statement> = [];
@@ -37,7 +37,7 @@ export const compileQueries = (
   for (const query of queries) {
     const result = compileQueryInput(
       query,
-      schemaListWithShortcuts,
+      schemaListWithPresets,
       options?.inlineValues ? null : [],
     );
 

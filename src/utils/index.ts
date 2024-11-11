@@ -116,7 +116,7 @@ export const compileQueryInput = (
       statement: including,
       rootTableSubQuery,
       rootTableName,
-    } = handleIncluding(schemas, statementParams, schema, instructions?.including, table);
+    } = handleIncluding(schemas, statementParams, instructions?.including, table);
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
