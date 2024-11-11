@@ -1,28 +1,24 @@
 import type {
-	GetInstructions,
-	Instructions,
-	Query,
-	QueryInstructionType,
-	SetInstructions,
-	WithInstruction,
-} from "@/src/types/query";
-import {
-	RONIN_SCHEMA_SYMBOLS,
-	RoninError,
-	isObject,
-} from "@/src/utils/helpers";
+  GetInstructions,
+  Instructions,
+  Query,
+  QueryInstructionType,
+  SetInstructions,
+  WithInstruction,
+} from '@/src/types/query';
+import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
 
 import {
-	WITH_CONDITIONS,
-	type WithCondition,
-	type WithFilters,
-	type WithValue,
-	type WithValueOptions,
-} from "@/src/instructions/with";
-import type { Schema } from "@/src/types/schema";
-import { compileQueryInput } from "@/src/utils/index";
-import { getSchemaBySlug } from "@/src/utils/schema";
-import { getFieldFromSchema } from "@/src/utils/schema";
+  WITH_CONDITIONS,
+  type WithCondition,
+  type WithFilters,
+  type WithValue,
+  type WithValueOptions,
+} from '@/src/instructions/with';
+import type { Schema } from '@/src/types/schema';
+import { compileQueryInput } from '@/src/utils/index';
+import { getSchemaBySlug } from '@/src/utils/schema';
+import { getFieldFromSchema } from '@/src/utils/schema';
 
 /**
  * Inserts a value into the list of statement values and returns a placeholder for it.
@@ -33,29 +29,29 @@ import { getFieldFromSchema } from "@/src/utils/schema";
  * @returns A placeholder for the inserted value.
  */
 export const prepareStatementValue = (
-	statementParams: Array<unknown> | null,
-	value: unknown,
+  statementParams: Array<unknown> | null,
+  value: unknown,
 ): string => {
-	// We don't need to register `null` as a statement value, because it's not a value, but
-	// rather a representation of the absence of a value. We can just inline it.
-	if (value === null) return "NULL";
+  // We don't need to register `null` as a statement value, because it's not a value, but
+  // rather a representation of the absence of a value. We can just inline it.
+  if (value === null) return 'NULL';
 
-	// If no list of statement values is available, that means we should inline the value,
-	// which is desired in cases where there is no risk of SQL injection and where the
-	// values must be plainly visible for manual human inspection.
-	if (!statementParams) return JSON.stringify(value);
+  // If no list of statement values is available, that means we should inline the value,
+  // which is desired in cases where there is no risk of SQL injection and where the
+  // values must be plainly visible for manual human inspection.
+  if (!statementParams) return JSON.stringify(value);
 
-	let formattedValue = value;
+  let formattedValue = value;
 
-	if (Array.isArray(value) || isObject(value)) {
-		formattedValue = JSON.stringify(value);
-	} else if (typeof value === "boolean") {
-		// When binding statement values, SQLite requires booleans as integers.
-		formattedValue = value ? 1 : 0;
-	}
+  if (Array.isArray(value) || isObject(value)) {
+    formattedValue = JSON.stringify(value);
+  } else if (typeof value === 'boolean') {
+    // When binding statement values, SQLite requires booleans as integers.
+    formattedValue = value ? 1 : 0;
+  }
 
-	const index = statementParams.push(formattedValue);
-	return `?${index}`;
+  const index = statementParams.push(formattedValue);
+  return `?${index}`;
 };
 
 /**
@@ -72,81 +68,77 @@ export const prepareStatementValue = (
  * or column value.
  */
 const composeFieldValues = (
-	schemas: Array<Schema>,
-	schema: Schema,
-	statementParams: Array<unknown> | null,
-	instructionName: QueryInstructionType,
-	value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
-	options: {
-		rootTable?: string;
-		fieldSlug: string;
-		type?: "fields" | "values";
-		customTable?: string;
-		condition?: WithCondition;
-	},
+  schemas: Array<Schema>,
+  schema: Schema,
+  statementParams: Array<unknown> | null,
+  instructionName: QueryInstructionType,
+  value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
+  options: {
+    rootTable?: string;
+    fieldSlug: string;
+    type?: 'fields' | 'values';
+    customTable?: string;
+    condition?: WithCondition;
+  },
 ): string => {
-	const { field: schemaField, fieldSelector: selector } = getFieldFromSchema(
-		schema,
-		options.fieldSlug,
-		instructionName,
-		options.rootTable,
-	);
+  const { field: schemaField, fieldSelector: selector } = getFieldFromSchema(
+    schema,
+    options.fieldSlug,
+    instructionName,
+    options.rootTable,
+  );
 
-	const isSubQuery =
-		isObject(value) &&
-		Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY);
+  const isSubQuery =
+    isObject(value) && Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY);
 
-	// If only the field selectors are being requested, do not register any values.
-	const collectStatementValue = options.type !== "fields";
+  // If only the field selectors are being requested, do not register any values.
+  const collectStatementValue = options.type !== 'fields';
 
-	let conditionSelector = selector;
-	let conditionValue = value;
+  let conditionSelector = selector;
+  let conditionValue = value;
 
-	if (isSubQuery && collectStatementValue) {
-		conditionValue = `(${
-			compileQueryInput(
-				(value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
-				schemas,
-				statementParams,
-			).main.statement
-		})`;
-	} else if (
-		typeof value === "string" &&
-		value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)
-	) {
-		let targetTable = `"${options.rootTable}"`;
-		let toReplace: string = RONIN_SCHEMA_SYMBOLS.FIELD;
+  if (isSubQuery && collectStatementValue) {
+    conditionValue = `(${
+      compileQueryInput(
+        (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
+        schemas,
+        statementParams,
+      ).main.statement
+    })`;
+  } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
+    let targetTable = `"${options.rootTable}"`;
+    let toReplace: string = RONIN_SCHEMA_SYMBOLS.FIELD;
 
-		if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_OLD)) {
-			targetTable = "OLD";
-			toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_OLD;
-		} else if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_NEW)) {
-			targetTable = "NEW";
-			toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
-		}
+    if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_OLD)) {
+      targetTable = 'OLD';
+      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_OLD;
+    } else if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_NEW)) {
+      targetTable = 'NEW';
+      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+    }
 
-		conditionSelector = `${options.customTable ? `"${options.customTable}".` : ""}"${schemaField.slug}"`;
-		conditionValue = `${targetTable}."${value.replace(toReplace, "")}"`;
-	}
-	// For columns containing JSON, special handling is required, because the properties
-	// inside a JSON structure cannot be updated directly using column selectors, and must
-	// instead be patched through a JSON function, since the properties are all stored
-	// inside a single TEXT column.
-	else if (schemaField.type === "json" && instructionName === "to") {
-		conditionSelector = `"${schemaField.slug}"`;
+    conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${schemaField.slug}"`;
+    conditionValue = `${targetTable}."${value.replace(toReplace, '')}"`;
+  }
+  // For columns containing JSON, special handling is required, because the properties
+  // inside a JSON structure cannot be updated directly using column selectors, and must
+  // instead be patched through a JSON function, since the properties are all stored
+  // inside a single TEXT column.
+  else if (schemaField.type === 'json' && instructionName === 'to') {
+    conditionSelector = `"${schemaField.slug}"`;
 
-		if (collectStatementValue) {
-			const preparedValue = prepareStatementValue(statementParams, value);
-			conditionValue = `IIF(${conditionSelector} IS NULL, ${preparedValue}, json_patch(${conditionSelector}, ${preparedValue}))`;
-		}
-	} else if (collectStatementValue) {
-		conditionValue = prepareStatementValue(statementParams, value);
-	}
+    if (collectStatementValue) {
+      const preparedValue = prepareStatementValue(statementParams, value);
+      conditionValue = `IIF(${conditionSelector} IS NULL, ${preparedValue}, json_patch(${conditionSelector}, ${preparedValue}))`;
+    }
+  } else if (collectStatementValue) {
+    conditionValue = prepareStatementValue(statementParams, value);
+  }
 
-	if (options.type === "fields") return conditionSelector;
-	if (options.type === "values") return conditionValue as string;
+  if (options.type === 'fields') return conditionSelector;
+  if (options.type === 'values') return conditionValue as string;
 
-	return `${conditionSelector} ${WITH_CONDITIONS[options.condition || "being"](conditionValue, value)}`;
+  return `${conditionSelector} ${WITH_CONDITIONS[options.condition || 'being'](conditionValue, value)}`;
 };
 
 /**
@@ -162,210 +154,183 @@ const composeFieldValues = (
  * @returns An SQL condition string representing the conditions for the provided query instructions.
  */
 export const composeConditions = (
-	schemas: Array<Schema>,
-	schema: Schema,
-	statementParams: Array<unknown> | null,
-	instructionName: QueryInstructionType,
-	value:
-		| WithFilters
-		| WithValueOptions
-		| Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
-	options: Omit<Parameters<typeof composeFieldValues>[5], "fieldSlug"> & {
-		fieldSlug?: string;
-	},
+  schemas: Array<Schema>,
+  schema: Schema,
+  statementParams: Array<unknown> | null,
+  instructionName: QueryInstructionType,
+  value:
+    | WithFilters
+    | WithValueOptions
+    | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
+  options: Omit<Parameters<typeof composeFieldValues>[5], 'fieldSlug'> & {
+    fieldSlug?: string;
+  },
 ): string => {
-	const isNested = isObject(value) && Object.keys(value as object).length > 0;
+  const isNested = isObject(value) && Object.keys(value as object).length > 0;
 
-	// 1. Check for conditions.
-	//
-	// Most commonly, the surrounding function is provided with an object. Before we can
-	// continue processing any potential fields inside of this object, we would like to
-	// assert whether it contains any of the known query conditions (such as `being`). If
-	// it does, we want to invoke the surrounding function again, but additionally provide
-	// information about which kind of condition is being performed.
-	if (
-		isNested &&
-		Object.keys(value as object).every((key) => key in WITH_CONDITIONS)
-	) {
-		const conditions = (
-			Object.entries(value as object) as Array<
-				[WithCondition, WithValueOptions]
-			>
-		).map(([conditionType, checkValue]) =>
-			composeConditions(
-				schemas,
-				schema,
-				statementParams,
-				instructionName,
-				checkValue,
-				{
-					...options,
-					condition: conditionType,
-				},
-			),
-		);
+  // 1. Check for conditions.
+  //
+  // Most commonly, the surrounding function is provided with an object. Before we can
+  // continue processing any potential fields inside of this object, we would like to
+  // assert whether it contains any of the known query conditions (such as `being`). If
+  // it does, we want to invoke the surrounding function again, but additionally provide
+  // information about which kind of condition is being performed.
+  if (isNested && Object.keys(value as object).every((key) => key in WITH_CONDITIONS)) {
+    const conditions = (
+      Object.entries(value as object) as Array<[WithCondition, WithValueOptions]>
+    ).map(([conditionType, checkValue]) =>
+      composeConditions(schemas, schema, statementParams, instructionName, checkValue, {
+        ...options,
+        condition: conditionType,
+      }),
+    );
 
-		return conditions.join(" AND ");
-	}
+    return conditions.join(' AND ');
+  }
 
-	// 2. Check for the existance of a field.
-	//
-	// If the surrounding function was provided with a `fieldSlug`, that means the value of
-	// a field is being asserted, so we first have to check whether that field exists and
-	// then check its type. Based on that, we then know how to treat the value of the field.
-	//
-	// Specifically, if the field is of the type "reference" or "json", we have to treat any
-	// potential object value in a special way, instead of just iterating over the nested
-	// fields and trying to assert the column for each one.
-	if (options.fieldSlug) {
-		const fieldDetails = getFieldFromSchema(
-			schema,
-			options.fieldSlug,
-			instructionName,
-			options.rootTable,
-		);
+  // 2. Check for the existance of a field.
+  //
+  // If the surrounding function was provided with a `fieldSlug`, that means the value of
+  // a field is being asserted, so we first have to check whether that field exists and
+  // then check its type. Based on that, we then know how to treat the value of the field.
+  //
+  // Specifically, if the field is of the type "reference" or "json", we have to treat any
+  // potential object value in a special way, instead of just iterating over the nested
+  // fields and trying to assert the column for each one.
+  if (options.fieldSlug) {
+    const fieldDetails = getFieldFromSchema(
+      schema,
+      options.fieldSlug,
+      instructionName,
+      options.rootTable,
+    );
 
-		const { field: schemaField } = fieldDetails;
+    const { field: schemaField } = fieldDetails;
 
-		// If the `to` instruction is used, JSON should be written as-is.
-		const consumeJSON = schemaField.type === "json" && instructionName === "to";
+    // If the `to` instruction is used, JSON should be written as-is.
+    const consumeJSON = schemaField.type === 'json' && instructionName === 'to';
 
-		const isSubQuery =
-			isNested && Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY);
+    const isSubQuery =
+      isNested && Object.hasOwn(value as object, RONIN_SCHEMA_SYMBOLS.QUERY);
 
-		if (
-			!(isObject(value) || Array.isArray(value)) ||
-			isSubQuery ||
-			consumeJSON
-		) {
-			return composeFieldValues(
-				schemas,
-				schema,
-				statementParams,
-				instructionName,
-				value as WithValue,
-				{ ...options, fieldSlug: options.fieldSlug as string },
-			);
-		}
+    if (!(isObject(value) || Array.isArray(value)) || isSubQuery || consumeJSON) {
+      return composeFieldValues(
+        schemas,
+        schema,
+        statementParams,
+        instructionName,
+        value as WithValue,
+        { ...options, fieldSlug: options.fieldSlug as string },
+      );
+    }
 
-		if (schemaField.type === "reference" && isNested) {
-			// `value` is asserted to be an object using `isObject` above, so we can safely
-			// cast it here. The type is not being inferred automatically.
-			const keys = Object.keys(value as object);
-			const values = Object.values(value as object);
+    if (schemaField.type === 'reference' && isNested) {
+      // `value` is asserted to be an object using `isObject` above, so we can safely
+      // cast it here. The type is not being inferred automatically.
+      const keys = Object.keys(value as object);
+      const values = Object.values(value as object);
 
-			let recordTarget:
-				| WithValue
-				| Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>;
+      let recordTarget: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>;
 
-			// If only a single key is present, and it's "id", then we can simplify the query a
-			// bit in favor of performance, because the stored value of a reference field in
-			// SQLite is always the ID of the related record. That means we don't need to join
-			// the destination table, and we can just perform a string assertion.
-			if (keys.length === 1 && keys[0] === "id") {
-				// This can be either a string or an object with conditions such as `being`.
-				recordTarget = values[0];
-			} else {
-				const relatedSchema = getSchemaBySlug(schemas, schemaField.target.slug);
+      // If only a single key is present, and it's "id", then we can simplify the query a
+      // bit in favor of performance, because the stored value of a reference field in
+      // SQLite is always the ID of the related record. That means we don't need to join
+      // the destination table, and we can just perform a string assertion.
+      if (keys.length === 1 && keys[0] === 'id') {
+        // This can be either a string or an object with conditions such as `being`.
+        recordTarget = values[0];
+      } else {
+        const relatedSchema = getSchemaBySlug(schemas, schemaField.target.slug);
 
-				const subQuery: Query = {
-					get: {
-						[relatedSchema.slug]: {
-							with: value as WithInstruction,
-							selecting: ["id"],
-						},
-					},
-				};
+        const subQuery: Query = {
+          get: {
+            [relatedSchema.slug]: {
+              with: value as WithInstruction,
+              selecting: ['id'],
+            },
+          },
+        };
 
-				recordTarget = {
-					[RONIN_SCHEMA_SYMBOLS.QUERY]: subQuery,
-				};
-			}
+        recordTarget = {
+          [RONIN_SCHEMA_SYMBOLS.QUERY]: subQuery,
+        };
+      }
 
-			return composeConditions(
-				schemas,
-				schema,
-				statementParams,
-				instructionName,
-				recordTarget,
-				options,
-			);
-		}
-	}
+      return composeConditions(
+        schemas,
+        schema,
+        statementParams,
+        instructionName,
+        recordTarget,
+        options,
+      );
+    }
+  }
 
-	// 3. Check for the existance of nested fields.
-	//
-	// If the value of the field is an object at this stage of the function, that means
-	// we are dealing with an object full of nested fields, because other kinds of objects
-	// (e.g. JSON objects, Reference objects, and objects containing conditions) have
-	// already been matched further above.
-	//
-	// We can therefore iterate over all fields inside that object and invoke the
-	// surrounding function again for each one, in order to handle any deeply nested fields
-	// or conditions that might be available.
-	if (isNested) {
-		const conditions = Object.entries(value as object).map(([field, value]) => {
-			const nestedFieldSlug = options.fieldSlug
-				? `${options.fieldSlug}.${field}`
-				: field;
+  // 3. Check for the existance of nested fields.
+  //
+  // If the value of the field is an object at this stage of the function, that means
+  // we are dealing with an object full of nested fields, because other kinds of objects
+  // (e.g. JSON objects, Reference objects, and objects containing conditions) have
+  // already been matched further above.
+  //
+  // We can therefore iterate over all fields inside that object and invoke the
+  // surrounding function again for each one, in order to handle any deeply nested fields
+  // or conditions that might be available.
+  if (isNested) {
+    const conditions = Object.entries(value as object).map(([field, value]) => {
+      const nestedFieldSlug = options.fieldSlug ? `${options.fieldSlug}.${field}` : field;
 
-			// If the value of the field is an object or array, we have to assume it might
-			// either contain a list of nested fields that must be matched, or a list of
-			// conditions (such as `being`, `notBeing`) that must be matched, so we have to
-			// start from the beginning again.
-			return composeConditions(
-				schemas,
-				schema,
-				statementParams,
-				instructionName,
-				value,
-				{
-					...options,
-					fieldSlug: nestedFieldSlug,
-				},
-			);
-		});
+      // If the value of the field is an object or array, we have to assume it might
+      // either contain a list of nested fields that must be matched, or a list of
+      // conditions (such as `being`, `notBeing`) that must be matched, so we have to
+      // start from the beginning again.
+      return composeConditions(schemas, schema, statementParams, instructionName, value, {
+        ...options,
+        fieldSlug: nestedFieldSlug,
+      });
+    });
 
-		const joiner = instructionName === "to" ? ", " : " AND ";
+    const joiner = instructionName === 'to' ? ', ' : ' AND ';
 
-		if (instructionName === "to") return `${conditions.join(joiner)}`;
-		return conditions.length === 1
-			? conditions[0]
-			: options.fieldSlug
-				? `(${conditions.join(joiner)})`
-				: conditions.join(joiner);
-	}
+    if (instructionName === 'to') return `${conditions.join(joiner)}`;
+    return conditions.length === 1
+      ? conditions[0]
+      : options.fieldSlug
+        ? `(${conditions.join(joiner)})`
+        : conditions.join(joiner);
+  }
 
-	// 4. Check for OR conditions.
-	//
-	// If the provided value is an array and none of the checks further above have been
-	// matched, that means we're dealing with an OR condition, so each of the values inside
-	// the array must be treated as a possibility inside of an OR condition.
-	if (Array.isArray(value)) {
-		const conditions = value.map((filter) =>
-			composeConditions(
-				schemas,
-				schema,
-				statementParams,
-				instructionName,
-				filter,
-				options,
-			),
-		);
+  // 4. Check for OR conditions.
+  //
+  // If the provided value is an array and none of the checks further above have been
+  // matched, that means we're dealing with an OR condition, so each of the values inside
+  // the array must be treated as a possibility inside of an OR condition.
+  if (Array.isArray(value)) {
+    const conditions = value.map((filter) =>
+      composeConditions(
+        schemas,
+        schema,
+        statementParams,
+        instructionName,
+        filter,
+        options,
+      ),
+    );
 
-		return conditions.join(" OR ");
-	}
+    return conditions.join(' OR ');
+  }
 
-	// 5. Handle empty fields.
-	//
-	// If the provided value could not be matched against any of the allowed value types,
-	// that means the provided value is empty, which is not allowed. To inform the
-	// developer, we are therefore throwing an error.
-	throw new RoninError({
-		message: `The \`with\` instruction must not contain an empty field. The following fields are empty: \`${options.fieldSlug}\`. If you meant to query by an empty field, try using \`null\` instead.`,
-		code: "INVALID_WITH_VALUE",
-		queries: null,
-	});
+  // 5. Handle empty fields.
+  //
+  // If the provided value could not be matched against any of the allowed value types,
+  // that means the provided value is empty, which is not allowed. To inform the
+  // developer, we are therefore throwing an error.
+  throw new RoninError({
+    message: `The \`with\` instruction must not contain an empty field. The following fields are empty: \`${options.fieldSlug}\`. If you meant to query by an empty field, try using \`null\` instead.`,
+    code: 'INVALID_WITH_VALUE',
+    queries: null,
+  });
 };
 
 /**
@@ -382,38 +347,38 @@ export const composeConditions = (
  * @returns The provided query instructions, with special identifiers replaced.
  */
 export const formatIdentifiers = (
-	{ identifiers }: Schema,
-	queryInstructions: Instructions,
+  { identifiers }: Schema,
+  queryInstructions: Instructions,
 ): Instructions & SetInstructions => {
-	// Queries might not have instructions (such as `get.accounts`).
-	if (!queryInstructions) return queryInstructions;
+  // Queries might not have instructions (such as `get.accounts`).
+  if (!queryInstructions) return queryInstructions;
 
-	const type = "with" in queryInstructions ? "with" : null;
+  const type = 'with' in queryInstructions ? 'with' : null;
 
-	// Special identifiers may only be used in the `with` instructions, so we
-	// want to skip all others.
-	if (!type) return queryInstructions as Instructions & SetInstructions;
+  // Special identifiers may only be used in the `with` instructions, so we
+  // want to skip all others.
+  if (!type) return queryInstructions as Instructions & SetInstructions;
 
-	// We currently also don't need to support special identifiers inside arrays.
-	const nestedInstructions = (queryInstructions as GetInstructions)[type];
-	if (!nestedInstructions || Array.isArray(nestedInstructions))
-		return queryInstructions as Instructions & SetInstructions;
+  // We currently also don't need to support special identifiers inside arrays.
+  const nestedInstructions = (queryInstructions as GetInstructions)[type];
+  if (!nestedInstructions || Array.isArray(nestedInstructions))
+    return queryInstructions as Instructions & SetInstructions;
 
-	const newNestedInstructions = { ...nestedInstructions };
+  const newNestedInstructions = { ...nestedInstructions };
 
-	for (const oldKey of Object.keys(newNestedInstructions)) {
-		if (oldKey !== "nameIdentifier" && oldKey !== "slugIdentifier") continue;
+  for (const oldKey of Object.keys(newNestedInstructions)) {
+    if (oldKey !== 'nameIdentifier' && oldKey !== 'slugIdentifier') continue;
 
-		const identifierName = oldKey === "nameIdentifier" ? "name" : "slug";
-		const value = newNestedInstructions[oldKey];
-		const newKey = identifiers[identifierName];
+    const identifierName = oldKey === 'nameIdentifier' ? 'name' : 'slug';
+    const value = newNestedInstructions[oldKey];
+    const newKey = identifiers[identifierName];
 
-		newNestedInstructions[newKey] = value;
-		delete newNestedInstructions[oldKey];
-	}
+    newNestedInstructions[newKey] = value;
+    delete newNestedInstructions[oldKey];
+  }
 
-	return {
-		...queryInstructions,
-		[type]: newNestedInstructions,
-	} as Instructions & SetInstructions;
+  return {
+    ...queryInstructions,
+    [type]: newNestedInstructions,
+  } as Instructions & SetInstructions;
 };
