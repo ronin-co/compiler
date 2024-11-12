@@ -60,16 +60,16 @@ jobs:
         if: ${{ steps.get_versions.outputs.versions != '' }}
         run: |
           PACKAGE_NAME="@ronin/compiler"
-
+          
           # Read versions into an array
-          mapfile -t versions_array <<< "0.2.1-test100-experimental.0"
-
+          mapfile -t versions_array <<< "${{ steps.get_versions.outputs.versions }}"
+          
           # Check if versions_array is not empty
           if [ ${#versions_array[@]} -eq 0 ]; then
             echo "No versions to unpublish."
             exit 0
           fi
-
+          
           for VERSION in "${versions_array[@]}"; do
             echo "Unpublishing $PACKAGE_NAME@$VERSION"
             npm unpublish "$PACKAGE_NAME@$VERSION" || echo "Failed to unpublish $PACKAGE_NAME@$VERSION"
