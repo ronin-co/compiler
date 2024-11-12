@@ -71,10 +71,10 @@ To fine-tune the behavior of the compiler, you can pass the following options:
 
 ```typescript
 compileQueries(queries, schemas, {
-  // Instead of returning an array of values for every statement (which allows for
-  // preventing SQL injections), all values are inlined directly into the SQL strings.
+  // Instead of returning an array of parameters for every statement (which allows for
+  // preventing SQL injections), all parameters are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.
-  inlineValues: true
+  inlineParams: true
 });
 ```
 

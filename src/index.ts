@@ -3,7 +3,7 @@ import type { PublicSchema } from '@/src/types/schema';
 import { compileQueryInput } from '@/src/utils';
 import {
   addDefaultSchemaFields,
-  addDefaultSchemaShortcuts,
+  addDefaultSchemaPresets,
   addSystemSchemas,
 } from '@/src/utils/schema';
 
@@ -20,15 +20,15 @@ export const compileQueries = (
   queries: Array<Query>,
   schemas: Array<PublicSchema>,
   options?: {
-    inlineValues?: boolean;
+    inlineParams?: boolean;
   },
 ): Array<Statement> => {
   const schemaList = addSystemSchemas(schemas).map((schema) => {
     return addDefaultSchemaFields(schema, true);
   });
 
-  const schemaListWithShortcuts = schemaList.map((schema) => {
-    return addDefaultSchemaShortcuts(schemaList, schema);
+  const schemaListWithPresets = schemaList.map((schema) => {
+    return addDefaultSchemaPresets(schemaList, schema);
   });
 
   const dependencyStatements: Array<Statement> = [];
@@ -37,8 +37,8 @@ export const compileQueries = (
   for (const query of queries) {
     const result = compileQueryInput(
       query,
-      schemaListWithShortcuts,
-      options?.inlineValues ? null : [],
+      schemaListWithPresets,
+      options?.inlineParams ? null : [],
     );
 
     // Every query can only produce one main statement (which can return output), but

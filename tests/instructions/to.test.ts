@@ -916,6 +916,8 @@ test('create multiple records with nested sub query and specific meta fields', (
   ]);
 });
 
+// Ensure that an error is thrown for fields that don't exist in the target schema, since
+// the value of the field cannot be used in those cases.
 test('try to create multiple records with nested sub query including non-existent fields', () => {
   const queries: Array<Query> = [
     {
