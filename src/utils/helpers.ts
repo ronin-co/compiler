@@ -1,5 +1,5 @@
+import type { Model } from '@/src/types/model';
 import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 
 import { init as cuid } from '@paralleldrive/cuid2';
 
@@ -17,17 +17,17 @@ export const RECORD_TIMESTAMP_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}
  * query is nested into a query, the nested query will be marked with `__RONIN_QUERY`,
  * which allows for distinguishing that nested query from an object of instructions.
  */
-export const RONIN_SCHEMA_SYMBOLS = {
+export const RONIN_MODEL_SYMBOLS = {
   // Represents a sub query.
   QUERY: '__RONIN_QUERY',
 
-  // Represents the value of a field in a schema.
+  // Represents the value of a field in a model.
   FIELD: '__RONIN_FIELD_',
 
-  // Represents the old value of a field in a schema. Used for triggers.
+  // Represents the old value of a field in a model. Used for triggers.
   FIELD_OLD: '__RONIN_FIELD_OLD_',
 
-  // Represents the new value of a field in a schema. Used for triggers.
+  // Represents the new value of a field in a model. Used for triggers.
   FIELD_NEW: '__RONIN_FIELD_NEW_',
 
   // Represents a value provided to a query preset.
@@ -35,15 +35,15 @@ export const RONIN_SCHEMA_SYMBOLS = {
 } as const;
 
 /**
- * A regular expression for matching the symbol that represents a field of a schema.
+ * A regular expression for matching the symbol that represents a field of a model.
  */
-export const RONIN_SCHEMA_FIELD_REGEX = new RegExp(
-  `${RONIN_SCHEMA_SYMBOLS.FIELD}[a-zA-Z0-9]+`,
+export const RONIN_MODEL_FIELD_REGEX = new RegExp(
+  `${RONIN_MODEL_SYMBOLS.FIELD}[a-zA-Z0-9]+`,
   'g',
 );
 
 type RoninErrorCode =
-  | 'SCHEMA_NOT_FOUND'
+  | 'MODEL_NOT_FOUND'
   | 'FIELD_NOT_FOUND'
   | 'PRESET_NOT_FOUND'
   | 'INVALID_WITH_VALUE'
@@ -51,7 +51,7 @@ type RoninErrorCode =
   | 'INVALID_INCLUDING_VALUE'
   | 'INVALID_FOR_VALUE'
   | 'INVALID_BEFORE_OR_AFTER_INSTRUCTION'
-  | 'INVALID_SCHEMA_VALUE'
+  | 'INVALID_MODEL_VALUE'
   | 'MUTUALLY_EXCLUSIVE_INSTRUCTIONS'
   | 'MISSING_INSTRUCTION'
   | 'MISSING_FIELD';
@@ -102,7 +102,7 @@ const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
  *
  * @returns The generated ID.
  */
-export const generateRecordId = (prefix: Schema['idPrefix']) =>
+export const generateRecordId = (prefix: Model['idPrefix']) =>
   `${prefix}_${cuid({ length: 16 })()}`;
 
 /**
@@ -278,21 +278,21 @@ export const expand = (obj: NestedObject) => {
 };
 
 /**
- * Splits a query into its type, schema, and instructions.
+ * Splits a query into its type, model, and instructions.
  *
  * @param query - The query to split.
  *
- * @returns The type, schema, and instructions of the provided query.
+ * @returns The type, model, and instructions of the provided query.
  */
 export const splitQuery = (query: Query) => {
   // The type of query that is being executed (`create`, `get`, etc).
   const queryType = Object.keys(query)[0] as QueryType;
 
-  // The slug or plural slug of the RONIN schema that the query will interact with.
-  const querySchema = Object.keys(query[queryType] as QuerySchemaType)[0];
+  // The slug or plural slug of the RONIN model that the query will interact with.
+  const queryModel = Object.keys(query[queryType] as QuerySchemaType)[0];
 
   // The instructions of the query (`with`, `including`, etc).
-  const queryInstructions = (query[queryType] as QuerySchemaType)[querySchema];
+  const queryInstructions = (query[queryType] as QuerySchemaType)[queryModel];
 
-  return { queryType, querySchema, queryInstructions };
+  return { queryType, queryModel, queryInstructions };
 };

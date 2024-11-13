@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RONIN_SCHEMA_SYMBOLS, RoninError } from '@/src/utils/helpers';
+import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('get single record for preset', () => {
   const queries: Array<Query> = [
@@ -15,7 +15,7 @@ test('get single record for preset', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
@@ -65,7 +65,7 @@ test('get single record for preset', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -89,7 +89,7 @@ test('get single record for preset containing field with condition', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
@@ -130,10 +130,10 @@ test('get single record for preset containing field with condition', () => {
             with: {
               space: {
                 notBeing: {
-                  [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                  [RONIN_MODEL_SYMBOLS.QUERY]: {
                     get: {
                       member: {
-                        with: { account: RONIN_SCHEMA_SYMBOLS.VALUE },
+                        with: { account: RONIN_MODEL_SYMBOLS.VALUE },
                         orderedBy: { descending: ['activeAt'] },
                         selecting: ['space'],
                       },
@@ -149,7 +149,7 @@ test('get single record for preset containing field with condition', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -174,7 +174,7 @@ test('get single record for preset containing field without condition', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
@@ -214,10 +214,10 @@ test('get single record for preset containing field without condition', () => {
           instructions: {
             with: {
               space: {
-                [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+                [RONIN_MODEL_SYMBOLS.QUERY]: {
                   get: {
                     member: {
-                      with: { account: RONIN_SCHEMA_SYMBOLS.VALUE },
+                      with: { account: RONIN_MODEL_SYMBOLS.VALUE },
                       orderedBy: { descending: ['activeAt'] },
                       selecting: ['space'],
                     },
@@ -232,7 +232,7 @@ test('get single record for preset containing field without condition', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -258,7 +258,7 @@ test('get single record for preset on existing object instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
@@ -292,7 +292,7 @@ test('get single record for preset on existing object instruction', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -316,7 +316,7 @@ test('get single record for preset on existing array instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
@@ -348,7 +348,7 @@ test('get single record for preset on existing array instruction', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -370,7 +370,7 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -387,7 +387,7 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -409,7 +409,7 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'post',
       fields: [
@@ -426,7 +426,7 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -448,7 +448,7 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -464,7 +464,7 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -488,7 +488,7 @@ test('try get single record with non-existing preset', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -500,7 +500,7 @@ test('try get single record with non-existing preset', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -508,7 +508,7 @@ test('try get single record with non-existing preset', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Preset "activeMember" does not exist in schema "Account".',
+    'Preset "activeMember" does not exist in model "Account".',
   );
   expect(error).toHaveProperty('code', 'PRESET_NOT_FOUND');
 });

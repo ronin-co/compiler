@@ -6,7 +6,7 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
+import { RONIN_MODEL_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
 
 import {
   WITH_CONDITIONS,
@@ -15,10 +15,9 @@ import {
   type WithValue,
   type WithValueOptions,
 } from '@/src/instructions/with';
-import type { Schema } from '@/src/types/schema';
+import type { Model } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
-import { getSchemaBySlug } from '@/src/utils/schema';
-import { getFieldFromSchema } from '@/src/utils/schema';
+import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 
 /**
  * Inserts a value into the list of statement values and returns a placeholder for it.
@@ -57,8 +56,8 @@ export const prepareStatementValue = (
 /**
  * Generates an SQL condition, column name, or column value for the provided field.
  *
- * @param schemas - A list of schemas.
- * @param schema - The specific schema being addressed in the query.
+ * @param models - A list of models.
+ * @param model - The specific model being addressed in the query.
  * @param statementParams - A list of values to be inserted into the final statements.
  * @param instructionName - The name of the instruction that is being processed.
  * @param value - The value that the selected field should be compared with.
@@ -68,11 +67,11 @@ export const prepareStatementValue = (
  * or column value.
  */
 const composeFieldValues = (
-  schemas: Array<Schema>,
-  schema: Schema,
+  models: Array<Model>,
+  model: Model,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
+  value: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
   options: {
     rootTable?: string;
     fieldSlug: string;
@@ -81,8 +80,8 @@ const composeFieldValues = (
     condition?: WithCondition;
   },
 ): string => {
-  const { field: schemaField, fieldSelector: selector } = getFieldFromSchema(
-    schema,
+  const { field: modelField, fieldSelector: selector } = getFieldFromModel(
+    model,
     options.fieldSlug,
     instructionName,
     options.rootTable,
@@ -97,32 +96,32 @@ const composeFieldValues = (
   if (getSubQuery(value) && collectStatementValue) {
     conditionValue = `(${
       compileQueryInput(
-        (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
-        schemas,
+        (value as Record<string, Query>)[RONIN_MODEL_SYMBOLS.QUERY],
+        models,
         statementParams,
       ).main.statement
     })`;
-  } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
+  } else if (typeof value === 'string' && value.startsWith(RONIN_MODEL_SYMBOLS.FIELD)) {
     let targetTable = `"${options.rootTable}"`;
-    let toReplace: string = RONIN_SCHEMA_SYMBOLS.FIELD;
+    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
 
-    if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_OLD)) {
+    if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
       targetTable = 'OLD';
-      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_OLD;
-    } else if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_NEW)) {
+      toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
+    } else if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
       targetTable = 'NEW';
-      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+      toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
     }
 
-    conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${schemaField.slug}"`;
+    conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${modelField.slug}"`;
     conditionValue = `${targetTable}."${value.replace(toReplace, '')}"`;
   }
   // For columns containing JSON, special handling is required, because the properties
   // inside a JSON structure cannot be updated directly using column selectors, and must
   // instead be patched through a JSON function, since the properties are all stored
   // inside a single TEXT column.
-  else if (schemaField.type === 'json' && instructionName === 'to') {
-    conditionSelector = `"${schemaField.slug}"`;
+  else if (modelField.type === 'json' && instructionName === 'to') {
+    conditionSelector = `"${modelField.slug}"`;
 
     if (collectStatementValue) {
       const preparedValue = prepareStatementValue(statementParams, value);
@@ -141,8 +140,8 @@ const composeFieldValues = (
 /**
  * Generates the conditions for each of the fields asserted in a given query instruction.
  *
- * @param schemas - A list of schemas.
- * @param schema - The specific schema being addressed in the query.
+ * @param models - A list of models.
+ * @param model - The specific model being addressed in the query.
  * @param statementParams - A list of values to be inserted into the final statements.
  * @param instructionName - The name of the instruction that is being processed.
  * @param value - The value that the selected field should be compared with.
@@ -151,14 +150,11 @@ const composeFieldValues = (
  * @returns An SQL string representing the conditions for the provided query instructions.
  */
 export const composeConditions = (
-  schemas: Array<Schema>,
-  schema: Schema,
+  models: Array<Model>,
+  model: Model,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value:
-    | WithFilters
-    | WithValueOptions
-    | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
+  value: WithFilters | WithValueOptions | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
   options: Omit<Parameters<typeof composeFieldValues>[5], 'fieldSlug'> & {
     fieldSlug?: string;
   },
@@ -176,7 +172,7 @@ export const composeConditions = (
     const conditions = (
       Object.entries(value as object) as Array<[WithCondition, WithValueOptions]>
     ).map(([conditionType, checkValue]) =>
-      composeConditions(schemas, schema, statementParams, instructionName, checkValue, {
+      composeConditions(models, model, statementParams, instructionName, checkValue, {
         ...options,
         condition: conditionType,
       }),
@@ -195,22 +191,22 @@ export const composeConditions = (
   // potential object value in a special way, instead of just iterating over the nested
   // fields and trying to assert the column for each one.
   if (options.fieldSlug) {
-    const fieldDetails = getFieldFromSchema(
-      schema,
+    const fieldDetails = getFieldFromModel(
+      model,
       options.fieldSlug,
       instructionName,
       options.rootTable,
     );
 
-    const { field: schemaField } = fieldDetails;
+    const { field: modelField } = fieldDetails;
 
     // If the `to` instruction is used, JSON should be written as-is.
-    const consumeJSON = schemaField.type === 'json' && instructionName === 'to';
+    const consumeJSON = modelField.type === 'json' && instructionName === 'to';
 
     if (!(isObject(value) || Array.isArray(value)) || getSubQuery(value) || consumeJSON) {
       return composeFieldValues(
-        schemas,
-        schema,
+        models,
+        model,
         statementParams,
         instructionName,
         value as WithValue,
@@ -218,13 +214,13 @@ export const composeConditions = (
       );
     }
 
-    if (schemaField.type === 'reference' && isNested) {
+    if (modelField.type === 'reference' && isNested) {
       // `value` is asserted to be an object using `isObject` above, so we can safely
       // cast it here. The type is not being inferred automatically.
       const keys = Object.keys(value as object);
       const values = Object.values(value as object);
 
-      let recordTarget: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>;
+      let recordTarget: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>;
 
       // If only a single key is present, and it's "id", then we can simplify the query a
       // bit in favor of performance, because the stored value of a reference field in
@@ -234,11 +230,11 @@ export const composeConditions = (
         // This can be either a string or an object with conditions such as `being`.
         recordTarget = values[0];
       } else {
-        const relatedSchema = getSchemaBySlug(schemas, schemaField.target.slug);
+        const relatedModel = getModelBySlug(models, modelField.target.slug);
 
         const subQuery: Query = {
           get: {
-            [relatedSchema.slug]: {
+            [relatedModel.slug]: {
               with: value as WithInstruction,
               selecting: ['id'],
             },
@@ -246,13 +242,13 @@ export const composeConditions = (
         };
 
         recordTarget = {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: subQuery,
+          [RONIN_MODEL_SYMBOLS.QUERY]: subQuery,
         };
       }
 
       return composeConditions(
-        schemas,
-        schema,
+        models,
+        model,
         statementParams,
         instructionName,
         recordTarget,
@@ -279,7 +275,7 @@ export const composeConditions = (
       // either contain a list of nested fields that must be matched, or a list of
       // conditions (such as `being`, `notBeing`) that must be matched, so we have to
       // start from the beginning again.
-      return composeConditions(schemas, schema, statementParams, instructionName, value, {
+      return composeConditions(models, model, statementParams, instructionName, value, {
         ...options,
         fieldSlug: nestedFieldSlug,
       });
@@ -302,14 +298,7 @@ export const composeConditions = (
   // the array must be treated as a possibility inside of an OR condition.
   if (Array.isArray(value)) {
     const conditions = value.map((filter) =>
-      composeConditions(
-        schemas,
-        schema,
-        statementParams,
-        instructionName,
-        filter,
-        options,
-      ),
+      composeConditions(models, model, statementParams, instructionName, filter, options),
     );
 
     return conditions.join(' OR ');
@@ -332,16 +321,16 @@ export const composeConditions = (
  * a query and replaces them with their respective field slugs.
  *
  * For example, if the field `firstName` is configured as the Title Identifier in the
- * schema, any use of `nameIdentifier` will be replaced with `firstName` inside the
+ * model, any use of `nameIdentifier` will be replaced with `firstName` inside the
  * query instructions.
  *
- * @param schema - The schema being addressed in the query.
+ * @param model - The model being addressed in the query.
  * @param queryInstructions - The instructions of the query that is being run.
  *
  * @returns The provided query instructions, with special identifiers replaced.
  */
 export const formatIdentifiers = (
-  { identifiers }: Schema,
+  { identifiers }: Model,
   queryInstructions: Instructions,
 ): Instructions & SetInstructions => {
   // Queries might not have instructions (such as `get.accounts`).
@@ -386,6 +375,6 @@ export const formatIdentifiers = (
  */
 export const getSubQuery = (value: unknown): Query | null => {
   return isObject(value)
-    ? (value as Record<string, Query | undefined>)[RONIN_SCHEMA_SYMBOLS.QUERY] || null
+    ? (value as Record<string, Query | undefined>)[RONIN_MODEL_SYMBOLS.QUERY] || null
     : null;
 };

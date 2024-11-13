@@ -1,34 +1,34 @@
+import type { PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
-import type { PublicSchema } from '@/src/types/schema';
 import { compileQueryInput } from '@/src/utils';
 import {
-  addDefaultSchemaFields,
-  addDefaultSchemaPresets,
-  addSystemSchemas,
-} from '@/src/utils/schema';
+  addDefaultModelFields,
+  addDefaultModelPresets,
+  addSystemModels,
+} from '@/src/utils/model';
 
 /**
  * Composes SQL statements for the provided RONIN queries.
  *
  * @param queries - The RONIN queries for which SQL statements should be composed.
- * @param schemas - A list of schemas.
+ * @param models - A list of models.
  * @param options - Additional options to adjust the behavior of the statement generation.
  *
  * @returns The composed SQL statements.
  */
 export const compileQueries = (
   queries: Array<Query>,
-  schemas: Array<PublicSchema>,
+  models: Array<PublicModel>,
   options?: {
     inlineParams?: boolean;
   },
 ): Array<Statement> => {
-  const schemaList = addSystemSchemas(schemas).map((schema) => {
-    return addDefaultSchemaFields(schema, true);
+  const modelList = addSystemModels(models).map((model) => {
+    return addDefaultModelFields(model, true);
   });
 
-  const schemaListWithPresets = schemaList.map((schema) => {
-    return addDefaultSchemaPresets(schemaList, schema);
+  const modelListWithPresets = modelList.map((model) => {
+    return addDefaultModelPresets(modelList, model);
   });
 
   const dependencyStatements: Array<Statement> = [];
@@ -37,7 +37,7 @@ export const compileQueries = (
   for (const query of queries) {
     const result = compileQueryInput(
       query,
-      schemaListWithPresets,
+      modelListWithPresets,
       options?.inlineParams ? null : [],
     );
 
@@ -56,13 +56,13 @@ export const compileQueries = (
   return [...dependencyStatements, ...mainStatements];
 };
 
-// Expose schema types
+// Expose model types
 export type {
-  PublicSchema as Schema,
-  SchemaField,
-  SchemaIndex,
-  SchemaTrigger,
-} from '@/src/types/schema';
+  PublicModel as Model,
+  ModelField,
+  ModelIndex,
+  ModelTrigger,
+} from '@/src/types/model';
 
 // Expose query types
 export type { Query, Statement } from '@/src/types/query';

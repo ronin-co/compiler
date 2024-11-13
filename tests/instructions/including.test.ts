@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
-import { RONIN_SCHEMA_SYMBOLS } from '@/src/utils/helpers';
+import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
 test('get single record including unrelated record without filter', () => {
   const queries: Array<Query> = [
@@ -11,7 +11,7 @@ test('get single record including unrelated record without filter', () => {
         view: {
           including: {
             team: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   team: null,
                 },
@@ -23,7 +23,7 @@ test('get single record including unrelated record without filter', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -32,7 +32,7 @@ test('get single record including unrelated record without filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -50,11 +50,11 @@ test('get single record including unrelated record with filter', () => {
         view: {
           including: {
             team: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   team: {
                     with: {
-                      handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
+                      handle: `${RONIN_MODEL_SYMBOLS.FIELD}label`,
                     },
                   },
                 },
@@ -66,7 +66,7 @@ test('get single record including unrelated record with filter', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [
@@ -87,7 +87,7 @@ test('get single record including unrelated record with filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -105,7 +105,7 @@ test('get single record including unrelated records without filter', () => {
         view: {
           including: {
             teams: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   teams: null,
                 },
@@ -117,7 +117,7 @@ test('get single record including unrelated records without filter', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -126,7 +126,7 @@ test('get single record including unrelated records without filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -144,11 +144,11 @@ test('get single record including unrelated records with filter', () => {
         view: {
           including: {
             teams: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   teams: {
                     with: {
-                      handle: `${RONIN_SCHEMA_SYMBOLS.FIELD}label`,
+                      handle: `${RONIN_MODEL_SYMBOLS.FIELD}label`,
                     },
                   },
                 },
@@ -160,7 +160,7 @@ test('get single record including unrelated records with filter', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [
@@ -181,7 +181,7 @@ test('get single record including unrelated records with filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -199,7 +199,7 @@ test('get single record including unrelated ordered record', () => {
         view: {
           including: {
             team: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   team: {
                     orderedBy: {
@@ -215,7 +215,7 @@ test('get single record including unrelated ordered record', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -224,7 +224,7 @@ test('get single record including unrelated ordered record', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -242,7 +242,7 @@ test('get single record including unrelated ordered records', () => {
         view: {
           including: {
             teams: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   teams: {
                     orderedBy: {
@@ -258,7 +258,7 @@ test('get single record including unrelated ordered records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -267,7 +267,7 @@ test('get single record including unrelated ordered records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -291,13 +291,13 @@ test('get single record including ephemeral field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -323,13 +323,13 @@ test('get single record including deeply nested ephemeral field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'space',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {

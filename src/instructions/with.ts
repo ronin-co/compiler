@@ -1,5 +1,5 @@
+import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 import { composeConditions } from '@/src/utils/statement';
 
 /**
@@ -53,8 +53,8 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
  * Generates the SQL syntax for the `with` query instruction, which allows for filtering
  * the records that should be addressed.
  *
- * @param schemas - A list of schemas.
- * @param schema - The schema being addressed in the query.
+ * @param models - A list of models.
+ * @param model - The model being addressed in the query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `with` instruction included in a query.
@@ -63,15 +63,15 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
  * @returns The SQL syntax for the provided `with` instruction.
  */
 export const handleWith = (
-  schemas: Array<Schema>,
-  schema: Schema,
+  models: Array<Model>,
+  model: Model,
   statementParams: Array<unknown> | null,
   instruction: GetInstructions['with'],
   rootTable?: string,
 ): string => {
   const subStatement = composeConditions(
-    schemas,
-    schema,
+    models,
+    model,
     statementParams,
     'with',
     instruction as WithFilters,

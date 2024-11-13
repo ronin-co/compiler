@@ -1,16 +1,16 @@
 import type { WithFilters } from '@/src/instructions/with';
+import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
+import { getModelBySlug, getTableForModel } from '@/src/utils/model';
 import { composeConditions, getSubQuery } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `including` query instruction, which allows for
- * joining records from other schemas.
+ * joining records from other models.
  *
- * @param schemas - A list of schemas.
+ * @param models - A list of models.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `including` instruction provided in the current query.
@@ -19,7 +19,7 @@ import { composeConditions, getSubQuery } from '@/src/utils/statement';
  * @returns The SQL syntax for the provided `including` instruction.
  */
 export const handleIncluding = (
-  schemas: Array<Schema>,
+  models: Array<Model>,
   statementParams: Array<unknown> | null,
   instruction: Instructions['including'],
   rootTable?: string,
@@ -44,16 +44,16 @@ export const handleIncluding = (
     // continue with the current function and process the query as an SQL JOIN.
     if (!includingQuery) continue;
 
-    const { queryType, querySchema, queryInstructions } = splitQuery(includingQuery);
+    const { queryType, queryModel, queryInstructions } = splitQuery(includingQuery);
     let modifiableQueryInstructions = queryInstructions;
 
-    const relatedSchema = getSchemaBySlug(schemas, querySchema);
+    const relatedModel = getModelBySlug(models, queryModel);
 
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
-    let relatedTableSelector = `"${getTableForSchema(relatedSchema)}"`;
+    let relatedTableSelector = `"${getTableForModel(relatedModel)}"`;
 
     const tableAlias = `including_${ephemeralFieldSlug}`;
-    const single = querySchema !== relatedSchema.pluralSlug;
+    const single = queryModel !== relatedModel.pluralSlug;
 
     // If no `with` query instruction is provided, we want to perform a CROSS
     // JOIN instead of a LEFT JOIN, because it is guaranteed that the joined
@@ -89,10 +89,10 @@ export const handleIncluding = (
       const subSelect = compileQueryInput(
         {
           [queryType]: {
-            [querySchema]: modifiableQueryInstructions,
+            [queryModel]: modifiableQueryInstructions,
           },
         },
-        schemas,
+        models,
         statementParams,
       );
 
@@ -108,8 +108,8 @@ export const handleIncluding = (
       }
 
       const subStatement = composeConditions(
-        schemas,
-        relatedSchema,
+        models,
+        relatedModel,
         statementParams,
         'including',
         queryInstructions?.with as WithFilters,

@@ -1,7 +1,7 @@
+import type { Model } from '@/src/types/model';
 import type { Instructions, SetInstructions } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 import {
-  RONIN_SCHEMA_SYMBOLS,
+  RONIN_MODEL_SYMBOLS,
   RoninError,
   findInObject,
   isObject,
@@ -11,13 +11,13 @@ import {
  * Generates the SQL syntax for the `for` query instruction, which allows for quickly
  * adding a list of pre-defined instructions to a query.
  *
- * @param schema - The schema associated with the current query.
+ * @param model - The model associated with the current query.
  * @param instructions - The instructions of the current query.
  *
  * @returns The SQL syntax for the provided `for` instruction.
  */
 export const handleFor = (
-  schema: Schema,
+  model: Model,
   instructions: Instructions & SetInstructions,
 ): Instructions & SetInstructions => {
   // The `for` instruction might either contain an array of preset slugs, or an object
@@ -29,11 +29,11 @@ export const handleFor = (
 
   for (const presetSlug in normalizedFor) {
     const arg = normalizedFor[presetSlug];
-    const preset = schema.presets?.find((preset) => preset.slug === presetSlug);
+    const preset = model.presets?.find((preset) => preset.slug === presetSlug);
 
     if (!preset) {
       throw new RoninError({
-        message: `Preset "${presetSlug}" does not exist in schema "${schema.name}".`,
+        message: `Preset "${presetSlug}" does not exist in model "${model.name}".`,
         code: 'PRESET_NOT_FOUND',
       });
     }
@@ -43,8 +43,8 @@ export const handleFor = (
     // If an argument was provided for the preset, find the respective placeholders
     // inside the preset and replace them with the value of the actual argument.
     if (arg !== null) {
-      findInObject(replacedForFilter, RONIN_SCHEMA_SYMBOLS.VALUE, (match: string) =>
-        match.replace(RONIN_SCHEMA_SYMBOLS.VALUE, arg),
+      findInObject(replacedForFilter, RONIN_MODEL_SYMBOLS.VALUE, (match: string) =>
+        match.replace(RONIN_MODEL_SYMBOLS.VALUE, arg),
       );
     }
 

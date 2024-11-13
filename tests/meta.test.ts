@@ -1,16 +1,16 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import {
   RECORD_TIMESTAMP_REGEX,
-  RONIN_SCHEMA_SYMBOLS,
+  RONIN_MODEL_SYMBOLS,
   RoninError,
 } from '@/src/utils/helpers';
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
-import { SYSTEM_FIELDS } from '@/src/utils/schema';
+import { SYSTEM_FIELDS } from '@/src/utils/model';
 
-test('create new schema', () => {
+test('create new model', () => {
   const fields = [
     {
       slug: 'handle',
@@ -25,7 +25,7 @@ test('create new schema', () => {
   const queries: Array<Query> = [
     {
       create: {
-        schema: {
+        model: {
           to: {
             slug: 'account',
             fields,
@@ -35,9 +35,9 @@ test('create new schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -47,7 +47,7 @@ test('create new schema', () => {
     },
     {
       statement:
-        'INSERT INTO "schemas" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
+        'INSERT INTO "models" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
       params: [
         'account',
         JSON.stringify([...SYSTEM_FIELDS, ...fields]),
@@ -67,8 +67,8 @@ test('create new schema', () => {
 });
 
 // Ensure that a reasonable display name and URL slug are automatically selected for the
-// schema, based on which fields are available.
-test('create new schema with suitable default identifiers', () => {
+// model, based on which fields are available.
+test('create new model with suitable default identifiers', () => {
   const fields = [
     {
       slug: 'name',
@@ -86,7 +86,7 @@ test('create new schema with suitable default identifiers', () => {
   const queries: Array<Query> = [
     {
       create: {
-        schema: {
+        model: {
           to: {
             slug: 'account',
             fields,
@@ -96,21 +96,21 @@ test('create new schema with suitable default identifiers', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements[1].params[6]).toEqual('name');
   expect(statements[1].params[7]).toEqual('handle');
 });
 
-// Ensure that, if the `slug` of a schema changes during an update, an `ALTER TABLE`
+// Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
 // statement is generated for it.
-test('update existing schema (slug)', () => {
+test('update existing model (slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
-        schema: {
+        model: {
           with: {
             slug: 'account',
           },
@@ -122,13 +122,13 @@ test('update existing schema (slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -137,7 +137,7 @@ test('update existing schema (slug)', () => {
     },
     {
       statement:
-        'UPDATE "schemas" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "ronin.updatedAt" = ?6 WHERE ("slug" = ?7) RETURNING *',
+        'UPDATE "models" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "ronin.updatedAt" = ?6 WHERE ("slug" = ?7) RETURNING *',
       params: [
         'user',
         'users',
@@ -152,13 +152,13 @@ test('update existing schema (slug)', () => {
   ]);
 });
 
-// Ensure that, if the `slug` of a schema does not change during an update, no
+// Ensure that, if the `slug` of a model does not change during an update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
-test('update existing schema (plural name)', () => {
+test('update existing model (plural name)', () => {
   const queries: Array<Query> = [
     {
       set: {
-        schema: {
+        model: {
           with: {
             slug: 'account',
           },
@@ -170,29 +170,29 @@ test('update existing schema (plural name)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
       statement:
-        'UPDATE "schemas" SET "pluralName" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
+        'UPDATE "models" SET "pluralName" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
       params: ['Signups', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);
 });
 
-test('drop existing schema', () => {
+test('drop existing model', () => {
   const queries: Array<Query> = [
     {
       drop: {
-        schema: {
+        model: {
           with: {
             slug: 'account',
           },
@@ -201,13 +201,13 @@ test('drop existing schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -215,18 +215,18 @@ test('drop existing schema', () => {
       params: [],
     },
     {
-      statement: 'DELETE FROM "schemas" WHERE ("slug" = ?1) RETURNING *',
+      statement: 'DELETE FROM "models" WHERE ("slug" = ?1) RETURNING *',
       params: ['account'],
       returning: true,
     },
   ]);
 });
 
-test('query a schema that was just created', () => {
+test('query a model that was just created', () => {
   const queries: Array<Query> = [
     {
       create: {
-        schema: {
+        model: {
           to: {
             slug: 'account',
           },
@@ -240,9 +240,9 @@ test('query a schema that was just created', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements[2]).toEqual({
     statement: 'SELECT * FROM "accounts" LIMIT 1',
@@ -251,11 +251,11 @@ test('query a schema that was just created', () => {
   });
 });
 
-test('query a schema that was just updated', () => {
+test('query a model that was just updated', () => {
   const queries: Array<Query> = [
     {
       set: {
-        schema: {
+        model: {
           with: {
             slug: 'account',
           },
@@ -272,13 +272,13 @@ test('query a schema that was just updated', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements[2]).toEqual({
     statement: 'SELECT * FROM "users" LIMIT 1',
@@ -287,11 +287,11 @@ test('query a schema that was just updated', () => {
   });
 });
 
-test('query a schema that was just dropped', () => {
+test('query a model that was just dropped', () => {
   const queries: Array<Query> = [
     {
       drop: {
-        schema: {
+        model: {
           with: {
             slug: 'account',
           },
@@ -305,7 +305,7 @@ test('query a schema that was just dropped', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -314,7 +314,7 @@ test('query a schema that was just dropped', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -322,9 +322,9 @@ test('query a schema that was just dropped', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'No matching schema with either Slug or Plural Slug of "account" could be found.',
+    'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
-  expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
+  expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
 test('create new field', () => {
@@ -333,7 +333,7 @@ test('create new field', () => {
       create: {
         field: {
           to: {
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             slug: 'email',
             type: 'string',
           },
@@ -342,13 +342,13 @@ test('create new field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -357,7 +357,7 @@ test('create new field', () => {
     },
     {
       statement:
-        'INSERT INTO "fields" ("schema", "slug", "type", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "fields" ("model", "slug", "type", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
       params: [
         'account',
         'email',
@@ -377,7 +377,7 @@ test('create new reference field', () => {
       create: {
         field: {
           to: {
-            schema: { slug: 'member' },
+            model: { slug: 'member' },
             slug: 'account',
             type: 'reference',
             target: { slug: 'account' },
@@ -387,7 +387,7 @@ test('create new reference field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'member',
     },
@@ -396,7 +396,7 @@ test('create new reference field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -406,7 +406,7 @@ test('create new reference field', () => {
     },
     {
       statement:
-        'INSERT INTO "fields" ("schema", "slug", "type", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "schemas" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "fields" ("model", "slug", "type", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "models" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7) RETURNING *',
       params: [
         'member',
         'account',
@@ -427,7 +427,7 @@ test('create new reference field with actions', () => {
       create: {
         field: {
           to: {
-            schema: { slug: 'member' },
+            model: { slug: 'member' },
             slug: 'account',
             type: 'reference',
             target: { slug: 'account' },
@@ -440,7 +440,7 @@ test('create new reference field with actions', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'member',
     },
@@ -449,7 +449,7 @@ test('create new reference field with actions', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -459,7 +459,7 @@ test('create new reference field with actions', () => {
     },
     {
       statement:
-        'INSERT INTO "fields" ("schema", "slug", "type", "target", "actions.onDelete", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "schemas" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "fields" ("model", "slug", "type", "target", "actions.onDelete", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "models" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7, ?8) RETURNING *',
       params: [
         'member',
         'account',
@@ -475,7 +475,7 @@ test('create new reference field with actions', () => {
   ]);
 });
 
-// Ensure that, if the `slug` of a field changes during a schema update, an `ALTER TABLE`
+// Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
   const queries: Array<Query> = [
@@ -483,7 +483,7 @@ test('update existing field (slug)', () => {
       set: {
         field: {
           with: {
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             slug: 'email',
           },
           to: {
@@ -494,13 +494,13 @@ test('update existing field (slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -509,7 +509,7 @@ test('update existing field (slug)', () => {
     },
     {
       statement:
-        'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+        'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
       params: [
         'emailAddress',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -521,7 +521,7 @@ test('update existing field (slug)', () => {
   ]);
 });
 
-// Ensure that, if the `slug` of a field does not change during a schema update, no
+// Ensure that, if the `slug` of a field does not change during a model update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('update existing field (name)', () => {
   const queries: Array<Query> = [
@@ -529,7 +529,7 @@ test('update existing field (name)', () => {
       set: {
         field: {
           with: {
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             slug: 'email',
           },
           to: {
@@ -540,18 +540,18 @@ test('update existing field (name)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
       statement:
-        'UPDATE "fields" SET "name" = ?1, "ronin.updatedAt" = ?2 WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+        'UPDATE "fields" SET "name" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
       params: [
         'Email Address',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -569,7 +569,7 @@ test('drop existing field', () => {
       drop: {
         field: {
           with: {
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             slug: 'email',
           },
         },
@@ -577,13 +577,13 @@ test('drop existing field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -592,7 +592,7 @@ test('drop existing field', () => {
     },
     {
       statement:
-        'DELETE FROM "fields" WHERE ("schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
+        'DELETE FROM "fields" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
       params: ['account', 'email'],
       returning: true,
     },
@@ -612,7 +612,7 @@ test('create new index', () => {
         index: {
           to: {
             slug: 'index_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             fields,
           },
         },
@@ -620,14 +620,14 @@ test('create new index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -636,7 +636,7 @@ test('create new index', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -669,7 +669,7 @@ test('create new index with filter', () => {
         index: {
           to: {
             slug: 'index_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             fields,
             filter: filterInstruction,
           },
@@ -678,14 +678,14 @@ test('create new index with filter', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -695,7 +695,7 @@ test('create new index with filter', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -713,7 +713,7 @@ test('create new index with filter', () => {
 test('create new index with field expressions', () => {
   const fields = [
     {
-      expression: `LOWER(${RONIN_SCHEMA_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_SCHEMA_SYMBOLS.FIELD}lastName)`,
+      expression: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
     },
   ];
 
@@ -723,7 +723,7 @@ test('create new index with field expressions', () => {
         index: {
           to: {
             slug: 'index_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             fields,
           },
         },
@@ -731,7 +731,7 @@ test('create new index with field expressions', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -747,7 +747,7 @@ test('create new index with field expressions', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -756,7 +756,7 @@ test('create new index with field expressions', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -785,7 +785,7 @@ test('create new index with ordered and collated fields', () => {
         index: {
           to: {
             slug: 'index_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             fields,
           },
         },
@@ -793,14 +793,14 @@ test('create new index with ordered and collated fields', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -809,7 +809,7 @@ test('create new index with ordered and collated fields', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -836,7 +836,7 @@ test('create new unique index', () => {
         index: {
           to: {
             slug: 'index_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             fields,
             unique: true,
           },
@@ -845,14 +845,14 @@ test('create new unique index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -861,7 +861,7 @@ test('create new unique index', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "schema", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6, ?7) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -883,20 +883,20 @@ test('drop existing index', () => {
         index: {
           with: {
             slug: 'index_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
           },
         },
       },
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -905,7 +905,7 @@ test('drop existing index', () => {
     },
     {
       statement:
-        'DELETE FROM "indexes" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
+        'DELETE FROM "indexes" WHERE ("slug" = ?1 AND "model" = (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
       params: ['index_slug', 'account'],
       returning: true,
     },
@@ -931,7 +931,7 @@ test('create new trigger for creating records', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -941,7 +941,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'signup',
       fields: [{ slug: 'year', type: 'number' }],
@@ -951,7 +951,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -966,7 +966,7 @@ test('create new trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'account',
@@ -1007,7 +1007,7 @@ test('create new trigger for creating records with targeted fields', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             when: 'AFTER',
             action: 'UPDATE',
             effects: effectQueries,
@@ -1018,7 +1018,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'signup',
       fields: [{ slug: 'year', type: 'number' }],
@@ -1029,7 +1029,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1044,7 +1044,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("fields" IS NULL, ?6, json_patch("fields", ?6)), ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("fields" IS NULL, ?6, json_patch("fields", ?6)), ?7, ?8, ?9) RETURNING *',
       params: [
         'trigger_slug',
         'account',
@@ -1089,7 +1089,7 @@ test('create new trigger for creating records with multiple effects', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -1099,7 +1099,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'candidate',
       fields: [{ slug: 'year', type: 'number' }],
@@ -1113,7 +1113,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1132,7 +1132,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'account',
@@ -1154,7 +1154,7 @@ test('create new per-record trigger for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
             role: 'owner',
             pending: false,
           },
@@ -1169,7 +1169,7 @@ test('create new per-record trigger for creating records', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'team' },
+            model: { slug: 'team' },
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -1179,7 +1179,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -1196,7 +1196,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1212,7 +1212,7 @@ test('create new per-record trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'team',
@@ -1234,7 +1234,7 @@ test('create new per-record trigger for deleting records', () => {
       drop: {
         members: {
           with: {
-            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_OLD}createdBy`,
+            account: `${RONIN_MODEL_SYMBOLS.FIELD_OLD}createdBy`,
           },
         },
       },
@@ -1247,7 +1247,7 @@ test('create new per-record trigger for deleting records', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'team' },
+            model: { slug: 'team' },
             when: 'AFTER',
             action: 'DELETE',
             effects: effectQueries,
@@ -1257,7 +1257,7 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -1274,7 +1274,7 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1284,7 +1284,7 @@ test('create new per-record trigger for deleting records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'team',
@@ -1306,7 +1306,7 @@ test('create new per-record trigger with filters for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
             role: 'owner',
             pending: false,
           },
@@ -1327,7 +1327,7 @@ test('create new per-record trigger with filters for creating records', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'team' },
+            model: { slug: 'team' },
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -1338,7 +1338,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [{ slug: 'handle', type: 'string' }],
@@ -1356,7 +1356,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1373,7 +1373,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "schema", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("filter" IS NULL, ?6, json_patch("filter", ?6)), ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("filter" IS NULL, ?6, json_patch("filter", ?6)), ?7, ?8, ?9) RETURNING *',
       params: [
         'trigger_slug',
         'team',
@@ -1397,20 +1397,20 @@ test('drop existing trigger', () => {
         trigger: {
           with: {
             slug: 'trigger_slug',
-            schema: { slug: 'team' },
+            model: { slug: 'team' },
           },
         },
       },
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1419,7 +1419,7 @@ test('drop existing trigger', () => {
     },
     {
       statement:
-        'DELETE FROM "triggers" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
+        'DELETE FROM "triggers" WHERE ("slug" = ?1 AND "model" = (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
       params: ['trigger_slug', 'team'],
       returning: true,
     },
@@ -1441,7 +1441,7 @@ test('create new preset', () => {
         preset: {
           to: {
             slug: 'company_employees',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             instructions,
           },
         },
@@ -1449,19 +1449,19 @@ test('create new preset', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "presets" ("slug", "schema", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1), IIF("instructions" IS NULL, ?3, json_patch("instructions", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "presets" ("slug", "model", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("instructions" IS NULL, ?3, json_patch("instructions", ?3)), ?4, ?5, ?6) RETURNING *',
       params: [
         'company_employees',
         'account',
@@ -1482,36 +1482,36 @@ test('drop existing preset', () => {
         preset: {
           with: {
             slug: 'company_employees',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
           },
         },
       },
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
       statement:
-        'DELETE FROM "presets" WHERE ("slug" = ?1 AND "schema" = (SELECT "id" FROM "schemas" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
+        'DELETE FROM "presets" WHERE ("slug" = ?1 AND "model" = (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
       params: ['company_employees', 'account'],
       returning: true,
     },
   ]);
 });
 
-test('try to update existing schema that does not exist', () => {
+test('try to update existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
       set: {
-        schema: {
+        model: {
           with: {
             slug: 'account',
           },
@@ -1523,12 +1523,12 @@ test('try to update existing schema that does not exist', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1536,16 +1536,16 @@ test('try to update existing schema that does not exist', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'No matching schema with either Slug or Plural Slug of "account" could be found.',
+    'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
-  expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
+  expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
-test('try to update existing schema without minimum details (schema slug)', () => {
+test('try to update existing model without minimum details (model slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
-        schema: {
+        model: {
           with: {
             name: 'Accounts',
           },
@@ -1557,12 +1557,12 @@ test('try to update existing schema without minimum details (schema slug)', () =
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1570,7 +1570,7 @@ test('try to update existing schema without minimum details (schema slug)', () =
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'When updating schemas, a `slug` field must be provided in the `with` instruction.',
+    'When updating models, a `slug` field must be provided in the `with` instruction.',
   );
   expect(error).toHaveProperty('code', 'MISSING_FIELD');
   expect(error).toHaveProperty('fields', ['slug']);
@@ -1582,7 +1582,7 @@ test('try to create new field without minimum details (field slug)', () => {
       create: {
         field: {
           to: {
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             slug: 'email',
           },
         },
@@ -1590,7 +1590,7 @@ test('try to create new field without minimum details (field slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -1599,7 +1599,7 @@ test('try to create new field without minimum details (field slug)', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1613,7 +1613,7 @@ test('try to create new field without minimum details (field slug)', () => {
   expect(error).toHaveProperty('fields', ['type']);
 });
 
-test('try to update existing field without minimum details (schema slug)', () => {
+test('try to update existing field without minimum details (model slug)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -1629,12 +1629,12 @@ test('try to update existing field without minimum details (schema slug)', () =>
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1642,10 +1642,10 @@ test('try to update existing field without minimum details (schema slug)', () =>
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'When updating fields, a `schema.slug` field must be provided in the `with` instruction.',
+    'When updating fields, a `model.slug` field must be provided in the `with` instruction.',
   );
   expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['schema.slug']);
+  expect(error).toHaveProperty('fields', ['model.slug']);
 });
 
 test('try to update existing field without minimum details (field slug)', () => {
@@ -1654,7 +1654,7 @@ test('try to update existing field without minimum details (field slug)', () => 
       set: {
         field: {
           with: {
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             name: 'Email Address',
           },
           to: {
@@ -1665,12 +1665,12 @@ test('try to update existing field without minimum details (field slug)', () => 
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1703,7 +1703,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
         trigger: {
           to: {
             slug: 'trigger_slug',
-            schema: { slug: 'account' },
+            model: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',
             fields: [{ slug: 'email' }],
@@ -1714,7 +1714,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'signup',
       fields: [{ slug: 'year', type: 'number' }],
@@ -1727,7 +1727,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1737,6 +1737,6 @@ test('try to create new trigger with targeted fields and wrong action', () => {
     'message',
     'When creating triggers, targeting specific fields requires the `UPDATE` action.',
   );
-  expect(error).toHaveProperty('code', 'INVALID_SCHEMA_VALUE');
+  expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
   expect(error).toHaveProperty('fields', ['action']);
 });

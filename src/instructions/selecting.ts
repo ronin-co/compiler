@@ -1,14 +1,14 @@
+import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 import { flatten } from '@/src/utils/helpers';
-import { getFieldFromSchema } from '@/src/utils/schema';
+import { getFieldFromModel } from '@/src/utils/model';
 import { getSubQuery, prepareStatementValue } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `selecting` query instruction, which allows for
  * selecting a list of columns from rows.
  *
- * @param schema - The schema associated with the current query.
+ * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
@@ -16,7 +16,7 @@ import { getSubQuery, prepareStatementValue } from '@/src/utils/statement';
  * @returns An SQL string containing the columns that should be selected.
  */
 export const handleSelecting = (
-  schema: Schema,
+  model: Model,
   statementParams: Array<unknown> | null,
   instructions: {
     selecting: Instructions['selecting'];
@@ -30,12 +30,12 @@ export const handleSelecting = (
   let statement = instructions.selecting
     ? instructions.selecting
         .map((slug) => {
-          return getFieldFromSchema(schema, slug, 'selecting').fieldSelector;
+          return getFieldFromModel(model, slug, 'selecting').fieldSelector;
         })
         .join(', ')
     : '*';
 
-  // If additional fields (that are not part of the schema) were provided in the
+  // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
   if (instructions.including) {
     const filteredObject = Object.entries(instructions.including)

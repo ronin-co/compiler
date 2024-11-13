@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import { RoninError } from '@/src/utils/helpers';
@@ -17,7 +17,7 @@ test('get single record with non-existing field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -26,7 +26,7 @@ test('get single record with non-existing field', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -34,12 +34,12 @@ test('get single record with non-existing field', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Field "handle" defined for `with` does not exist in schema "Account".',
+    'Field "handle" defined for `with` does not exist in model "Account".',
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
 
-test('get single record with non-existing schema', () => {
+test('get single record with non-existing model', () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -52,12 +52,12 @@ test('get single record with non-existing schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -65,9 +65,9 @@ test('get single record with non-existing schema', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'No matching schema with either Slug or Plural Slug of "account" could be found.',
+    'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
-  expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
+  expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
 test('get single record with empty `with` instruction', () => {
@@ -83,7 +83,7 @@ test('get single record with empty `with` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -98,7 +98,7 @@ test('get single record with empty `with` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -125,7 +125,7 @@ test('set single record with empty `to` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -134,7 +134,7 @@ test('set single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -158,7 +158,7 @@ test('create single record with empty `to` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -167,7 +167,7 @@ test('create single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -191,7 +191,7 @@ test('get single record with `before` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -200,7 +200,7 @@ test('get single record with `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -224,7 +224,7 @@ test('get single record with `after` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -233,7 +233,7 @@ test('get single record with `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -258,7 +258,7 @@ test('get multiple records with `before` and `after` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -267,7 +267,7 @@ test('get multiple records with `before` and `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -291,7 +291,7 @@ test('get multiple records with empty `before` instruction', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -300,7 +300,7 @@ test('get multiple records with empty `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
