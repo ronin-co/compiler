@@ -327,7 +327,7 @@ test('set single record to new json field with array', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: [
         '["elaine@site.co","elaine@company.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -374,7 +374,7 @@ test('set single record to new json field with empty array', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: ['[]', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
       returning: true,
     },
@@ -420,7 +420,7 @@ test('set single record to new json field with object', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: [
         '{"site":"elaine@site.co","hobby":"dancer@dancing.co"}',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -467,7 +467,7 @@ test('set single record to new json field with empty object', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = IIF("emails" IS NULL, ?1, json_patch("emails", ?1)), "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
+      statement: `UPDATE \"accounts\" SET \"emails\" = ?1, \"ronin.updatedAt\" = ?2 WHERE (\"handle\" = ?3) RETURNING *`,
       params: ['{}', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
       returning: true,
     },
@@ -622,7 +622,7 @@ test('set single record to new grouped json field', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = IIF("billing.invoiceRecipients" IS NULL, ?1, json_patch("billing.invoiceRecipients", ?1)), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      statement: `UPDATE \"teams\" SET \"billing.invoiceRecipients\" = ?1, \"ronin.updatedAt\" = ?2 WHERE (\"id\" = ?3) RETURNING *`,
       params: [
         '["receipts@test.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
