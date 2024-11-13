@@ -115,18 +115,6 @@ const composeFieldValues = (
 
     conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${modelField.slug}"`;
     conditionValue = `${targetTable}."${value.replace(toReplace, '')}"`;
-  }
-  // For columns containing JSON, special handling is required, because the properties
-  // inside a JSON structure cannot be updated directly using column selectors, and must
-  // instead be patched through a JSON function, since the properties are all stored
-  // inside a single TEXT column.
-  else if (modelField.type === 'json' && instructionName === 'to') {
-    conditionSelector = `"${modelField.slug}"`;
-
-    if (collectStatementValue) {
-      const preparedValue = prepareStatementValue(statementParams, value);
-      conditionValue = `IIF(${conditionSelector} IS NULL, ${preparedValue}, json_patch(${conditionSelector}, ${preparedValue}))`;
-    }
   } else if (collectStatementValue) {
     conditionValue = prepareStatementValue(statementParams, value);
   }

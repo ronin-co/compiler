@@ -94,19 +94,25 @@ export const composeAssociationModelSlug = (model: PublicModel, field: ModelFiel
  * @param field - A field from a model.
  * @param fieldPath - The path of the field being addressed. Supports dot notation for
  * accessing nested fields.
+ * @param instructionName - The name of the query instruction that is being used.
  * @param rootTable - The name of a table, if it should be included in the SQL selector.
  *
  * @returns The SQL column selector for the provided field.
  */
-const getFieldSelector = (field: ModelField, fieldPath: string, rootTable?: string) => {
+const getFieldSelector = (
+  field: ModelField,
+  fieldPath: string,
+  instructionName: QueryInstructionType,
+  rootTable?: string,
+) => {
   const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD)
     ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD, '').slice(0, -1)}.`
     : '';
   const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
 
-  // If nested fields are allowed and the name of the field contains a period, that means
-  // we need to select a nested property from within a JSON field.
-  if (field.type === 'json') {
+  // If the field is of type JSON and the field is being selected in a read query, that
+  // means we should extract the nested property from the JSON field.
+  if (field.type === 'json' && instructionName !== 'to') {
     const dotParts = fieldPath.split('.');
     const columnName = tablePrefix + dotParts.shift();
     const jsonField = dotParts.join('.');
@@ -145,7 +151,12 @@ export const getFieldFromModel = (
     modelField = modelFields.find((field) => field.slug === fieldPath.split('.')[0]);
 
     if (modelField?.type === 'json') {
-      const fieldSelector = getFieldSelector(modelField, fieldPath, rootTable);
+      const fieldSelector = getFieldSelector(
+        modelField,
+        fieldPath,
+        instructionName,
+        rootTable,
+      );
       return { field: modelField, fieldSelector };
     }
   }
@@ -161,7 +172,12 @@ export const getFieldFromModel = (
     });
   }
 
-  const fieldSelector = getFieldSelector(modelField, fieldPath, rootTable);
+  const fieldSelector = getFieldSelector(
+    modelField,
+    fieldPath,
+    instructionName,
+    rootTable,
+  );
   return { field: modelField, fieldSelector };
 };
 

@@ -47,7 +47,7 @@ test('create new model', () => {
     },
     {
       statement:
-        'INSERT INTO "models" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, IIF("fields" IS NULL, ?2, json_patch("fields", ?2)), ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
+        'INSERT INTO "models" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
       params: [
         'account',
         JSON.stringify([...SYSTEM_FIELDS, ...fields]),
@@ -636,7 +636,7 @@ test('create new index', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -695,7 +695,7 @@ test('create new index with filter', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), IIF("filter" IS NULL, ?4, json_patch("filter", ?4)), ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -756,7 +756,7 @@ test('create new index with field expressions', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -809,7 +809,7 @@ test('create new index with ordered and collated fields', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -861,7 +861,7 @@ test('create new unique index', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("fields" IS NULL, ?3, json_patch("fields", ?3)), ?4, ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "indexes" ("slug", "model", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7) RETURNING *',
       params: [
         'index_slug',
         'account',
@@ -966,7 +966,7 @@ test('create new trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'account',
@@ -1044,7 +1044,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("fields" IS NULL, ?6, json_patch("fields", ?6)), ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
       params: [
         'trigger_slug',
         'account',
@@ -1132,7 +1132,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'account',
@@ -1212,7 +1212,7 @@ test('create new per-record trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'team',
@@ -1284,7 +1284,7 @@ test('create new per-record trigger for deleting records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
         'trigger_slug',
         'team',
@@ -1373,7 +1373,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, IIF("effects" IS NULL, ?5, json_patch("effects", ?5)), IIF("filter" IS NULL, ?6, json_patch("filter", ?6)), ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
       params: [
         'trigger_slug',
         'team',
@@ -1461,7 +1461,7 @@ test('create new preset', () => {
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "presets" ("slug", "model", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), IIF("instructions" IS NULL, ?3, json_patch("instructions", ?3)), ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "presets" ("slug", "model", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
       params: [
         'company_employees',
         'account',
