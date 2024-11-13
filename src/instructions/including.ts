@@ -4,7 +4,7 @@ import type { Instructions } from '@/src/types/query';
 import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { getModelBySlug, getTableForModel } from '@/src/utils/model';
-import { composeConditions, getSubQuery } from '@/src/utils/statement';
+import { composeConditions, getSymbol } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `including` query instruction, which allows for
@@ -34,7 +34,7 @@ export const handleIncluding = (
   let rootTableName = rootTable;
 
   for (const ephemeralFieldSlug in instruction) {
-    const includingQuery = getSubQuery(instruction[ephemeralFieldSlug]);
+    const symbol = getSymbol(instruction[ephemeralFieldSlug]);
 
     // The `including` instruction might contain values that are not queries, which are
     // taken care of by the `handleSelecting` function. Specifically, those values are
@@ -42,9 +42,9 @@ export const handleIncluding = (
     //
     // Only in the case that the `including` instruction contains a query, we want to
     // continue with the current function and process the query as an SQL JOIN.
-    if (!includingQuery) continue;
+    if (symbol?.type !== 'query') continue;
 
-    const { queryType, queryModel, queryInstructions } = splitQuery(includingQuery);
+    const { queryType, queryModel, queryInstructions } = splitQuery(symbol.value);
     let modifiableQueryInstructions = queryInstructions;
 
     const relatedModel = getModelBySlug(models, queryModel);

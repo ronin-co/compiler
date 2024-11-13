@@ -13,7 +13,7 @@ import {
   getFieldFromModel,
   getModelBySlug,
 } from '@/src/utils/model';
-import { composeConditions, getSubQuery } from '@/src/utils/statement';
+import { composeConditions, getSymbol } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `to` query instruction, which allows for providing
@@ -63,14 +63,14 @@ export const handleTo = (
     ...toInstruction.ronin,
   };
 
-  const subQuery = getSubQuery(toInstruction);
+  const symbol = getSymbol(toInstruction);
 
   // If a sub query is provided as the `to` instruction, we don't need to compute a list
   // of fields and/or values for the SQL query, since the fields and values are all
   // derived from the sub query. This allows us to keep the SQL statement lean.
-  if (subQuery) {
+  if (symbol?.type === 'query') {
     let { queryModel: subQueryModelSlug, queryInstructions: subQueryInstructions } =
-      splitQuery(subQuery);
+      splitQuery(symbol.value);
     const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
     const subQuerySelectedFields = subQueryInstructions?.selecting;
@@ -121,7 +121,7 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, models, statementParams).main.statement;
+    return compileQueryInput(symbol.value, models, statementParams).main.statement;
   }
 
   // Assign default field values to the provided instruction.

@@ -90,10 +90,12 @@ const composeFieldValues = (
   // If only the field selectors are being requested, do not register any values.
   const collectStatementValue = options.type !== 'fields';
 
+  const symbol = getSymbol(value);
+
   let conditionSelector = selector;
   let conditionValue = value;
 
-  if (getSubQuery(value) && collectStatementValue) {
+  if (symbol?.type === 'query' && collectStatementValue) {
     conditionValue = `(${
       compileQueryInput(
         (value as Record<string, Query>)[RONIN_MODEL_SYMBOLS.QUERY],
@@ -191,7 +193,13 @@ export const composeConditions = (
     // If the `to` instruction is used, JSON should be written as-is.
     const consumeJSON = modelField.type === 'json' && instructionName === 'to';
 
-    if (!(isObject(value) || Array.isArray(value)) || getSubQuery(value) || consumeJSON) {
+    const symbol = getSymbol(value);
+
+    if (
+      !(isObject(value) || Array.isArray(value)) ||
+      symbol?.type === 'query' ||
+      consumeJSON
+    ) {
       return composeFieldValues(
         models,
         model,
@@ -355,14 +363,42 @@ export const formatIdentifiers = (
 };
 
 /**
- * Obtains a sub query from a value, if the value contains one.
+ * Checks if the provided value contains a symbol and returns its type and value.
  *
  * @param value - The value that should be checked.
  *
- * @returns A sub query, if the provided value contains one.
+ * @returns The type and value of the symbol, if the provided value contains one.
  */
-export const getSubQuery = (value: unknown): Query | null => {
-  return isObject(value)
-    ? (value as Record<string, Query | undefined>)[RONIN_MODEL_SYMBOLS.QUERY] || null
-    : null;
+export const getSymbol = (
+  value: unknown,
+):
+  | {
+      type: 'query';
+      value: Query;
+    }
+  | {
+      type: 'expression';
+      value: string;
+    }
+  | null => {
+  if (!isObject(value)) return null;
+  const objectValue = value as
+    | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>
+    | Record<typeof RONIN_MODEL_SYMBOLS.EXPRESSION, string>;
+
+  if (RONIN_MODEL_SYMBOLS.QUERY in objectValue) {
+    return {
+      type: 'query',
+      value: objectValue[RONIN_MODEL_SYMBOLS.QUERY],
+    };
+  }
+
+  if (RONIN_MODEL_SYMBOLS.EXPRESSION in objectValue) {
+    return {
+      type: 'expression',
+      value: objectValue[RONIN_MODEL_SYMBOLS.EXPRESSION],
+    };
+  }
+
+  return null;
 };

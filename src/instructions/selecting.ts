@@ -2,7 +2,7 @@ import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { flatten } from '@/src/utils/helpers';
 import { getFieldFromModel } from '@/src/utils/model';
-import { getSubQuery, prepareStatementValue } from '@/src/utils/statement';
+import { getSymbol, prepareStatementValue } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `selecting` query instruction, which allows for
@@ -45,7 +45,9 @@ export const handleSelecting = (
       // the case of sub queries resulting in multiple records, it's the only way to
       // include multiple rows of another table.
       .filter(([_, value]) => {
-        const hasQuery = getSubQuery(value);
+        const symbol = getSymbol(value);
+        const hasQuery = symbol?.type === 'query';
+
         if (hasQuery) isJoining = true;
         return !hasQuery;
       });
