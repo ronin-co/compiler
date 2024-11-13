@@ -63,6 +63,7 @@ export const handleTo = (
     ...toInstruction.ronin,
   };
 
+  // Check whether a query resides at the root of the `to` instruction.
   const symbol = getSymbol(toInstruction);
 
   // If a sub query is provided as the `to` instruction, we don't need to compute a list

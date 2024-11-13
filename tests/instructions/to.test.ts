@@ -48,6 +48,51 @@ test('set single record to new string field', () => {
   ]);
 });
 
+test('set single record to new string field with expression referencing fields', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            name: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `UPPER(substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 1, 1)) || substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 2)`,
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, models);
+
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "name" = UPPER(substr("handle", 1, 1)) || substr("handle", 2), "ronin.updatedAt" = ?1 WHERE ("handle" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      returning: true,
+    },
+  ]);
+});
+
 test('set single record to new one-cardinality reference field', () => {
   const queries: Array<Query> = [
     {
@@ -467,7 +512,7 @@ test('set single record to new json field with empty object', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE \"accounts\" SET \"emails\" = ?1, \"ronin.updatedAt\" = ?2 WHERE (\"handle\" = ?3) RETURNING *`,
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: ['{}', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
       returning: true,
     },
@@ -622,7 +667,7 @@ test('set single record to new grouped json field', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE \"teams\" SET \"billing.invoiceRecipients\" = ?1, \"ronin.updatedAt\" = ?2 WHERE (\"id\" = ?3) RETURNING *`,
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
         '["receipts@test.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),

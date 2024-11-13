@@ -6,7 +6,12 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import { RONIN_MODEL_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
+import {
+  RONIN_MODEL_FIELD_REGEX,
+  RONIN_MODEL_SYMBOLS,
+  RoninError,
+  isObject,
+} from '@/src/utils/helpers';
 
 import {
   WITH_CONDITIONS,
@@ -97,12 +102,13 @@ const composeFieldValues = (
 
   if (symbol?.type === 'query' && collectStatementValue) {
     conditionValue = `(${
-      compileQueryInput(
-        (value as Record<string, Query>)[RONIN_MODEL_SYMBOLS.QUERY],
-        models,
-        statementParams,
-      ).main.statement
+      compileQueryInput(symbol.value, models, statementParams).main.statement
     })`;
+  } else if (symbol?.type === 'expression' && collectStatementValue) {
+    conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
+      const fieldSlug = match.replace(RONIN_MODEL_SYMBOLS.FIELD, '');
+      return getFieldFromModel(model, fieldSlug, instructionName).fieldSelector;
+    });
   } else if (typeof value === 'string' && value.startsWith(RONIN_MODEL_SYMBOLS.FIELD)) {
     let targetTable = `"${options.rootTable}"`;
     let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
@@ -193,13 +199,7 @@ export const composeConditions = (
     // If the `to` instruction is used, JSON should be written as-is.
     const consumeJSON = modelField.type === 'json' && instructionName === 'to';
 
-    const symbol = getSymbol(value);
-
-    if (
-      !(isObject(value) || Array.isArray(value)) ||
-      symbol?.type === 'query' ||
-      consumeJSON
-    ) {
+    if (!(isObject(value) || Array.isArray(value)) || getSymbol(value) || consumeJSON) {
       return composeFieldValues(
         models,
         model,
