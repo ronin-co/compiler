@@ -105,6 +105,10 @@ const composeFieldValues = (
       compileQueryInput(symbol.value, models, statementParams).main.statement
     })`;
   } else if (symbol?.type === 'expression') {
+    if (collectStatementValue) {
+      conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${modelField.slug}"`;
+    }
+
     conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
       let targetTable: string | undefined;
       let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
@@ -125,7 +129,7 @@ const composeFieldValues = (
         targetTable = options.rootTable;
         toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
 
-        if (options.rootTable && !collectStatementValue)
+        if (options.rootTable && !options.rootTable.startsWith('sub_'))
           rootModel = getModelBySlug(models, options.rootTable);
       }
 
