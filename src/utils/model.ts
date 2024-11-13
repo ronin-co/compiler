@@ -99,7 +99,12 @@ export const composeAssociationModelSlug = (model: PublicModel, field: ModelFiel
  *
  * @returns The SQL column selector for the provided field.
  */
-const getFieldSelector = (field: ModelField, fieldPath: string,  instructionName: QueryInstructionType, rootTable?: string) => {
+const getFieldSelector = (
+  field: ModelField,
+  fieldPath: string,
+  instructionName: QueryInstructionType,
+  rootTable?: string,
+) => {
   const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD)
     ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD, '').slice(0, -1)}.`
     : '';
@@ -146,7 +151,12 @@ export const getFieldFromModel = (
     modelField = modelFields.find((field) => field.slug === fieldPath.split('.')[0]);
 
     if (modelField?.type === 'json') {
-      const fieldSelector = getFieldSelector(modelField, fieldPath, instructionName, rootTable);
+      const fieldSelector = getFieldSelector(
+        modelField,
+        fieldPath,
+        instructionName,
+        rootTable,
+      );
       return { field: modelField, fieldSelector };
     }
   }
@@ -162,7 +172,12 @@ export const getFieldFromModel = (
     });
   }
 
-  const fieldSelector = getFieldSelector(modelField, fieldPath, instructionName, rootTable);
+  const fieldSelector = getFieldSelector(
+    modelField,
+    fieldPath,
+    instructionName,
+    rootTable,
+  );
   return { field: modelField, fieldSelector };
 };
 
