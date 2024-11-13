@@ -110,8 +110,8 @@ const getFieldSelector = (
     : '';
   const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
 
-  // If the field is of type JSON and a field is being selected (not updated), that means
-  // we should extract the nested property from the JSON field.
+  // If the field is of type JSON and the field is being selected in a read query, that
+  // means we should extract the nested property from the JSON field.
   if (field.type === 'json' && instructionName !== 'to') {
     const dotParts = fieldPath.split('.');
     const columnName = tablePrefix + dotParts.shift();
