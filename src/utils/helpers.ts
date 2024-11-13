@@ -21,6 +21,9 @@ export const RONIN_MODEL_SYMBOLS = {
   // Represents a sub query.
   QUERY: '__RONIN_QUERY',
 
+  // Represents an expression that should be evaluated.
+  EXPRESSION: '__RONIN_EXPRESSION',
+
   // Represents the value of a field in a model.
   FIELD: '__RONIN_FIELD_',
 
