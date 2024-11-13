@@ -864,6 +864,8 @@ export const addModelQueries = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
+      const currentModel = targetModel as Model;
+
       // When the trigger should fire and what type of query should cause it to fire.
       const { when, action } = instructionList;
 
@@ -891,7 +893,7 @@ export const addModelQueries = (
         }
 
         const fieldSelectors = fields.map((field) => {
-          return getFieldFromModel(targetModel as Model, field.slug, 'to').fieldSelector;
+          return getFieldFromModel(currentModel, field.slug, 'to').fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
@@ -918,13 +920,9 @@ export const addModelQueries = (
             ? RONIN_MODEL_SYMBOLS.FIELD_OLD
             : RONIN_MODEL_SYMBOLS.FIELD_NEW;
 
-        const withStatement = handleWith(
-          models,
-          targetModel as Model,
-          params,
-          filterQuery,
-          tablePlaceholder,
-        );
+        const withStatement = handleWith(models, currentModel, params, filterQuery, {
+          rootTable: tablePlaceholder,
+        });
 
         statementParts.push('WHEN', `(${withStatement})`);
       }
@@ -933,6 +931,7 @@ export const addModelQueries = (
       const effectStatements = effectQueries.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
+          rootModel: currentModel,
         }).main.statement;
       });
 

@@ -41,7 +41,7 @@ export const RONIN_MODEL_SYMBOLS = {
  * A regular expression for matching the symbol that represents a field of a model.
  */
 export const RONIN_MODEL_FIELD_REGEX = new RegExp(
-  `${RONIN_MODEL_SYMBOLS.FIELD}[a-zA-Z0-9]+`,
+  `${RONIN_MODEL_SYMBOLS.FIELD}[_a-zA-Z0-9]+`,
   'g',
 );
 

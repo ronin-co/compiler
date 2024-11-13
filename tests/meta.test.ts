@@ -1234,7 +1234,9 @@ test('create new per-record trigger for deleting records', () => {
       drop: {
         members: {
           with: {
-            account: `${RONIN_MODEL_SYMBOLS.FIELD_OLD}createdBy`,
+            account: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_OLD}createdBy`,
+            },
           },
         },
       },
@@ -1260,14 +1262,17 @@ test('create new per-record trigger for deleting records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-    },
-    {
-      slug: 'account',
+      fields: [
+        {
+          slug: 'createdBy',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'member',
       fields: [
-        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'account', type: 'string' },
         { slug: 'role', type: 'string' },
         { slug: 'pending', type: 'boolean' },
       ],

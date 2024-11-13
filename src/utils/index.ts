@@ -37,6 +37,11 @@ export const compileQueryInput = (
      * Whether the query should explicitly return records. Defaults to `true`.
      */
     returning?: boolean;
+    /**
+     * If the query is the result of a query targeting a different schema, this option
+     * can contain the original schema for which the original query was processed.
+     */
+    rootModel?: Model;
   },
 ): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
@@ -163,13 +168,16 @@ export const compileQueryInput = (
   // Queries of type "get", "set", "drop", or "count" all support filtering records, but
   // those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
-    const withStatement = handleWith(
-      models,
-      model,
-      statementParams,
-      instructions?.with,
-      isJoining ? table : undefined,
-    );
+    let customTable: string | undefined;
+
+    if (options?.rootModel) {
+      customTable = getTableForModel(options.rootModel);
+    }
+
+    const withStatement = handleWith(models, model, statementParams, instructions?.with, {
+      rootTable: isJoining ? table : undefined,
+      customTable,
+    });
 
     if (withStatement.length > 0) conditions.push(withStatement);
   }

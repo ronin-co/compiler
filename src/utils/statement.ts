@@ -106,8 +106,22 @@ const composeFieldValues = (
     })`;
   } else if (symbol?.type === 'expression' && collectStatementValue) {
     conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
-      const fieldSlug = match.replace(RONIN_MODEL_SYMBOLS.FIELD, '');
-      return getFieldFromModel(model, fieldSlug, instructionName).fieldSelector;
+      let targetTable: string | undefined;
+      let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
+
+      if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
+        targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
+      } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
+        targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
+      }
+
+      const rootModel = options.customTable
+        ? getModelBySlug(models, options.customTable)
+        : model;
+
+      const fieldSlug = match.replace(toReplace, '');
+      return getFieldFromModel(rootModel, fieldSlug, instructionName, targetTable)
+        .fieldSelector;
     });
   } else if (typeof value === 'string' && value.startsWith(RONIN_MODEL_SYMBOLS.FIELD)) {
     let targetTable = `"${options.rootTable}"`;
