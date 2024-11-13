@@ -150,6 +150,12 @@ export const compileQueryInput = (
       });
     }
 
+    let customTable: string | undefined;
+
+    if (options?.rootModel) {
+      customTable = getTableForModel(options.rootModel);
+    }
+
     const toStatement = handleTo(
       models,
       model,
@@ -157,7 +163,10 @@ export const compileQueryInput = (
       queryType,
       dependencyStatements,
       { with: instructions.with, to: instructions.to },
-      isJoining ? table : undefined,
+      {
+        rootTable: isJoining ? table : undefined,
+        customTable,
+      },
     );
 
     statement += `${toStatement} `;

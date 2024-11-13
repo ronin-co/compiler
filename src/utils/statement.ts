@@ -104,7 +104,7 @@ const composeFieldValues = (
     conditionValue = `(${
       compileQueryInput(symbol.value, models, statementParams).main.statement
     })`;
-  } else if (symbol?.type === 'expression' && collectStatementValue) {
+  } else if (symbol?.type === 'expression') {
     conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
       let targetTable: string | undefined;
       let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;

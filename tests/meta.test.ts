@@ -1154,7 +1154,9 @@ test('create new per-record trigger for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+            account: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+            },
             role: 'owner',
             pending: false,
           },
@@ -1182,14 +1184,17 @@ test('create new per-record trigger for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-    },
-    {
-      slug: 'account',
+      fields: [
+        {
+          slug: 'createdBy',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'member',
       fields: [
-        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'account', type: 'string' },
         { slug: 'role', type: 'string' },
         { slug: 'pending', type: 'boolean' },
       ],
@@ -1311,7 +1316,9 @@ test('create new per-record trigger with filters for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+            account: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+            },
             role: 'owner',
             pending: false,
           },
@@ -1346,15 +1353,12 @@ test('create new per-record trigger with filters for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [{ slug: 'handle', type: 'string' }],
-    },
-    {
-      slug: 'account',
+      fields: [{ slug: 'handle', type: 'string' }, { slug: 'createdBy', type: 'string' }],
     },
     {
       slug: 'member',
       fields: [
-        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'account', type: 'string' },
         { slug: 'role', type: 'string' },
         { slug: 'pending', type: 'boolean' },
       ],
