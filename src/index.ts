@@ -1,8 +1,8 @@
+import type { PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
-import type { PublicSchema } from '@/src/types/schema';
 import { compileQueryInput } from '@/src/utils';
 import {
-  addDefaultSchemaFields,
+  addDefaultModelFields,
   addDefaultSchemaPresets,
   addSystemSchemas,
 } from '@/src/utils/schema';
@@ -18,13 +18,13 @@ import {
  */
 export const compileQueries = (
   queries: Array<Query>,
-  schemas: Array<PublicSchema>,
+  schemas: Array<PublicModel>,
   options?: {
     inlineParams?: boolean;
   },
 ): Array<Statement> => {
   const schemaList = addSystemSchemas(schemas).map((schema) => {
-    return addDefaultSchemaFields(schema, true);
+    return addDefaultModelFields(schema, true);
   });
 
   const schemaListWithPresets = schemaList.map((schema) => {
@@ -58,11 +58,11 @@ export const compileQueries = (
 
 // Expose schema types
 export type {
-  PublicSchema as Schema,
-  SchemaField,
-  SchemaIndex,
-  SchemaTrigger,
-} from '@/src/types/schema';
+  PublicModel as Model,
+  ModelField,
+  ModelIndex,
+  ModelTrigger,
+} from '@/src/types/model';
 
 // Expose query types
 export type { Query, Statement } from '@/src/types/query';

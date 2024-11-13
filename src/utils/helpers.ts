@@ -1,5 +1,5 @@
+import type { Schema } from '@/src/types/model';
 import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 
 import { init as cuid } from '@paralleldrive/cuid2';
 
@@ -17,7 +17,7 @@ export const RECORD_TIMESTAMP_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}
  * query is nested into a query, the nested query will be marked with `__RONIN_QUERY`,
  * which allows for distinguishing that nested query from an object of instructions.
  */
-export const RONIN_SCHEMA_SYMBOLS = {
+export const RONIN_MODEL_SYMBOLS = {
   // Represents a sub query.
   QUERY: '__RONIN_QUERY',
 
@@ -38,7 +38,7 @@ export const RONIN_SCHEMA_SYMBOLS = {
  * A regular expression for matching the symbol that represents a field of a schema.
  */
 export const RONIN_SCHEMA_FIELD_REGEX = new RegExp(
-  `${RONIN_SCHEMA_SYMBOLS.FIELD}[a-zA-Z0-9]+`,
+  `${RONIN_MODEL_SYMBOLS.FIELD}[a-zA-Z0-9]+`,
   'g',
 );
 

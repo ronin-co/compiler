@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('inline statement values', () => {
@@ -13,7 +13,7 @@ test('inline statement values', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -25,7 +25,7 @@ test('inline statement values', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas, {
+  const statements = compileQueries(queries, models, {
     inlineParams: true,
   });
 

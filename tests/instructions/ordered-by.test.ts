@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get multiple records ordered by field', () => {
@@ -15,7 +15,7 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -27,7 +27,7 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -51,7 +51,7 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -67,7 +67,7 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {

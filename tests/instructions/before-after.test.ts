@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import { CURSOR_NULL_PLACEHOLDER } from '@/src/instructions/before-after';
 import type { Query } from '@/src/types/query';
 import { RoninError } from '@/src/utils/helpers';
@@ -16,13 +16,13 @@ test('get multiple records before cursor', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -48,7 +48,7 @@ test('get multiple records before cursor ordered by string field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -60,7 +60,7 @@ test('get multiple records before cursor ordered by string field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -86,7 +86,7 @@ test('get multiple records before cursor ordered by boolean field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -98,7 +98,7 @@ test('get multiple records before cursor ordered by boolean field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -124,7 +124,7 @@ test('get multiple records before cursor ordered by number field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -136,7 +136,7 @@ test('get multiple records before cursor ordered by number field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -162,7 +162,7 @@ test('get multiple records before cursor ordered by empty string field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -174,7 +174,7 @@ test('get multiple records before cursor ordered by empty string field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -200,7 +200,7 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -212,7 +212,7 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -238,7 +238,7 @@ test('get multiple records before cursor ordered by empty number field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -250,7 +250,7 @@ test('get multiple records before cursor ordered by empty number field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -276,7 +276,7 @@ test('get multiple records before cursor while filtering', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -288,7 +288,7 @@ test('get multiple records before cursor while filtering', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -310,7 +310,7 @@ test('try to paginate without providing page size', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -319,7 +319,7 @@ test('try to paginate without providing page size', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }

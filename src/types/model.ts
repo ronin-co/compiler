@@ -1,6 +1,6 @@
 import type { GetInstructions, Query, WithInstruction } from '@/src/types/query';
 
-type SchemaFieldBasics = {
+type ModelFieldBasics = {
   name?: string;
   slug: string;
   displayAs?: string;
@@ -9,18 +9,18 @@ type SchemaFieldBasics = {
   defaultValue?: unknown;
 };
 
-type SchemaFieldNormal = SchemaFieldBasics & {
+type ModelFieldNormal = ModelFieldBasics & {
   type: 'string' | 'number' | 'boolean' | 'date' | 'json' | 'group';
 };
 
-export type SchemaFieldReferenceAction =
+export type ModelFieldReferenceAction =
   | 'CASCADE'
   | 'RESTRICT'
   | 'SET NULL'
   | 'SET DEFAULT'
   | 'NO ACTION';
 
-export type SchemaFieldReference = SchemaFieldBasics & {
+export type ModelFieldReference = ModelFieldBasics & {
   type: 'reference';
 
   // Make the `slug` required.
@@ -28,14 +28,14 @@ export type SchemaFieldReference = SchemaFieldBasics & {
 
   kind?: 'one' | 'many';
   actions?: {
-    onDelete?: SchemaFieldReferenceAction;
-    onUpdate?: SchemaFieldReferenceAction;
+    onDelete?: ModelFieldReferenceAction;
+    onUpdate?: ModelFieldReferenceAction;
   };
 };
 
-export type SchemaField = SchemaFieldNormal | SchemaFieldReference;
+export type ModelField = ModelFieldNormal | ModelFieldReference;
 
-export type SchemaIndexField = {
+export type ModelIndexField = {
   /** The collating sequence used for text placed inside the field. */
   collation?: 'BINARY' | 'NOCASE' | 'RTRIM';
   /** How the records in the index should be ordered. */
@@ -51,11 +51,11 @@ export type SchemaIndexField = {
     }
 );
 
-export type SchemaIndex = {
+export type ModelIndex = {
   /**
    * The list of fields in the schema for which the index should be created.
    */
-  fields: Array<SchemaIndexField>;
+  fields: Array<ModelIndexField>;
   /**
    * Whether only one record with a unique value for the provided fields will be allowed.
    */
@@ -67,7 +67,7 @@ export type SchemaIndex = {
   filter?: WithInstruction;
 };
 
-export type SchemaTriggerField = {
+export type ModelTriggerField = {
   /**
    * The slug of the field that should cause the trigger to fire if the value of the
    * field has changed.
@@ -75,7 +75,7 @@ export type SchemaTriggerField = {
   slug: string;
 };
 
-export type SchemaTrigger = {
+export type ModelTrigger = {
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a maching query is executed. */
@@ -83,7 +83,7 @@ export type SchemaTrigger = {
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
   /** A list of field slugs for which the trigger should fire. */
-  fields?: Array<SchemaTriggerField>;
+  fields?: Array<ModelTriggerField>;
   /**
    * An object containing query instructions used to determine whether the trigger should
    * fire, or not.
@@ -110,15 +110,15 @@ export interface Schema {
   };
   idPrefix?: string;
 
-  fields?: Array<SchemaField>;
-  indexes?: Array<SchemaIndex>;
-  triggers?: Array<SchemaTrigger>;
+  fields?: Array<ModelField>;
+  indexes?: Array<ModelIndex>;
+  triggers?: Array<ModelTrigger>;
   presets?: Array<SchemaPreset>;
 }
 
 // In schemas provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicSchema = Omit<Partial<Schema>, 'slug' | 'identifiers'> & {
+export type PublicModel = Omit<Partial<Schema>, 'slug' | 'identifiers'> & {
   slug: Required<Schema['slug']>;
 
   // It should also be possible for schemas to only define one of the two identifiers,

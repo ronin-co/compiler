@@ -1,11 +1,11 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import {
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
-  RONIN_SCHEMA_SYMBOLS,
+  RONIN_MODEL_SYMBOLS,
   RoninError,
 } from '@/src/utils/helpers';
 
@@ -25,7 +25,7 @@ test('set single record to new string field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -37,7 +37,7 @@ test('set single record to new string field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -66,7 +66,7 @@ test('set single record to new one-cardinality reference field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -88,7 +88,7 @@ test('set single record to new one-cardinality reference field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -119,7 +119,7 @@ test('set single record to new many-cardinality reference field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'post',
       fields: [
@@ -142,7 +142,7 @@ test('set single record to new many-cardinality reference field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -187,7 +187,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'post',
       fields: [
@@ -210,7 +210,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -251,7 +251,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'post',
       fields: [
@@ -274,7 +274,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -307,7 +307,7 @@ test('set single record to new json field with array', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -323,7 +323,7 @@ test('set single record to new json field with array', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -354,7 +354,7 @@ test('set single record to new json field with empty array', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -370,7 +370,7 @@ test('set single record to new json field with empty array', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -400,7 +400,7 @@ test('set single record to new json field with object', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -416,7 +416,7 @@ test('set single record to new json field with object', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -447,7 +447,7 @@ test('set single record to new json field with empty object', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -463,7 +463,7 @@ test('set single record to new json field with empty object', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -492,7 +492,7 @@ test('set single record to new grouped string field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [
@@ -508,7 +508,7 @@ test('set single record to new grouped string field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -543,7 +543,7 @@ test('set single record to new grouped reference field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -569,7 +569,7 @@ test('set single record to new grouped reference field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -602,7 +602,7 @@ test('set single record to new grouped json field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [
@@ -618,7 +618,7 @@ test('set single record to new grouped json field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -643,7 +643,7 @@ test('set single record to result of nested query', () => {
           },
           to: {
             name: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   account: {
                     with: { handle: 'elaine' },
@@ -658,7 +658,7 @@ test('set single record to result of nested query', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [
@@ -683,7 +683,7 @@ test('set single record to result of nested query', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -704,7 +704,7 @@ test('create multiple records with nested sub query', () => {
       create: {
         newAccounts: {
           to: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+            [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: null,
               },
@@ -715,7 +715,7 @@ test('create multiple records with nested sub query', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'oldAccount',
       fields: [
@@ -736,7 +736,7 @@ test('create multiple records with nested sub query', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -753,7 +753,7 @@ test('create multiple records with nested sub query including additional fields'
       create: {
         newAccounts: {
           to: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+            [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: {
                   including: {
@@ -768,7 +768,7 @@ test('create multiple records with nested sub query including additional fields'
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'oldAccount',
       fields: [
@@ -793,7 +793,7 @@ test('create multiple records with nested sub query including additional fields'
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -811,7 +811,7 @@ test('create multiple records with nested sub query and specific fields', () => 
       create: {
         newAccounts: {
           to: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+            [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: {
                   selecting: ['handle'],
@@ -824,7 +824,7 @@ test('create multiple records with nested sub query and specific fields', () => 
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'oldAccount',
       fields: [
@@ -845,7 +845,7 @@ test('create multiple records with nested sub query and specific fields', () => 
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -867,7 +867,7 @@ test('create multiple records with nested sub query and specific meta fields', (
       create: {
         newAccounts: {
           to: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+            [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: {
                   selecting: ['ronin.updatedAt'],
@@ -880,7 +880,7 @@ test('create multiple records with nested sub query and specific meta fields', (
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'oldAccount',
       fields: [
@@ -901,7 +901,7 @@ test('create multiple records with nested sub query and specific meta fields', (
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -924,7 +924,7 @@ test('try to create multiple records with nested sub query including non-existen
       create: {
         newAccounts: {
           to: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+            [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: {
                   including: {
@@ -939,7 +939,7 @@ test('try to create multiple records with nested sub query including non-existen
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'oldAccount',
       fields: [
@@ -963,7 +963,7 @@ test('try to create multiple records with nested sub query including non-existen
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }

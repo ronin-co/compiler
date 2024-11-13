@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 test('get single record with specific field', () => {
@@ -13,13 +13,13 @@ test('get single record with specific field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'category',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -41,7 +41,7 @@ test('get single record with specific fields', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'beach',
       fields: [
@@ -53,7 +53,7 @@ test('get single record with specific fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {

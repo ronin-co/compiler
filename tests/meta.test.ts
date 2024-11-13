@@ -1,10 +1,10 @@
 import { expect, test } from 'bun:test';
-import { type Schema, compileQueries } from '@/src/index';
+import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
 import {
   RECORD_TIMESTAMP_REGEX,
-  RONIN_SCHEMA_SYMBOLS,
+  RONIN_MODEL_SYMBOLS,
   RoninError,
 } from '@/src/utils/helpers';
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
@@ -35,9 +35,9 @@ test('create new schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -96,9 +96,9 @@ test('create new schema with suitable default identifiers', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements[1].params[6]).toEqual('name');
   expect(statements[1].params[7]).toEqual('handle');
@@ -122,13 +122,13 @@ test('update existing schema (slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -170,13 +170,13 @@ test('update existing schema (plural name)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -201,13 +201,13 @@ test('drop existing schema', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -240,9 +240,9 @@ test('query a schema that was just created', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements[2]).toEqual({
     statement: 'SELECT * FROM "accounts" LIMIT 1',
@@ -272,13 +272,13 @@ test('query a schema that was just updated', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements[2]).toEqual({
     statement: 'SELECT * FROM "users" LIMIT 1',
@@ -305,7 +305,7 @@ test('query a schema that was just dropped', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -314,7 +314,7 @@ test('query a schema that was just dropped', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -342,13 +342,13 @@ test('create new field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -387,7 +387,7 @@ test('create new reference field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'member',
     },
@@ -396,7 +396,7 @@ test('create new reference field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -440,7 +440,7 @@ test('create new reference field with actions', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'member',
     },
@@ -449,7 +449,7 @@ test('create new reference field with actions', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -494,13 +494,13 @@ test('update existing field (slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -540,13 +540,13 @@ test('update existing field (name)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -577,13 +577,13 @@ test('drop existing field', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -620,14 +620,14 @@ test('create new index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -678,14 +678,14 @@ test('create new index with filter', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -713,7 +713,7 @@ test('create new index with filter', () => {
 test('create new index with field expressions', () => {
   const fields = [
     {
-      expression: `LOWER(${RONIN_SCHEMA_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_SCHEMA_SYMBOLS.FIELD}lastName)`,
+      expression: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
     },
   ];
 
@@ -731,7 +731,7 @@ test('create new index with field expressions', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [
@@ -747,7 +747,7 @@ test('create new index with field expressions', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -793,14 +793,14 @@ test('create new index with ordered and collated fields', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -845,14 +845,14 @@ test('create new unique index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -890,13 +890,13 @@ test('drop existing index', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -941,7 +941,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'signup',
       fields: [{ slug: 'year', type: 'number' }],
@@ -951,7 +951,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1018,7 +1018,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'signup',
       fields: [{ slug: 'year', type: 'number' }],
@@ -1029,7 +1029,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1099,7 +1099,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'candidate',
       fields: [{ slug: 'year', type: 'number' }],
@@ -1113,7 +1113,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1154,7 +1154,7 @@ test('create new per-record trigger for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
             role: 'owner',
             pending: false,
           },
@@ -1179,7 +1179,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -1196,7 +1196,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1234,7 +1234,7 @@ test('create new per-record trigger for deleting records', () => {
       drop: {
         members: {
           with: {
-            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_OLD}createdBy`,
+            account: `${RONIN_MODEL_SYMBOLS.FIELD_OLD}createdBy`,
           },
         },
       },
@@ -1257,7 +1257,7 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
@@ -1274,7 +1274,7 @@ test('create new per-record trigger for deleting records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1306,7 +1306,7 @@ test('create new per-record trigger with filters for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_SCHEMA_SYMBOLS.FIELD_NEW}createdBy`,
+            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
             role: 'owner',
             pending: false,
           },
@@ -1338,7 +1338,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
       fields: [{ slug: 'handle', type: 'string' }],
@@ -1356,7 +1356,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1404,13 +1404,13 @@ test('drop existing trigger', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'team',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1449,14 +1449,14 @@ test('create new preset', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1489,13 +1489,13 @@ test('drop existing preset', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
   ];
 
-  const statements = compileQueries(queries, schemas);
+  const statements = compileQueries(queries, models);
 
   expect(statements).toEqual([
     {
@@ -1523,12 +1523,12 @@ test('try to update existing schema that does not exist', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1557,12 +1557,12 @@ test('try to update existing schema without minimum details (schema slug)', () =
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1590,7 +1590,7 @@ test('try to create new field without minimum details (field slug)', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'account',
     },
@@ -1599,7 +1599,7 @@ test('try to create new field without minimum details (field slug)', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1629,12 +1629,12 @@ test('try to update existing field without minimum details (schema slug)', () =>
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1665,12 +1665,12 @@ test('try to update existing field without minimum details (field slug)', () => 
     },
   ];
 
-  const schemas: Array<Schema> = [];
+  const models: Array<Model> = [];
 
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1714,7 +1714,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
     },
   ];
 
-  const schemas: Array<Schema> = [
+  const models: Array<Model> = [
     {
       slug: 'signup',
       fields: [{ slug: 'year', type: 'number' }],
@@ -1727,7 +1727,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, schemas);
+    compileQueries(queries, models);
   } catch (err) {
     error = err as Error;
   }

@@ -1,5 +1,5 @@
+import type { Schema } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
-import type { Schema } from '@/src/types/schema';
 import { composeConditions } from '@/src/utils/statement';
 
 /**

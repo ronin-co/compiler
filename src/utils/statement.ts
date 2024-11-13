@@ -6,7 +6,7 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import { RONIN_SCHEMA_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
+import { RONIN_MODEL_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
 
 import {
   WITH_CONDITIONS,
@@ -15,7 +15,7 @@ import {
   type WithValue,
   type WithValueOptions,
 } from '@/src/instructions/with';
-import type { Schema } from '@/src/types/schema';
+import type { Schema } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
 import { getSchemaBySlug } from '@/src/utils/schema';
 import { getFieldFromSchema } from '@/src/utils/schema';
@@ -72,7 +72,7 @@ const composeFieldValues = (
   schema: Schema,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
+  value: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
   options: {
     rootTable?: string;
     fieldSlug: string;
@@ -97,21 +97,21 @@ const composeFieldValues = (
   if (getSubQuery(value) && collectStatementValue) {
     conditionValue = `(${
       compileQueryInput(
-        (value as Record<string, Query>)[RONIN_SCHEMA_SYMBOLS.QUERY],
+        (value as Record<string, Query>)[RONIN_MODEL_SYMBOLS.QUERY],
         schemas,
         statementParams,
       ).main.statement
     })`;
-  } else if (typeof value === 'string' && value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)) {
+  } else if (typeof value === 'string' && value.startsWith(RONIN_MODEL_SYMBOLS.FIELD)) {
     let targetTable = `"${options.rootTable}"`;
-    let toReplace: string = RONIN_SCHEMA_SYMBOLS.FIELD;
+    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
 
-    if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_OLD)) {
+    if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
       targetTable = 'OLD';
-      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_OLD;
-    } else if (value.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD_NEW)) {
+      toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
+    } else if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
       targetTable = 'NEW';
-      toReplace = RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+      toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
     }
 
     conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${schemaField.slug}"`;
@@ -155,10 +155,7 @@ export const composeConditions = (
   schema: Schema,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value:
-    | WithFilters
-    | WithValueOptions
-    | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>,
+  value: WithFilters | WithValueOptions | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
   options: Omit<Parameters<typeof composeFieldValues>[5], 'fieldSlug'> & {
     fieldSlug?: string;
   },
@@ -224,7 +221,7 @@ export const composeConditions = (
       const keys = Object.keys(value as object);
       const values = Object.values(value as object);
 
-      let recordTarget: WithValue | Record<typeof RONIN_SCHEMA_SYMBOLS.QUERY, Query>;
+      let recordTarget: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>;
 
       // If only a single key is present, and it's "id", then we can simplify the query a
       // bit in favor of performance, because the stored value of a reference field in
@@ -246,7 +243,7 @@ export const composeConditions = (
         };
 
         recordTarget = {
-          [RONIN_SCHEMA_SYMBOLS.QUERY]: subQuery,
+          [RONIN_MODEL_SYMBOLS.QUERY]: subQuery,
         };
       }
 
@@ -386,6 +383,6 @@ export const formatIdentifiers = (
  */
 export const getSubQuery = (value: unknown): Query | null => {
   return isObject(value)
-    ? (value as Record<string, Query | undefined>)[RONIN_SCHEMA_SYMBOLS.QUERY] || null
+    ? (value as Record<string, Query | undefined>)[RONIN_MODEL_SYMBOLS.QUERY] || null
     : null;
 };

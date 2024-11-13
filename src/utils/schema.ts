@@ -1,5 +1,14 @@
 import { handleWith } from '@/src/instructions/with';
 import type {
+  ModelField,
+  ModelFieldReferenceAction,
+  ModelIndexField,
+  ModelTriggerField,
+  PublicModel,
+  Schema,
+  SchemaPreset,
+} from '@/src/types/model';
+import type {
   Instructions,
   Query,
   QueryInstructionType,
@@ -8,18 +17,9 @@ import type {
   Statement,
   WithInstruction,
 } from '@/src/types/query';
-import type {
-  PublicSchema,
-  Schema,
-  SchemaField,
-  SchemaFieldReferenceAction,
-  SchemaIndexField,
-  SchemaPreset,
-  SchemaTriggerField,
-} from '@/src/types/schema';
 import {
+  RONIN_MODEL_SYMBOLS,
   RONIN_SCHEMA_FIELD_REGEX,
-  RONIN_SCHEMA_SYMBOLS,
   RoninError,
   convertToCamelCase,
   convertToSnakeCase,
@@ -37,7 +37,7 @@ import title from 'title';
  *
  * @returns A schema for the provided slug or plural slug.
  */
-export const getSchemaBySlug = <T extends Schema | PublicSchema>(
+export const getSchemaBySlug = <T extends Schema | PublicModel>(
   schemas: Array<T>,
   slug: string,
 ): T => {
@@ -85,7 +85,7 @@ const composeMetaSchemaSlug = (suffix: string) => convertToCamelCase(`ronin_${su
  *
  * @returns A slug for the associative schema.
  */
-export const composeAssociationSchemaSlug = (schema: PublicSchema, field: SchemaField) =>
+export const composeAssociationSchemaSlug = (schema: PublicModel, field: ModelField) =>
   composeMetaSchemaSlug(`${schema.slug}_${field.slug}`);
 
 /**
@@ -98,9 +98,9 @@ export const composeAssociationSchemaSlug = (schema: PublicSchema, field: Schema
  *
  * @returns The SQL column selector for the provided field.
  */
-const getFieldSelector = (field: SchemaField, fieldPath: string, rootTable?: string) => {
-  const symbol = rootTable?.startsWith(RONIN_SCHEMA_SYMBOLS.FIELD)
-    ? `${rootTable.replace(RONIN_SCHEMA_SYMBOLS.FIELD, '').slice(0, -1)}.`
+const getFieldSelector = (field: ModelField, fieldPath: string, rootTable?: string) => {
+  const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD)
+    ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD, '').slice(0, -1)}.`
     : '';
   const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
 
@@ -133,11 +133,11 @@ export const getFieldFromSchema = (
   fieldPath: string,
   instructionName: QueryInstructionType,
   rootTable?: string,
-): { field: SchemaField; fieldSelector: string } => {
+): { field: ModelField; fieldSelector: string } => {
   const errorPrefix = `Field "${fieldPath}" defined for \`${instructionName}\``;
   const schemaFields = schema.fields || [];
 
-  let schemaField: SchemaField | undefined;
+  let schemaField: ModelField | undefined;
 
   // If the field being accessed is actually a nested property of a JSON field, return
   // that root JSON field.
@@ -258,7 +258,7 @@ const schemaSettings: Array<
  *
  * @returns The updated schema.
  */
-export const addDefaultSchemaFields = (schema: PublicSchema, isNew: boolean): Schema => {
+export const addDefaultModelFields = (schema: PublicModel, isNew: boolean): Schema => {
   const copiedSchema = { ...schema };
 
   for (const [setting, base, generator] of schemaSettings) {
@@ -312,7 +312,7 @@ export const addDefaultSchemaFields = (schema: PublicSchema, isNew: boolean): Sc
 };
 
 /** These fields are required by the system and automatically added to every schema. */
-export const SYSTEM_FIELDS: Array<SchemaField> = [
+export const SYSTEM_FIELDS: Array<ModelField> = [
   {
     name: 'ID',
     type: 'string',
@@ -468,7 +468,7 @@ const SYSTEM_SCHEMAS: Array<Schema> = [
       { slug: 'instructions', type: 'json', required: true },
     ],
   },
-].map((schema) => addDefaultSchemaFields(schema as PublicSchema, true));
+].map((schema) => addDefaultModelFields(schema as PublicModel, true));
 
 /**
  * We are computing this at the root level in order to avoid computing it again with
@@ -487,9 +487,9 @@ const SYSTEM_SCHEMA_SLUGS = SYSTEM_SCHEMAS.flatMap(({ slug, pluralSlug }) => [
  *
  * @returns The extended list of schemas.
  */
-export const addSystemSchemas = (schemas: Array<PublicSchema>): Array<PublicSchema> => {
+export const addSystemSchemas = (schemas: Array<PublicModel>): Array<PublicModel> => {
   const associativeSchemas = schemas.flatMap((schema) => {
-    const addedSchemas: Array<PublicSchema> = [];
+    const addedSchemas: Array<PublicModel> = [];
 
     for (const field of schema.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
@@ -561,13 +561,13 @@ export const addDefaultSchemaPresets = (list: Array<Schema>, schema: Schema): Sc
         instructions: {
           including: {
             [field.slug]: {
-              [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   [fieldSlug]: {
                     with: {
                       // Compare the `id` field of the related schema to the reference field on
                       // the root schema (`field.slug`).
-                      id: `${RONIN_SCHEMA_SYMBOLS.FIELD}${field.slug}`,
+                      id: `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
                     },
                   },
                 },
@@ -602,11 +602,11 @@ export const addDefaultSchemaPresets = (list: Array<Schema>, schema: Schema): Sc
       instructions: {
         including: {
           [pluralSlug]: {
-            [RONIN_SCHEMA_SYMBOLS.QUERY]: {
+            [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 [pluralSlug]: {
                   with: {
-                    [childField.slug]: `${RONIN_SCHEMA_SYMBOLS.FIELD}id`,
+                    [childField.slug]: `${RONIN_MODEL_SYMBOLS.FIELD}id`,
                   },
                 },
               },
@@ -662,7 +662,7 @@ const typesInSQLite = {
  *
  * @returns The SQL syntax for the provided field.
  */
-const getFieldStatement = (field: SchemaField): string | null => {
+const getFieldStatement = (field: ModelField): string | null => {
   if (field.type === 'group') return null;
 
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
@@ -683,7 +683,7 @@ const getFieldStatement = (field: SchemaField): string | null => {
       const triggerName = trigger.toUpperCase().slice(2);
       const action = actions[
         trigger as keyof typeof actions
-      ] as SchemaFieldReferenceAction;
+      ] as ModelFieldReferenceAction;
 
       statement += ` ON ${triggerName} ${action}`;
     }
@@ -794,7 +794,7 @@ export const addSchemaQueries = (
     const filterQuery: WithInstruction = instructionList?.filter;
 
     // The specific fields that should be indexed.
-    const fields: Array<SchemaIndexField> = instructionList?.fields;
+    const fields: Array<ModelIndexField> = instructionList?.fields;
 
     const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
@@ -815,7 +815,7 @@ export const addSchemaQueries = (
         // SQL statement.
         else if ('expression' in field) {
           fieldSelector = field.expression.replace(RONIN_SCHEMA_FIELD_REGEX, (match) => {
-            const fieldSlug = match.replace(RONIN_SCHEMA_SYMBOLS.FIELD, '');
+            const fieldSlug = match.replace(RONIN_MODEL_SYMBOLS.FIELD, '');
             return getFieldFromSchema(schema, fieldSlug, 'to').fieldSelector;
           });
         }
@@ -867,7 +867,7 @@ export const addSchemaQueries = (
 
       // The specific fields that should be targeted by the trigger. If those fields have
       // changed, the trigger will be fired.
-      const fields: Array<SchemaTriggerField> | undefined = instructionList?.fields;
+      const fields: Array<ModelTriggerField> | undefined = instructionList?.fields;
 
       if (fields) {
         if (action !== 'UPDATE') {
@@ -893,7 +893,7 @@ export const addSchemaQueries = (
       // basis, meaning "for each row", instead of on a per-query basis.
       if (
         filterQuery ||
-        effectQueries.some((query) => findInObject(query, RONIN_SCHEMA_SYMBOLS.FIELD))
+        effectQueries.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
       ) {
         statementParts.push('FOR EACH ROW');
       }
@@ -904,8 +904,8 @@ export const addSchemaQueries = (
       if (filterQuery) {
         const tablePlaceholder =
           action === 'DELETE'
-            ? RONIN_SCHEMA_SYMBOLS.FIELD_OLD
-            : RONIN_SCHEMA_SYMBOLS.FIELD_NEW;
+            ? RONIN_MODEL_SYMBOLS.FIELD_OLD
+            : RONIN_MODEL_SYMBOLS.FIELD_NEW;
 
         const withStatement = handleWith(
           schemas,
@@ -941,8 +941,8 @@ export const addSchemaQueries = (
   if (kind === 'schemas') {
     // Compose default settings for the schema.
     if (queryType === 'create' || queryType === 'set') {
-      const schemaWithFields = addDefaultSchemaFields(
-        queryInstructions.to as PublicSchema,
+      const schemaWithFields = addDefaultModelFields(
+        queryInstructions.to as PublicModel,
         queryType === 'create',
       );
 
@@ -997,7 +997,7 @@ export const addSchemaQueries = (
       }
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(instructionList as SchemaField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(instructionList as ModelField)}`,
         params: [],
       });
     } else if (queryType === 'set') {

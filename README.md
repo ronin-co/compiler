@@ -43,7 +43,7 @@ import {
   compileQueries,
 
   type Query,
-  type Schema,
+  type Model,
   type Statement
 } from '@ronin/compiler';
 
@@ -53,11 +53,11 @@ const queries: Array<Query> = [{
   }
 }];
 
-const schemas: Array<Schema> = [{
+const models: Array<Model> = [{
   slug: 'account'
 }];
 
-const statements: Array<Statements> = compileQueries(queries, schemas);
+const statements: Array<Statement> = compileQueries(queries, models);
 // [{
 //   statement: 'SELECT * FROM "accounts"',
 //   params: [],
@@ -70,7 +70,7 @@ const statements: Array<Statements> = compileQueries(queries, schemas);
 To fine-tune the behavior of the compiler, you can pass the following options:
 
 ```typescript
-compileQueries(queries, schemas, {
+compileQueries(queries, models, {
   // Instead of returning an array of parameters for every statement (which allows for
   // preventing SQL injections), all parameters are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.
