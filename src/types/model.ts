@@ -24,7 +24,7 @@ export type ModelFieldReference = ModelFieldBasics & {
   type: 'reference';
 
   // Make the `slug` required.
-  target: Omit<Partial<Schema>, 'slug'> & Pick<Schema, 'slug'>;
+  target: Omit<Partial<Model>, 'slug'> & Pick<Model, 'slug'>;
 
   kind?: 'one' | 'many';
   actions?: {
@@ -53,7 +53,7 @@ export type ModelIndexField = {
 
 export type ModelIndex = {
   /**
-   * The list of fields in the schema for which the index should be created.
+   * The list of fields in the model for which the index should be created.
    */
   fields: Array<ModelIndexField>;
   /**
@@ -91,14 +91,14 @@ export type ModelTrigger = {
   filter?: WithInstruction;
 };
 
-export type SchemaPreset = {
+export type ModelPreset = {
   /** The identifier that can be used for adding the preset to a query. */
   slug: string;
   /** The query instructions that should be applied when the preset is used. */
   instructions: GetInstructions;
 };
 
-export interface Schema {
+export interface Model {
   name?: string;
   pluralName?: string;
   slug: string;
@@ -113,15 +113,15 @@ export interface Schema {
   fields?: Array<ModelField>;
   indexes?: Array<ModelIndex>;
   triggers?: Array<ModelTrigger>;
-  presets?: Array<SchemaPreset>;
+  presets?: Array<ModelPreset>;
 }
 
-// In schemas provided to the compiler, all settings are optional, except for the `slug`,
+// In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicModel = Omit<Partial<Schema>, 'slug' | 'identifiers'> & {
-  slug: Required<Schema['slug']>;
+export type PublicModel = Omit<Partial<Model>, 'slug' | 'identifiers'> & {
+  slug: Required<Model['slug']>;
 
-  // It should also be possible for schemas to only define one of the two identifiers,
+  // It should also be possible for models to only define one of the two identifiers,
   // since the missing one will be generated automatically.
-  identifiers?: Partial<Schema['identifiers']>;
+  identifiers?: Partial<Model['identifiers']>;
 };

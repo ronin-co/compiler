@@ -34,12 +34,12 @@ test('get single record with non-existing field', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Field "handle" defined for `with` does not exist in schema "Account".',
+    'Field "handle" defined for `with` does not exist in model "Account".',
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
 
-test('get single record with non-existing schema', () => {
+test('get single record with non-existing model', () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -65,9 +65,9 @@ test('get single record with non-existing schema', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'No matching schema with either Slug or Plural Slug of "account" could be found.',
+    'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
-  expect(error).toHaveProperty('code', 'SCHEMA_NOT_FOUND');
+  expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
 test('get single record with empty `with` instruction', () => {

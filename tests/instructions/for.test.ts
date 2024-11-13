@@ -508,7 +508,7 @@ test('try get single record with non-existing preset', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Preset "activeMember" does not exist in schema "Account".',
+    'Preset "activeMember" does not exist in model "Account".',
   );
   expect(error).toHaveProperty('code', 'PRESET_NOT_FOUND');
 });

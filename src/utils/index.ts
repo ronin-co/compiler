@@ -6,17 +6,17 @@ import { handleOrderedBy } from '@/src/instructions/ordered-by';
 import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
-import type { Schema } from '@/src/types/model';
+import type { Model } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import { addSchemaQueries, getSchemaBySlug, getTableForSchema } from '@/src/utils/schema';
+import { addModelQueries, getModelBySlug, getTableForModel } from '@/src/utils/model';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
  * Composes an SQL statement for a provided RONIN query.
  *
  * @param query - The RONIN query for which an SQL statement should be composed.
- * @param schemas - A list of schemas.
+ * @param models - A list of models.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param options - Additional options to adjust the behavior of the statement generation.
@@ -25,7 +25,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  */
 export const compileQueryInput = (
   query: Query,
-  schemas: Array<Schema>,
+  models: Array<Model>,
   // In order to prevent SQL injections and allow for faster query execution, we're not
   // inserting any values into the SQL statement directly. Instead, we will pass them to
   // SQLite's API later on, so that it can prepare an object that the database can
@@ -41,21 +41,21 @@ export const compileQueryInput = (
 ): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
-  const { queryType, querySchema, queryInstructions } = parsedQuery;
+  const { queryType, queryModel, queryInstructions } = parsedQuery;
 
-  // Find the schema that the query is interacting with.
-  const schema = getSchemaBySlug(schemas, querySchema);
+  // Find the model that the query is interacting with.
+  const model = getModelBySlug(models, queryModel);
 
   // Whether the query will interact with a single record, or multiple at the same time.
-  const single = querySchema !== schema.pluralSlug;
+  const single = queryModel !== model.pluralSlug;
 
   // Walk deeper into the query, to the level on which the actual instructions (such as
   // `with` and `including`) are located.
-  let instructions = formatIdentifiers(schema, queryInstructions);
+  let instructions = formatIdentifiers(model, queryInstructions);
 
   // The name of the table in SQLite that contains the records that are being addressed.
-  // This always matches the plural slug of the schema, but in snake case.
-  let table = getTableForSchema(schema);
+  // This always matches the plural slug of the model, but in snake case.
+  let table = getTableForModel(model);
 
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -66,20 +66,20 @@ export const compileQueryInput = (
   const returning = options?.returning ?? true;
 
   // Generate additional dependency statements for meta queries, meaning queries that
-  // affect the database schema.
-  instructions = addSchemaQueries(
-    schemas,
-    { queryType, querySchema, queryInstructions: instructions },
+  // affect the database model.
+  instructions = addModelQueries(
+    models,
+    { queryType, queryModel, queryInstructions: instructions },
     dependencyStatements,
   );
 
   // Apply any presets that are potentially being selected by the query.
   if (instructions && Object.hasOwn(instructions, 'for')) {
-    instructions = handleFor(schema, instructions);
+    instructions = handleFor(model, instructions);
   }
 
   // A list of columns that should be selected when querying records.
-  const { columns, isJoining } = handleSelecting(schema, statementParams, {
+  const { columns, isJoining } = handleSelecting(model, statementParams, {
     selecting: instructions?.selecting,
     including: instructions?.including,
   });
@@ -115,7 +115,7 @@ export const compileQueryInput = (
       statement: including,
       rootTableSubQuery,
       rootTableName,
-    } = handleIncluding(schemas, statementParams, instructions?.including, table);
+    } = handleIncluding(models, statementParams, instructions?.including, table);
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
@@ -146,8 +146,8 @@ export const compileQueryInput = (
     }
 
     const toStatement = handleTo(
-      schemas,
-      schema,
+      models,
+      model,
       statementParams,
       queryType,
       dependencyStatements,
@@ -164,8 +164,8 @@ export const compileQueryInput = (
   // those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
     const withStatement = handleWith(
-      schemas,
-      schema,
+      models,
+      model,
       statementParams,
       instructions?.with,
       isJoining ? table : undefined,
@@ -220,7 +220,7 @@ export const compileQueryInput = (
     }
 
     const beforeAndAfterStatement = handleBeforeOrAfter(
-      schema,
+      model,
       statementParams,
       {
         before: instructions.before,
@@ -246,7 +246,7 @@ export const compileQueryInput = (
 
   if (instructions?.orderedBy) {
     const orderedByStatement = handleOrderedBy(
-      schema,
+      model,
       instructions.orderedBy,
       isJoining ? table : undefined,
     );

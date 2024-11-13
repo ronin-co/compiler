@@ -1,4 +1,4 @@
-import type { Schema } from '@/src/types/model';
+import type { Model } from '@/src/types/model';
 import type { SetInstructions, Statement } from '@/src/types/query';
 import {
   expand,
@@ -9,18 +9,18 @@ import {
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import {
-  composeAssociationSchemaSlug,
-  getFieldFromSchema,
-  getSchemaBySlug,
-} from '@/src/utils/schema';
+  composeAssociationModelSlug,
+  getFieldFromModel,
+  getModelBySlug,
+} from '@/src/utils/model';
 import { composeConditions, getSubQuery } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `to` query instruction, which allows for providing
  * values that should be stored in the records that are being addressed.
  *
- * @param schemas - A list of schemas.
- * @param schema - The schema being addressed in the query.
+ * @param models - A list of models.
+ * @param model - The model being addressed in the query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param queryType - The type of query that is being executed.
@@ -32,8 +32,8 @@ import { composeConditions, getSubQuery } from '@/src/utils/statement';
  * @returns The SQL syntax for the provided `to` instruction.
  */
 export const handleTo = (
-  schemas: Array<Schema>,
-  schema: Schema,
+  models: Array<Model>,
+  model: Model,
   statementParams: Array<unknown> | null,
   queryType: 'create' | 'set',
   dependencyStatements: Array<Statement>,
@@ -51,7 +51,7 @@ export const handleTo = (
   // If records are being created, assign a default ID to them, unless a custom ID was
   // already provided in the query.
   if (queryType === 'create') {
-    defaultFields.id = toInstruction.id || generateRecordId(schema.idPrefix);
+    defaultFields.id = toInstruction.id || generateRecordId(model.idPrefix);
   }
 
   defaultFields.ronin = {
@@ -69,9 +69,9 @@ export const handleTo = (
   // of fields and/or values for the SQL query, since the fields and values are all
   // derived from the sub query. This allows us to keep the SQL statement lean.
   if (subQuery) {
-    let { querySchema: subQuerySchemaSlug, queryInstructions: subQueryInstructions } =
+    let { queryModel: subQueryModelSlug, queryInstructions: subQueryInstructions } =
       splitQuery(subQuery);
-    const subQuerySchema = getSchemaBySlug(schemas, subQuerySchemaSlug);
+    const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
     const subQuerySelectedFields = subQueryInstructions?.selecting;
     const subQueryIncludedFields = subQueryInstructions?.including;
@@ -79,7 +79,7 @@ export const handleTo = (
     // Determine which fields will be returned by the sub query.
     const subQueryFields = [
       ...(subQuerySelectedFields ||
-        (subQuerySchema.fields || []).map((field) => field.slug)),
+        (subQueryModel.fields || []).map((field) => field.slug)),
       ...(subQueryIncludedFields
         ? Object.keys(
             flatten((subQueryIncludedFields || {}) as unknown as Record<string, unknown>),
@@ -87,10 +87,10 @@ export const handleTo = (
         : []),
     ];
 
-    // Ensure that every field returned by the sub query is present in the schema
+    // Ensure that every field returned by the sub query is present in the model
     // of the root query, otherwise the fields of the sub query can't be used.
     for (const field of subQueryFields || []) {
-      getFieldFromSchema(schema, field, 'to');
+      getFieldFromModel(model, field, 'to');
     }
 
     const defaultFieldsToAdd = subQuerySelectedFields
@@ -99,7 +99,7 @@ export const handleTo = (
         })
       : [];
 
-    // If the sub query selects only a subset of fields from its schema using
+    // If the sub query selects only a subset of fields from its model using
     // `selecting`, there is a chance that the fields returned by the sub query will not
     // include the metadata fields of the retrieved records.
     //
@@ -121,29 +121,26 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(subQuery, schemas, statementParams).main.statement;
+    return compileQueryInput(subQuery, models, statementParams).main.statement;
   }
 
   // Assign default field values to the provided instruction.
   Object.assign(toInstruction, defaultFields);
 
   // For reference fields of the cardinality "many", we need to compose separate
-  // queries for managing the records in the associative schema, which is the schema
-  // that is used to establish the relationship between two other schemas, as those two
+  // queries for managing the records in the associative model, which is the model
+  // that is used to establish the relationship between two other models, as those two
   // do not share a direct reference.
   for (const fieldSlug in toInstruction) {
     const fieldValue = toInstruction[fieldSlug];
-    const fieldDetails = getFieldFromSchema(schema, fieldSlug, 'to');
+    const fieldDetails = getFieldFromModel(model, fieldSlug, 'to');
 
     if (fieldDetails.field.type === 'reference' && fieldDetails.field.kind === 'many') {
       // Remove the field from the `to` instruction as it will be handled using
       // separate queries.
       delete toInstruction[fieldSlug];
 
-      const associativeSchemaSlug = composeAssociationSchemaSlug(
-        schema,
-        fieldDetails.field,
-      );
+      const associativeModelSlug = composeAssociationModelSlug(model, fieldDetails.field);
 
       const composeStatement = (
         subQueryType: 'create' | 'drop',
@@ -158,13 +155,13 @@ export const handleTo = (
         return compileQueryInput(
           {
             [subQueryType]: {
-              [associativeSchemaSlug]:
+              [associativeModelSlug]:
                 subQueryType === 'create'
                   ? { to: recordDetails }
                   : { with: recordDetails },
             },
           },
-          schemas,
+          models,
           [],
           { returning: false },
         ).main;
@@ -188,22 +185,15 @@ export const handleTo = (
     }
   }
 
-  let statement = composeConditions(
-    schemas,
-    schema,
-    statementParams,
-    'to',
-    toInstruction,
-    {
-      rootTable,
-      type: queryType === 'create' ? 'fields' : undefined,
-    },
-  );
+  let statement = composeConditions(models, model, statementParams, 'to', toInstruction, {
+    rootTable,
+    type: queryType === 'create' ? 'fields' : undefined,
+  });
 
   if (queryType === 'create') {
     const deepStatement = composeConditions(
-      schemas,
-      schema,
+      models,
+      model,
       statementParams,
       'to',
       toInstruction,

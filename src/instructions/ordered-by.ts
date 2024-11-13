@@ -1,19 +1,19 @@
-import type { Schema } from '@/src/types/model';
+import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
-import { getFieldFromSchema } from '@/src/utils/schema';
+import { getFieldFromModel } from '@/src/utils/model';
 
 /**
  * Generates the SQL syntax for the `orderedBy` query instruction, which allows for
  * ordering the list of records that are returned.
  *
- * @param schema - The schema being addressed in the query.
+ * @param model - The model being addressed in the query.
  * @param instruction - The `orderedBy` instruction provided in the current query.
  * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The SQL syntax for the provided `orderedBy` instruction.
  */
 export const handleOrderedBy = (
-  schema: Schema,
+  model: Model,
   instruction: GetInstructions['orderedBy'],
   rootTable?: string,
 ): string => {
@@ -21,8 +21,8 @@ export const handleOrderedBy = (
 
   for (const field of instruction!.ascending || []) {
     // Check whether the field exists.
-    const { field: schemaField, fieldSelector } = getFieldFromSchema(
-      schema,
+    const { field: modelField, fieldSelector } = getFieldFromModel(
+      model,
       field,
       'orderedBy.ascending',
       rootTable,
@@ -33,7 +33,7 @@ export const handleOrderedBy = (
     }
 
     const caseInsensitiveStatement =
-      schemaField.type === 'string' ? ' COLLATE NOCASE' : '';
+      modelField.type === 'string' ? ' COLLATE NOCASE' : '';
 
     statement += `${fieldSelector}${caseInsensitiveStatement} ASC`;
   }
@@ -44,8 +44,8 @@ export const handleOrderedBy = (
   // we need the empty array fallback.
   for (const field of instruction!.descending || []) {
     // Check whether the field exists.
-    const { field: schemaField, fieldSelector } = getFieldFromSchema(
-      schema,
+    const { field: modelField, fieldSelector } = getFieldFromModel(
+      model,
       field,
       'orderedBy.descending',
       rootTable,
@@ -56,7 +56,7 @@ export const handleOrderedBy = (
     }
 
     const caseInsensitiveStatement =
-      schemaField.type === 'string' ? ' COLLATE NOCASE' : '';
+      modelField.type === 'string' ? ' COLLATE NOCASE' : '';
 
     statement += `${fieldSelector}${caseInsensitiveStatement} DESC`;
   }

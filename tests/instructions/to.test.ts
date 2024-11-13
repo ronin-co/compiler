@@ -916,7 +916,7 @@ test('create multiple records with nested sub query and specific meta fields', (
   ]);
 });
 
-// Ensure that an error is thrown for fields that don't exist in the target schema, since
+// Ensure that an error is thrown for fields that don't exist in the target model, since
 // the value of the field cannot be used in those cases.
 test('try to create multiple records with nested sub query including non-existent fields', () => {
   const queries: Array<Query> = [
@@ -971,7 +971,7 @@ test('try to create multiple records with nested sub query including non-existen
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Field "nonExistingField" defined for `to` does not exist in schema "New Account".',
+    'Field "nonExistingField" defined for `to` does not exist in model "New Account".',
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
   expect(error).toHaveProperty('field', 'nonExistingField');

@@ -1,7 +1,7 @@
-import type { Schema } from '@/src/types/model';
+import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
 import { RoninError } from '@/src/utils/helpers';
-import { getFieldFromSchema } from '@/src/utils/schema';
+import { getFieldFromModel } from '@/src/utils/model';
 import { prepareStatementValue } from '@/src/utils/statement';
 
 // The separator and NULL placeholder have to be somewhat unique so that they don't
@@ -17,7 +17,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  * `moreBefore` and `moreAfter` properties available on a list of records
  * retrieved from RONIN.
  *
- * @param schema - The schema being addressed in the query.
+ * @param model - The model being addressed in the query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
@@ -26,7 +26,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  * @returns The SQL syntax for the provided `before` or `after` instruction.
  */
 export const handleBeforeOrAfter = (
-  schema: Schema,
+  model: Model,
   statementParams: Array<unknown> | null,
   instructions: {
     before?: GetInstructions['before'];
@@ -79,7 +79,7 @@ export const handleBeforeOrAfter = (
       return 'NULL';
     }
 
-    const { field } = getFieldFromSchema(schema, key, 'orderedBy');
+    const { field } = getFieldFromModel(model, key, 'orderedBy');
 
     if (field.type === 'boolean') {
       return prepareStatementValue(statementParams, value === 'true');
@@ -124,8 +124,8 @@ export const handleBeforeOrAfter = (
       const key = keys[j];
       const value = values[j];
 
-      let { field, fieldSelector } = getFieldFromSchema(
-        schema,
+      let { field, fieldSelector } = getFieldFromModel(
+        model,
         key,
         'orderedBy',
         rootTable,
