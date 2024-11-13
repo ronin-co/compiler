@@ -66,15 +66,7 @@ export const getTableForModel = (model: Model): string => {
   return convertToSnakeCase(model.pluralSlug as string);
 };
 
-/**
- * Composes a slug for a model that was automatically provided by the system, instead
- * of being provided by a developer.
- *
- * @param suffix - A suffix to append to the generated slug.
- *
- * @returns A slug for a model that was automatically provided by the system.
- */
-const composeMetaModelSlug = (suffix: string) => convertToCamelCase(`ronin_${suffix}`);
+const RONIN_MODEL_LINK_PREFIX = 'ronin_link_';
 
 /**
  * Composes the slug of an associative model that is used to establish a relationship
@@ -86,7 +78,7 @@ const composeMetaModelSlug = (suffix: string) => convertToCamelCase(`ronin_${suf
  * @returns A slug for the associative model.
  */
 export const composeAssociationModelSlug = (model: PublicModel, field: ModelField) =>
-  composeMetaModelSlug(`${model.slug}_${field.slug}`);
+  convertToCamelCase(`${RONIN_MODEL_LINK_PREFIX}_${model.slug}_${field.slug}`);
 
 /**
  * Constructs the SQL selector for a given field in a model.
@@ -523,6 +515,7 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PublicModel> 
           addedModels.push({
             pluralSlug: fieldSlug,
             slug: fieldSlug,
+            associationSlug: field.slug,
             fields: [
               {
                 slug: 'source',
@@ -565,11 +558,11 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
     if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
       const relatedModel = getModelBySlug(list, field.target.slug);
 
-      let fieldSlug = relatedModel.slug;
-
-      if (field.kind === 'many') {
-        fieldSlug = composeAssociationModelSlug(model, field);
-      }
+      // If a reference field has the cardinality "many", we don't need to add a default
+      // preset for resolving its records, because we are already adding an associative
+      // schema in `addSystemModels`, which causes a default preset to get added in the
+      // original schema anyways.
+      if (field.kind === 'many') continue;
 
       // For every reference field, add a default preset for resolving the referenced
       // record in the model that contains the reference field.
@@ -579,11 +572,13 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
             [field.slug]: {
               [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
-                  [fieldSlug]: {
+                  [relatedModel.slug]: {
                     with: {
                       // Compare the `id` field of the related model to the reference field on
                       // the root model (`field.slug`).
-                      id: `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
+                      id: {
+                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}${field.slug}`,
+                      },
                     },
                   },
                 },
@@ -614,15 +609,19 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
     const { model: childModel, field: childField } = childMatch;
     const pluralSlug = childModel.pluralSlug as string;
 
+    const presetSlug = childModel.associationSlug || pluralSlug;
+
     defaultPresets.push({
       instructions: {
         including: {
-          [pluralSlug]: {
+          [presetSlug]: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 [pluralSlug]: {
                   with: {
-                    [childField.slug]: `${RONIN_MODEL_SYMBOLS.FIELD}id`,
+                    [childField.slug]: {
+                      [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}id`,
+                    },
                   },
                 },
               },
@@ -630,7 +629,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
           },
         },
       },
-      slug: pluralSlug,
+      slug: presetSlug,
     });
   }
 

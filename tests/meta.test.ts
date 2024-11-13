@@ -1353,7 +1353,10 @@ test('create new per-record trigger with filters for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [{ slug: 'handle', type: 'string' }, { slug: 'createdBy', type: 'string' }],
+      fields: [
+        { slug: 'handle', type: 'string' },
+        { slug: 'createdBy', type: 'string' },
+      ],
     },
     {
       slug: 'member',

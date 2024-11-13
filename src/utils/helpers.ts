@@ -24,6 +24,9 @@ export const RONIN_MODEL_SYMBOLS = {
   // Represents an expression that should be evaluated.
   EXPRESSION: '__RONIN_EXPRESSION',
 
+  // Represents the value of a parent field in a model.
+  FIELD_PARENT: '__RONIN_FIELD_PARENT_',
+
   // Represents the value of a field in a model.
   FIELD: '__RONIN_FIELD_',
 

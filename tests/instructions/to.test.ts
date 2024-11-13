@@ -191,12 +191,12 @@ test('set single record to new many-cardinality reference field', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'DELETE FROM "ronin_post_comments" WHERE ("source" = ?1)',
+      statement: 'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1)',
       params: ['pos_zgoj3xav8tpcte1s'],
     },
     {
       statement:
-        'INSERT INTO "ronin_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
         'pos_zgoj3xav8tpcte1s',
         'Great post!',
@@ -260,7 +260,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "ronin_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
         'pos_zgoj3xav8tpcte1s',
         'Great post!',
@@ -324,7 +324,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
   expect(statements).toEqual([
     {
       statement:
-        'DELETE FROM "ronin_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
+        'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
       params: ['pos_zgoj3xav8tpcte1s', 'Great post!'],
     },
     {

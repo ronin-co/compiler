@@ -110,6 +110,10 @@ export interface Model {
   };
   idPrefix?: string;
 
+  // If the model is used as an associative model, this property should contain the field
+  // to which the associative model should be mounted.
+  associationSlug?: string;
+
   fields?: Array<ModelField>;
   indexes?: Array<ModelIndex>;
   triggers?: Array<ModelTrigger>;

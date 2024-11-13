@@ -109,15 +109,25 @@ const composeFieldValues = (
       let targetTable: string | undefined;
       let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
 
+      let rootModel = model;
+
       if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
         targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
+
+        if (options.customTable) rootModel = getModelBySlug(models, options.customTable);
       } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
         targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
+
+        if (options.customTable) rootModel = getModelBySlug(models, options.customTable);
       }
 
-      const rootModel = options.customTable
-        ? getModelBySlug(models, options.customTable)
-        : model;
+      if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
+        targetTable = options.rootTable;
+        toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+
+        if (options.rootTable && !collectStatementValue)
+          rootModel = getModelBySlug(models, options.rootTable);
+      }
 
       const fieldSlug = match.replace(toReplace, '');
       return getFieldFromModel(rootModel, fieldSlug, instructionName, targetTable)
