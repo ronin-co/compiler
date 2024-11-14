@@ -109,7 +109,7 @@ export const handleIncluding = (
 
       const subStatement = composeConditions(
         models,
-        relatedModel,
+        { ...relatedModel, tableAlias },
         statementParams,
         'including',
         queryInstructions?.with as WithFilters,

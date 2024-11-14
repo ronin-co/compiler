@@ -910,14 +910,20 @@ export const addModelQueries = (
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
       if (filterQuery) {
-        const tablePlaceholder =
+        const tableAlias =
           action === 'DELETE'
             ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
             : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
 
-        const withStatement = handleWith(models, currentModel, params, filterQuery, {
-          rootTable: tablePlaceholder,
-        });
+        const withStatement = handleWith(
+          models,
+          { ...currentModel, table: tableAlias },
+          params,
+          filterQuery,
+          {
+            rootTable: tableAlias,
+          },
+        );
 
         statementParts.push('WHEN', `(${withStatement})`);
       }

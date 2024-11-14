@@ -112,6 +112,11 @@ export interface Model {
 
   /** The name of the table in SQLite. */
   table: string;
+  /**
+   * The table name to which the model was aliased. This will be set in the case that
+   * multiple tables are being joined into one SQL statement.
+   */
+  tableAlias?: string;
 
   /**
    * If the model is used to associate two models with each other (in the case of
@@ -136,7 +141,7 @@ export type PartialModel = RecursivePartial<Model>;
 // which is the required bare minimum.
 export type PublicModel = Omit<
   Partial<Model>,
-  'slug' | 'identifiers' | 'associationSlug'
+  'slug' | 'identifiers' | 'associationSlug' | 'table'
 > & {
   slug: Required<Model['slug']>;
 
