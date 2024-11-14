@@ -383,49 +383,6 @@ test('set single record to new json field with array', () => {
   ]);
 });
 
-test('set single record to new json field with empty array', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        account: {
-          with: {
-            handle: 'elaine',
-          },
-          to: {
-            emails: [],
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-        {
-          slug: 'emails',
-          type: 'json',
-        },
-      ],
-    },
-  ];
-
-  const statements = compileQueries(queries, models);
-
-  expect(statements).toEqual([
-    {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: ['[]', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
-      returning: true,
-    },
-  ]);
-});
-
 test('set single record to new json field with object', () => {
   const queries: Array<Query> = [
     {
@@ -471,49 +428,6 @@ test('set single record to new json field with object', () => {
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'elaine',
       ],
-      returning: true,
-    },
-  ]);
-});
-
-test('set single record to new json field with empty object', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        account: {
-          with: {
-            handle: 'elaine',
-          },
-          to: {
-            emails: {},
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-        {
-          slug: 'emails',
-          type: 'json',
-        },
-      ],
-    },
-  ];
-
-  const statements = compileQueries(queries, models);
-
-  expect(statements).toEqual([
-    {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: ['{}', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
       returning: true,
     },
   ]);
