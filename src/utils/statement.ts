@@ -78,14 +78,14 @@ const composeFieldValues = (
   instructionName: QueryInstructionType,
   value: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
   options: {
-    rootTable?: string;
     fieldSlug: string;
     type?: 'fields' | 'values';
+    rootTable?: string;
     parentTable?: string;
     condition?: WithCondition;
   },
 ): string => {
-  const { field: modelField, fieldSelector: selector } = getFieldFromModel(
+  const { fieldSelector: conditionSelector } = getFieldFromModel(
     model,
     options.fieldSlug,
     instructionName,
@@ -98,15 +98,12 @@ const composeFieldValues = (
   // Determine if the value of the field is a symbol.
   const symbol = getSymbol(value);
 
-  let conditionSelector = selector;
   let conditionValue = value;
 
   if (symbol) {
     // The value of the field is a RONIN expression, which we need to compile into an SQL
     // syntax that can be run.
     if (symbol?.type === 'expression') {
-      conditionSelector = `${options.rootTable ? `"${options.rootTable}".` : ''}"${modelField.slug}"`;
-
       conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
         let targetTable: string | undefined;
         let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;

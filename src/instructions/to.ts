@@ -187,8 +187,7 @@ export const handleTo = (
   }
 
   let statement = composeConditions(models, model, statementParams, 'to', toInstruction, {
-    rootTable: options?.rootTable,
-    parentTable: options?.parentTable,
+    ...options,
     type: queryType === 'create' ? 'fields' : undefined,
   });
 
@@ -200,8 +199,7 @@ export const handleTo = (
       'to',
       toInstruction,
       {
-        rootTable: options?.rootTable,
-        parentTable: options?.parentTable,
+        ...options,
         type: 'values',
       },
     );

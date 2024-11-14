@@ -75,7 +75,7 @@ export const handleWith = (
     statementParams,
     'with',
     instruction as WithFilters,
-    { rootTable: options?.rootTable, parentTable: options?.parentTable },
+    { ...options },
   );
 
   return `(${subStatement})`;
