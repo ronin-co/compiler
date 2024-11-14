@@ -95,46 +95,55 @@ const composeFieldValues = (
   // If only the field selectors are being requested, do not register any values.
   const collectStatementValue = options.type !== 'fields';
 
+  // Determine if the value of the field is a symbol.
   const symbol = getSymbol(value);
 
   let conditionSelector = selector;
   let conditionValue = value;
 
-  if (symbol?.type === 'query' && collectStatementValue) {
-    conditionValue = `(${
-      compileQueryInput(symbol.value, models, statementParams).main.statement
-    })`;
-  } else if (symbol?.type === 'expression') {
-    if (collectStatementValue) {
-      conditionSelector = `${options.rootTable ? `"${options.rootTable}".` : ''}"${modelField.slug}"`;
+  if (symbol) {
+    if (symbol.type === 'query' && collectStatementValue) {
+      conditionValue = `(${
+        compileQueryInput(symbol.value, models, statementParams).main.statement
+      })`;
     }
 
-    conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
-      let targetTable: string | undefined;
-      let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
+    if (symbol?.type === 'expression') {
+      conditionSelector = `${options.rootTable ? `"${options.rootTable}".` : ''}"${modelField.slug}"`;
 
-      let rootModel = model;
+      conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
+        let targetTable: string | undefined;
+        let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
 
-      if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
-        targetTable = options.parentTable;
-        toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+        let rootModel = model;
 
-        if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
-          targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
-        } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
-          targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
+        if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
+          targetTable = options.parentTable;
+          toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+
+          if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
+            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
+          } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
+            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
+          }
+
+          if (options.parentTable) {
+            const cleanModelSlug = options.parentTable.replace('sub_', '');
+            rootModel = getModelBySlug(models, cleanModelSlug);
+          }
         }
 
-        if (options.parentTable) {
-          const cleanModelSlug = options.parentTable.replace('sub_', '');
-          rootModel = getModelBySlug(models, cleanModelSlug);
-        }
-      }
+        const fieldSlug = match.replace(toReplace, '');
+        const field = getFieldFromModel(
+          rootModel,
+          fieldSlug,
+          instructionName,
+          targetTable,
+        );
 
-      const fieldSlug = match.replace(toReplace, '');
-      return getFieldFromModel(rootModel, fieldSlug, instructionName, targetTable)
-        .fieldSelector;
-    });
+        return field.fieldSelector;
+      });
+    }
   } else if (collectStatementValue) {
     conditionValue = prepareStatementValue(statementParams, value);
   }
