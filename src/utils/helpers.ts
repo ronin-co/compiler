@@ -24,17 +24,17 @@ export const RONIN_MODEL_SYMBOLS = {
   // Represents an expression that should be evaluated.
   EXPRESSION: '__RONIN_EXPRESSION',
 
-  // Represents the value of a parent field in a model.
-  FIELD_PARENT: '__RONIN_FIELD_PARENT_',
-
-  // Represents the value of a field in a model.
+  // Represents the value of a field in the model.
   FIELD: '__RONIN_FIELD_',
 
-  // Represents the old value of a field in a model. Used for triggers.
-  FIELD_OLD: '__RONIN_FIELD_PARENT_OLD_',
+  // Represents the value of a field in the model of a parent query.
+  FIELD_PARENT: '__RONIN_FIELD_PARENT_',
 
-  // Represents the new value of a field in a model. Used for triggers.
-  FIELD_NEW: '__RONIN_FIELD_PARENT_NEW_',
+  // Represents the old value of a field in the model. Used for triggers.
+  FIELD_PARENT_OLD: '__RONIN_FIELD_PARENT_OLD_',
+
+  // Represents the new value of a field in the model. Used for triggers.
+  FIELD_PARENT_NEW: '__RONIN_FIELD_PARENT_NEW_',
 
   // Represents a value provided to a query preset.
   VALUE: '__RONIN_VALUE',

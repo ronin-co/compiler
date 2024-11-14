@@ -114,10 +114,10 @@ const composeFieldValues = (
           targetTable = options.parentTable;
           toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
 
-          if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
-            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
-          } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
-            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
+          if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
+            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
+          } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
+            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
           }
 
           if (options.parentTable) {

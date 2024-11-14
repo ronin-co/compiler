@@ -914,8 +914,8 @@ export const addModelQueries = (
       if (filterQuery) {
         const tablePlaceholder =
           action === 'DELETE'
-            ? RONIN_MODEL_SYMBOLS.FIELD_OLD
-            : RONIN_MODEL_SYMBOLS.FIELD_NEW;
+            ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
+            : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
 
         const withStatement = handleWith(models, currentModel, params, filterQuery, {
           rootTable: tablePlaceholder,

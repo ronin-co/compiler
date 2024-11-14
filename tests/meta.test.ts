@@ -1155,7 +1155,7 @@ test('create new per-record trigger for creating records', () => {
         member: {
           to: {
             account: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
             },
             role: 'owner',
             pending: false,
@@ -1240,7 +1240,7 @@ test('create new per-record trigger for deleting records', () => {
         members: {
           with: {
             account: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_OLD}createdBy`,
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
             },
           },
         },
@@ -1317,7 +1317,7 @@ test('create new per-record trigger with filters for creating records', () => {
         member: {
           to: {
             account: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
             },
             role: 'owner',
             pending: false,
