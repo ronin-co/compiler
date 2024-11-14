@@ -67,7 +67,7 @@ export const handleWith = (
   model: Model,
   statementParams: Array<unknown> | null,
   instruction: GetInstructions['with'],
-  options?: { rootTable?: string; customTable?: string },
+  options?: { rootTable?: string; parentTable?: string },
 ): string => {
   const subStatement = composeConditions(
     models,
@@ -75,7 +75,7 @@ export const handleWith = (
     statementParams,
     'with',
     instruction as WithFilters,
-    { rootTable: options?.rootTable, customTable: options?.customTable },
+    { rootTable: options?.rootTable, parentTable: options?.parentTable },
   );
 
   return `(${subStatement})`;

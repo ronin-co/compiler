@@ -115,7 +115,7 @@ export const handleIncluding = (
         queryInstructions?.with as WithFilters,
         {
           rootTable: rootTableName,
-          customTable: tableAlias,
+          parentTable: tableAlias,
         },
       );
 

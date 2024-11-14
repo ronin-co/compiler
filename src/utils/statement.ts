@@ -81,7 +81,7 @@ const composeFieldValues = (
     rootTable?: string;
     fieldSlug: string;
     type?: 'fields' | 'values';
-    customTable?: string;
+    parentTable?: string;
     condition?: WithCondition;
   },
 ): string => {
@@ -106,7 +106,7 @@ const composeFieldValues = (
     })`;
   } else if (symbol?.type === 'expression') {
     if (collectStatementValue) {
-      conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${modelField.slug}"`;
+      conditionSelector = `${options.parentTable ? `"${options.parentTable}".` : ''}"${modelField.slug}"`;
     }
 
     conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
@@ -121,12 +121,12 @@ const composeFieldValues = (
 
         if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
           targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
-          if (options.customTable)
-            rootModel = getModelBySlug(models, options.customTable);
+          if (options.parentTable)
+            rootModel = getModelBySlug(models, options.parentTable);
         } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
           targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
-          if (options.customTable)
-            rootModel = getModelBySlug(models, options.customTable);
+          if (options.parentTable)
+            rootModel = getModelBySlug(models, options.parentTable);
         }
 
         if (options.rootTable) {

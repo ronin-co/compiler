@@ -150,10 +150,10 @@ export const compileQueryInput = (
       });
     }
 
-    let customTable: string | undefined;
+    let parentTable: string | undefined;
 
     if (options?.rootModel) {
-      customTable = getTableForModel(options.rootModel);
+      parentTable = getTableForModel(options.rootModel);
     }
 
     const toStatement = handleTo(
@@ -165,7 +165,7 @@ export const compileQueryInput = (
       { with: instructions.with, to: instructions.to },
       {
         rootTable: isJoining ? table : undefined,
-        customTable,
+        parentTable,
       },
     );
 
@@ -177,14 +177,14 @@ export const compileQueryInput = (
   // Queries of type "get", "set", "drop", or "count" all support filtering records, but
   // those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
-    let customTable: string | undefined;
+    let parentTable: string | undefined;
 
     if (options?.rootModel) {
-      customTable = getTableForModel(options.rootModel);
+      parentTable = getTableForModel(options.rootModel);
     }
 
     const withStatement = handleWith(models, model, statementParams, instructions?.with, {
-      rootTable: isJoining ? table : customTable,
+      rootTable: isJoining ? table : parentTable,
     });
 
     if (withStatement.length > 0) conditions.push(withStatement);

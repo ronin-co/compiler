@@ -41,7 +41,7 @@ export const handleTo = (
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
   },
-  options?: { rootTable?: string; customTable?: string },
+  options?: { rootTable?: string; parentTable?: string },
 ): string => {
   const currentTime = new Date().toISOString();
   const { with: withInstruction, to: toInstruction } = instructions;
@@ -188,7 +188,7 @@ export const handleTo = (
 
   let statement = composeConditions(models, model, statementParams, 'to', toInstruction, {
     rootTable: options?.rootTable,
-    customTable: options?.customTable,
+    parentTable: options?.parentTable,
     type: queryType === 'create' ? 'fields' : undefined,
   });
 
@@ -201,7 +201,7 @@ export const handleTo = (
       toInstruction,
       {
         rootTable: options?.rootTable,
-        customTable: options?.customTable,
+        parentTable: options?.parentTable,
         type: 'values',
       },
     );
