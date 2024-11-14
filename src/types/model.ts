@@ -99,20 +99,22 @@ export type ModelPreset = {
 };
 
 export interface Model {
-  name?: string;
-  pluralName?: string;
+  name: string;
+  pluralName: string;
   slug: string;
-  pluralSlug?: string;
+  pluralSlug: string;
 
   identifiers: {
     name: string;
     slug: string;
   };
-  idPrefix?: string;
+  idPrefix: string;
 
-  // If the model is used to associate two models with each other (in the case of
-  // many-cardinality reference fields), this property should contain the field to which
-  // the associative model should be mounted.
+  /**
+   * If the model is used to associate two models with each other (in the case of
+   * many-cardinality reference fields), this property should contain the field to which
+   * the associative model should be mounted.
+   */
   associationSlug?: string;
 
   fields?: Array<ModelField>;
@@ -121,9 +123,18 @@ export interface Model {
   presets?: Array<ModelPreset>;
 }
 
+type RecursivePartial<T> = {
+  [P in keyof T]?: T[P] extends object ? RecursivePartial<T[P]> : T[P];
+};
+
+export type PartialModel = RecursivePartial<Model>;
+
 // In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicModel = Omit<Partial<Model>, 'slug' | 'identifiers'> & {
+export type PublicModel = Omit<
+  Partial<Model>,
+  'slug' | 'identifiers' | 'associationSlug'
+> & {
   slug: Required<Model['slug']>;
 
   // It should also be possible for models to only define one of the two identifiers,

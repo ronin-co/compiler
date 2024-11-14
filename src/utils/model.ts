@@ -6,6 +6,7 @@ import type {
   ModelIndexField,
   ModelPreset,
   ModelTriggerField,
+  PartialModel,
   PublicModel,
 } from '@/src/types/model';
 import type {
@@ -264,7 +265,7 @@ const modelSettings: Array<
  *
  * @returns The updated model.
  */
-export const addDefaultModelFields = (model: PublicModel, isNew: boolean): Model => {
+export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
 
   for (const [setting, base, generator] of modelSettings) {
@@ -493,9 +494,9 @@ const SYSTEM_MODEL_SLUGS = SYSTEM_MODELS.flatMap(({ slug, pluralSlug }) => [
  *
  * @returns The extended list of models.
  */
-export const addSystemModels = (models: Array<PublicModel>): Array<PublicModel> => {
+export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel> => {
   const associativeModels = models.flatMap((model) => {
-    const addedModels: Array<PublicModel> = [];
+    const addedModels: Array<PartialModel> = [];
 
     for (const field of model.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
