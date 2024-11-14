@@ -119,18 +119,30 @@ const composeFieldValues = (
         targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
 
         if (options.customTable) rootModel = getModelBySlug(models, options.customTable);
+
+        if (options.rootTable) {
+          const cleanModelSlug = options.rootTable.replace('sub_', '');
+          rootModel = getModelBySlug(models, cleanModelSlug);
+        }
       } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
         targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
 
         if (options.customTable) rootModel = getModelBySlug(models, options.customTable);
+
+        if (options.rootTable) {
+          const cleanModelSlug = options.rootTable.replace('sub_', '');
+          rootModel = getModelBySlug(models, cleanModelSlug);
+        }
       }
 
       if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
         targetTable = options.rootTable;
         toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
 
-        if (options.rootTable && !options.rootTable.startsWith('sub_'))
-          rootModel = getModelBySlug(models, options.rootTable);
+        if (options.rootTable) {
+          const cleanModelSlug = options.rootTable.replace('sub_', '');
+          rootModel = getModelBySlug(models, cleanModelSlug);
+        }
       }
 
       const fieldSlug = match.replace(toReplace, '');
