@@ -312,6 +312,48 @@ test('get single record including ephemeral field', () => {
   ]);
 });
 
+test('get single record including ephemeral field containing expression', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          including: {
+            name: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName`,
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, models);
+
+  expect(statements).toEqual([
+    {
+      statement: `SELECT *, ("firstName" || ' ' || "lastName") as "name" FROM "accounts" LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+});
+
 test('get single record including deeply nested ephemeral field', () => {
   const queries: Array<Query> = [
     {
