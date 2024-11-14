@@ -113,7 +113,7 @@ export const compileQueryInput = (
   let isJoiningMultipleRows = false;
 
   if (isJoining) {
-    const { statement: including, rootTableSubQuery } = handleIncluding(
+    const { statement: including, tableSubQuery } = handleIncluding(
       models,
       model,
       statementParams,
@@ -124,8 +124,8 @@ export const compileQueryInput = (
     // query is only supposed to return a single row, we need to ensure a limit for the
     // root query *before* joining the other rows. Otherwise, if the limit sits at the
     // end of the full query, only one row would be available at the end.
-    if (rootTableSubQuery) {
-      statement += `(${rootTableSubQuery}) as ${model.tableAlias} `;
+    if (tableSubQuery) {
+      statement += `(${tableSubQuery}) as ${model.tableAlias} `;
       isJoiningMultipleRows = true;
     } else {
       statement += `"${model.table}" `;

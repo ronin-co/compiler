@@ -25,11 +25,11 @@ export const handleIncluding = (
   instruction: Instructions['including'],
 ): {
   statement: string;
-  rootTableSubQuery?: string;
+  tableSubQuery?: string;
 } => {
   let statement = '';
 
-  let rootTableSubQuery: string | undefined;
+  let tableSubQuery: string | undefined;
 
   for (const ephemeralFieldSlug in instruction) {
     const symbol = getSymbol(instruction[ephemeralFieldSlug]);
@@ -106,7 +106,7 @@ export const handleIncluding = (
 
     if (joinType === 'LEFT') {
       if (!single) {
-        rootTableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
+        tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
         model.tableAlias = `sub_${model.table}`;
       }
 
@@ -125,5 +125,5 @@ export const handleIncluding = (
     }
   }
 
-  return { statement, rootTableSubQuery };
+  return { statement, tableSubQuery };
 };
