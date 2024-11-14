@@ -113,32 +113,25 @@ export const compileQueryInput = (
   let isJoiningMultipleRows = false;
 
   if (isJoining) {
-    const {
-      statement: including,
-      rootTableSubQuery,
-      rootTableName,
-    } = handleIncluding(models, model, statementParams, instructions?.including);
-
-    let tableName = model.table;
+    const { statement: including, rootTableSubQuery } = handleIncluding(
+      models,
+      model,
+      statementParams,
+      instructions?.including,
+    );
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
     // root query *before* joining the other rows. Otherwise, if the limit sits at the
     // end of the full query, only one row would be available at the end.
-    if (rootTableSubQuery && rootTableName) {
-      tableName = rootTableName;
-      statement += `(${rootTableSubQuery}) as ${rootTableName} `;
+    if (rootTableSubQuery) {
+      statement += `(${rootTableSubQuery}) as ${model.tableAlias} `;
       isJoiningMultipleRows = true;
     } else {
-      statement += `"${tableName}" `;
+      statement += `"${model.table}" `;
     }
 
     statement += `${including} `;
-
-    // Show the table name for every column. By default, it doesn't show, but since we
-    // are joining multiple tables together, we need to show the table name for every
-    // table, in order to avoid conflicts.
-    model.tableAlias = tableName;
   } else {
     statement += `"${model.table}" `;
   }

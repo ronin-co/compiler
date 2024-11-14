@@ -26,12 +26,10 @@ export const handleIncluding = (
 ): {
   statement: string;
   rootTableSubQuery?: string;
-  rootTableName?: string;
 } => {
   let statement = '';
 
   let rootTableSubQuery: string | undefined;
-  let rootTableName = model.table;
 
   for (const ephemeralFieldSlug in instruction) {
     const symbol = getSymbol(instruction[ephemeralFieldSlug]);
@@ -101,10 +99,15 @@ export const handleIncluding = (
 
     statement += `${joinType} JOIN ${relatedTableSelector} as ${tableAlias}`;
 
+    // Show the table name for every column. By default, it doesn't show, but since we
+    // are joining multiple tables together, we need to show the table name for every
+    // table, in order to avoid conflicts.
+    model.tableAlias = model.table;
+
     if (joinType === 'LEFT') {
       if (!single) {
-        rootTableSubQuery = `SELECT * FROM "${rootTableName}" LIMIT 1`;
-        rootTableName = `sub_${rootTableName}`;
+        rootTableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
+        model.tableAlias = `sub_${model.table}`;
       }
 
       const subStatement = composeConditions(
@@ -114,7 +117,7 @@ export const handleIncluding = (
         'including',
         queryInstructions?.with as WithFilters,
         {
-          parentModel: { ...model, tableAlias: rootTableName },
+          parentModel: model,
         },
       );
 
@@ -122,5 +125,5 @@ export const handleIncluding = (
     }
   }
 
-  return { statement, rootTableSubQuery, rootTableName };
+  return { statement, rootTableSubQuery };
 };
