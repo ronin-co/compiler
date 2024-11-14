@@ -12,4 +12,4 @@ jobs:
   validate:
     uses: ronin-co/github-actions/.github/workflows/validate.yml@main
     with:
-      package_dir: './'  # Adjust if your package is in a subdirectory
+      package_dir: './'  
