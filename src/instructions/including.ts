@@ -11,18 +11,18 @@ import { composeConditions, getSymbol } from '@/src/utils/statement';
  * joining records from other models.
  *
  * @param models - A list of models.
+ * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `including` instruction provided in the current query.
- * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The SQL syntax for the provided `including` instruction.
  */
 export const handleIncluding = (
   models: Array<Model>,
+  model: Model,
   statementParams: Array<unknown> | null,
   instruction: Instructions['including'],
-  rootTable?: string,
 ): {
   statement: string;
   rootTableSubQuery?: string;
@@ -31,7 +31,7 @@ export const handleIncluding = (
   let statement = '';
 
   let rootTableSubQuery: string | undefined;
-  let rootTableName = rootTable;
+  let rootTableName = model.table;
 
   for (const ephemeralFieldSlug in instruction) {
     const symbol = getSymbol(instruction[ephemeralFieldSlug]);
@@ -103,8 +103,8 @@ export const handleIncluding = (
 
     if (joinType === 'LEFT') {
       if (!single) {
-        rootTableSubQuery = `SELECT * FROM "${rootTable}" LIMIT 1`;
-        rootTableName = `sub_${rootTable}`;
+        rootTableSubQuery = `SELECT * FROM "${rootTableName}" LIMIT 1`;
+        rootTableName = `sub_${rootTableName}`;
       }
 
       const subStatement = composeConditions(

@@ -59,10 +59,6 @@ export const compileQueryInput = (
   // `with` and `including`) are located.
   let instructions = formatIdentifiers(model, queryInstructions);
 
-  // The name of the table in SQLite that contains the records that are being addressed.
-  // This always matches the plural slug of the model, but in snake case.
-  let { table } = model;
-
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
   // used to update the database in a way that is required for the main read statement
@@ -121,18 +117,20 @@ export const compileQueryInput = (
       statement: including,
       rootTableSubQuery,
       rootTableName,
-    } = handleIncluding(models, statementParams, instructions?.including, table);
+    } = handleIncluding(models, model, statementParams, instructions?.including);
+
+    let tableName = model.table;
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
     // root query *before* joining the other rows. Otherwise, if the limit sits at the
     // end of the full query, only one row would be available at the end.
     if (rootTableSubQuery && rootTableName) {
-      table = rootTableName;
+      tableName = rootTableName;
       statement += `(${rootTableSubQuery}) as ${rootTableName} `;
       isJoiningMultipleRows = true;
     } else {
-      statement += `"${table}" `;
+      statement += `"${tableName}" `;
     }
 
     statement += `${including} `;
@@ -140,9 +138,9 @@ export const compileQueryInput = (
     // Show the table name for every column. By default, it doesn't show, but since we
     // are joining multiple tables together, we need to show the table name for every
     // table, in order to avoid conflicts.
-    model.tableAlias = table;
+    model.tableAlias = tableName;
   } else {
-    statement += `"${table}" `;
+    statement += `"${model.table}" `;
   }
 
   if (queryType === 'create' || queryType === 'set') {
