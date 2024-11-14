@@ -31,10 +31,10 @@ export const RONIN_MODEL_SYMBOLS = {
   FIELD: '__RONIN_FIELD_',
 
   // Represents the old value of a field in a model. Used for triggers.
-  FIELD_OLD: '__RONIN_FIELD_OLD_',
+  FIELD_OLD: '__RONIN_FIELD_PARENT_OLD_',
 
   // Represents the new value of a field in a model. Used for triggers.
-  FIELD_NEW: '__RONIN_FIELD_NEW_',
+  FIELD_NEW: '__RONIN_FIELD_PARENT_NEW_',
 
   // Represents a value provided to a query preset.
   VALUE: '__RONIN_VALUE',

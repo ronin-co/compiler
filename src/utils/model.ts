@@ -97,8 +97,8 @@ const getFieldSelector = (
   instructionName: QueryInstructionType,
   rootTable?: string,
 ) => {
-  const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD)
-    ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD, '').slice(0, -1)}.`
+  const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)
+    ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
     : '';
   const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
 
