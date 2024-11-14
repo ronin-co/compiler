@@ -80,7 +80,6 @@ const composeFieldValues = (
   options: {
     fieldSlug: string;
     type?: 'fields' | 'values';
-    rootTable?: string;
     parentTable?: string;
     condition?: WithCondition;
   },
@@ -89,7 +88,6 @@ const composeFieldValues = (
     model,
     options.fieldSlug,
     instructionName,
-    options.rootTable,
   );
 
   // If only the field selectors are being requested, do not register any values.
@@ -105,34 +103,27 @@ const composeFieldValues = (
     // syntax that can be run.
     if (symbol?.type === 'expression') {
       conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
-        let targetTable: string | undefined;
         let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
-
-        let rootModel = model;
+        let rootModel: Model = model;
 
         if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
-          targetTable = options.parentTable;
-          toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
-
-          if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
-            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
-          } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
-            targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
-          }
-
           if (options.parentTable) {
             const cleanModelSlug = options.parentTable.replace('sub_', '');
             rootModel = getModelBySlug(models, cleanModelSlug);
           }
+
+          rootModel.tableAlias = options.parentTable;
+          toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+
+          if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
+            rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
+          } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
+            rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
+          }
         }
 
         const fieldSlug = match.replace(toReplace, '');
-        const field = getFieldFromModel(
-          rootModel,
-          fieldSlug,
-          instructionName,
-          targetTable,
-        );
+        const field = getFieldFromModel(rootModel, fieldSlug, instructionName);
 
         return field.fieldSelector;
       });
@@ -209,12 +200,7 @@ export const composeConditions = (
   // potential object value in a special way, instead of just iterating over the nested
   // fields and trying to assert the column for each one.
   if (options.fieldSlug) {
-    const fieldDetails = getFieldFromModel(
-      model,
-      options.fieldSlug,
-      instructionName,
-      options.rootTable,
-    );
+    const fieldDetails = getFieldFromModel(model, options.fieldSlug, instructionName);
 
     const { field: modelField } = fieldDetails;
 

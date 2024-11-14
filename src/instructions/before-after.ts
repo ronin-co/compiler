@@ -21,7 +21,6 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
- * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The SQL syntax for the provided `before` or `after` instruction.
  */
@@ -35,7 +34,6 @@ export const handleBeforeOrAfter = (
     orderedBy: GetInstructions['orderedBy'];
     limitedTo?: GetInstructions['limitedTo'];
   },
-  rootTable?: string,
 ): string => {
   if (!(instructions.before || instructions.after)) {
     throw new RoninError({
@@ -124,12 +122,7 @@ export const handleBeforeOrAfter = (
       const key = keys[j];
       const value = values[j];
 
-      let { field, fieldSelector } = getFieldFromModel(
-        model,
-        key,
-        'orderedBy',
-        rootTable,
-      );
+      let { field, fieldSelector } = getFieldFromModel(model, key, 'orderedBy');
 
       // If we're at the current field, add the comparison to the condition.
       if (j === i) {

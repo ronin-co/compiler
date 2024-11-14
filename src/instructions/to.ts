@@ -41,7 +41,7 @@ export const handleTo = (
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
   },
-  options?: { rootTable?: string; parentTable?: string },
+  options?: { parentTable?: string },
 ): string => {
   const currentTime = new Date().toISOString();
   const { with: withInstruction, to: toInstruction } = instructions;

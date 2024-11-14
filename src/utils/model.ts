@@ -71,24 +71,24 @@ export const composeAssociationModelSlug = (model: PublicModel, field: ModelFiel
 /**
  * Constructs the SQL selector for a given field in a model.
  *
- * @param field - A field from a model.
+ * @param model - The model to which the field belongs.
+ * @param field - A field from the model.
  * @param fieldPath - The path of the field being addressed. Supports dot notation for
  * accessing nested fields.
  * @param instructionName - The name of the query instruction that is being used.
- * @param rootTable - The name of a table, if it should be included in the SQL selector.
  *
  * @returns The SQL column selector for the provided field.
  */
 const getFieldSelector = (
+  model: Model,
   field: ModelField,
   fieldPath: string,
   instructionName: QueryInstructionType,
-  rootTable?: string,
 ) => {
-  const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)
-    ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
+  const symbol = model.tableAlias?.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)
+    ? `${model.tableAlias.replace(RONIN_MODEL_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
     : '';
-  const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
+  const tablePrefix = symbol || (model.tableAlias ? `"${model.tableAlias}".` : '');
 
   // If the field is of type JSON and the field is being selected in a read query, that
   // means we should extract the nested property from the JSON field.
@@ -110,7 +110,6 @@ const getFieldSelector = (
  * @param fieldPath - The path of the field to retrieve. Supports dot notation for
  * accessing nested fields.
  * @param instructionName - The name of the query instruction that is being used.
- * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The requested field of the model, and its SQL selector.
  */
@@ -118,7 +117,6 @@ export const getFieldFromModel = (
   model: Model,
   fieldPath: string,
   instructionName: QueryInstructionType,
-  rootTable?: string,
 ): { field: ModelField; fieldSelector: string } => {
   const errorPrefix = `Field "${fieldPath}" defined for \`${instructionName}\``;
   const modelFields = model.fields || [];
@@ -132,10 +130,10 @@ export const getFieldFromModel = (
 
     if (modelField?.type === 'json') {
       const fieldSelector = getFieldSelector(
+        model,
         modelField,
         fieldPath,
         instructionName,
-        rootTable,
       );
       return { field: modelField, fieldSelector };
     }
@@ -152,12 +150,7 @@ export const getFieldFromModel = (
     });
   }
 
-  const fieldSelector = getFieldSelector(
-    modelField,
-    fieldPath,
-    instructionName,
-    rootTable,
-  );
+  const fieldSelector = getFieldSelector(model, modelField, fieldPath, instructionName);
   return { field: modelField, fieldSelector };
 };
 
@@ -917,12 +910,9 @@ export const addModelQueries = (
 
         const withStatement = handleWith(
           models,
-          { ...currentModel, table: tableAlias },
+          { ...currentModel, tableAlias: tableAlias },
           params,
           filterQuery,
-          {
-            rootTable: tableAlias,
-          },
         );
 
         statementParts.push('WHEN', `(${withStatement})`);

@@ -67,7 +67,7 @@ export const handleWith = (
   model: Model,
   statementParams: Array<unknown> | null,
   instruction: GetInstructions['with'],
-  options?: { rootTable?: string; parentTable?: string },
+  options?: { parentTable?: string },
 ): string => {
   const subStatement = composeConditions(
     models,

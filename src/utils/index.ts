@@ -136,6 +136,11 @@ export const compileQueryInput = (
     }
 
     statement += `${including} `;
+
+    // Show the table name for every column. By default, it doesn't show, but since we
+    // are joining multiple tables together, we need to show the table name for every
+    // table, in order to avoid conflicts.
+    model.tableAlias = table;
   } else {
     statement += `"${table}" `;
   }
@@ -159,7 +164,6 @@ export const compileQueryInput = (
       dependencyStatements,
       { with: instructions.with, to: instructions.to },
       {
-        rootTable: isJoining ? table : undefined,
         parentTable: options?.parentTable,
       },
     );
@@ -173,7 +177,6 @@ export const compileQueryInput = (
   // those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
     const withStatement = handleWith(models, model, statementParams, instructions?.with, {
-      rootTable: isJoining ? table : undefined,
       parentTable: options?.parentTable,
     });
 
@@ -225,18 +228,13 @@ export const compileQueryInput = (
       });
     }
 
-    const beforeAndAfterStatement = handleBeforeOrAfter(
-      model,
-      statementParams,
-      {
-        before: instructions.before,
-        after: instructions.after,
-        with: instructions.with,
-        orderedBy: instructions.orderedBy,
-        limitedTo: instructions.limitedTo,
-      },
-      isJoining ? table : undefined,
-    );
+    const beforeAndAfterStatement = handleBeforeOrAfter(model, statementParams, {
+      before: instructions.before,
+      after: instructions.after,
+      with: instructions.with,
+      orderedBy: instructions.orderedBy,
+      limitedTo: instructions.limitedTo,
+    });
     conditions.push(beforeAndAfterStatement);
   }
 
@@ -251,11 +249,7 @@ export const compileQueryInput = (
   }
 
   if (instructions?.orderedBy) {
-    const orderedByStatement = handleOrderedBy(
-      model,
-      instructions.orderedBy,
-      isJoining ? table : undefined,
-    );
+    const orderedByStatement = handleOrderedBy(model, instructions.orderedBy);
     statement += `${orderedByStatement} `;
   }
 
