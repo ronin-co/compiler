@@ -58,7 +58,7 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `with` instruction included in a query.
- * @param options - Additional options for customizing the behavior of the function.
+ * @param parentModel - The model of the parent query, if there is one.
  *
  * @returns The SQL syntax for the provided `with` instruction.
  */
@@ -67,7 +67,7 @@ export const handleWith = (
   model: Model,
   statementParams: Array<unknown> | null,
   instruction: GetInstructions['with'],
-  options?: { parentTable?: string },
+  parentModel?: Model,
 ): string => {
   const subStatement = composeConditions(
     models,
@@ -75,7 +75,7 @@ export const handleWith = (
     statementParams,
     'with',
     instruction as WithFilters,
-    { ...options },
+    { parentModel },
   );
 
   return `(${subStatement})`;

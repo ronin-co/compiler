@@ -27,7 +27,7 @@ import { composeConditions, getSymbol } from '@/src/utils/statement';
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  * @param instructions - The `to` and `with` instruction included in the query.
- * @param options - Additional options for customizing the behavior of the function.
+ * @param parentModel - The model of the parent query, if there is one.
  *
  * @returns The SQL syntax for the provided `to` instruction.
  */
@@ -41,7 +41,7 @@ export const handleTo = (
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
   },
-  options?: { parentTable?: string },
+  parentModel?: Model,
 ): string => {
   const currentTime = new Date().toISOString();
   const { with: withInstruction, to: toInstruction } = instructions;
@@ -187,7 +187,7 @@ export const handleTo = (
   }
 
   let statement = composeConditions(models, model, statementParams, 'to', toInstruction, {
-    ...options,
+    parentModel,
     type: queryType === 'create' ? 'fields' : undefined,
   });
 
@@ -199,7 +199,7 @@ export const handleTo = (
       'to',
       toInstruction,
       {
-        ...options,
+        parentModel,
         type: 'values',
       },
     );

@@ -922,7 +922,7 @@ export const addModelQueries = (
       const effectStatements = effectQueries.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
-          parentTable: tableName,
+          parentModel: currentModel,
         }).main.statement;
       });
 

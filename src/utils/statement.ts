@@ -80,7 +80,7 @@ const composeFieldValues = (
   options: {
     fieldSlug: string;
     type?: 'fields' | 'values';
-    parentTable?: string;
+    parentModel?: Model;
     condition?: WithCondition;
   },
 ): string => {
@@ -107,12 +107,7 @@ const composeFieldValues = (
         let rootModel: Model = model;
 
         if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
-          if (options.parentTable) {
-            const cleanModelSlug = options.parentTable.replace('sub_', '');
-            rootModel = getModelBySlug(models, cleanModelSlug);
-          }
-
-          rootModel.tableAlias = options.parentTable;
+          rootModel = options.parentModel as Model;
           toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
 
           if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {

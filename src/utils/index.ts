@@ -39,10 +39,10 @@ export const compileQueryInput = (
     returning?: boolean;
     /**
      * If the query is contained within another query, this property should be set to the
-     * name of the table of the parent query. Like that, it becomes possible to reference
-     * fields of the parent model in the nested query (the current query).
+     * model of the parent query. Like that, it becomes possible to reference fields of
+     * the parent model in the nested query (the current query).
      */
-    parentTable?: string;
+    parentModel?: Model;
   },
 ): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
@@ -161,9 +161,7 @@ export const compileQueryInput = (
       queryType,
       dependencyStatements,
       { with: instructions.with, to: instructions.to },
-      {
-        parentTable: options?.parentTable,
-      },
+      options?.parentModel,
     );
 
     statement += `${toStatement} `;
@@ -174,9 +172,13 @@ export const compileQueryInput = (
   // Queries of type "get", "set", "drop", or "count" all support filtering records, but
   // those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
-    const withStatement = handleWith(models, model, statementParams, instructions?.with, {
-      parentTable: options?.parentTable,
-    });
+    const withStatement = handleWith(
+      models,
+      model,
+      statementParams,
+      instructions?.with,
+      options?.parentModel,
+    );
 
     if (withStatement.length > 0) conditions.push(withStatement);
   }
