@@ -59,6 +59,49 @@ export const prepareStatementValue = (
 };
 
 /**
+ * Parses a RONIN expression and returns the SQL expression.
+ *
+ * @param model - The specific model being addressed in the surrounding query.
+ * @param instructionName - The name of the instruction that is being processed.
+ * @param expression - The expression that should be parsed.
+ * @param parentModel - The model of the parent query, if there is one.
+ *
+ * @returns An SQL expression.
+ */
+export const parseFieldExpression = (
+  model: Model,
+  instructionName: QueryInstructionType,
+  expression: string,
+  parentModel?: Model,
+) => {
+  return expression.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
+    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
+    let rootModel: Model = model;
+
+    // If a parent field is being referenced inside the value of the field, we need to
+    // obtain the field from the parent model instead of the current model.
+    if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
+      rootModel = parentModel as Model;
+      toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+
+      // If the old or new value of a field in the parent model is being referenced, we
+      // can't use the table name directly and instead have to resort to using special
+      // keywords such as `OLD` and `NEW` as the table names, which SQLite will handle.
+      if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
+        rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
+      } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
+        rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
+      }
+    }
+
+    const fieldSlug = match.replace(toReplace, '');
+    const field = getFieldFromModel(rootModel, fieldSlug, instructionName);
+
+    return field.fieldSelector;
+  });
+};
+
+/**
  * Generates an SQL condition, column name, or column value for the provided field.
  *
  * @param models - A list of models.
@@ -71,7 +114,7 @@ export const prepareStatementValue = (
  * @returns An SQL condition for the provided field. Alternatively only its column name
  * or column value.
  */
-const composeFieldValues = (
+export const composeFieldValues = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
@@ -102,32 +145,12 @@ const composeFieldValues = (
     // The value of the field is a RONIN expression, which we need to compile into an SQL
     // syntax that can be run.
     if (symbol?.type === 'expression') {
-      conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
-        let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
-        let rootModel: Model = model;
-
-        // If a parent field is being referenced inside the value of the field, we need
-        // to obtain the field from the parent model instead of the current model.
-        if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
-          rootModel = options.parentModel as Model;
-          toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
-
-          // If the old or new value of a field in the parent model is being referenced,
-          // we can't use the table name directly and instead have to resort to using
-          // special keywords such as `OLD` and `NEW` as the table names, which SQLite
-          // will parse itself.
-          if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
-            rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
-          } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
-            rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
-          }
-        }
-
-        const fieldSlug = match.replace(toReplace, '');
-        const field = getFieldFromModel(rootModel, fieldSlug, instructionName);
-
-        return field.fieldSelector;
-      });
+      conditionValue = parseFieldExpression(
+        model,
+        instructionName,
+        symbol.value,
+        options.parentModel,
+      );
     }
 
     // The value of the field is a RONIN query, which we need to compile into an SQL

@@ -77,7 +77,7 @@ export const handleBeforeOrAfter = (
       return 'NULL';
     }
 
-    const { field } = getFieldFromModel(model, key, 'orderedBy');
+    const { field } = getFieldFromModel(model, key as string, 'orderedBy');
 
     if (field.type === 'boolean') {
       return prepareStatementValue(statementParams, value === 'true');
@@ -122,7 +122,7 @@ export const handleBeforeOrAfter = (
       const key = keys[j];
       const value = values[j];
 
-      let { field, fieldSelector } = getFieldFromModel(model, key, 'orderedBy');
+      let { field, fieldSelector } = getFieldFromModel(model, key as string, 'orderedBy');
 
       // If we're at the current field, add the comparison to the condition.
       if (j === i) {
@@ -145,7 +145,7 @@ export const handleBeforeOrAfter = (
         if (
           value !== 'NULL' &&
           operator === '<' &&
-          !['ronin.createdAt', 'ronin.updatedAt'].includes(key)
+          !['ronin.createdAt', 'ronin.updatedAt'].includes(key as string)
         ) {
           fieldSelector = `IFNULL(${fieldSelector}, -1e999)`;
         }
