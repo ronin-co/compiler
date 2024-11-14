@@ -149,20 +149,6 @@ const composeFieldValues = (
       return getFieldFromModel(rootModel, fieldSlug, instructionName, targetTable)
         .fieldSelector;
     });
-  } else if (typeof value === 'string' && value.startsWith(RONIN_MODEL_SYMBOLS.FIELD)) {
-    let targetTable = `"${options.rootTable}"`;
-    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
-
-    if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
-      targetTable = 'OLD';
-      toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
-    } else if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
-      targetTable = 'NEW';
-      toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
-    }
-
-    conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${modelField.slug}"`;
-    conditionValue = `${targetTable}."${value.replace(toReplace, '')}"`;
   } else if (collectStatementValue) {
     conditionValue = prepareStatementValue(statementParams, value);
   }
