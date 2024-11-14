@@ -3,38 +3,36 @@ import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { getModelBySlug, getTableForModel } from '@/src/utils/model';
-import { composeConditions, getSubQuery } from '@/src/utils/statement';
+import { getModelBySlug } from '@/src/utils/model';
+import { composeConditions, getSymbol } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `including` query instruction, which allows for
  * joining records from other models.
  *
  * @param models - A list of models.
+ * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `including` instruction provided in the current query.
- * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The SQL syntax for the provided `including` instruction.
  */
 export const handleIncluding = (
   models: Array<Model>,
+  model: Model,
   statementParams: Array<unknown> | null,
   instruction: Instructions['including'],
-  rootTable?: string,
 ): {
   statement: string;
-  rootTableSubQuery?: string;
-  rootTableName?: string;
+  tableSubQuery?: string;
 } => {
   let statement = '';
 
-  let rootTableSubQuery: string | undefined;
-  let rootTableName = rootTable;
+  let tableSubQuery: string | undefined;
 
   for (const ephemeralFieldSlug in instruction) {
-    const includingQuery = getSubQuery(instruction[ephemeralFieldSlug]);
+    const symbol = getSymbol(instruction[ephemeralFieldSlug]);
 
     // The `including` instruction might contain values that are not queries, which are
     // taken care of by the `handleSelecting` function. Specifically, those values are
@@ -42,15 +40,15 @@ export const handleIncluding = (
     //
     // Only in the case that the `including` instruction contains a query, we want to
     // continue with the current function and process the query as an SQL JOIN.
-    if (!includingQuery) continue;
+    if (symbol?.type !== 'query') continue;
 
-    const { queryType, queryModel, queryInstructions } = splitQuery(includingQuery);
+    const { queryType, queryModel, queryInstructions } = splitQuery(symbol.value);
     let modifiableQueryInstructions = queryInstructions;
 
     const relatedModel = getModelBySlug(models, queryModel);
 
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
-    let relatedTableSelector = `"${getTableForModel(relatedModel)}"`;
+    let relatedTableSelector = `"${relatedModel.table}"`;
 
     const tableAlias = `including_${ephemeralFieldSlug}`;
     const single = queryModel !== relatedModel.pluralSlug;
@@ -101,21 +99,25 @@ export const handleIncluding = (
 
     statement += `${joinType} JOIN ${relatedTableSelector} as ${tableAlias}`;
 
+    // Show the table name for every column in the final SQL statement. By default, it
+    // doesn't show, but since we are joining multiple tables together, we need to show
+    // the table name for every column, in order to avoid conflicts.
+    model.tableAlias = model.table;
+
     if (joinType === 'LEFT') {
       if (!single) {
-        rootTableSubQuery = `SELECT * FROM "${rootTable}" LIMIT 1`;
-        rootTableName = `sub_${rootTable}`;
+        tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
+        model.tableAlias = `sub_${model.table}`;
       }
 
       const subStatement = composeConditions(
         models,
-        relatedModel,
+        { ...relatedModel, tableAlias },
         statementParams,
         'including',
         queryInstructions?.with as WithFilters,
         {
-          rootTable: rootTableName,
-          customTable: tableAlias,
+          parentModel: model,
         },
       );
 
@@ -123,5 +125,5 @@ export const handleIncluding = (
     }
   }
 
-  return { statement, rootTableSubQuery, rootTableName };
+  return { statement, tableSubQuery };
 };

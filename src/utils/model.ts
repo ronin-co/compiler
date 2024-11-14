@@ -6,6 +6,7 @@ import type {
   ModelIndexField,
   ModelPreset,
   ModelTriggerField,
+  PartialModel,
   PublicModel,
 } from '@/src/types/model';
 import type {
@@ -56,27 +57,6 @@ export const getModelBySlug = <T extends Model | PublicModel>(
 };
 
 /**
- * Composes the SQLite table name for a given RONIN model.
- *
- * @param model - The model to compose the table name for.
- *
- * @returns A table name.
- */
-export const getTableForModel = (model: Model): string => {
-  return convertToSnakeCase(model.pluralSlug as string);
-};
-
-/**
- * Composes a slug for a model that was automatically provided by the system, instead
- * of being provided by a developer.
- *
- * @param suffix - A suffix to append to the generated slug.
- *
- * @returns A slug for a model that was automatically provided by the system.
- */
-const composeMetaModelSlug = (suffix: string) => convertToCamelCase(`ronin_${suffix}`);
-
-/**
  * Composes the slug of an associative model that is used to establish a relationship
  * between two models that are not directly related to each other.
  *
@@ -86,29 +66,29 @@ const composeMetaModelSlug = (suffix: string) => convertToCamelCase(`ronin_${suf
  * @returns A slug for the associative model.
  */
 export const composeAssociationModelSlug = (model: PublicModel, field: ModelField) =>
-  composeMetaModelSlug(`${model.slug}_${field.slug}`);
+  convertToCamelCase(`ronin_link_${model.slug}_${field.slug}`);
 
 /**
  * Constructs the SQL selector for a given field in a model.
  *
- * @param field - A field from a model.
+ * @param model - The model to which the field belongs.
+ * @param field - A field from the model.
  * @param fieldPath - The path of the field being addressed. Supports dot notation for
  * accessing nested fields.
  * @param instructionName - The name of the query instruction that is being used.
- * @param rootTable - The name of a table, if it should be included in the SQL selector.
  *
  * @returns The SQL column selector for the provided field.
  */
 const getFieldSelector = (
+  model: Model,
   field: ModelField,
   fieldPath: string,
   instructionName: QueryInstructionType,
-  rootTable?: string,
 ) => {
-  const symbol = rootTable?.startsWith(RONIN_MODEL_SYMBOLS.FIELD)
-    ? `${rootTable.replace(RONIN_MODEL_SYMBOLS.FIELD, '').slice(0, -1)}.`
+  const symbol = model.tableAlias?.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)
+    ? `${model.tableAlias.replace(RONIN_MODEL_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
     : '';
-  const tablePrefix = symbol || (rootTable ? `"${rootTable}".` : '');
+  const tablePrefix = symbol || (model.tableAlias ? `"${model.tableAlias}".` : '');
 
   // If the field is of type JSON and the field is being selected in a read query, that
   // means we should extract the nested property from the JSON field.
@@ -130,7 +110,6 @@ const getFieldSelector = (
  * @param fieldPath - The path of the field to retrieve. Supports dot notation for
  * accessing nested fields.
  * @param instructionName - The name of the query instruction that is being used.
- * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The requested field of the model, and its SQL selector.
  */
@@ -138,7 +117,6 @@ export const getFieldFromModel = (
   model: Model,
   fieldPath: string,
   instructionName: QueryInstructionType,
-  rootTable?: string,
 ): { field: ModelField; fieldSelector: string } => {
   const errorPrefix = `Field "${fieldPath}" defined for \`${instructionName}\``;
   const modelFields = model.fields || [];
@@ -152,10 +130,10 @@ export const getFieldFromModel = (
 
     if (modelField?.type === 'json') {
       const fieldSelector = getFieldSelector(
+        model,
         modelField,
         fieldPath,
         instructionName,
-        rootTable,
       );
       return { field: modelField, fieldSelector };
     }
@@ -172,12 +150,7 @@ export const getFieldFromModel = (
     });
   }
 
-  const fieldSelector = getFieldSelector(
-    modelField,
-    fieldPath,
-    instructionName,
-    rootTable,
-  );
+  const fieldSelector = getFieldSelector(model, modelField, fieldPath, instructionName);
   return { field: modelField, fieldSelector };
 };
 
@@ -248,7 +221,13 @@ const pluralize = (word: string) => {
   return `${word}s`;
 };
 
-type ComposableSettings = 'slug' | 'pluralSlug' | 'name' | 'pluralName' | 'idPrefix';
+type ComposableSettings =
+  | 'slug'
+  | 'pluralSlug'
+  | 'name'
+  | 'pluralName'
+  | 'idPrefix'
+  | 'table';
 
 /**
  * A list of settings that can be automatically generated based on other settings.
@@ -264,6 +243,7 @@ const modelSettings: Array<
   ['name', 'slug', slugToName],
   ['pluralName', 'pluralSlug', slugToName],
   ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+  ['table', 'pluralSlug', convertToSnakeCase],
 ];
 
 /**
@@ -274,7 +254,7 @@ const modelSettings: Array<
  *
  * @returns The updated model.
  */
-export const addDefaultModelFields = (model: PublicModel, isNew: boolean): Model => {
+export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
 
   for (const [setting, base, generator] of modelSettings) {
@@ -384,6 +364,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'pluralSlug', type: 'string' },
 
       { slug: 'idPrefix', type: 'string' },
+      { slug: 'table', type: 'string' },
 
       { slug: 'identifiers', type: 'group' },
       { slug: 'identifiers.name', type: 'string' },
@@ -503,9 +484,9 @@ const SYSTEM_MODEL_SLUGS = SYSTEM_MODELS.flatMap(({ slug, pluralSlug }) => [
  *
  * @returns The extended list of models.
  */
-export const addSystemModels = (models: Array<PublicModel>): Array<PublicModel> => {
+export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel> => {
   const associativeModels = models.flatMap((model) => {
-    const addedModels: Array<PublicModel> = [];
+    const addedModels: Array<PartialModel> = [];
 
     for (const field of model.fields || []) {
       if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
@@ -523,6 +504,7 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PublicModel> 
           addedModels.push({
             pluralSlug: fieldSlug,
             slug: fieldSlug,
+            associationSlug: field.slug,
             fields: [
               {
                 slug: 'source',
@@ -565,11 +547,11 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
     if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
       const relatedModel = getModelBySlug(list, field.target.slug);
 
-      let fieldSlug = relatedModel.slug;
-
-      if (field.kind === 'many') {
-        fieldSlug = composeAssociationModelSlug(model, field);
-      }
+      // If a reference field has the cardinality "many", we don't need to add a default
+      // preset for resolving its records, because we are already adding an associative
+      // schema in `addSystemModels`, which causes a default preset to get added in the
+      // original schema anyways.
+      if (field.kind === 'many') continue;
 
       // For every reference field, add a default preset for resolving the referenced
       // record in the model that contains the reference field.
@@ -579,11 +561,13 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
             [field.slug]: {
               [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
-                  [fieldSlug]: {
+                  [relatedModel.slug]: {
                     with: {
                       // Compare the `id` field of the related model to the reference field on
                       // the root model (`field.slug`).
-                      id: `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
+                      id: {
+                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}${field.slug}`,
+                      },
                     },
                   },
                 },
@@ -614,15 +598,19 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
     const { model: childModel, field: childField } = childMatch;
     const pluralSlug = childModel.pluralSlug as string;
 
+    const presetSlug = childModel.associationSlug || pluralSlug;
+
     defaultPresets.push({
       instructions: {
         including: {
-          [pluralSlug]: {
+          [presetSlug]: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
                 [pluralSlug]: {
                   with: {
-                    [childField.slug]: `${RONIN_MODEL_SYMBOLS.FIELD}id`,
+                    [childField.slug]: {
+                      [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}id`,
+                    },
                   },
                 },
               },
@@ -630,7 +618,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
           },
         },
       },
-      slug: pluralSlug,
+      slug: presetSlug,
     });
   }
 
@@ -864,6 +852,8 @@ export const addModelQueries = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (queryType === 'create') {
+      const currentModel = targetModel as Model;
+
       // When the trigger should fire and what type of query should cause it to fire.
       const { when, action } = instructionList;
 
@@ -891,7 +881,7 @@ export const addModelQueries = (
         }
 
         const fieldSelectors = fields.map((field) => {
-          return getFieldFromModel(targetModel as Model, field.slug, 'to').fieldSelector;
+          return getFieldFromModel(currentModel, field.slug, 'to').fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
@@ -913,17 +903,16 @@ export const addModelQueries = (
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
       if (filterQuery) {
-        const tablePlaceholder =
+        const tableAlias =
           action === 'DELETE'
-            ? RONIN_MODEL_SYMBOLS.FIELD_OLD
-            : RONIN_MODEL_SYMBOLS.FIELD_NEW;
+            ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
+            : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
 
         const withStatement = handleWith(
           models,
-          targetModel as Model,
+          { ...currentModel, tableAlias: tableAlias },
           params,
           filterQuery,
-          tablePlaceholder,
         );
 
         statementParts.push('WHEN', `(${withStatement})`);
@@ -933,6 +922,7 @@ export const addModelQueries = (
       const effectStatements = effectQueries.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
+          parentModel: currentModel,
         }).main.statement;
       });
 

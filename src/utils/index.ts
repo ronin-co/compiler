@@ -9,7 +9,7 @@ import { handleWith } from '@/src/instructions/with';
 import type { Model } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import { addModelQueries, getModelBySlug, getTableForModel } from '@/src/utils/model';
+import { addModelQueries, getModelBySlug } from '@/src/utils/model';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -37,6 +37,12 @@ export const compileQueryInput = (
      * Whether the query should explicitly return records. Defaults to `true`.
      */
     returning?: boolean;
+    /**
+     * If the query is contained within another query, this option should be set to the
+     * model of the parent query. Like that, it becomes possible to reference fields of
+     * the parent model in the nested query (the current query).
+     */
+    parentModel?: Model;
   },
 ): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
@@ -52,10 +58,6 @@ export const compileQueryInput = (
   // Walk deeper into the query, to the level on which the actual instructions (such as
   // `with` and `including`) are located.
   let instructions = formatIdentifiers(model, queryInstructions);
-
-  // The name of the table in SQLite that contains the records that are being addressed.
-  // This always matches the plural slug of the model, but in snake case.
-  let table = getTableForModel(model);
 
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -111,27 +113,27 @@ export const compileQueryInput = (
   let isJoiningMultipleRows = false;
 
   if (isJoining) {
-    const {
-      statement: including,
-      rootTableSubQuery,
-      rootTableName,
-    } = handleIncluding(models, statementParams, instructions?.including, table);
+    const { statement: including, tableSubQuery } = handleIncluding(
+      models,
+      model,
+      statementParams,
+      instructions?.including,
+    );
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the
     // root query *before* joining the other rows. Otherwise, if the limit sits at the
     // end of the full query, only one row would be available at the end.
-    if (rootTableSubQuery && rootTableName) {
-      table = rootTableName;
-      statement += `(${rootTableSubQuery}) as ${rootTableName} `;
+    if (tableSubQuery) {
+      statement += `(${tableSubQuery}) as ${model.tableAlias} `;
       isJoiningMultipleRows = true;
     } else {
-      statement += `"${table}" `;
+      statement += `"${model.table}" `;
     }
 
     statement += `${including} `;
   } else {
-    statement += `"${table}" `;
+    statement += `"${model.table}" `;
   }
 
   if (queryType === 'create' || queryType === 'set') {
@@ -152,7 +154,7 @@ export const compileQueryInput = (
       queryType,
       dependencyStatements,
       { with: instructions.with, to: instructions.to },
-      isJoining ? table : undefined,
+      options?.parentModel,
     );
 
     statement += `${toStatement} `;
@@ -168,7 +170,7 @@ export const compileQueryInput = (
       model,
       statementParams,
       instructions?.with,
-      isJoining ? table : undefined,
+      options?.parentModel,
     );
 
     if (withStatement.length > 0) conditions.push(withStatement);
@@ -219,18 +221,14 @@ export const compileQueryInput = (
       });
     }
 
-    const beforeAndAfterStatement = handleBeforeOrAfter(
-      model,
-      statementParams,
-      {
-        before: instructions.before,
-        after: instructions.after,
-        with: instructions.with,
-        orderedBy: instructions.orderedBy,
-        limitedTo: instructions.limitedTo,
-      },
-      isJoining ? table : undefined,
-    );
+    const beforeAndAfterStatement = handleBeforeOrAfter(model, statementParams, {
+      before: instructions.before,
+      after: instructions.after,
+      with: instructions.with,
+      orderedBy: instructions.orderedBy,
+      limitedTo: instructions.limitedTo,
+    });
+
     conditions.push(beforeAndAfterStatement);
   }
 
@@ -245,11 +243,7 @@ export const compileQueryInput = (
   }
 
   if (instructions?.orderedBy) {
-    const orderedByStatement = handleOrderedBy(
-      model,
-      instructions.orderedBy,
-      isJoining ? table : undefined,
-    );
+    const orderedByStatement = handleOrderedBy(model, instructions.orderedBy);
     statement += `${orderedByStatement} `;
   }
 

@@ -54,7 +54,9 @@ test('get single record including unrelated record with filter', () => {
                 get: {
                   team: {
                     with: {
-                      handle: `${RONIN_MODEL_SYMBOLS.FIELD}label`,
+                      handle: {
+                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}label`,
+                      },
                     },
                   },
                 },
@@ -148,7 +150,9 @@ test('get single record including unrelated records with filter', () => {
                 get: {
                   teams: {
                     with: {
-                      handle: `${RONIN_MODEL_SYMBOLS.FIELD}label`,
+                      handle: {
+                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}label`,
+                      },
                     },
                   },
                 },

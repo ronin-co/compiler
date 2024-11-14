@@ -8,14 +8,12 @@ import { getFieldFromModel } from '@/src/utils/model';
  *
  * @param model - The model being addressed in the query.
  * @param instruction - The `orderedBy` instruction provided in the current query.
- * @param rootTable - The table for which the current query is being executed.
  *
  * @returns The SQL syntax for the provided `orderedBy` instruction.
  */
 export const handleOrderedBy = (
   model: Model,
   instruction: GetInstructions['orderedBy'],
-  rootTable?: string,
 ): string => {
   let statement = '';
 
@@ -25,7 +23,6 @@ export const handleOrderedBy = (
       model,
       field,
       'orderedBy.ascending',
-      rootTable,
     );
 
     if (statement.length > 0) {
@@ -48,7 +45,6 @@ export const handleOrderedBy = (
       model,
       field,
       'orderedBy.descending',
-      rootTable,
     );
 
     if (statement.length > 0) {

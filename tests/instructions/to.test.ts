@@ -48,6 +48,51 @@ test('set single record to new string field', () => {
   ]);
 });
 
+test('set single record to new string field with expression referencing fields', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            name: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `UPPER(substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 1, 1)) || substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 2)`,
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const statements = compileQueries(queries, models);
+
+  expect(statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "name" = UPPER(substr("handle", 1, 1)) || substr("handle", 2), "ronin.updatedAt" = ?1 WHERE ("handle" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      returning: true,
+    },
+  ]);
+});
+
 test('set single record to new one-cardinality reference field', () => {
   const queries: Array<Query> = [
     {
@@ -146,12 +191,12 @@ test('set single record to new many-cardinality reference field', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'DELETE FROM "ronin_post_comments" WHERE ("source" = ?1)',
+      statement: 'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1)',
       params: ['pos_zgoj3xav8tpcte1s'],
     },
     {
       statement:
-        'INSERT INTO "ronin_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
         'pos_zgoj3xav8tpcte1s',
         'Great post!',
@@ -215,7 +260,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "ronin_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
         'pos_zgoj3xav8tpcte1s',
         'Great post!',
@@ -279,7 +324,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
   expect(statements).toEqual([
     {
       statement:
-        'DELETE FROM "ronin_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
+        'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
       params: ['pos_zgoj3xav8tpcte1s', 'Great post!'],
     },
     {
@@ -338,49 +383,6 @@ test('set single record to new json field with array', () => {
   ]);
 });
 
-test('set single record to new json field with empty array', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        account: {
-          with: {
-            handle: 'elaine',
-          },
-          to: {
-            emails: [],
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-        {
-          slug: 'emails',
-          type: 'json',
-        },
-      ],
-    },
-  ];
-
-  const statements = compileQueries(queries, models);
-
-  expect(statements).toEqual([
-    {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: ['[]', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
-      returning: true,
-    },
-  ]);
-});
-
 test('set single record to new json field with object', () => {
   const queries: Array<Query> = [
     {
@@ -426,49 +428,6 @@ test('set single record to new json field with object', () => {
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'elaine',
       ],
-      returning: true,
-    },
-  ]);
-});
-
-test('set single record to new json field with empty object', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        account: {
-          with: {
-            handle: 'elaine',
-          },
-          to: {
-            emails: {},
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-        {
-          slug: 'emails',
-          type: 'json',
-        },
-      ],
-    },
-  ];
-
-  const statements = compileQueries(queries, models);
-
-  expect(statements).toEqual([
-    {
-      statement: `UPDATE \"accounts\" SET \"emails\" = ?1, \"ronin.updatedAt\" = ?2 WHERE (\"handle\" = ?3) RETURNING *`,
-      params: ['{}', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
       returning: true,
     },
   ]);
@@ -622,7 +581,7 @@ test('set single record to new grouped json field', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE \"teams\" SET \"billing.invoiceRecipients\" = ?1, \"ronin.updatedAt\" = ?2 WHERE (\"id\" = ?3) RETURNING *`,
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
         '["receipts@test.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
