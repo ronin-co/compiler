@@ -184,7 +184,8 @@ export const compileQueryInput = (
     }
 
     const withStatement = handleWith(models, model, statementParams, instructions?.with, {
-      rootTable: isJoining ? table : parentTable,
+      rootTable: isJoining ? table : undefined,
+      parentTable,
     });
 
     if (withStatement.length > 0) conditions.push(withStatement);

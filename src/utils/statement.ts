@@ -106,7 +106,7 @@ const composeFieldValues = (
     })`;
   } else if (symbol?.type === 'expression') {
     if (collectStatementValue) {
-      conditionSelector = `${options.parentTable ? `"${options.parentTable}".` : ''}"${modelField.slug}"`;
+      conditionSelector = `${options.rootTable ? `"${options.rootTable}".` : ''}"${modelField.slug}"`;
     }
 
     conditionValue = symbol.value.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
@@ -116,21 +116,17 @@ const composeFieldValues = (
       let rootModel = model;
 
       if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
-        targetTable = options.rootTable;
+        targetTable = options.parentTable;
         toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
 
         if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
           targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
-          if (options.parentTable)
-            rootModel = getModelBySlug(models, options.parentTable);
         } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
           targetTable = toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
-          if (options.parentTable)
-            rootModel = getModelBySlug(models, options.parentTable);
         }
 
-        if (options.rootTable) {
-          const cleanModelSlug = options.rootTable.replace('sub_', '');
+        if (options.parentTable) {
+          const cleanModelSlug = options.parentTable.replace('sub_', '');
           rootModel = getModelBySlug(models, cleanModelSlug);
         }
       }
