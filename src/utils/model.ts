@@ -19,7 +19,6 @@ import type {
   WithInstruction,
 } from '@/src/types/query';
 import {
-  RONIN_MODEL_FIELD_REGEX,
   RONIN_MODEL_SYMBOLS,
   RoninError,
   convertToCamelCase,
@@ -28,6 +27,7 @@ import {
   type splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
+import { parseFieldExpression } from '@/src/utils/statement';
 import title from 'title';
 
 /**
@@ -814,10 +814,7 @@ export const addModelQueries = (
         // insert them into the expression, after which the expression can be used in the
         // SQL statement.
         else if ('expression' in field) {
-          fieldSelector = field.expression.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
-            const fieldSlug = match.replace(RONIN_MODEL_SYMBOLS.FIELD, '');
-            return getFieldFromModel(model, fieldSlug, 'to').fieldSelector;
-          });
+          fieldSelector = parseFieldExpression(model, 'to', field.expression, model);
         }
 
         if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;

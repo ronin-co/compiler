@@ -47,7 +47,7 @@ test('get multiple records ordered by expression', () => {
           orderedBy: {
             ascending: [
               {
-                [RONIN_MODEL_SYMBOLS.EXPRESSION]: 'RANDOM()',
+                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName`,
               },
             ],
           },
@@ -61,7 +61,11 @@ test('get multiple records ordered by expression', () => {
       slug: 'account',
       fields: [
         {
-          slug: 'handle',
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -72,7 +76,7 @@ test('get multiple records ordered by expression', () => {
 
   expect(statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY RANDOM() ASC`,
+      statement: `SELECT * FROM "accounts" ORDER BY ("firstName" || ' ' || "lastName") ASC`,
       params: [],
       returning: true,
     },

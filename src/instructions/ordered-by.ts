@@ -1,7 +1,7 @@
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
 import { getFieldFromModel } from '@/src/utils/model';
-import { getSymbol } from '@/src/utils/statement';
+import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `orderedBy` query instruction, which allows for
@@ -29,9 +29,11 @@ export const handleOrderedBy = (
     }
 
     const symbol = getSymbol(item.value);
+    const instructionName =
+      item.order === 'ASC' ? 'orderedBy.ascending' : 'orderedBy.descending';
 
     if (symbol?.type === 'expression') {
-      statement += `${symbol.value} ${item.order}`;
+      statement += `(${parseFieldExpression(model, instructionName, symbol.value)}) ${item.order}`;
       continue;
     }
 
@@ -39,7 +41,7 @@ export const handleOrderedBy = (
     const { field: modelField, fieldSelector } = getFieldFromModel(
       model,
       item.value as string,
-      item.order === 'ASC' ? 'orderedBy.ascending' : 'orderedBy.descending',
+      instructionName,
     );
 
     const caseInsensitiveStatement =
