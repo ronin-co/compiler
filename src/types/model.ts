@@ -110,8 +110,9 @@ export interface Model {
   };
   idPrefix?: string;
 
-  // If the model is used as an associative model, this property should contain the field
-  // to which the associative model should be mounted.
+  // If the model is used to associate two models with each other (in the case of
+  // many-cardinality reference fields), this property should contain the field to which
+  // the associative model should be mounted.
   associationSlug?: string;
 
   fields?: Array<ModelField>;

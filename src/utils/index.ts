@@ -38,10 +38,11 @@ export const compileQueryInput = (
      */
     returning?: boolean;
     /**
-     * If the query is the result of a query targeting a different schema, this option
-     * can contain the original schema for which the original query was processed.
+     * If the query is contained within another query, this property should be set to the
+     * name of the table of the parent query. Like that, it becomes possible to reference
+     * fields of the parent model in the nested query (the current query).
      */
-    rootModel?: Model;
+    parentTable?: string;
   },
 ): { dependencies: Array<Statement>; main: Statement } => {
   // Split out the individual components of the query.
@@ -150,12 +151,6 @@ export const compileQueryInput = (
       });
     }
 
-    let parentTable: string | undefined;
-
-    if (options?.rootModel) {
-      parentTable = getTableForModel(options.rootModel);
-    }
-
     const toStatement = handleTo(
       models,
       model,
@@ -165,7 +160,7 @@ export const compileQueryInput = (
       { with: instructions.with, to: instructions.to },
       {
         rootTable: isJoining ? table : undefined,
-        parentTable,
+        parentTable: options?.parentTable,
       },
     );
 
@@ -177,15 +172,9 @@ export const compileQueryInput = (
   // Queries of type "get", "set", "drop", or "count" all support filtering records, but
   // those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
-    let parentTable: string | undefined;
-
-    if (options?.rootModel) {
-      parentTable = getTableForModel(options.rootModel);
-    }
-
     const withStatement = handleWith(models, model, statementParams, instructions?.with, {
       rootTable: isJoining ? table : undefined,
-      parentTable,
+      parentTable: options?.parentTable,
     });
 
     if (withStatement.length > 0) conditions.push(withStatement);
