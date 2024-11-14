@@ -66,8 +66,6 @@ export const getTableForModel = (model: Model): string => {
   return convertToSnakeCase(model.pluralSlug as string);
 };
 
-const RONIN_MODEL_LINK_PREFIX = 'ronin_link_';
-
 /**
  * Composes the slug of an associative model that is used to establish a relationship
  * between two models that are not directly related to each other.
@@ -78,7 +76,7 @@ const RONIN_MODEL_LINK_PREFIX = 'ronin_link_';
  * @returns A slug for the associative model.
  */
 export const composeAssociationModelSlug = (model: PublicModel, field: ModelField) =>
-  convertToCamelCase(`${RONIN_MODEL_LINK_PREFIX}_${model.slug}_${field.slug}`);
+  convertToCamelCase(`ronin_link_${model.slug}_${field.slug}`);
 
 /**
  * Constructs the SQL selector for a given field in a model.
