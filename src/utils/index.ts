@@ -9,7 +9,7 @@ import { handleWith } from '@/src/instructions/with';
 import type { Model } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import { addModelQueries, getModelBySlug, getTableForModel } from '@/src/utils/model';
+import { addModelQueries, getModelBySlug } from '@/src/utils/model';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -61,7 +61,7 @@ export const compileQueryInput = (
 
   // The name of the table in SQLite that contains the records that are being addressed.
   // This always matches the plural slug of the model, but in snake case.
-  let table = getTableForModel(model);
+  let { table } = model;
 
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely

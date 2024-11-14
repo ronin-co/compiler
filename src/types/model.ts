@@ -110,6 +110,9 @@ export interface Model {
   };
   idPrefix: string;
 
+  /** The name of the table in SQLite. */
+  table: string;
+
   /**
    * If the model is used to associate two models with each other (in the case of
    * many-cardinality reference fields), this property should contain the field to which

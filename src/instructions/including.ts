@@ -3,7 +3,7 @@ import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { getModelBySlug, getTableForModel } from '@/src/utils/model';
+import { getModelBySlug } from '@/src/utils/model';
 import { composeConditions, getSymbol } from '@/src/utils/statement';
 
 /**
@@ -50,7 +50,7 @@ export const handleIncluding = (
     const relatedModel = getModelBySlug(models, queryModel);
 
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
-    let relatedTableSelector = `"${getTableForModel(relatedModel)}"`;
+    let relatedTableSelector = `"${relatedModel.table}"`;
 
     const tableAlias = `including_${ephemeralFieldSlug}`;
     const single = queryModel !== relatedModel.pluralSlug;

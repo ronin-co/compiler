@@ -57,17 +57,6 @@ export const getModelBySlug = <T extends Model | PublicModel>(
 };
 
 /**
- * Composes the SQLite table name for a given RONIN model.
- *
- * @param model - The model to compose the table name for.
- *
- * @returns A table name.
- */
-export const getTableForModel = (model: Model): string => {
-  return convertToSnakeCase(model.pluralSlug as string);
-};
-
-/**
  * Composes the slug of an associative model that is used to establish a relationship
  * between two models that are not directly related to each other.
  *
@@ -239,7 +228,13 @@ const pluralize = (word: string) => {
   return `${word}s`;
 };
 
-type ComposableSettings = 'slug' | 'pluralSlug' | 'name' | 'pluralName' | 'idPrefix';
+type ComposableSettings =
+  | 'slug'
+  | 'pluralSlug'
+  | 'name'
+  | 'pluralName'
+  | 'idPrefix'
+  | 'table';
 
 /**
  * A list of settings that can be automatically generated based on other settings.
@@ -255,6 +250,7 @@ const modelSettings: Array<
   ['name', 'slug', slugToName],
   ['pluralName', 'pluralSlug', slugToName],
   ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+  ['table', 'pluralSlug', convertToSnakeCase],
 ];
 
 /**
@@ -375,6 +371,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'pluralSlug', type: 'string' },
 
       { slug: 'idPrefix', type: 'string' },
+      { slug: 'table', type: 'string' },
 
       { slug: 'identifiers', type: 'group' },
       { slug: 'identifiers.name', type: 'string' },
