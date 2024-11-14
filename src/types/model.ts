@@ -141,7 +141,7 @@ export type PartialModel = RecursivePartial<Model>;
 // which is the required bare minimum.
 export type PublicModel = Omit<
   Partial<Model>,
-  'slug' | 'identifiers' | 'associationSlug' | 'table'
+  'slug' | 'identifiers' | 'associationSlug' | 'table' | 'tableAlias'
 > & {
   slug: Required<Model['slug']>;
 

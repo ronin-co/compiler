@@ -38,7 +38,7 @@ export const compileQueryInput = (
      */
     returning?: boolean;
     /**
-     * If the query is contained within another query, this property should be set to the
+     * If the query is contained within another query, this option should be set to the
      * model of the parent query. Like that, it becomes possible to reference fields of
      * the parent model in the nested query (the current query).
      */
@@ -228,6 +228,7 @@ export const compileQueryInput = (
       orderedBy: instructions.orderedBy,
       limitedTo: instructions.limitedTo,
     });
+
     conditions.push(beforeAndAfterStatement);
   }
 

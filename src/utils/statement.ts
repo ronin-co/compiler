@@ -106,10 +106,16 @@ const composeFieldValues = (
         let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
         let rootModel: Model = model;
 
+        // If a parent field is being referenced inside the value of the field, we need
+        // to obtain the field from the parent model instead of the current model.
         if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
           rootModel = options.parentModel as Model;
           toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
 
+          // If the old or new value of a field in the parent model is being referenced,
+          // we can't use the table name directly and instead have to resort to using
+          // special keywords such as `OLD` and `NEW` as the table names, which SQLite
+          // will parse itself.
           if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
             rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
           } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
@@ -366,7 +372,9 @@ export const formatIdentifiers = (
 };
 
 /**
- * Checks if the provided value contains a symbol and returns its type and value.
+ * Checks if the provided value contains a RONIN model symbol (a represenation of a
+ * particular entity inside a query, such as an expression or a sub query) and returns
+ * its type and value.
  *
  * @param value - The value that should be checked.
  *

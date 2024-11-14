@@ -99,9 +99,9 @@ export const handleIncluding = (
 
     statement += `${joinType} JOIN ${relatedTableSelector} as ${tableAlias}`;
 
-    // Show the table name for every column. By default, it doesn't show, but since we
-    // are joining multiple tables together, we need to show the table name for every
-    // table, in order to avoid conflicts.
+    // Show the table name for every column in the final SQL statement. By default, it
+    // doesn't show, but since we are joining multiple tables together, we need to show
+    // the table name for every column, in order to avoid conflicts.
     model.tableAlias = model.table;
 
     if (joinType === 'LEFT') {
