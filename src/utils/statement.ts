@@ -6,7 +6,12 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import { RONIN_MODEL_SYMBOLS, RoninError, isObject } from '@/src/utils/helpers';
+import {
+  RONIN_MODEL_FIELD_REGEX,
+  RONIN_MODEL_SYMBOLS,
+  RoninError,
+  isObject,
+} from '@/src/utils/helpers';
 
 import {
   WITH_CONDITIONS,
@@ -54,6 +59,49 @@ export const prepareStatementValue = (
 };
 
 /**
+ * Parses a RONIN expression and returns the SQL expression.
+ *
+ * @param model - The specific model being addressed in the surrounding query.
+ * @param instructionName - The name of the instruction that is being processed.
+ * @param expression - The expression that should be parsed.
+ * @param parentModel - The model of the parent query, if there is one.
+ *
+ * @returns An SQL expression.
+ */
+export const parseFieldExpression = (
+  model: Model,
+  instructionName: QueryInstructionType,
+  expression: string,
+  parentModel?: Model,
+) => {
+  return expression.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
+    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
+    let rootModel: Model = model;
+
+    // If a parent field is being referenced inside the value of the field, we need to
+    // obtain the field from the parent model instead of the current model.
+    if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
+      rootModel = parentModel as Model;
+      toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+
+      // If the old or new value of a field in the parent model is being referenced, we
+      // can't use the table name directly and instead have to resort to using special
+      // keywords such as `OLD` and `NEW` as the table names, which SQLite will handle.
+      if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
+        rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
+      } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
+        rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
+      }
+    }
+
+    const fieldSlug = match.replace(toReplace, '');
+    const field = getFieldFromModel(rootModel, fieldSlug, instructionName);
+
+    return field.fieldSelector;
+  });
+};
+
+/**
  * Generates an SQL condition, column name, or column value for the provided field.
  *
  * @param models - A list of models.
@@ -66,55 +114,52 @@ export const prepareStatementValue = (
  * @returns An SQL condition for the provided field. Alternatively only its column name
  * or column value.
  */
-const composeFieldValues = (
+export const composeFieldValues = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
   value: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
   options: {
-    rootTable?: string;
     fieldSlug: string;
     type?: 'fields' | 'values';
-    customTable?: string;
+    parentModel?: Model;
     condition?: WithCondition;
   },
 ): string => {
-  const { field: modelField, fieldSelector: selector } = getFieldFromModel(
+  const { fieldSelector: conditionSelector } = getFieldFromModel(
     model,
     options.fieldSlug,
     instructionName,
-    options.rootTable,
   );
 
   // If only the field selectors are being requested, do not register any values.
   const collectStatementValue = options.type !== 'fields';
 
-  let conditionSelector = selector;
+  // Determine if the value of the field is a symbol.
+  const symbol = getSymbol(value);
+
   let conditionValue = value;
 
-  if (getSubQuery(value) && collectStatementValue) {
-    conditionValue = `(${
-      compileQueryInput(
-        (value as Record<string, Query>)[RONIN_MODEL_SYMBOLS.QUERY],
-        models,
-        statementParams,
-      ).main.statement
-    })`;
-  } else if (typeof value === 'string' && value.startsWith(RONIN_MODEL_SYMBOLS.FIELD)) {
-    let targetTable = `"${options.rootTable}"`;
-    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
-
-    if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_OLD)) {
-      targetTable = 'OLD';
-      toReplace = RONIN_MODEL_SYMBOLS.FIELD_OLD;
-    } else if (value.startsWith(RONIN_MODEL_SYMBOLS.FIELD_NEW)) {
-      targetTable = 'NEW';
-      toReplace = RONIN_MODEL_SYMBOLS.FIELD_NEW;
+  if (symbol) {
+    // The value of the field is a RONIN expression, which we need to compile into an SQL
+    // syntax that can be run.
+    if (symbol?.type === 'expression') {
+      conditionValue = parseFieldExpression(
+        model,
+        instructionName,
+        symbol.value,
+        options.parentModel,
+      );
     }
 
-    conditionSelector = `${options.customTable ? `"${options.customTable}".` : ''}"${modelField.slug}"`;
-    conditionValue = `${targetTable}."${value.replace(toReplace, '')}"`;
+    // The value of the field is a RONIN query, which we need to compile into an SQL
+    // syntax that can be run.
+    if (symbol.type === 'query' && collectStatementValue) {
+      conditionValue = `(${
+        compileQueryInput(symbol.value, models, statementParams).main.statement
+      })`;
+    }
   } else if (collectStatementValue) {
     conditionValue = prepareStatementValue(statementParams, value);
   }
@@ -179,19 +224,14 @@ export const composeConditions = (
   // potential object value in a special way, instead of just iterating over the nested
   // fields and trying to assert the column for each one.
   if (options.fieldSlug) {
-    const fieldDetails = getFieldFromModel(
-      model,
-      options.fieldSlug,
-      instructionName,
-      options.rootTable,
-    );
+    const fieldDetails = getFieldFromModel(model, options.fieldSlug, instructionName);
 
     const { field: modelField } = fieldDetails;
 
     // If the `to` instruction is used, JSON should be written as-is.
     const consumeJSON = modelField.type === 'json' && instructionName === 'to';
 
-    if (!(isObject(value) || Array.isArray(value)) || getSubQuery(value) || consumeJSON) {
+    if (!(isObject(value) || Array.isArray(value)) || getSymbol(value) || consumeJSON) {
       return composeFieldValues(
         models,
         model,
@@ -355,14 +395,44 @@ export const formatIdentifiers = (
 };
 
 /**
- * Obtains a sub query from a value, if the value contains one.
+ * Checks if the provided value contains a RONIN model symbol (a represenation of a
+ * particular entity inside a query, such as an expression or a sub query) and returns
+ * its type and value.
  *
  * @param value - The value that should be checked.
  *
- * @returns A sub query, if the provided value contains one.
+ * @returns The type and value of the symbol, if the provided value contains one.
  */
-export const getSubQuery = (value: unknown): Query | null => {
-  return isObject(value)
-    ? (value as Record<string, Query | undefined>)[RONIN_MODEL_SYMBOLS.QUERY] || null
-    : null;
+export const getSymbol = (
+  value: unknown,
+):
+  | {
+      type: 'query';
+      value: Query;
+    }
+  | {
+      type: 'expression';
+      value: string;
+    }
+  | null => {
+  if (!isObject(value)) return null;
+  const objectValue = value as
+    | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>
+    | Record<typeof RONIN_MODEL_SYMBOLS.EXPRESSION, string>;
+
+  if (RONIN_MODEL_SYMBOLS.QUERY in objectValue) {
+    return {
+      type: 'query',
+      value: objectValue[RONIN_MODEL_SYMBOLS.QUERY],
+    };
+  }
+
+  if (RONIN_MODEL_SYMBOLS.EXPRESSION in objectValue) {
+    return {
+      type: 'expression',
+      value: objectValue[RONIN_MODEL_SYMBOLS.EXPRESSION],
+    };
+  }
+
+  return null;
 };

@@ -47,7 +47,7 @@ test('create new model', () => {
     },
     {
       statement:
-        'INSERT INTO "models" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11) RETURNING *',
+        'INSERT INTO "models" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12) RETURNING *',
       params: [
         'account',
         JSON.stringify([...SYSTEM_FIELDS, ...fields]),
@@ -55,6 +55,7 @@ test('create new model', () => {
         'Account',
         'Accounts',
         'acc',
+        'accounts',
         'id',
         'id',
         expect.stringMatching(RECORD_ID_REGEX),
@@ -100,8 +101,8 @@ test('create new model with suitable default identifiers', () => {
 
   const statements = compileQueries(queries, models);
 
-  expect(statements[1].params[6]).toEqual('name');
-  expect(statements[1].params[7]).toEqual('handle');
+  expect(statements[1].params[7]).toEqual('name');
+  expect(statements[1].params[8]).toEqual('handle');
 });
 
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
@@ -137,13 +138,14 @@ test('update existing model (slug)', () => {
     },
     {
       statement:
-        'UPDATE "models" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "ronin.updatedAt" = ?6 WHERE ("slug" = ?7) RETURNING *',
+        'UPDATE "models" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = ?7 WHERE ("slug" = ?8) RETURNING *',
       params: [
         'user',
         'users',
         'User',
         'Users',
         'use',
+        'users',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -1154,7 +1156,9 @@ test('create new per-record trigger for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+            account: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+            },
             role: 'owner',
             pending: false,
           },
@@ -1182,14 +1186,17 @@ test('create new per-record trigger for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-    },
-    {
-      slug: 'account',
+      fields: [
+        {
+          slug: 'createdBy',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'member',
       fields: [
-        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'account', type: 'string' },
         { slug: 'role', type: 'string' },
         { slug: 'pending', type: 'boolean' },
       ],
@@ -1234,7 +1241,9 @@ test('create new per-record trigger for deleting records', () => {
       drop: {
         members: {
           with: {
-            account: `${RONIN_MODEL_SYMBOLS.FIELD_OLD}createdBy`,
+            account: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
+            },
           },
         },
       },
@@ -1260,14 +1269,17 @@ test('create new per-record trigger for deleting records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-    },
-    {
-      slug: 'account',
+      fields: [
+        {
+          slug: 'createdBy',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'member',
       fields: [
-        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'account', type: 'string' },
         { slug: 'role', type: 'string' },
         { slug: 'pending', type: 'boolean' },
       ],
@@ -1306,7 +1318,9 @@ test('create new per-record trigger with filters for creating records', () => {
       create: {
         member: {
           to: {
-            account: `${RONIN_MODEL_SYMBOLS.FIELD_NEW}createdBy`,
+            account: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+            },
             role: 'owner',
             pending: false,
           },
@@ -1341,15 +1355,15 @@ test('create new per-record trigger with filters for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [{ slug: 'handle', type: 'string' }],
-    },
-    {
-      slug: 'account',
+      fields: [
+        { slug: 'handle', type: 'string' },
+        { slug: 'createdBy', type: 'string' },
+      ],
     },
     {
       slug: 'member',
       fields: [
-        { slug: 'account', type: 'reference', target: { slug: 'account' } },
+        { slug: 'account', type: 'string' },
         { slug: 'role', type: 'string' },
         { slug: 'pending', type: 'boolean' },
       ],

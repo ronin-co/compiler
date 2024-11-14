@@ -1,3 +1,4 @@
+import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
@@ -12,6 +13,11 @@ export const FieldValue = z.union(
   },
 );
 export const FieldSelector = z.record(FieldValue);
+
+// Expression
+export const ExpressionSchema = z.object({
+  [RONIN_MODEL_SYMBOLS.EXPRESSION]: z.string(),
+});
 
 // With Instructions.
 export const WithInstructionRefinementTypes = z.enum([
@@ -115,25 +121,31 @@ export const OrderedByInstructionSchema = z
   .object({
     ascending: z
       .array(
-        z.string({
-          invalid_type_error:
-            'The `orderedBy.ascending` instruction must be an array of strings.',
-        }),
+        z.union([
+          z.string({
+            invalid_type_error:
+              'The `orderedBy.ascending` instruction must be an array of field slugs or expressions.',
+          }),
+          ExpressionSchema,
+        ]),
         {
           invalid_type_error:
-            'The `orderedBy.ascending` instruction must be an array of strings.',
+            'The `orderedBy.ascending` instruction must be an array of field slugs or expressions.',
         },
       )
       .optional(),
     descending: z
       .array(
-        z.string({
-          invalid_type_error:
-            'The `orderedBy.descending` instruction must be an array of strings.',
-        }),
+        z.union([
+          z.string({
+            invalid_type_error:
+              'The `orderedBy.descending` instruction must be an array of field slugs or expressions.',
+          }),
+          ExpressionSchema,
+        ]),
         {
           invalid_type_error:
-            'The `orderedBy.descending` instruction must be an array of strings.',
+            'The `orderedBy.descending` instruction must be an array of field slugs or expressions.',
         },
       )
       .optional(),
