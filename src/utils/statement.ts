@@ -102,12 +102,8 @@ const composeFieldValues = (
   let conditionValue = value;
 
   if (symbol) {
-    if (symbol.type === 'query' && collectStatementValue) {
-      conditionValue = `(${
-        compileQueryInput(symbol.value, models, statementParams).main.statement
-      })`;
-    }
-
+    // The value of the field is a RONIN expression, which we need to compile into an SQL
+    // syntax that can be run.
     if (symbol?.type === 'expression') {
       conditionSelector = `${options.rootTable ? `"${options.rootTable}".` : ''}"${modelField.slug}"`;
 
@@ -143,6 +139,14 @@ const composeFieldValues = (
 
         return field.fieldSelector;
       });
+    }
+
+    // The value of the field is a RONIN query, which we need to compile into an SQL
+    // syntax that can be run.
+    if (symbol.type === 'query' && collectStatementValue) {
+      conditionValue = `(${
+        compileQueryInput(symbol.value, models, statementParams).main.statement
+      })`;
     }
   } else if (collectStatementValue) {
     conditionValue = prepareStatementValue(statementParams, value);
