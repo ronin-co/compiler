@@ -7,70 +7,10 @@ on:
     types: [closed]
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    name: Remove Experimental Packages
-    steps:
-      - name: Code Checkout
-        uses: actions/checkout@v3.1.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3.5.1
-      - run: echo '//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN_READ_AND_WRITE }}' > ~/.npmrc
-
-      - name: Get Branch Name
-        id: get_branch_name
-        run: echo "branch_name=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-
-      - name: Get Versions to Unpublish
-        id: get_versions
-        run: |
-          PACKAGE_NAME="@ronin/compiler"
-          BRANCH_NAME="${{ steps.get_branch_name.outputs.branch_name }}"
-          echo "Original Branch Name: $BRANCH_NAME"
-          
-          # Sanitize branch name by replacing slashes with hyphens
-          BRANCH_NAME_SANITIZED=$(echo "$BRANCH_NAME" | tr '/' '-')
-          echo "Sanitized Branch Name: $BRANCH_NAME_SANITIZED"
-          
-          # Retrieve all versions
-          VERSIONS=$(npm view $PACKAGE_NAME versions --json)
-          
-          # Check if VERSIONS is empty
-          if [ -z "$VERSIONS" ]; then
-            echo "No versions found for $PACKAGE_NAME."
-            exit 0
-          fi
-          
-          # Filter versions that match the pattern
-          MATCHING_VERSIONS=$(echo "$VERSIONS" | tr -d '[]" ' | tr ',' '\n' | grep -F -- "-${BRANCH_NAME_SANITIZED}-experimental" || true)
-          
-          # Check if any versions match
-          if [ -z "$MATCHING_VERSIONS" ]; then
-            echo "No versions to unpublish for branch $BRANCH_NAME."
-            exit 0
-          fi
-          
-          # Output the versions to unpublish
-          echo "versions<<EOF" >> $GITHUB_OUTPUT
-          echo "$MATCHING_VERSIONS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Unpublish Versions
-        if: ${{ steps.get_versions.outputs.versions != '' }}
-        run: |
-          PACKAGE_NAME="@ronin/compiler"
-          
-          # Read versions into an array
-          mapfile -t versions_array <<< "${{ steps.get_versions.outputs.versions }}"
-          
-          # Check if versions_array is not empty
-          if [ ${#versions_array[@]} -eq 0 ]; then
-            echo "No versions to unpublish."
-            exit 0
-          fi
-          
-          for VERSION in "${versions_array[@]}"; do
-            echo "Unpublishing $PACKAGE_NAME@$VERSION"
-            npm unpublish "$PACKAGE_NAME@$VERSION" || echo "Failed to unpublish $PACKAGE_NAME@$VERSION"
-          done
+  remove-experimental:
+    uses: ronin-co/github-actions/.github/workflows/remove-experimental.yml@main
+    with:
+      branch_name: ${{ github.event.pull_request.head.ref }}
+      package_dir: './'  # Adjust if your package is in a subdirectory
+    secrets:
+      NPM_TOKEN_READ_AND_WRITE: ${{ secrets.NPM_TOKEN_READ_AND_WRITE }}
