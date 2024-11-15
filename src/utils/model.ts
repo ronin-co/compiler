@@ -662,11 +662,12 @@ const typesInSQLite = {
 /**
  * Composes the SQL syntax for a field in a RONIN model.
  *
+ * @param model - The model that contains the field.
  * @param field - The field of a RONIN model.
  *
  * @returns The SQL syntax for the provided field.
  */
-const getFieldStatement = (field: ModelField): string | null => {
+const getFieldStatement = (model: Model, field: ModelField): string | null => {
   if (field.type === 'group') return null;
 
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
@@ -676,6 +677,10 @@ const getFieldStatement = (field: ModelField): string | null => {
   if (field.required === true) statement += ' NOT NULL';
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
+
+  if (typeof field.check !== 'undefined') {
+    statement += ` CHECK (${parseFieldExpression(model, 'to', field.check)})`;
+  }
 
   if (field.type === 'link') {
     const actions = field.actions || {};
@@ -949,8 +954,11 @@ export const addModelQueries = (
     }
 
     if (queryType === 'create') {
-      const { fields } = queryInstructions.to;
-      const columns = fields.map(getFieldStatement).filter(Boolean);
+      const newModel = queryInstructions.to as Model;
+      const { fields } = newModel;
+      const columns = fields
+        .map((field) => getFieldStatement(newModel, field))
+        .filter(Boolean);
 
       dependencyStatements.push({
         statement: `${statement} (${columns.join(', ')})`,
@@ -958,7 +966,7 @@ export const addModelQueries = (
       });
 
       // Add the newly created model to the list of models.
-      models.push(queryInstructions.to as Model);
+      models.push(newModel);
     } else if (queryType === 'set') {
       const newSlug = queryInstructions.to?.pluralSlug;
 
@@ -995,7 +1003,7 @@ export const addModelQueries = (
       }
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(instructionList as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(targetModel as Model, instructionList as ModelField)}`,
         params: [],
       });
     } else if (queryType === 'set') {

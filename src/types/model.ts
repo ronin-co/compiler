@@ -7,6 +7,7 @@ type ModelFieldBasics = {
   unique?: boolean;
   required?: boolean;
   defaultValue?: unknown;
+  check?: string;
 };
 
 type ModelFieldNormal = ModelFieldBasics & {
@@ -125,7 +126,7 @@ export interface Model {
    */
   associationSlug?: string;
 
-  fields?: Array<ModelField>;
+  fields: Array<ModelField>;
   indexes?: Array<ModelIndex>;
   triggers?: Array<ModelTrigger>;
   presets?: Array<ModelPreset>;

@@ -6,6 +6,7 @@ import type {
   CreateQuerySchema,
   DropInstructionsSchema,
   DropQuerySchema,
+  ExpressionSchema,
   GetInstructionsSchema,
   GetQuerySchema,
   IncludingInstructionSchema,
@@ -50,6 +51,9 @@ export type IncludingInstruction = z.infer<typeof IncludingInstructionSchema>;
 
 // Ordering Instructions.
 export type OrderedByInstrucion = z.infer<typeof OrderedByInstructionSchema>;
+
+// Expressions.
+export type Expression = z.infer<typeof ExpressionSchema>;
 
 /**
  * Union of the instructions for all query types. It requires or disallows fields
