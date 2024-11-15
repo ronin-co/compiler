@@ -1,4 +1,9 @@
-import type { GetInstructions, Query, WithInstruction } from '@/src/types/query';
+import type {
+  Expression,
+  GetInstructions,
+  Query,
+  WithInstruction,
+} from '@/src/types/query';
 
 type ModelFieldBasics = {
   name?: string;
@@ -7,7 +12,7 @@ type ModelFieldBasics = {
   unique?: boolean;
   required?: boolean;
   defaultValue?: unknown;
-  check?: string;
+  check?: Expression;
 };
 
 type ModelFieldNormal = ModelFieldBasics & {

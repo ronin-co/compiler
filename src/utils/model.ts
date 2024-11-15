@@ -27,7 +27,7 @@ import {
   type splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { parseFieldExpression } from '@/src/utils/statement';
+import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
 import title from 'title';
 
 /**
@@ -679,7 +679,8 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
     statement += ` DEFAULT ${field.defaultValue}`;
 
   if (typeof field.check !== 'undefined') {
-    statement += ` CHECK (${parseFieldExpression(model, 'to', field.check)})`;
+    const symbol = getSymbol(field.check);
+    statement += ` CHECK (${parseFieldExpression(model, 'to', symbol?.value as string)})`;
   }
 
   if (field.type === 'link') {

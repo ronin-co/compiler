@@ -21,7 +21,9 @@ test('create new model', () => {
       type: 'string',
       required: true,
       unique: true,
-      check: `length(${RONIN_MODEL_SYMBOLS.FIELD}handle) >= 3`,
+      check: {
+        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `length(${RONIN_MODEL_SYMBOLS.FIELD}handle) >= 3`,
+      },
     },
   ];
 
