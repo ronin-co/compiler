@@ -93,7 +93,7 @@ test('set single record to new string field with expression referencing fields',
   ]);
 });
 
-test('set single record to new one-cardinality reference field', () => {
+test('set single record to new one-cardinality link field', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -126,7 +126,7 @@ test('set single record to new one-cardinality reference field', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
       ],
@@ -148,7 +148,7 @@ test('set single record to new one-cardinality reference field', () => {
   ]);
 });
 
-test('set single record to new many-cardinality reference field', () => {
+test('set single record to new many-cardinality link field', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -170,7 +170,7 @@ test('set single record to new many-cardinality reference field', () => {
       fields: [
         {
           slug: 'comments',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'comment' },
           kind: 'many',
         },
@@ -214,7 +214,7 @@ test('set single record to new many-cardinality reference field', () => {
   ]);
 });
 
-test('set single record to new many-cardinality reference field (add)', () => {
+test('set single record to new many-cardinality link field (add)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -238,7 +238,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
       fields: [
         {
           slug: 'comments',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'comment' },
           kind: 'many',
         },
@@ -278,7 +278,7 @@ test('set single record to new many-cardinality reference field (add)', () => {
   ]);
 });
 
-test('set single record to new many-cardinality reference field (delete)', () => {
+test('set single record to new many-cardinality link field (delete)', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -302,7 +302,7 @@ test('set single record to new many-cardinality reference field (delete)', () =>
       fields: [
         {
           slug: 'comments',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'comment' },
           kind: 'many',
         },
@@ -482,7 +482,7 @@ test('set single record to new grouped string field', () => {
   ]);
 });
 
-test('set single record to new grouped reference field', () => {
+test('set single record to new grouped link field', () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -521,7 +521,7 @@ test('set single record to new grouped reference field', () => {
         },
         {
           slug: 'billing.manager',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
       ],

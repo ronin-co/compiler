@@ -27,12 +27,12 @@ test('get single record for preset', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
         {
@@ -46,7 +46,7 @@ test('get single record for preset', () => {
       fields: [
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
       ],
@@ -101,12 +101,12 @@ test('get single record for preset containing field with condition', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
         {
@@ -120,7 +120,7 @@ test('get single record for preset containing field with condition', () => {
       fields: [
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
       ],
@@ -186,12 +186,12 @@ test('get single record for preset containing field without condition', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
         {
@@ -205,7 +205,7 @@ test('get single record for preset containing field without condition', () => {
       fields: [
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
       ],
@@ -270,12 +270,12 @@ test('get single record for preset on existing object instruction', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
       ],
@@ -328,12 +328,12 @@ test('get single record for preset on existing array instruction', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
         {
           slug: 'space',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'space' },
         },
       ],
@@ -379,7 +379,7 @@ test('get single record including parent record (many-to-one)', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
           kind: 'one',
         },
@@ -415,7 +415,7 @@ test('get single record including child records (one-to-many, defined manually)'
       fields: [
         {
           slug: 'comments',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'comment' },
           kind: 'many',
         },
@@ -457,7 +457,7 @@ test('get single record including child records (one-to-many, defined automatica
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
       ],

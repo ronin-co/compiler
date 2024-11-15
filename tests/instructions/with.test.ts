@@ -541,7 +541,7 @@ test('get single record with multiple fields being value', () => {
   ]);
 });
 
-test('get single record with reference field', () => {
+test('get single record with link field', () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -571,7 +571,7 @@ test('get single record with reference field', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
       ],
@@ -590,7 +590,7 @@ test('get single record with reference field', () => {
   ]);
 });
 
-test('get single record with reference field and id', () => {
+test('get single record with link field and id', () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -614,7 +614,7 @@ test('get single record with reference field and id', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
       ],
@@ -632,7 +632,7 @@ test('get single record with reference field and id', () => {
   ]);
 });
 
-test('get single record with reference field and id with condition', () => {
+test('get single record with link field and id with condition', () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -658,7 +658,7 @@ test('get single record with reference field and id with condition', () => {
       fields: [
         {
           slug: 'account',
-          type: 'reference',
+          type: 'link',
           target: { slug: 'account' },
         },
       ],
