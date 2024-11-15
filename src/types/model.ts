@@ -21,7 +21,7 @@ export type ModelFieldReferenceAction =
   | 'NO ACTION';
 
 export type ModelFieldReference = ModelFieldBasics & {
-  type: 'reference';
+  type: 'link';
 
   // Make the `slug` required.
   target: Omit<Partial<Model>, 'slug'> & Pick<Model, 'slug'>;
@@ -120,8 +120,8 @@ export interface Model {
 
   /**
    * If the model is used to associate two models with each other (in the case of
-   * many-cardinality reference fields), this property should contain the field to which
-   * the associative model should be mounted.
+   * many-cardinality link fields), this property should contain the field slug to which
+   * the associative model should be mounted on the source model.
    */
   associationSlug?: string;
 

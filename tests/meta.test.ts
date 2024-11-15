@@ -373,7 +373,7 @@ test('create new field', () => {
   ]);
 });
 
-test('create new reference field', () => {
+test('create new link field', () => {
   const queries: Array<Query> = [
     {
       create: {
@@ -381,7 +381,7 @@ test('create new reference field', () => {
           to: {
             model: { slug: 'member' },
             slug: 'account',
-            type: 'reference',
+            type: 'link',
             target: { slug: 'account' },
           },
         },
@@ -412,7 +412,7 @@ test('create new reference field', () => {
       params: [
         'member',
         'account',
-        'reference',
+        'link',
         'account',
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -423,7 +423,7 @@ test('create new reference field', () => {
   ]);
 });
 
-test('create new reference field with actions', () => {
+test('create new link field with actions', () => {
   const queries: Array<Query> = [
     {
       create: {
@@ -431,7 +431,7 @@ test('create new reference field with actions', () => {
           to: {
             model: { slug: 'member' },
             slug: 'account',
-            type: 'reference',
+            type: 'link',
             target: { slug: 'account' },
             actions: {
               onDelete: 'CASCADE',
@@ -465,7 +465,7 @@ test('create new reference field with actions', () => {
       params: [
         'member',
         'account',
-        'reference',
+        'link',
         'account',
         'CASCADE',
         expect.stringMatching(RECORD_ID_REGEX),

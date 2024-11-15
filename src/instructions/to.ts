@@ -128,15 +128,15 @@ export const handleTo = (
   // Assign default field values to the provided instruction.
   Object.assign(toInstruction, defaultFields);
 
-  // For reference fields of the cardinality "many", we need to compose separate
-  // queries for managing the records in the associative model, which is the model
-  // that is used to establish the relationship between two other models, as those two
-  // do not share a direct reference.
+  // For link fields with the cardinality "many", we need to compose separate queries for
+  // managing the records in the associative model, which is the model that is used to
+  // establish the relationship between two other models, as those two do not share a
+  // direct link.
   for (const fieldSlug in toInstruction) {
     const fieldValue = toInstruction[fieldSlug];
     const fieldDetails = getFieldFromModel(model, fieldSlug, 'to');
 
-    if (fieldDetails.field.type === 'reference' && fieldDetails.field.kind === 'many') {
+    if (fieldDetails.field.type === 'link' && fieldDetails.field.kind === 'many') {
       // Remove the field from the `to` instruction as it will be handled using
       // separate queries.
       delete toInstruction[fieldSlug];

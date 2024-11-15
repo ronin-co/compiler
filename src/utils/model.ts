@@ -60,8 +60,8 @@ export const getModelBySlug = <T extends Model | PublicModel>(
  * Composes the slug of an associative model that is used to establish a relationship
  * between two models that are not directly related to each other.
  *
- * @param model - The model that contains the reference field.
- * @param field - The reference field that is being used to establish the relationship.
+ * @param model - The model that contains the link field.
+ * @param field - The link field that is being used to establish the relationship.
  *
  * @returns A slug for the associative model.
  */
@@ -390,7 +390,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'type', type: 'string', required: true },
       {
         slug: 'model',
-        type: 'reference',
+        type: 'link',
         target: { slug: 'model' },
         required: true,
       },
@@ -399,8 +399,8 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'unique', type: 'boolean' },
       { slug: 'autoIncrement', type: 'boolean' },
 
-      // Only allowed for fields of type "reference".
-      { slug: 'target', type: 'reference', target: { slug: 'model' } },
+      // Only allowed for fields of type "link".
+      { slug: 'target', type: 'link', target: { slug: 'model' } },
       { slug: 'kind', type: 'string' },
       { slug: 'actions', type: 'group' },
       { slug: 'actions.onDelete', type: 'string' },
@@ -419,7 +419,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'slug', type: 'string', required: true },
       {
         slug: 'model',
-        type: 'reference',
+        type: 'link',
         target: { slug: 'model' },
         required: true,
       },
@@ -440,7 +440,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'slug', type: 'string', required: true },
       {
         slug: 'model',
-        type: 'reference',
+        type: 'link',
         target: { slug: 'model' },
         required: true,
       },
@@ -458,7 +458,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'slug', type: 'string', required: true },
       {
         slug: 'model',
-        type: 'reference',
+        type: 'link',
         target: { slug: 'model' },
         required: true,
       },
@@ -489,15 +489,15 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel>
     const addedModels: Array<PartialModel> = [];
 
     for (const field of model.fields || []) {
-      if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
+      if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
         const relatedModel = getModelBySlug(models, field.target.slug);
 
         let fieldSlug = relatedModel.slug;
 
-        // If a reference field with a cardinality of "many" is found, we would like to
+        // If a link field with the cardinality "many" is found, we would like to
         // initialize an invisible associative model, which is used to establish the
-        // relationship between the first and second model, even though those two are
-        // not directly related to each other.
+        // relationship between the source model and target model, even though those two
+        // are not directly related to each other.
         if (field.kind === 'many') {
           fieldSlug = composeAssociationModelSlug(model, field);
 
@@ -508,12 +508,12 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel>
             fields: [
               {
                 slug: 'source',
-                type: 'reference',
+                type: 'link',
                 target: { slug: model.slug },
               },
               {
                 slug: 'target',
-                type: 'reference',
+                type: 'link',
                 target: { slug: relatedModel.slug },
               },
             ],
@@ -544,17 +544,17 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // complex queries inside the model definitions and re-using them across many
   // different queries in the codebase of an application.
   for (const field of model.fields || []) {
-    if (field.type === 'reference' && !field.slug.startsWith('ronin.')) {
+    if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
       const relatedModel = getModelBySlug(list, field.target.slug);
 
-      // If a reference field has the cardinality "many", we don't need to add a default
+      // If a link field has the cardinality "many", we don't need to add a default
       // preset for resolving its records, because we are already adding an associative
       // schema in `addSystemModels`, which causes a default preset to get added in the
       // original schema anyways.
       if (field.kind === 'many') continue;
 
-      // For every reference field, add a default preset for resolving the referenced
-      // record in the model that contains the reference field.
+      // For every link field, add a default preset for resolving the linked record in
+      // the model that contains the link field.
       defaultPresets.push({
         instructions: {
           including: {
@@ -563,7 +563,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
                 get: {
                   [relatedModel.slug]: {
                     with: {
-                      // Compare the `id` field of the related model to the reference field on
+                      // Compare the `id` field of the related model to the link field on
                       // the root model (`field.slug`).
                       id: {
                         [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}${field.slug}`,
@@ -586,7 +586,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   const childModels = list
     .map((subModel) => {
       const field = subModel.fields?.find((field) => {
-        return field.type === 'reference' && field.target.slug === model.slug;
+        return field.type === 'link' && field.target.slug === model.slug;
       });
 
       if (!field) return null;
@@ -650,7 +650,7 @@ const mappedInstructions: Partial<Record<QueryType, QueryInstructionTypeClean>> 
 
 /** A list of all RONIN data types and their respective column types in SQLite. */
 const typesInSQLite = {
-  reference: 'TEXT',
+  link: 'TEXT',
   string: 'TEXT',
   date: 'DATETIME',
   blob: 'TEXT',
@@ -677,7 +677,7 @@ const getFieldStatement = (field: ModelField): string | null => {
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
 
-  if (field.type === 'reference') {
+  if (field.type === 'link') {
     const actions = field.actions || {};
     const targetTable = convertToSnakeCase(pluralize(field.target.slug));
 

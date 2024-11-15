@@ -220,7 +220,7 @@ export const composeConditions = (
   // a field is being asserted, so we first have to check whether that field exists and
   // then check its type. Based on that, we then know how to treat the value of the field.
   //
-  // Specifically, if the field is of the type "reference" or "json", we have to treat any
+  // Specifically, if the field is of the type "link" or "json", we have to treat any
   // potential object value in a special way, instead of just iterating over the nested
   // fields and trying to assert the column for each one.
   if (options.fieldSlug) {
@@ -242,7 +242,7 @@ export const composeConditions = (
       );
     }
 
-    if (modelField.type === 'reference' && isNested) {
+    if (modelField.type === 'link' && isNested) {
       // `value` is asserted to be an object using `isObject` above, so we can safely
       // cast it here. The type is not being inferred automatically.
       const keys = Object.keys(value as object);
@@ -251,9 +251,9 @@ export const composeConditions = (
       let recordTarget: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>;
 
       // If only a single key is present, and it's "id", then we can simplify the query a
-      // bit in favor of performance, because the stored value of a reference field in
-      // SQLite is always the ID of the related record. That means we don't need to join
-      // the destination table, and we can just perform a string assertion.
+      // bit in favor of performance, because the stored value of a link field in SQLite
+      // is always the ID of the linked record. That means we don't need to join the
+      // destination table, and we can just perform a string assertion.
       if (keys.length === 1 && keys[0] === 'id') {
         // This can be either a string or an object with conditions such as `being`.
         recordTarget = values[0];
