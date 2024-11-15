@@ -1,4 +1,9 @@
-import type { GetInstructions, Query, WithInstruction } from '@/src/types/query';
+import type {
+  Expression,
+  GetInstructions,
+  Query,
+  WithInstruction,
+} from '@/src/types/query';
 
 type ModelFieldBasics = {
   name?: string;
@@ -7,6 +12,7 @@ type ModelFieldBasics = {
   unique?: boolean;
   required?: boolean;
   defaultValue?: unknown;
+  check?: Expression;
 };
 
 type ModelFieldNormal = ModelFieldBasics & {
@@ -125,17 +131,19 @@ export interface Model {
    */
   associationSlug?: string;
 
-  fields?: Array<ModelField>;
+  // Fields are not optional for internal models, because internal models within the
+  // compiler always at least contain the default fields. For models that are passed into
+  // the compiler from the outside, the fields are optional, because the compiler will
+  // add the default fields automatically, and those are enough to create a model.
+  fields: Array<ModelField>;
   indexes?: Array<ModelIndex>;
   triggers?: Array<ModelTrigger>;
   presets?: Array<ModelPreset>;
 }
 
-type RecursivePartial<T> = {
-  [P in keyof T]?: T[P] extends object ? RecursivePartial<T[P]> : T[P];
+export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
+  identifiers?: Partial<Model['identifiers']>;
 };
-
-export type PartialModel = RecursivePartial<Model>;
 
 // In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.

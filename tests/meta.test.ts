@@ -19,6 +19,11 @@ test('create new model', () => {
     {
       slug: 'email',
       type: 'string',
+      required: true,
+      unique: true,
+      check: {
+        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `length(${RONIN_MODEL_SYMBOLS.FIELD}handle) >= 3`,
+      },
     },
   ];
 
@@ -42,7 +47,7 @@ test('create new model', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT)',
+        'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL CHECK (length("handle") >= 3))',
       params: [],
     },
     {
