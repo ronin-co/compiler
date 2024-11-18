@@ -677,6 +677,7 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
   if (field.required === true) statement += ' NOT NULL';
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
+  if (field.collation) statement += ` COLLATE ${field.collation}`;
 
   if (typeof field.check !== 'undefined') {
     const symbol = getSymbol(field.check);

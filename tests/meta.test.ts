@@ -24,6 +24,7 @@ test('create new model', () => {
       check: {
         [RONIN_MODEL_SYMBOLS.EXPRESSION]: `length(${RONIN_MODEL_SYMBOLS.FIELD}handle) >= 3`,
       },
+      collation: 'NOCASE',
     },
   ];
 
@@ -47,7 +48,7 @@ test('create new model', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL CHECK (length("handle") >= 3))',
+        'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3))',
       params: [],
     },
     {

@@ -5,6 +5,8 @@ import type {
   WithInstruction,
 } from '@/src/types/query';
 
+type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
+
 type ModelFieldBasics = {
   name?: string;
   slug: string;
@@ -13,6 +15,7 @@ type ModelFieldBasics = {
   required?: boolean;
   defaultValue?: unknown;
   check?: Expression;
+  collation?: ModelFieldCollation;
 };
 
 type ModelFieldNormal = ModelFieldBasics & {
@@ -43,7 +46,7 @@ export type ModelField = ModelFieldNormal | ModelFieldReference;
 
 export type ModelIndexField = {
   /** The collating sequence used for text placed inside the field. */
-  collation?: 'BINARY' | 'NOCASE' | 'RTRIM';
+  collation?: ModelFieldCollation;
   /** How the records in the index should be ordered. */
   order?: 'ASC' | 'DESC';
 } & (
