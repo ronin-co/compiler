@@ -677,10 +677,18 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
   if (field.required === true) statement += ' NOT NULL';
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
+  if (field.collation) statement += ` COLLATE ${field.collation}`;
+  if (field.increment === true) statement += ' AUTOINCREMENT';
 
   if (typeof field.check !== 'undefined') {
     const symbol = getSymbol(field.check);
     statement += ` CHECK (${parseFieldExpression(model, 'to', symbol?.value as string)})`;
+  }
+
+  if (typeof field.computedAs !== 'undefined') {
+    const { kind, value } = field.computedAs;
+    const symbol = getSymbol(value);
+    statement += ` GENERATED ALWAYS AS (${parseFieldExpression(model, 'to', symbol?.value as string)}) ${kind}`;
   }
 
   if (field.type === 'link') {
