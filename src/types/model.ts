@@ -16,6 +16,7 @@ type ModelFieldBasics = {
   defaultValue?: unknown;
   check?: Expression;
   collation?: ModelFieldCollation;
+  increment?: boolean;
 };
 
 type ModelFieldNormal = ModelFieldBasics & {

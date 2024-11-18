@@ -678,6 +678,7 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
   if (typeof field.defaultValue !== 'undefined')
     statement += ` DEFAULT ${field.defaultValue}`;
   if (field.collation) statement += ` COLLATE ${field.collation}`;
+  if (field.increment === true) statement += ' AUTOINCREMENT';
 
   if (typeof field.check !== 'undefined') {
     const symbol = getSymbol(field.check);

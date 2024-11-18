@@ -26,6 +26,11 @@ test('create new model', () => {
       },
       collation: 'NOCASE',
     },
+    {
+      slug: 'position',
+      type: 'number',
+      increment: true,
+    },
   ];
 
   const queries: Array<Query> = [
@@ -48,7 +53,7 @@ test('create new model', () => {
   expect(statements).toEqual([
     {
       statement:
-        'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3))',
+        'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT)',
       params: [],
     },
     {
