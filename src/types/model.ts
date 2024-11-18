@@ -65,10 +65,7 @@ export type ModelFieldReferenceAction =
 
 export type ModelFieldReference = ModelFieldBasics & {
   type: 'link';
-
-  // Make the `slug` required.
-  target: Omit<Partial<Model>, 'slug'> & Pick<Model, 'slug'>;
-
+  target: string;
   kind?: 'one' | 'many';
   actions?: {
     onDelete?: ModelFieldReferenceAction;

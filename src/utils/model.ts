@@ -391,7 +391,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'required', type: 'boolean' },
@@ -400,7 +400,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'autoIncrement', type: 'boolean' },
 
       // Only allowed for fields of type "link".
-      { slug: 'target', type: 'link', target: { slug: 'model' } },
+      { slug: 'target', type: 'string' },
       { slug: 'kind', type: 'string' },
       { slug: 'actions', type: 'group' },
       { slug: 'actions.onDelete', type: 'string' },
@@ -420,7 +420,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'unique', type: 'boolean' },
@@ -441,7 +441,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'when', type: 'string', required: true },
@@ -459,7 +459,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'instructions', type: 'json', required: true },
@@ -490,7 +490,7 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel>
 
     for (const field of model.fields || []) {
       if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
-        const relatedModel = getModelBySlug(models, field.target.slug);
+        const relatedModel = getModelBySlug(models, field.target);
 
         let fieldSlug = relatedModel.slug;
 
@@ -509,12 +509,12 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel>
               {
                 slug: 'source',
                 type: 'link',
-                target: { slug: model.slug },
+                target: model.slug,
               },
               {
                 slug: 'target',
                 type: 'link',
-                target: { slug: relatedModel.slug },
+                target: relatedModel.slug,
               },
             ],
           });
@@ -545,7 +545,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // different queries in the codebase of an application.
   for (const field of model.fields || []) {
     if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
-      const relatedModel = getModelBySlug(list, field.target.slug);
+      const relatedModel = getModelBySlug(list, field.target);
 
       // If a link field has the cardinality "many", we don't need to add a default
       // preset for resolving its records, because we are already adding an associative
@@ -586,7 +586,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   const childModels = list
     .map((subModel) => {
       const field = subModel.fields?.find((field) => {
-        return field.type === 'link' && field.target.slug === model.slug;
+        return field.type === 'link' && field.target === model.slug;
       });
 
       if (!field) return null;
@@ -662,12 +662,17 @@ const typesInSQLite = {
 /**
  * Composes the SQL syntax for a field in a RONIN model.
  *
+ * @param models - A list of models.
  * @param model - The model that contains the field.
  * @param field - The field of a RONIN model.
  *
  * @returns The SQL syntax for the provided field.
  */
-const getFieldStatement = (model: Model, field: ModelField): string | null => {
+const getFieldStatement = (
+  models: Array<Model>,
+  model: Model,
+  field: ModelField,
+): string | null => {
   if (field.type === 'group') return null;
 
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
@@ -693,7 +698,7 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
 
   if (field.type === 'link') {
     const actions = field.actions || {};
-    const targetTable = convertToSnakeCase(pluralize(field.target.slug));
+    const targetTable = getModelBySlug(models, field.target).table;
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
@@ -966,7 +971,7 @@ export const addModelQueries = (
       const newModel = queryInstructions.to as Model;
       const { fields } = newModel;
       const columns = fields
-        .map((field) => getFieldStatement(newModel, field))
+        .map((field) => getFieldStatement(models, newModel, field))
         .filter(Boolean);
 
       dependencyStatements.push({
@@ -1012,7 +1017,7 @@ export const addModelQueries = (
       }
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(targetModel as Model, instructionList as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
         params: [],
       });
     } else if (queryType === 'set') {

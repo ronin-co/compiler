@@ -127,7 +127,7 @@ test('set single record to new one-cardinality link field', () => {
         {
           slug: 'account',
           type: 'link',
-          target: { slug: 'account' },
+          target: 'account',
         },
       ],
     },
@@ -171,7 +171,7 @@ test('set single record to new many-cardinality link field', () => {
         {
           slug: 'comments',
           type: 'link',
-          target: { slug: 'comment' },
+          target: 'comment',
           kind: 'many',
         },
       ],
@@ -239,7 +239,7 @@ test('set single record to new many-cardinality link field (add)', () => {
         {
           slug: 'comments',
           type: 'link',
-          target: { slug: 'comment' },
+          target: 'comment',
           kind: 'many',
         },
       ],
@@ -303,7 +303,7 @@ test('set single record to new many-cardinality link field (delete)', () => {
         {
           slug: 'comments',
           type: 'link',
-          target: { slug: 'comment' },
+          target: 'comment',
           kind: 'many',
         },
       ],
@@ -522,7 +522,7 @@ test('set single record to new grouped link field', () => {
         {
           slug: 'billing.manager',
           type: 'link',
-          target: { slug: 'account' },
+          target: 'account',
         },
       ],
     },

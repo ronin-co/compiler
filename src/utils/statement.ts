@@ -258,7 +258,7 @@ export const composeConditions = (
         // This can be either a string or an object with conditions such as `being`.
         recordTarget = values[0];
       } else {
-        const relatedModel = getModelBySlug(models, modelField.target.slug);
+        const relatedModel = getModelBySlug(models, modelField.target);
 
         const subQuery: Query = {
           get: {
