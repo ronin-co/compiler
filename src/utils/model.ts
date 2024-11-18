@@ -685,6 +685,12 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
     statement += ` CHECK (${parseFieldExpression(model, 'to', symbol?.value as string)})`;
   }
 
+  if (typeof field.computedAs !== 'undefined') {
+    const { kind, value } = field.computedAs;
+    const symbol = getSymbol(value);
+    statement += ` GENERATED ALWAYS AS (${parseFieldExpression(model, 'to', symbol?.value as string)}) ${kind}`;
+  }
+
   if (field.type === 'link') {
     const actions = field.actions || {};
     const targetTable = convertToSnakeCase(pluralize(field.target.slug));

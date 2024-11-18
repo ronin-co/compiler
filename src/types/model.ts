@@ -29,6 +29,15 @@ type ModelFieldBasics = {
    * explicitly provided for it when a record is created.
    */
   defaultValue?: unknown;
+  /**
+   * An expression that should be evaluated to form the value of the field. The
+   * expression can either be VIRTUAL (evaluated whenever a record is read) or STORED
+   * (evaluated whenever a record is created or updated).
+   */
+  computedAs?: {
+    kind: 'VIRTUAL' | 'STORED';
+    value: Expression;
+  };
   /** An expression that gets evaluated every time a value is provided for the field. */
   check?: Expression;
   /** The collation sequence to use for the field value. */
