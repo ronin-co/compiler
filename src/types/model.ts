@@ -40,10 +40,13 @@ type ModelFieldBasics = {
   };
   /** An expression that gets evaluated every time a value is provided for the field. */
   check?: Expression;
-  /** The collation sequence to use for the field value. */
+  /**
+   * If the field is of type `string`, setting this attribute defines the collation
+   * sequence to use for the field value.
+   */
   collation?: ModelFieldCollation;
   /**
-   * If the field is of type `number`, setting this attribute will autmatically increment
+   * If the field is of type `number`, setting this attribute will automatically increment
    * the value of the field with every new record that gets inserted.
    */
   increment?: boolean;
