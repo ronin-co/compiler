@@ -8,14 +8,35 @@ import type {
 type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
 
 type ModelFieldBasics = {
+  /** The label that should be used when displaying the field on the RONIN dashboard. */
   name?: string;
+  /** Allows for addressing the field programmatically. */
   slug: string;
+  /** How the field should be displayed visually on the RONIN dashboard. */
   displayAs?: string;
+  /**
+   * If set, only one record of the same model will be allowed to exist with a given
+   * value for the field.
+   */
   unique?: boolean;
+  /**
+   * Whether a value must be provided for the field. If this attribute is set and no
+   * value is provided, an error will be thrown.
+   */
   required?: boolean;
+  /**
+   * The value that should be inserted into the field in the case that no value was
+   * explicitly provided for it when a record is created.
+   */
   defaultValue?: unknown;
+  /** An expression that gets evaluated every time a value is provided for the field. */
   check?: Expression;
+  /** The collation sequence to use for the field value. */
   collation?: ModelFieldCollation;
+  /**
+   * If the field is of type `number`, setting this attribute will autmatically increment
+   * the value of the field with every new record that gets inserted.
+   */
   increment?: boolean;
 };
 
