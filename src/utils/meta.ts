@@ -1,16 +1,22 @@
+import type { Model } from '@/src/types/model';
 import type { ModelIndex, PartialModel } from '@/src/types/model';
 import type { Query } from '@/src/types/query';
+import { addDefaultModelFields, addDefaultModelPresets } from '@/src/utils/model';
 
 const ACTION_REGEX = /(?=[A-Z])/;
 
-export const transformMetaQuery = (query: Query): Query => {
+export const transformMetaQuery = (models: Array<Model>, query: Query): Query => {
   if ('addModel' in query) {
     const details = query.addModel as PartialModel;
+
+    // Compose default settings for the model.
+    const modelWithFields = addDefaultModelFields(details, true);
+    const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
     return {
       create: {
         model: {
-          to: details,
+          to: modelWithPresets,
         },
       },
     };
@@ -41,11 +47,15 @@ export const transformMetaQuery = (query: Query): Query => {
       | 'to';
 
     if (fullAction === 'to') {
+      // Compose default settings for the model.
+      const modelWithFields = addDefaultModelFields(query.to, false);
+      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
+
       return {
         set: {
           model: {
             with: { slug },
-            to: query.to as PartialModel,
+            to: modelWithPresets,
           },
         },
       };

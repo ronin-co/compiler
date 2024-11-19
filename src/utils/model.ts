@@ -10,11 +10,9 @@ import type {
   PublicModel,
 } from '@/src/types/model';
 import type {
-  Instructions,
   Query,
   QueryInstructionType,
   QueryType,
-  SetInstructions,
   Statement,
   WithInstruction,
 } from '@/src/types/query';
@@ -731,16 +729,14 @@ export const addModelQueries = (
   models: Array<Model>,
   queryDetails: ReturnType<typeof splitQuery>,
   dependencyStatements: Array<Statement>,
-): Instructions & SetInstructions => {
-  const { queryType, queryModel, queryInstructions: queryInstructionsRaw } = queryDetails;
-
-  const queryInstructions = queryInstructionsRaw as Instructions & SetInstructions;
+) => {
+  const { queryType, queryModel, queryInstructions } = queryDetails;
 
   // Only continue if the query is a write query.
-  if (!['create', 'set', 'drop'].includes(queryType)) return queryInstructions;
+  if (!['create', 'set', 'drop'].includes(queryType)) return;
 
   // Only continue if the query addresses system models.
-  if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return queryInstructions;
+  if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return;
 
   const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
@@ -842,7 +838,7 @@ export const addModelQueries = (
     }
 
     dependencyStatements.push({ statement, params });
-    return queryInstructions;
+    return;
   }
 
   if (kind === 'triggers') {
@@ -934,23 +930,12 @@ export const addModelQueries = (
     }
 
     dependencyStatements.push({ statement, params });
-    return queryInstructions;
+    return;
   }
 
   const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'models') {
-    // Compose default settings for the model.
-    if (queryType === 'create' || queryType === 'set') {
-      const modelWithFields = addDefaultModelFields(
-        queryInstructions.to as PublicModel,
-        queryType === 'create',
-      );
-
-      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
-      queryInstructions.to = modelWithPresets;
-    }
-
     if (queryType === 'create') {
       const newModel = queryInstructions.to as Model;
       const { fields } = newModel;
@@ -987,7 +972,8 @@ export const addModelQueries = (
 
       dependencyStatements.push({ statement, params: [] });
     }
-    return queryInstructions;
+
+    return;
   }
 
   if (kind === 'fields') {
@@ -1022,6 +1008,4 @@ export const addModelQueries = (
       });
     }
   }
-
-  return queryInstructions;
 };

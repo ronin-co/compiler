@@ -69,7 +69,7 @@ export const compileQueryInput = (
 
   // Generate additional dependency statements for meta queries, meaning queries that
   // affect the database model.
-  instructions = addModelQueries(
+  addModelQueries(
     models,
     { queryType, queryModel, queryInstructions: instructions },
     dependencyStatements,
