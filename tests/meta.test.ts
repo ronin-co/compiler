@@ -328,7 +328,6 @@ test('add new field', () => {
         add: {
           field: {
             slug: 'email',
-            type: 'string',
           },
         },
       },
@@ -364,57 +363,7 @@ test('add new field', () => {
   ]);
 });
 
-test('add new link field', () => {
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'member',
-        add: {
-          field: {
-            slug: 'account',
-            type: 'link',
-            target: 'account',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'member',
-    },
-    {
-      slug: 'account',
-    },
-  ];
-
-  const statements = compileQueries(queries, models);
-
-  expect(statements).toEqual([
-    {
-      statement:
-        'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
-      params: [],
-    },
-    {
-      statement:
-        'INSERT INTO "fields" ("model", "slug", "type", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7) RETURNING *',
-      params: [
-        'member',
-        'account',
-        'link',
-        'account',
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
-      returning: true,
-    },
-  ]);
-});
-
-test('add new link field with actions', () => {
+test('add new field with options', () => {
   const queries: Array<Query> = [
     {
       alter: {
@@ -1453,6 +1402,51 @@ test('add new preset', () => {
   ]);
 });
 
+test('update existing preset', () => {
+  const instructions = {
+    with: {
+      email: {
+        endingWith: '@site.co',
+      },
+    },
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        alter: {
+          preset: 'company_employees',
+          options: { instructions },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+    },
+  ];
+
+  const statements = compileQueries(queries, models);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'UPDATE "presets" SET "instructions" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      params: [
+        JSON.stringify(instructions),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'account',
+        'company_employees',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
 test('remove existing preset', () => {
   const queries: Array<Query> = [
     {
@@ -1511,43 +1505,6 @@ test('try to update existing model that does not exist', () => {
     'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
-});
-
-test('try to create new field without minimum details (field slug)', () => {
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        add: {
-          field: {
-            slug: 'email',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-    },
-  ];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueries(queries, models);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When creating fields, a `type` field must be provided in the `to` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['type']);
 });
 
 test('try to create new trigger with targeted fields and wrong action', () => {

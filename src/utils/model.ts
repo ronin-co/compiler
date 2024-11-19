@@ -978,13 +978,8 @@ export const addModelQueries = (
 
   if (kind === 'fields') {
     if (queryType === 'create') {
-      if (!instructionList.type) {
-        throw new RoninError({
-          message: `When ${queryTypeReadable} fields, a \`type\` field must be provided in the \`to\` instruction.`,
-          code: 'MISSING_FIELD',
-          fields: ['type'],
-        });
-      }
+      // Default field type.
+      if (!instructionList.type) instructionList.type = 'string';
 
       dependencyStatements.push({
         statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
