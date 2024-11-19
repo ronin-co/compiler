@@ -65,10 +65,7 @@ export type ModelFieldReferenceAction =
 
 export type ModelFieldReference = ModelFieldBasics & {
   type: 'link';
-
-  // Make the `slug` required.
-  target: Omit<Partial<Model>, 'slug'> & Pick<Model, 'slug'>;
-
+  target: string;
   kind?: 'one' | 'many';
   actions?: {
     onDelete?: ModelFieldReferenceAction;
@@ -100,6 +97,10 @@ export type ModelIndex = {
    */
   fields: Array<ModelIndexField>;
   /**
+   * The identifier of the index.
+   */
+  slug?: string;
+  /**
    * Whether only one record with a unique value for the provided fields will be allowed.
    */
   unique?: boolean;
@@ -121,7 +122,7 @@ export type ModelTriggerField = {
 export type ModelTrigger = {
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
-  /** When the trigger should fire in the case that a maching query is executed. */
+  /** When the trigger should fire in the case that a matching query is executed. */
   when: 'BEFORE' | 'DURING' | 'AFTER';
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;

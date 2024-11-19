@@ -10,11 +10,9 @@ import type {
   PublicModel,
 } from '@/src/types/model';
 import type {
-  Instructions,
   Query,
   QueryInstructionType,
   QueryType,
-  SetInstructions,
   Statement,
   WithInstruction,
 } from '@/src/types/query';
@@ -391,7 +389,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'required', type: 'boolean' },
@@ -400,7 +398,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'autoIncrement', type: 'boolean' },
 
       // Only allowed for fields of type "link".
-      { slug: 'target', type: 'link', target: { slug: 'model' } },
+      { slug: 'target', type: 'string' },
       { slug: 'kind', type: 'string' },
       { slug: 'actions', type: 'group' },
       { slug: 'actions.onDelete', type: 'string' },
@@ -420,7 +418,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'unique', type: 'boolean' },
@@ -441,7 +439,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'when', type: 'string', required: true },
@@ -459,7 +457,7 @@ const SYSTEM_MODELS: Array<Model> = [
       {
         slug: 'model',
         type: 'link',
-        target: { slug: 'model' },
+        target: 'model',
         required: true,
       },
       { slug: 'instructions', type: 'json', required: true },
@@ -490,7 +488,7 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel>
 
     for (const field of model.fields || []) {
       if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
-        const relatedModel = getModelBySlug(models, field.target.slug);
+        const relatedModel = getModelBySlug(models, field.target);
 
         let fieldSlug = relatedModel.slug;
 
@@ -509,12 +507,12 @@ export const addSystemModels = (models: Array<PublicModel>): Array<PartialModel>
               {
                 slug: 'source',
                 type: 'link',
-                target: { slug: model.slug },
+                target: model.slug,
               },
               {
                 slug: 'target',
                 type: 'link',
-                target: { slug: relatedModel.slug },
+                target: relatedModel.slug,
               },
             ],
           });
@@ -545,7 +543,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // different queries in the codebase of an application.
   for (const field of model.fields || []) {
     if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
-      const relatedModel = getModelBySlug(list, field.target.slug);
+      const relatedModel = getModelBySlug(list, field.target);
 
       // If a link field has the cardinality "many", we don't need to add a default
       // preset for resolving its records, because we are already adding an associative
@@ -586,7 +584,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   const childModels = list
     .map((subModel) => {
       const field = subModel.fields?.find((field) => {
-        return field.type === 'link' && field.target.slug === model.slug;
+        return field.type === 'link' && field.target === model.slug;
       });
 
       if (!field) return null;
@@ -662,12 +660,17 @@ const typesInSQLite = {
 /**
  * Composes the SQL syntax for a field in a RONIN model.
  *
+ * @param models - A list of models.
  * @param model - The model that contains the field.
  * @param field - The field of a RONIN model.
  *
  * @returns The SQL syntax for the provided field.
  */
-const getFieldStatement = (model: Model, field: ModelField): string | null => {
+const getFieldStatement = (
+  models: Array<Model>,
+  model: Model,
+  field: ModelField,
+): string | null => {
   if (field.type === 'group') return null;
 
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
@@ -693,7 +696,7 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
 
   if (field.type === 'link') {
     const actions = field.actions || {};
-    const targetTable = convertToSnakeCase(pluralize(field.target.slug));
+    const targetTable = getModelBySlug(models, field.target).table;
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
@@ -716,26 +719,24 @@ const getFieldStatement = (model: Model, field: ModelField): string | null => {
  * dependency statements are used to alter the SQLite database model.
  *
  * @param models - A list of models.
- * @param queryDetails - The parsed details of the query that is being executed.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
+ * @param queryDetails - The parsed details of the query that is being executed.
  *
  * @returns The (possibly modified) query instructions.
  */
 export const addModelQueries = (
   models: Array<Model>,
-  queryDetails: ReturnType<typeof splitQuery>,
   dependencyStatements: Array<Statement>,
-): Instructions & SetInstructions => {
-  const { queryType, queryModel, queryInstructions: queryInstructionsRaw } = queryDetails;
-
-  const queryInstructions = queryInstructionsRaw as Instructions & SetInstructions;
+  queryDetails: ReturnType<typeof splitQuery>,
+) => {
+  const { queryType, queryModel, queryInstructions } = queryDetails;
 
   // Only continue if the query is a write query.
-  if (!['create', 'set', 'drop'].includes(queryType)) return queryInstructions;
+  if (!['create', 'set', 'drop'].includes(queryType)) return;
 
   // Only continue if the query addresses system models.
-  if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return queryInstructions;
+  if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return;
 
   const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
@@ -770,26 +771,10 @@ export const addModelQueries = (
     }
   }
 
-  const slug: string | null = instructionList?.slug?.being || instructionList?.slug;
-
-  if (!slug) {
-    throw new RoninError({
-      message: `When ${queryTypeReadable} ${kind}, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
-      code: 'MISSING_FIELD',
-      fields: ['slug'],
-    });
-  }
+  const slug: string = instructionList?.slug?.being || instructionList?.slug;
 
   const modelInstruction = instructionList?.model;
   const modelSlug = modelInstruction?.slug?.being || modelInstruction?.slug;
-
-  if (kind !== 'models' && !modelSlug) {
-    throw new RoninError({
-      message: `When ${queryTypeReadable} ${kind}, a \`model.slug\` field must be provided in the \`${instructionName}\` instruction.`,
-      code: 'MISSING_FIELD',
-      fields: ['model.slug'],
-    });
-  }
 
   const usableSlug = kind === 'models' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
@@ -853,7 +838,7 @@ export const addModelQueries = (
     }
 
     dependencyStatements.push({ statement, params });
-    return queryInstructions;
+    return;
   }
 
   if (kind === 'triggers') {
@@ -945,28 +930,17 @@ export const addModelQueries = (
     }
 
     dependencyStatements.push({ statement, params });
-    return queryInstructions;
+    return;
   }
 
   const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'models') {
-    // Compose default settings for the model.
-    if (queryType === 'create' || queryType === 'set') {
-      const modelWithFields = addDefaultModelFields(
-        queryInstructions.to as PublicModel,
-        queryType === 'create',
-      );
-
-      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
-      queryInstructions.to = modelWithPresets;
-    }
-
     if (queryType === 'create') {
       const newModel = queryInstructions.to as Model;
       const { fields } = newModel;
       const columns = fields
-        .map((field) => getFieldStatement(newModel, field))
+        .map((field) => getFieldStatement(models, newModel, field))
         .filter(Boolean);
 
       dependencyStatements.push({
@@ -998,21 +972,17 @@ export const addModelQueries = (
 
       dependencyStatements.push({ statement, params: [] });
     }
-    return queryInstructions;
+
+    return;
   }
 
   if (kind === 'fields') {
     if (queryType === 'create') {
-      if (!instructionList.type) {
-        throw new RoninError({
-          message: `When ${queryTypeReadable} fields, a \`type\` field must be provided in the \`to\` instruction.`,
-          code: 'MISSING_FIELD',
-          fields: ['type'],
-        });
-      }
+      // Default field type.
+      if (!instructionList.type) instructionList.type = 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(targetModel as Model, instructionList as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
         params: [],
       });
     } else if (queryType === 'set') {
@@ -1033,6 +1003,4 @@ export const addModelQueries = (
       });
     }
   }
-
-  return queryInstructions;
 };

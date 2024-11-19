@@ -572,7 +572,7 @@ test('get single record with link field', () => {
         {
           slug: 'account',
           type: 'link',
-          target: { slug: 'account' },
+          target: 'account',
         },
       ],
     },
@@ -615,7 +615,7 @@ test('get single record with link field and id', () => {
         {
           slug: 'account',
           type: 'link',
-          target: { slug: 'account' },
+          target: 'account',
         },
       ],
     },
@@ -659,7 +659,7 @@ test('get single record with link field and id with condition', () => {
         {
           slug: 'account',
           type: 'link',
-          target: { slug: 'account' },
+          target: 'account',
         },
       ],
     },
