@@ -97,6 +97,10 @@ export type ModelIndex = {
    */
   fields: Array<ModelIndexField>;
   /**
+   * The identifier of the index.
+   */
+  slug?: string;
+  /**
    * Whether only one record with a unique value for the provided fields will be allowed.
    */
   unique?: boolean;

@@ -59,24 +59,17 @@ export const transformMetaQuery = (
   }
 
   if ('alterModel' in query) {
-    const slug = query.alterModel as string;
-    const fullAction = Object.keys(query).filter((key) => key !== 'alterModel')[0] as
-      | 'addField'
-      | 'alterField'
-      | 'removeField'
-      | 'addIndex'
-      | 'removeIndex'
-      | 'addTrigger'
-      | 'removeTrigger'
-      | 'to';
+    const slug = query.alterModel as string | [string, PartialModel];
 
-    if (fullAction === 'to') {
+    if (Array.isArray(slug)) {
+      const [modelSlug, modelDetails] = slug;
+
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(query.to, false);
+      const modelWithFields = addDefaultModelFields(modelDetails, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const instructions = {
-        with: { slug },
+        with: { slug: modelSlug },
         to: modelWithPresets,
       };
 
@@ -92,6 +85,15 @@ export const transformMetaQuery = (
         },
       };
     }
+
+    const fullAction = Object.keys(query).filter((key) => key !== 'alterModel')[0] as
+      | 'addField'
+      | 'alterField'
+      | 'removeField'
+      | 'addIndex'
+      | 'removeIndex'
+      | 'addTrigger'
+      | 'removeTrigger';
 
     const [action, type] = fullAction
       .split(ACTION_REGEX)

@@ -2,7 +2,28 @@ import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
-export const QueryTypeEnum = z.enum(['get', 'set', 'drop', 'create', 'count']);
+export const QueryTypeEnum = z.enum([
+  'get',
+  'set',
+  'drop',
+  'create',
+  'count',
+  'addModel',
+  'alterModel',
+  'removeModel',
+  'addField',
+  'alterField',
+  'removeField',
+  'addIndex',
+  'alterIndex',
+  'removeIndex',
+  'addTrigger',
+  'alterTrigger',
+  'removeTrigger',
+  'addPreset',
+  'alterPreset',
+  'removePreset',
+]);
 
 // Record.
 export const FieldValue = z.union(
@@ -289,6 +310,35 @@ export const QuerySchema = z
     [QueryTypeEnum.Enum.drop]: z.record(z.string(), DropInstructionsSchema),
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
+
+    [QueryTypeEnum.Enum.addModel]: z.record(z.string(), z.any()),
+    [QueryTypeEnum.Enum.alterModel]: z.union([
+      z.string(),
+      z.tuple([z.string(), z.record(z.string(), z.any())]),
+    ]),
+    [QueryTypeEnum.Enum.removeModel]: z.string(),
+
+    [QueryTypeEnum.Enum.addField]: z.record(z.string(), z.any()),
+    [QueryTypeEnum.Enum.alterField]: z.tuple([z.string(), z.record(z.string(), z.any())]),
+    [QueryTypeEnum.Enum.removeField]: z.string(),
+
+    [QueryTypeEnum.Enum.addIndex]: z.record(z.string(), z.any()),
+    [QueryTypeEnum.Enum.alterIndex]: z.tuple([z.string(), z.record(z.string(), z.any())]),
+    [QueryTypeEnum.Enum.removeIndex]: z.string(),
+
+    [QueryTypeEnum.Enum.addTrigger]: z.record(z.string(), z.any()),
+    [QueryTypeEnum.Enum.alterTrigger]: z.tuple([
+      z.string(),
+      z.record(z.string(), z.any()),
+    ]),
+    [QueryTypeEnum.Enum.removeTrigger]: z.string(),
+
+    [QueryTypeEnum.Enum.addPreset]: z.record(z.string(), z.any()),
+    [QueryTypeEnum.Enum.alterPreset]: z.tuple([
+      z.string(),
+      z.record(z.string(), z.any()),
+    ]),
+    [QueryTypeEnum.Enum.removePreset]: z.string(),
   })
   .partial();
 

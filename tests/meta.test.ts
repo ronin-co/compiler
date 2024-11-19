@@ -123,10 +123,12 @@ test('add new model with suitable default identifiers', () => {
 test('update existing model (slug)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      to: {
-        slug: 'user',
-      },
+      alterModel: [
+        'account',
+        {
+          slug: 'user',
+        },
+      ],
     },
   ];
 
@@ -166,10 +168,12 @@ test('update existing model (slug)', () => {
 test('update existing model (plural name)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      to: {
-        pluralName: 'Signups',
-      },
+      alterModel: [
+        'account',
+        {
+          pluralName: 'Signups',
+        },
+      ],
     },
   ];
 
@@ -247,10 +251,12 @@ test('query a model that was just created', () => {
 test('query a model that was just updated', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      to: {
-        slug: 'user',
-      },
+      alterModel: [
+        'account',
+        {
+          slug: 'user',
+        },
+      ],
     },
     {
       get: {
@@ -1400,10 +1406,12 @@ test('remove existing preset', () => {
 test('try to update existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      to: {
-        slug: 'user',
-      },
+      alterModel: [
+        'account',
+        {
+          slug: 'user',
+        },
+      ],
     },
   ];
 
