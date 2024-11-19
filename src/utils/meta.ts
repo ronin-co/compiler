@@ -134,26 +134,24 @@ export const transformMetaQuery = (
       };
     }
 
-    if ('remove' in query.alter) {
-      const type = Object.keys(query.alter.remove)[0] as ModelEntity;
-      const itemSlug = query.alter.remove[type] as string;
+    const type = Object.keys(query.alter.remove)[0] as ModelEntity;
+    const itemSlug = query.alter.remove[type] as string;
 
-      const instructions = {
-        with: { model: { slug }, slug: itemSlug },
-      };
+    const instructions = {
+      with: { model: { slug }, slug: itemSlug },
+    };
 
-      addModelQueries(models, dependencyStatements, {
-        queryType: 'drop',
-        queryModel: type,
-        queryInstructions: instructions,
-      });
+    addModelQueries(models, dependencyStatements, {
+      queryType: 'drop',
+      queryModel: type,
+      queryInstructions: instructions,
+    });
 
-      return {
-        drop: {
-          [type]: instructions,
-        },
-      };
-    }
+    return {
+      drop: {
+        [type]: instructions,
+      },
+    };
   }
 
   return query;
