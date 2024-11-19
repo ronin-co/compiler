@@ -32,6 +32,7 @@ export const transformMetaQuery = (query: Query): Query => {
     const slug = query.alterModel as string;
     const fullAction = Object.keys(query).filter((key) => key !== 'alterModel')[0] as
       | 'addField'
+      | 'alterField'
       | 'removeField'
       | 'addIndex'
       | 'removeIndex'
@@ -53,7 +54,7 @@ export const transformMetaQuery = (query: Query): Query => {
     const [action, type] = fullAction
       .split(ACTION_REGEX)
       .map((part) => part.toLowerCase()) as [
-      'add' | 'remove',
+      'add' | 'remove' | 'alter',
       'field' | 'index' | 'trigger',
     ];
 
@@ -68,6 +69,19 @@ export const transformMetaQuery = (query: Query): Query => {
               model: { slug },
               ...completeItem,
             },
+          },
+        },
+      };
+    }
+
+    if (action === 'alter') {
+      const [itemSlug, newItem] = query[fullAction] as [string, Partial<ModelIndex>];
+
+      return {
+        set: {
+          [type]: {
+            with: { model: { slug }, slug: itemSlug },
+            to: newItem,
           },
         },
       };

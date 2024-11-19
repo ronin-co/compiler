@@ -444,23 +444,18 @@ test('add new link field with actions', () => {
   ]);
 });
 
-/*
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            slug: 'email',
-          },
-          to: {
-            slug: 'emailAddress',
-          },
+      alterModel: 'account',
+      alterField: [
+        'email',
+        {
+          slug: 'emailAddress',
         },
-      },
+      ],
     },
   ];
 
@@ -490,25 +485,19 @@ test('update existing field (slug)', () => {
     },
   ]);
 });
-*/
 
-/*
 // Ensure that, if the `slug` of a field does not change during a model update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('update existing field (name)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            slug: 'email',
-          },
-          to: {
-            name: 'Email Address',
-          },
+      alterModel: 'account',
+      alterField: [
+        'email',
+        {
+          name: 'Email Address',
         },
-      },
+      ],
     },
   ];
 
@@ -534,7 +523,6 @@ test('update existing field (name)', () => {
     },
   ]);
 });
-*/
 
 test('remove existing field', () => {
   const queries: Array<Query> = [
