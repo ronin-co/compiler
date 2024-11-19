@@ -1437,6 +1437,39 @@ test('try to update existing model that does not exist', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
+test('try to create new field without minimum details (field slug)', () => {
+  const queries: Array<Query> = [
+    {
+      alterModel: 'account',
+      addField: {
+        slug: 'email',
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    compileQueries(queries, models);
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When creating fields, a `type` field must be provided in the `to` instruction.',
+  );
+  expect(error).toHaveProperty('code', 'MISSING_FIELD');
+  expect(error).toHaveProperty('fields', ['type']);
+});
+
 test('try to create new trigger with targeted fields and wrong action', () => {
   const effectQueries = [
     {
