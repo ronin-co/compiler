@@ -10,7 +10,7 @@ import {
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS } from '@/src/utils/model';
 
-test('create new model', () => {
+test('add new model', () => {
   const fields = [
     {
       slug: 'handle',
@@ -45,13 +45,9 @@ test('create new model', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        model: {
-          to: {
-            slug: 'account',
-            fields,
-          },
-        },
+      add: {
+        model: 'account',
+        options: { fields },
       },
     },
   ];
@@ -90,7 +86,7 @@ test('create new model', () => {
 
 // Ensure that a reasonable display name and URL slug are automatically selected for the
 // model, based on which fields are available.
-test('create new model with suitable default identifiers', () => {
+test('add new model with suitable default identifiers', () => {
   const fields = [
     {
       slug: 'name',
@@ -107,13 +103,9 @@ test('create new model with suitable default identifiers', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        model: {
-          to: {
-            slug: 'account',
-            fields,
-          },
-        },
+      add: {
+        model: 'account',
+        options: { fields },
       },
     },
   ];
@@ -131,14 +123,10 @@ test('create new model with suitable default identifiers', () => {
 test('update existing model (slug)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            slug: 'user',
-          },
+      alter: {
+        model: 'account',
+        options: {
+          slug: 'user',
         },
       },
     },
@@ -180,14 +168,10 @@ test('update existing model (slug)', () => {
 test('update existing model (plural name)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            pluralName: 'Signups',
-          },
+      alter: {
+        model: 'account',
+        options: {
+          pluralName: 'Signups',
         },
       },
     },
@@ -211,15 +195,11 @@ test('update existing model (plural name)', () => {
   ]);
 });
 
-test('drop existing model', () => {
+test('remove existing model', () => {
   const queries: Array<Query> = [
     {
-      drop: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-        },
+      remove: {
+        model: 'account',
       },
     },
   ];
@@ -248,11 +228,9 @@ test('drop existing model', () => {
 test('query a model that was just created', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         model: {
-          to: {
-            slug: 'account',
-          },
+          slug: 'account',
         },
       },
     },
@@ -277,14 +255,10 @@ test('query a model that was just created', () => {
 test('query a model that was just updated', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            slug: 'user',
-          },
+      alter: {
+        model: 'account',
+        options: {
+          slug: 'user',
         },
       },
     },
@@ -313,12 +287,8 @@ test('query a model that was just updated', () => {
 test('query a model that was just dropped', () => {
   const queries: Array<Query> = [
     {
-      drop: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-        },
+      remove: {
+        model: 'account',
       },
     },
     {
@@ -350,15 +320,14 @@ test('query a model that was just dropped', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
-test('create new field', () => {
+test('add new field', () => {
   const queries: Array<Query> = [
     {
-      create: {
-        field: {
-          to: {
-            model: { slug: 'account' },
+      alter: {
+        model: 'account',
+        add: {
+          field: {
             slug: 'email',
-            type: 'string',
           },
         },
       },
@@ -394,66 +363,16 @@ test('create new field', () => {
   ]);
 });
 
-test('create new link field', () => {
+test('add new field with options', () => {
   const queries: Array<Query> = [
     {
-      create: {
-        field: {
-          to: {
-            model: { slug: 'member' },
+      alter: {
+        model: 'member',
+        add: {
+          field: {
             slug: 'account',
             type: 'link',
-            target: { slug: 'account' },
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'member',
-    },
-    {
-      slug: 'account',
-    },
-  ];
-
-  const statements = compileQueries(queries, models);
-
-  expect(statements).toEqual([
-    {
-      statement:
-        'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id")',
-      params: [],
-    },
-    {
-      statement:
-        'INSERT INTO "fields" ("model", "slug", "type", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "models" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7) RETURNING *',
-      params: [
-        'member',
-        'account',
-        'link',
-        'account',
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
-      returning: true,
-    },
-  ]);
-});
-
-test('create new link field with actions', () => {
-  const queries: Array<Query> = [
-    {
-      create: {
-        field: {
-          to: {
-            model: { slug: 'member' },
-            slug: 'account',
-            type: 'link',
-            target: { slug: 'account' },
+            target: 'account',
             actions: {
               onDelete: 'CASCADE',
             },
@@ -482,7 +401,7 @@ test('create new link field with actions', () => {
     },
     {
       statement:
-        'INSERT INTO "fields" ("model", "slug", "type", "target", "actions.onDelete", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, (SELECT "id" FROM "models" WHERE ("slug" = ?4) LIMIT 1), ?5, ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "fields" ("model", "slug", "type", "target", "actions.onDelete", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
         'member',
         'account',
@@ -503,13 +422,11 @@ test('create new link field with actions', () => {
 test('update existing field (slug)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            slug: 'email',
-          },
-          to: {
+      alter: {
+        model: 'account',
+        alter: {
+          field: 'email',
+          options: {
             slug: 'emailAddress',
           },
         },
@@ -549,13 +466,11 @@ test('update existing field (slug)', () => {
 test('update existing field (name)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            slug: 'email',
-          },
-          to: {
+      alter: {
+        model: 'account',
+        alter: {
+          field: 'email',
+          options: {
             name: 'Email Address',
           },
         },
@@ -586,15 +501,13 @@ test('update existing field (name)', () => {
   ]);
 });
 
-test('drop existing field', () => {
+test('remove existing field', () => {
   const queries: Array<Query> = [
     {
-      drop: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            slug: 'email',
-          },
+      alter: {
+        model: 'account',
+        remove: {
+          field: 'email',
         },
       },
     },
@@ -622,7 +535,7 @@ test('drop existing field', () => {
   ]);
 });
 
-test('create new index', () => {
+test('add new index', () => {
   const fields = [
     {
       slug: 'email',
@@ -631,13 +544,10 @@ test('create new index', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        index: {
-          to: {
-            slug: 'index_slug',
-            model: { slug: 'account' },
-            fields,
-          },
+      alter: {
+        model: 'account',
+        add: {
+          index: { fields },
         },
       },
     },
@@ -659,10 +569,10 @@ test('create new index', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("model", "slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
       params: [
-        'index_slug',
         'account',
+        'index_slug',
         JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -673,7 +583,7 @@ test('create new index', () => {
   ]);
 });
 
-test('create new index with filter', () => {
+test('add new index with filter', () => {
   const fields = [
     {
       slug: 'email',
@@ -688,11 +598,10 @@ test('create new index with filter', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        index: {
-          to: {
-            slug: 'index_slug',
-            model: { slug: 'account' },
+      alter: {
+        model: 'account',
+        add: {
+          index: {
             fields,
             filter: filterInstruction,
           },
@@ -718,10 +627,10 @@ test('create new index with filter', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "indexes" ("model", "slug", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7) RETURNING *',
       params: [
-        'index_slug',
         'account',
+        'index_slug',
         JSON.stringify(fields),
         JSON.stringify(filterInstruction),
         expect.stringMatching(RECORD_ID_REGEX),
@@ -733,7 +642,7 @@ test('create new index with filter', () => {
   ]);
 });
 
-test('create new index with field expressions', () => {
+test('add new index with field expressions', () => {
   const fields = [
     {
       expression: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
@@ -742,13 +651,10 @@ test('create new index with field expressions', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        index: {
-          to: {
-            slug: 'index_slug',
-            model: { slug: 'account' },
-            fields,
-          },
+      alter: {
+        model: 'account',
+        add: {
+          index: { fields },
         },
       },
     },
@@ -779,10 +685,10 @@ test('create new index with field expressions', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("model", "slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
       params: [
-        'index_slug',
         'account',
+        'index_slug',
         JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -793,7 +699,7 @@ test('create new index with field expressions', () => {
   ]);
 });
 
-test('create new index with ordered and collated fields', () => {
+test('add new index with ordered and collated fields', () => {
   const fields = [
     {
       slug: 'email',
@@ -804,13 +710,10 @@ test('create new index with ordered and collated fields', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        index: {
-          to: {
-            slug: 'index_slug',
-            model: { slug: 'account' },
-            fields,
-          },
+      alter: {
+        model: 'account',
+        add: {
+          index: { fields },
         },
       },
     },
@@ -832,10 +735,10 @@ test('create new index with ordered and collated fields', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "indexes" ("model", "slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
       params: [
-        'index_slug',
         'account',
+        'index_slug',
         JSON.stringify(fields),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -846,7 +749,7 @@ test('create new index with ordered and collated fields', () => {
   ]);
 });
 
-test('create new unique index', () => {
+test('add new unique index', () => {
   const fields = [
     {
       slug: 'email',
@@ -855,11 +758,10 @@ test('create new unique index', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        index: {
-          to: {
-            slug: 'index_slug',
-            model: { slug: 'account' },
+      alter: {
+        model: 'account',
+        add: {
+          index: {
             fields,
             unique: true,
           },
@@ -884,10 +786,10 @@ test('create new unique index', () => {
     },
     {
       statement:
-        'INSERT INTO "indexes" ("slug", "model", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7) RETURNING *',
+        'INSERT INTO "indexes" ("model", "slug", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7) RETURNING *',
       params: [
-        'index_slug',
         'account',
+        'index_slug',
         JSON.stringify(fields),
         1,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -899,15 +801,13 @@ test('create new unique index', () => {
   ]);
 });
 
-test('drop existing index', () => {
+test('remove existing index', () => {
   const queries: Array<Query> = [
     {
-      drop: {
-        index: {
-          with: {
-            slug: 'index_slug',
-            model: { slug: 'account' },
-          },
+      alter: {
+        model: 'account',
+        remove: {
+          index: 'index_slug',
         },
       },
     },
@@ -928,14 +828,14 @@ test('drop existing index', () => {
     },
     {
       statement:
-        'DELETE FROM "indexes" WHERE ("slug" = ?1 AND "model" = (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
-      params: ['index_slug', 'account'],
+        'DELETE FROM "indexes" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
+      params: ['account', 'index_slug'],
       returning: true,
     },
   ]);
 });
 
-test('create new trigger for creating records', () => {
+test('add new trigger for creating records', () => {
   const effectQueries = [
     {
       create: {
@@ -950,11 +850,10 @@ test('create new trigger for creating records', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'account' },
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -989,10 +888,10 @@ test('create new trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_slug',
         'account',
+        'trigger_slug',
         'AFTER',
         'INSERT',
         JSON.stringify(effectQueries),
@@ -1005,7 +904,7 @@ test('create new trigger for creating records', () => {
   ]);
 });
 
-test('create new trigger for creating records with targeted fields', () => {
+test('add new trigger for creating records with targeted fields', () => {
   const effectQueries = [
     {
       create: {
@@ -1026,11 +925,10 @@ test('create new trigger for creating records with targeted fields', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'account' },
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
             when: 'AFTER',
             action: 'UPDATE',
             effects: effectQueries,
@@ -1067,10 +965,10 @@ test('create new trigger for creating records with targeted fields', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
       params: [
-        'trigger_slug',
         'account',
+        'trigger_slug',
         'AFTER',
         'UPDATE',
         JSON.stringify(effectQueries),
@@ -1084,7 +982,7 @@ test('create new trigger for creating records with targeted fields', () => {
   ]);
 });
 
-test('create new trigger for creating records with multiple effects', () => {
+test('add new trigger for creating records with multiple effects', () => {
   const effectQueries = [
     {
       create: {
@@ -1108,11 +1006,10 @@ test('create new trigger for creating records with multiple effects', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'account' },
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -1155,10 +1052,10 @@ test('create new trigger for creating records with multiple effects', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_slug',
         'account',
+        'trigger_slug',
         'AFTER',
         'INSERT',
         JSON.stringify(effectQueries),
@@ -1171,7 +1068,7 @@ test('create new trigger for creating records with multiple effects', () => {
   ]);
 });
 
-test('create new per-record trigger for creating records', () => {
+test('add new per-record trigger for creating records', () => {
   const effectQueries = [
     {
       create: {
@@ -1190,11 +1087,10 @@ test('create new per-record trigger for creating records', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'team' },
+      alter: {
+        model: 'team',
+        add: {
+          trigger: {
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -1240,10 +1136,10 @@ test('create new per-record trigger for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_slug',
         'team',
+        'trigger_slug',
         'AFTER',
         'INSERT',
         JSON.stringify(effectQueries),
@@ -1256,7 +1152,7 @@ test('create new per-record trigger for creating records', () => {
   ]);
 });
 
-test('create new per-record trigger for deleting records', () => {
+test('add new per-record trigger for deleting records', () => {
   const effectQueries = [
     {
       drop: {
@@ -1273,11 +1169,10 @@ test('create new per-record trigger for deleting records', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'team' },
+      alter: {
+        model: 'team',
+        add: {
+          trigger: {
             when: 'AFTER',
             action: 'DELETE',
             effects: effectQueries,
@@ -1317,10 +1212,10 @@ test('create new per-record trigger for deleting records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
       params: [
-        'trigger_slug',
         'team',
+        'trigger_slug',
         'AFTER',
         'DELETE',
         JSON.stringify(effectQueries),
@@ -1333,7 +1228,7 @@ test('create new per-record trigger for deleting records', () => {
   ]);
 });
 
-test('create new per-record trigger with filters for creating records', () => {
+test('add new per-record trigger with filters for creating records', () => {
   const effectQueries = [
     {
       create: {
@@ -1358,11 +1253,10 @@ test('create new per-record trigger with filters for creating records', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'team' },
+      alter: {
+        model: 'team',
+        add: {
+          trigger: {
             when: 'AFTER',
             action: 'INSERT',
             effects: effectQueries,
@@ -1408,10 +1302,10 @@ test('create new per-record trigger with filters for creating records', () => {
     },
     {
       statement:
-        'INSERT INTO "triggers" ("slug", "model", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
       params: [
-        'trigger_slug',
         'team',
+        'trigger_slug',
         'AFTER',
         'INSERT',
         JSON.stringify(effectQueries),
@@ -1425,15 +1319,13 @@ test('create new per-record trigger with filters for creating records', () => {
   ]);
 });
 
-test('drop existing trigger', () => {
+test('remove existing trigger', () => {
   const queries: Array<Query> = [
     {
-      drop: {
-        trigger: {
-          with: {
-            slug: 'trigger_slug',
-            model: { slug: 'team' },
-          },
+      alter: {
+        model: 'team',
+        remove: {
+          trigger: 'trigger_slug',
         },
       },
     },
@@ -1454,14 +1346,14 @@ test('drop existing trigger', () => {
     },
     {
       statement:
-        'DELETE FROM "triggers" WHERE ("slug" = ?1 AND "model" = (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
-      params: ['trigger_slug', 'team'],
+        'DELETE FROM "triggers" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
+      params: ['team', 'trigger_slug'],
       returning: true,
     },
   ]);
 });
 
-test('create new preset', () => {
+test('add new preset', () => {
   const instructions = {
     with: {
       email: {
@@ -1472,11 +1364,11 @@ test('create new preset', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        preset: {
-          to: {
+      alter: {
+        model: 'account',
+        add: {
+          preset: {
             slug: 'company_employees',
-            model: { slug: 'account' },
             instructions,
           },
         },
@@ -1496,10 +1388,10 @@ test('create new preset', () => {
   expect(statements).toEqual([
     {
       statement:
-        'INSERT INTO "presets" ("slug", "model", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1), ?3, ?4, ?5, ?6) RETURNING *',
+        'INSERT INTO "presets" ("model", "slug", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
       params: [
-        'company_employees',
         'account',
+        'company_employees',
         JSON.stringify(instructions),
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1510,15 +1402,58 @@ test('create new preset', () => {
   ]);
 });
 
-test('drop existing preset', () => {
+test('update existing preset', () => {
+  const instructions = {
+    with: {
+      email: {
+        endingWith: '@site.co',
+      },
+    },
+  };
+
   const queries: Array<Query> = [
     {
-      drop: {
-        preset: {
-          with: {
-            slug: 'company_employees',
-            model: { slug: 'account' },
-          },
+      alter: {
+        model: 'account',
+        alter: {
+          preset: 'company_employees',
+          options: { instructions },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+    },
+  ];
+
+  const statements = compileQueries(queries, models);
+
+  expect(statements).toEqual([
+    {
+      statement:
+        'UPDATE "presets" SET "instructions" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      params: [
+        JSON.stringify(instructions),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'account',
+        'company_employees',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
+test('remove existing preset', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        remove: {
+          preset: 'company_employees',
         },
       },
     },
@@ -1535,8 +1470,8 @@ test('drop existing preset', () => {
   expect(statements).toEqual([
     {
       statement:
-        'DELETE FROM "presets" WHERE ("slug" = ?1 AND "model" = (SELECT "id" FROM "models" WHERE ("slug" = ?2) LIMIT 1)) RETURNING *',
-      params: ['company_employees', 'account'],
+        'DELETE FROM "presets" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
+      params: ['account', 'company_employees'],
       returning: true,
     },
   ]);
@@ -1545,14 +1480,10 @@ test('drop existing preset', () => {
 test('try to update existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            slug: 'user',
-          },
+      alter: {
+        model: 'account',
+        options: {
+          slug: 'user',
         },
       },
     },
@@ -1576,150 +1507,7 @@ test('try to update existing model that does not exist', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
-test('try to update existing model without minimum details (model slug)', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        model: {
-          with: {
-            name: 'Accounts',
-          },
-          to: {
-            slug: 'user',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueries(queries, models);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When updating models, a `slug` field must be provided in the `with` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['slug']);
-});
-
-test('try to create new field without minimum details (field slug)', () => {
-  const queries: Array<Query> = [
-    {
-      create: {
-        field: {
-          to: {
-            model: { slug: 'account' },
-            slug: 'email',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-    },
-  ];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueries(queries, models);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When creating fields, a `type` field must be provided in the `to` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['type']);
-});
-
-test('try to update existing field without minimum details (model slug)', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        field: {
-          with: {
-            slug: 'email',
-          },
-          to: {
-            slug: 'emailAddress',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueries(queries, models);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When updating fields, a `model.slug` field must be provided in the `with` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['model.slug']);
-});
-
-test('try to update existing field without minimum details (field slug)', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            name: 'Email Address',
-          },
-          to: {
-            slug: 'emailAddress',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueries(queries, models);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When updating fields, a `slug` field must be provided in the `with` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['slug']);
-});
-
-test('try to create new trigger with targeted fields and wrong action', () => {
+test('try to add new trigger with targeted fields and wrong action', () => {
   const effectQueries = [
     {
       create: {
@@ -1734,10 +1522,10 @@ test('try to create new trigger with targeted fields and wrong action', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
             model: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',

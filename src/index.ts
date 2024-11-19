@@ -1,6 +1,7 @@
 import type { PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { compileQueryInput } from '@/src/utils';
+import { transformMetaQuery } from '@/src/utils/meta';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
@@ -35,8 +36,14 @@ export const compileQueries = (
   const mainStatements: Array<Statement> = [];
 
   for (const query of queries) {
-    const result = compileQueryInput(
+    const transformedQuery = transformMetaQuery(
+      modelListWithPresets,
+      dependencyStatements,
       query,
+    );
+
+    const result = compileQueryInput(
+      transformedQuery,
       modelListWithPresets,
       options?.inlineParams ? null : [],
     );

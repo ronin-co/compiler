@@ -4,6 +4,10 @@ import { z } from 'zod';
 // Query Types.
 export const QueryTypeEnum = z.enum(['get', 'set', 'drop', 'create', 'count']);
 
+// Model Query Types.
+export const ModelQueryTypeEnum = z.enum(['add', 'alter', 'remove']);
+export const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
+
 // Record.
 export const FieldValue = z.union(
   [z.string(), z.number(), z.boolean(), z.null(), z.any()],
@@ -289,6 +293,52 @@ export const QuerySchema = z
     [QueryTypeEnum.Enum.drop]: z.record(z.string(), DropInstructionsSchema),
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
+
+    [ModelQueryTypeEnum.Enum.add]: z.union([
+      z.object({
+        model: z.string(),
+        options: z.record(z.string(), z.any()),
+      }),
+      z.object({
+        model: z.record(z.string(), z.any()),
+      }),
+    ]),
+
+    [ModelQueryTypeEnum.Enum.alter]: z
+      .object({
+        model: z.string(),
+      })
+      .and(
+        z.union([
+          z.object({
+            options: z.record(z.string(), z.any()),
+          }),
+          z.object({
+            [ModelQueryTypeEnum.Enum.add]: z.union([
+              z.record(ModelEntityEnum, z.string()).and(
+                z.object({
+                  options: z.record(z.string(), z.any()),
+                }),
+              ),
+              z.record(ModelEntityEnum, z.record(z.string(), z.any())),
+            ]),
+          }),
+          z.object({
+            [ModelQueryTypeEnum.Enum.alter]: z.record(ModelEntityEnum, z.string()).and(
+              z.object({
+                options: z.record(z.string(), z.any()),
+              }),
+            ),
+          }),
+          z.object({
+            [ModelQueryTypeEnum.Enum.remove]: z.record(ModelEntityEnum, z.string()),
+          }),
+        ]),
+      ),
+
+    [ModelQueryTypeEnum.Enum.remove]: z.object({
+      model: z.string(),
+    }),
   })
   .partial();
 
