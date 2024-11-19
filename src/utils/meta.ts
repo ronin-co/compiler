@@ -7,15 +7,17 @@ import {
   addModelQueries,
 } from '@/src/utils/model';
 
-const ACTION_REGEX = /(?=[A-Z])/;
-
 export const transformMetaQuery = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
   query: Query,
 ): Query => {
-  if ('addModel' in query) {
-    const details = query.addModel as PartialModel;
+  if (query.add) {
+    const init = query.add.model;
+    const details =
+      'options' in query.add
+        ? ({ slug: init, ...query.add.options } as PartialModel)
+        : (init as PartialModel);
 
     // Compose default settings for the model.
     const modelWithFields = addDefaultModelFields(details, true);
@@ -38,8 +40,8 @@ export const transformMetaQuery = (
     };
   }
 
-  if ('removeModel' in query) {
-    const slug = query.removeModel as string;
+  if (query.remove) {
+    const slug = query.remove.model;
 
     const instructions = {
       with: { slug },
@@ -58,18 +60,18 @@ export const transformMetaQuery = (
     };
   }
 
-  if ('alterModel' in query) {
-    const slug = query.alterModel as string | [string, PartialModel];
+  if (query.alter) {
+    const slug = query.alter.model;
+    const options =
+      'options' in query.alter ? (query.alter.options as PartialModel) : null;
 
-    if (Array.isArray(slug)) {
-      const [modelSlug, modelDetails] = slug;
-
+    if (options) {
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(modelDetails, false);
+      const modelWithFields = addDefaultModelFields(options, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const instructions = {
-        with: { slug: modelSlug },
+        with: { slug },
         to: modelWithPresets,
       };
 
@@ -86,24 +88,14 @@ export const transformMetaQuery = (
       };
     }
 
-    const fullAction = Object.keys(query).filter((key) => key !== 'alterModel')[0] as
-      | 'addField'
-      | 'alterField'
-      | 'removeField'
-      | 'addIndex'
-      | 'removeIndex'
-      | 'addTrigger'
-      | 'removeTrigger';
-
-    const [action, type] = fullAction
-      .split(ACTION_REGEX)
-      .map((part) => part.toLowerCase()) as [
-      'add' | 'remove' | 'alter',
-      'field' | 'index' | 'trigger',
-    ];
+    const action = Object.keys(query.alter).filter((key) => key !== 'model')[0] as
+      | 'add'
+      | 'alter'
+      | 'remove';
+    const type = Object.keys(query.alter[action])[0];
 
     if (action === 'add') {
-      const item = query[fullAction] as Partial<ModelIndex>;
+      const item = query.alter[action][type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}_slug`, ...item };
 
       const instructions = {
@@ -127,7 +119,8 @@ export const transformMetaQuery = (
     }
 
     if (action === 'alter') {
-      const [itemSlug, newItem] = query[fullAction] as [string, Partial<ModelIndex>];
+      const itemSlug = query.alter[action][type];
+      const newItem = query.alter[action].options;
 
       const instructions = {
         with: { model: { slug }, slug: itemSlug },
@@ -147,7 +140,7 @@ export const transformMetaQuery = (
       };
     }
 
-    const itemSlug = query[fullAction] as string;
+    const itemSlug = query.alter[action][type] as string;
 
     const instructions = {
       with: { model: { slug }, slug: itemSlug },

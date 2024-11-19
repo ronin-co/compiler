@@ -45,9 +45,9 @@ test('add new model', () => {
 
   const queries: Array<Query> = [
     {
-      addModel: {
-        slug: 'account',
-        fields,
+      add: {
+        model: 'account',
+        options: { fields },
       },
     },
   ];
@@ -103,9 +103,9 @@ test('add new model with suitable default identifiers', () => {
 
   const queries: Array<Query> = [
     {
-      addModel: {
-        slug: 'account',
-        fields,
+      add: {
+        model: 'account',
+        options: { fields },
       },
     },
   ];
@@ -123,12 +123,12 @@ test('add new model with suitable default identifiers', () => {
 test('update existing model (slug)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: [
-        'account',
-        {
+      alter: {
+        model: 'account',
+        options: {
           slug: 'user',
         },
-      ],
+      },
     },
   ];
 
@@ -168,12 +168,12 @@ test('update existing model (slug)', () => {
 test('update existing model (plural name)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: [
-        'account',
-        {
+      alter: {
+        model: 'account',
+        options: {
           pluralName: 'Signups',
         },
-      ],
+      },
     },
   ];
 
@@ -198,7 +198,9 @@ test('update existing model (plural name)', () => {
 test('remove existing model', () => {
   const queries: Array<Query> = [
     {
-      removeModel: 'account',
+      remove: {
+        model: 'account',
+      },
     },
   ];
 
@@ -226,8 +228,10 @@ test('remove existing model', () => {
 test('query a model that was just created', () => {
   const queries: Array<Query> = [
     {
-      addModel: {
-        slug: 'account',
+      add: {
+        model: {
+          slug: 'account',
+        },
       },
     },
     {
@@ -251,12 +255,12 @@ test('query a model that was just created', () => {
 test('query a model that was just updated', () => {
   const queries: Array<Query> = [
     {
-      alterModel: [
-        'account',
-        {
+      alter: {
+        model: 'account',
+        options: {
           slug: 'user',
         },
-      ],
+      },
     },
     {
       get: {
@@ -283,7 +287,9 @@ test('query a model that was just updated', () => {
 test('query a model that was just dropped', () => {
   const queries: Array<Query> = [
     {
-      removeModel: 'account',
+      remove: {
+        model: 'account',
+      },
     },
     {
       get: {
@@ -317,10 +323,14 @@ test('query a model that was just dropped', () => {
 test('add new field', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addField: {
-        slug: 'email',
-        type: 'string',
+      alter: {
+        model: 'account',
+        add: {
+          field: {
+            slug: 'email',
+            type: 'string',
+          },
+        },
       },
     },
   ];
@@ -357,11 +367,15 @@ test('add new field', () => {
 test('add new link field', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'member',
-      addField: {
-        slug: 'account',
-        type: 'link',
-        target: 'account',
+      alter: {
+        model: 'member',
+        add: {
+          field: {
+            slug: 'account',
+            type: 'link',
+            target: 'account',
+          },
+        },
       },
     },
   ];
@@ -403,13 +417,17 @@ test('add new link field', () => {
 test('add new link field with actions', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'member',
-      addField: {
-        slug: 'account',
-        type: 'link',
-        target: 'account',
-        actions: {
-          onDelete: 'CASCADE',
+      alter: {
+        model: 'member',
+        add: {
+          field: {
+            slug: 'account',
+            type: 'link',
+            target: 'account',
+            actions: {
+              onDelete: 'CASCADE',
+            },
+          },
         },
       },
     },
@@ -455,13 +473,15 @@ test('add new link field with actions', () => {
 test('update existing field (slug)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      alterField: [
-        'email',
-        {
-          slug: 'emailAddress',
+      alter: {
+        model: 'account',
+        alter: {
+          field: 'email',
+          options: {
+            slug: 'emailAddress',
+          },
         },
-      ],
+      },
     },
   ];
 
@@ -497,13 +517,15 @@ test('update existing field (slug)', () => {
 test('update existing field (name)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      alterField: [
-        'email',
-        {
-          name: 'Email Address',
+      alter: {
+        model: 'account',
+        alter: {
+          field: 'email',
+          options: {
+            name: 'Email Address',
+          },
         },
-      ],
+      },
     },
   ];
 
@@ -533,8 +555,12 @@ test('update existing field (name)', () => {
 test('remove existing field', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      removeField: 'email',
+      alter: {
+        model: 'account',
+        remove: {
+          field: 'email',
+        },
+      },
     },
   ];
 
@@ -569,9 +595,11 @@ test('add new index', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addIndex: {
-        fields,
+      alter: {
+        model: 'account',
+        add: {
+          index: { fields },
+        },
       },
     },
   ];
@@ -621,10 +649,14 @@ test('add new index with filter', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addIndex: {
-        fields,
-        filter: filterInstruction,
+      alter: {
+        model: 'account',
+        add: {
+          index: {
+            fields,
+            filter: filterInstruction,
+          },
+        },
       },
     },
   ];
@@ -670,9 +702,11 @@ test('add new index with field expressions', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addIndex: {
-        fields,
+      alter: {
+        model: 'account',
+        add: {
+          index: { fields },
+        },
       },
     },
   ];
@@ -727,9 +761,11 @@ test('add new index with ordered and collated fields', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addIndex: {
-        fields,
+      alter: {
+        model: 'account',
+        add: {
+          index: { fields },
+        },
       },
     },
   ];
@@ -773,10 +809,14 @@ test('add new unique index', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addIndex: {
-        fields,
-        unique: true,
+      alter: {
+        model: 'account',
+        add: {
+          index: {
+            fields,
+            unique: true,
+          },
+        },
       },
     },
   ];
@@ -815,8 +855,12 @@ test('add new unique index', () => {
 test('remove existing index', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      removeIndex: 'index_slug',
+      alter: {
+        model: 'account',
+        remove: {
+          index: 'index_slug',
+        },
+      },
     },
   ];
 
@@ -857,11 +901,15 @@ test('add new trigger for creating records', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addTrigger: {
-        when: 'AFTER',
-        action: 'INSERT',
-        effects: effectQueries,
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
+            when: 'AFTER',
+            action: 'INSERT',
+            effects: effectQueries,
+          },
+        },
       },
     },
   ];
@@ -928,12 +976,16 @@ test('add new trigger for creating records with targeted fields', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addTrigger: {
-        when: 'AFTER',
-        action: 'UPDATE',
-        effects: effectQueries,
-        fields,
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
+            when: 'AFTER',
+            action: 'UPDATE',
+            effects: effectQueries,
+            fields,
+          },
+        },
       },
     },
   ];
@@ -1005,11 +1057,15 @@ test('add new trigger for creating records with multiple effects', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addTrigger: {
-        when: 'AFTER',
-        action: 'INSERT',
-        effects: effectQueries,
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
+            when: 'AFTER',
+            action: 'INSERT',
+            effects: effectQueries,
+          },
+        },
       },
     },
   ];
@@ -1082,11 +1138,15 @@ test('add new per-record trigger for creating records', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'team',
-      addTrigger: {
-        when: 'AFTER',
-        action: 'INSERT',
-        effects: effectQueries,
+      alter: {
+        model: 'team',
+        add: {
+          trigger: {
+            when: 'AFTER',
+            action: 'INSERT',
+            effects: effectQueries,
+          },
+        },
       },
     },
   ];
@@ -1160,11 +1220,15 @@ test('add new per-record trigger for deleting records', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'team',
-      addTrigger: {
-        when: 'AFTER',
-        action: 'DELETE',
-        effects: effectQueries,
+      alter: {
+        model: 'team',
+        add: {
+          trigger: {
+            when: 'AFTER',
+            action: 'DELETE',
+            effects: effectQueries,
+          },
+        },
       },
     },
   ];
@@ -1240,12 +1304,16 @@ test('add new per-record trigger with filters for creating records', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'team',
-      addTrigger: {
-        when: 'AFTER',
-        action: 'INSERT',
-        effects: effectQueries,
-        filter: filterInstruction,
+      alter: {
+        model: 'team',
+        add: {
+          trigger: {
+            when: 'AFTER',
+            action: 'INSERT',
+            effects: effectQueries,
+            filter: filterInstruction,
+          },
+        },
       },
     },
   ];
@@ -1305,8 +1373,12 @@ test('add new per-record trigger with filters for creating records', () => {
 test('remove existing trigger', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'team',
-      removeTrigger: 'trigger_slug',
+      alter: {
+        model: 'team',
+        remove: {
+          trigger: 'trigger_slug',
+        },
+      },
     },
   ];
 
@@ -1343,10 +1415,14 @@ test('add new preset', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addPreset: {
-        slug: 'company_employees',
-        instructions,
+      alter: {
+        model: 'account',
+        add: {
+          preset: {
+            slug: 'company_employees',
+            instructions,
+          },
+        },
       },
     },
   ];
@@ -1380,8 +1456,12 @@ test('add new preset', () => {
 test('remove existing preset', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      removePreset: 'company_employees',
+      alter: {
+        model: 'account',
+        remove: {
+          preset: 'company_employees',
+        },
+      },
     },
   ];
 
@@ -1406,12 +1486,12 @@ test('remove existing preset', () => {
 test('try to update existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
-      alterModel: [
-        'account',
-        {
+      alter: {
+        model: 'account',
+        options: {
           slug: 'user',
         },
-      ],
+      },
     },
   ];
 
@@ -1436,9 +1516,13 @@ test('try to update existing model that does not exist', () => {
 test('try to create new field without minimum details (field slug)', () => {
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addField: {
-        slug: 'email',
+      alter: {
+        model: 'account',
+        add: {
+          field: {
+            slug: 'email',
+          },
+        },
       },
     },
   ];
@@ -1481,13 +1565,17 @@ test('try to create new trigger with targeted fields and wrong action', () => {
 
   const queries: Array<Query> = [
     {
-      alterModel: 'account',
-      addTrigger: {
-        model: { slug: 'account' },
-        when: 'AFTER',
-        action: 'INSERT',
-        fields: [{ slug: 'email' }],
-        effects: effectQueries,
+      alter: {
+        model: 'account',
+        add: {
+          trigger: {
+            model: { slug: 'account' },
+            when: 'AFTER',
+            action: 'INSERT',
+            fields: [{ slug: 'email' }],
+            effects: effectQueries,
+          },
+        },
       },
     },
   ];

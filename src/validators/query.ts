@@ -2,28 +2,11 @@ import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
-export const QueryTypeEnum = z.enum([
-  'get',
-  'set',
-  'drop',
-  'create',
-  'count',
-  'addModel',
-  'alterModel',
-  'removeModel',
-  'addField',
-  'alterField',
-  'removeField',
-  'addIndex',
-  'alterIndex',
-  'removeIndex',
-  'addTrigger',
-  'alterTrigger',
-  'removeTrigger',
-  'addPreset',
-  'alterPreset',
-  'removePreset',
-]);
+export const QueryTypeEnum = z.enum(['get', 'set', 'drop', 'create', 'count']);
+
+// Model Types.
+export const ModelTypeEnum = z.enum(['add', 'alter', 'remove']);
+export const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
 
 // Record.
 export const FieldValue = z.union(
@@ -311,34 +294,51 @@ export const QuerySchema = z
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
 
-    [QueryTypeEnum.Enum.addModel]: z.record(z.string(), z.any()),
-    [QueryTypeEnum.Enum.alterModel]: z.union([
-      z.string(),
-      z.tuple([z.string(), z.record(z.string(), z.any())]),
+    [ModelTypeEnum.Enum.add]: z.union([
+      z.object({
+        model: z.string(),
+        options: z.record(z.string(), z.any()),
+      }),
+      z.object({
+        model: z.record(z.string(), z.any()),
+      }),
     ]),
-    [QueryTypeEnum.Enum.removeModel]: z.string(),
 
-    [QueryTypeEnum.Enum.addField]: z.record(z.string(), z.any()),
-    [QueryTypeEnum.Enum.alterField]: z.tuple([z.string(), z.record(z.string(), z.any())]),
-    [QueryTypeEnum.Enum.removeField]: z.string(),
+    [ModelTypeEnum.Enum.alter]: z
+      .object({
+        model: z.string(),
+      })
+      .and(
+        z.union([
+          z.object({
+            options: z.record(z.string(), z.any()),
+          }),
+          z.object({
+            [ModelTypeEnum.Enum.add]: z.union([
+              z.record(ModelEntityEnum, z.string()).and(
+                z.object({
+                  options: z.record(z.string(), z.any()),
+                }),
+              ),
+              z.record(ModelEntityEnum, z.record(z.string(), z.any())),
+            ]),
+          }),
+          z.object({
+            [ModelTypeEnum.Enum.alter]: z.record(ModelEntityEnum, z.string()).and(
+              z.object({
+                options: z.record(z.string(), z.any()),
+              }),
+            ),
+          }),
+          z.object({
+            [ModelTypeEnum.Enum.remove]: z.record(ModelEntityEnum, z.string()),
+          }),
+        ]),
+      ),
 
-    [QueryTypeEnum.Enum.addIndex]: z.record(z.string(), z.any()),
-    [QueryTypeEnum.Enum.alterIndex]: z.tuple([z.string(), z.record(z.string(), z.any())]),
-    [QueryTypeEnum.Enum.removeIndex]: z.string(),
-
-    [QueryTypeEnum.Enum.addTrigger]: z.record(z.string(), z.any()),
-    [QueryTypeEnum.Enum.alterTrigger]: z.tuple([
-      z.string(),
-      z.record(z.string(), z.any()),
-    ]),
-    [QueryTypeEnum.Enum.removeTrigger]: z.string(),
-
-    [QueryTypeEnum.Enum.addPreset]: z.record(z.string(), z.any()),
-    [QueryTypeEnum.Enum.alterPreset]: z.tuple([
-      z.string(),
-      z.record(z.string(), z.any()),
-    ]),
-    [QueryTypeEnum.Enum.removePreset]: z.string(),
+    [ModelTypeEnum.Enum.remove]: z.object({
+      model: z.string(),
+    }),
   })
   .partial();
 
