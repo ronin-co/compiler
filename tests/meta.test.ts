@@ -118,21 +118,14 @@ test('add new model with suitable default identifiers', () => {
   expect(statements[1].params[8]).toEqual('handle');
 });
 
-/*
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing model (slug)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            slug: 'user',
-          },
-        },
+      alterModel: 'account',
+      to: {
+        slug: 'user',
       },
     },
   ];
@@ -167,23 +160,15 @@ test('update existing model (slug)', () => {
     },
   ]);
 });
-*/
 
-/*
 // Ensure that, if the `slug` of a model does not change during an update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('update existing model (plural name)', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            pluralName: 'Signups',
-          },
-        },
+      alterModel: 'account',
+      to: {
+        pluralName: 'Signups',
       },
     },
   ];
@@ -205,7 +190,6 @@ test('update existing model (plural name)', () => {
     },
   ]);
 });
-*/
 
 test('remove existing model', () => {
   const queries: Array<Query> = [
@@ -260,19 +244,12 @@ test('query a model that was just created', () => {
   });
 });
 
-/*
 test('query a model that was just updated', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            slug: 'user',
-          },
-        },
+      alterModel: 'account',
+      to: {
+        slug: 'user',
       },
     },
     {
@@ -296,7 +273,6 @@ test('query a model that was just updated', () => {
     returning: true,
   });
 });
-*/
 
 test('query a model that was just dropped', () => {
   const queries: Array<Query> = [
@@ -1433,20 +1409,12 @@ test('remove existing preset', () => {
   ]);
 });
 
-/*
-
 test('try to update existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
-      set: {
-        model: {
-          with: {
-            slug: 'account',
-          },
-          to: {
-            slug: 'user',
-          },
-        },
+      alterModel: 'account',
+      to: {
+        slug: 'user',
       },
     },
   ];
@@ -1469,6 +1437,7 @@ test('try to update existing model that does not exist', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
+/*
 test('try to update existing model without minimum details (model slug)', () => {
   const queries: Array<Query> = [
     {
@@ -1503,42 +1472,7 @@ test('try to update existing model without minimum details (model slug)', () => 
   expect(error).toHaveProperty('code', 'MISSING_FIELD');
   expect(error).toHaveProperty('fields', ['slug']);
 });
-
-test('try to update existing field without minimum details (field slug)', () => {
-  const queries: Array<Query> = [
-    {
-      set: {
-        field: {
-          with: {
-            model: { slug: 'account' },
-            name: 'Email Address',
-          },
-          to: {
-            slug: 'emailAddress',
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [];
-
-  let error: Error | undefined;
-
-  try {
-    compileQueries(queries, models);
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When updating fields, a `slug` field must be provided in the `with` instruction.',
-  );
-  expect(error).toHaveProperty('code', 'MISSING_FIELD');
-  expect(error).toHaveProperty('fields', ['slug']);
-});
+*/
 
 test('try to create new trigger with targeted fields and wrong action', () => {
   const effectQueries = [
@@ -1555,17 +1489,13 @@ test('try to create new trigger with targeted fields and wrong action', () => {
 
   const queries: Array<Query> = [
     {
-      create: {
-        trigger: {
-          to: {
-            slug: 'trigger_slug',
-            model: { slug: 'account' },
-            when: 'AFTER',
-            action: 'INSERT',
-            fields: [{ slug: 'email' }],
-            effects: effectQueries,
-          },
-        },
+      alterModel: 'account',
+      addTrigger: {
+        model: { slug: 'account' },
+        when: 'AFTER',
+        action: 'INSERT',
+        fields: [{ slug: 'email' }],
+        effects: effectQueries,
       },
     },
   ];
@@ -1596,5 +1526,3 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
   expect(error).toHaveProperty('fields', ['action']);
 });
-
-*/

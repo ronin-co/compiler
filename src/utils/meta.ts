@@ -36,7 +36,20 @@ export const transformMetaQuery = (query: Query): Query => {
       | 'addIndex'
       | 'removeIndex'
       | 'addTrigger'
-      | 'removeTrigger';
+      | 'removeTrigger'
+      | 'to';
+
+    if (fullAction === 'to') {
+      return {
+        set: {
+          model: {
+            with: { slug },
+            to: query.to as PartialModel,
+          },
+        },
+      };
+    }
+
     const [action, type] = fullAction
       .split(ACTION_REGEX)
       .map((part) => part.toLowerCase()) as [
