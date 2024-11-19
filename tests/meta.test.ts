@@ -1507,7 +1507,7 @@ test('try to update existing model that does not exist', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
-test('try to create new trigger with targeted fields and wrong action', () => {
+test('try to add new trigger with targeted fields and wrong action', () => {
   const effectQueries = [
     {
       create: {

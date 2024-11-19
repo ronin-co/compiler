@@ -9,7 +9,7 @@ import {
 
 /**
  * Handles queries that modify the database schema. Specifically, those are `add.model`,
- * `alter.model`, and `remove.model` queries..
+ * `alter.model`, and `remove.model` queries.
  *
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
