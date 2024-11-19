@@ -118,7 +118,7 @@ export type ModelTriggerField = {
 export type ModelTrigger = {
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
-  /** When the trigger should fire in the case that a maching query is executed. */
+  /** When the trigger should fire in the case that a matching query is executed. */
   when: 'BEFORE' | 'DURING' | 'AFTER';
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
