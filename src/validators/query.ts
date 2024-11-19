@@ -4,8 +4,8 @@ import { z } from 'zod';
 // Query Types.
 export const QueryTypeEnum = z.enum(['get', 'set', 'drop', 'create', 'count']);
 
-// Model Types.
-export const ModelTypeEnum = z.enum(['add', 'alter', 'remove']);
+// Model Query Types.
+export const ModelQueryTypeEnum = z.enum(['add', 'alter', 'remove']);
 export const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
 
 // Record.
@@ -294,7 +294,7 @@ export const QuerySchema = z
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
 
-    [ModelTypeEnum.Enum.add]: z.union([
+    [ModelQueryTypeEnum.Enum.add]: z.union([
       z.object({
         model: z.string(),
         options: z.record(z.string(), z.any()),
@@ -304,7 +304,7 @@ export const QuerySchema = z
       }),
     ]),
 
-    [ModelTypeEnum.Enum.alter]: z
+    [ModelQueryTypeEnum.Enum.alter]: z
       .object({
         model: z.string(),
       })
@@ -314,7 +314,7 @@ export const QuerySchema = z
             options: z.record(z.string(), z.any()),
           }),
           z.object({
-            [ModelTypeEnum.Enum.add]: z.union([
+            [ModelQueryTypeEnum.Enum.add]: z.union([
               z.record(ModelEntityEnum, z.string()).and(
                 z.object({
                   options: z.record(z.string(), z.any()),
@@ -324,19 +324,19 @@ export const QuerySchema = z
             ]),
           }),
           z.object({
-            [ModelTypeEnum.Enum.alter]: z.record(ModelEntityEnum, z.string()).and(
+            [ModelQueryTypeEnum.Enum.alter]: z.record(ModelEntityEnum, z.string()).and(
               z.object({
                 options: z.record(z.string(), z.any()),
               }),
             ),
           }),
           z.object({
-            [ModelTypeEnum.Enum.remove]: z.record(ModelEntityEnum, z.string()),
+            [ModelQueryTypeEnum.Enum.remove]: z.record(ModelEntityEnum, z.string()),
           }),
         ]),
       ),
 
-    [ModelTypeEnum.Enum.remove]: z.object({
+    [ModelQueryTypeEnum.Enum.remove]: z.object({
       model: z.string(),
     }),
   })

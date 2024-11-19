@@ -12,6 +12,8 @@ import type {
   IncludingInstructionSchema,
   InstructionSchema,
   InstructionsSchema,
+  ModelEntityEnum,
+  ModelQueryTypeEnum,
   OrderedByInstructionSchema,
   QueryPaginationOptionsSchema,
   QuerySchema,
@@ -76,6 +78,9 @@ export type QueryType = z.infer<typeof QueryTypeEnum>;
 export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema>;
 
 export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
+
+export type ModelQueryType = z.infer<typeof ModelQueryTypeEnum>;
+export type ModelEntity = z.infer<typeof ModelEntityEnum>;
 
 export interface Statement {
   statement: string;

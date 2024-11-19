@@ -1,6 +1,6 @@
 import type { Model } from '@/src/types/model';
 import type { ModelIndex, PartialModel } from '@/src/types/model';
-import type { Query, Statement } from '@/src/types/query';
+import type { ModelEntity, Query, Statement } from '@/src/types/query';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
@@ -62,12 +62,10 @@ export const transformMetaQuery = (
 
   if (query.alter) {
     const slug = query.alter.model;
-    const options =
-      'options' in query.alter ? (query.alter.options as PartialModel) : null;
 
-    if (options) {
+    if ('options' in query.alter) {
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(options, false);
+      const modelWithFields = addDefaultModelFields(query.alter.options, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const instructions = {
@@ -88,14 +86,9 @@ export const transformMetaQuery = (
       };
     }
 
-    const action = Object.keys(query.alter).filter((key) => key !== 'model')[0] as
-      | 'add'
-      | 'alter'
-      | 'remove';
-    const type = Object.keys(query.alter[action])[0];
-
-    if (action === 'add') {
-      const item = query.alter[action][type] as Partial<ModelIndex>;
+    if ('add' in query.alter) {
+      const type = Object.keys(query.alter.add)[0] as ModelEntity;
+      const item = query.alter.add[type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}_slug`, ...item };
 
       const instructions = {
@@ -118,9 +111,10 @@ export const transformMetaQuery = (
       };
     }
 
-    if (action === 'alter') {
-      const itemSlug = query.alter[action][type];
-      const newItem = query.alter[action].options;
+    if ('alter' in query.alter) {
+      const type = Object.keys(query.alter.alter)[0] as ModelEntity;
+      const itemSlug = query.alter.alter[type];
+      const newItem = query.alter.alter.options;
 
       const instructions = {
         with: { model: { slug }, slug: itemSlug },
@@ -140,23 +134,26 @@ export const transformMetaQuery = (
       };
     }
 
-    const itemSlug = query.alter[action][type] as string;
+    if ('remove' in query.alter) {
+      const type = Object.keys(query.alter.remove)[0] as ModelEntity;
+      const itemSlug = query.alter.remove[type] as string;
 
-    const instructions = {
-      with: { model: { slug }, slug: itemSlug },
-    };
+      const instructions = {
+        with: { model: { slug }, slug: itemSlug },
+      };
 
-    addModelQueries(models, dependencyStatements, {
-      queryType: 'drop',
-      queryModel: type,
-      queryInstructions: instructions,
-    });
+      addModelQueries(models, dependencyStatements, {
+        queryType: 'drop',
+        queryModel: type,
+        queryInstructions: instructions,
+      });
 
-    return {
-      drop: {
-        [type]: instructions,
-      },
-    };
+      return {
+        drop: {
+          [type]: instructions,
+        },
+      };
+    }
   }
 
   return query;
