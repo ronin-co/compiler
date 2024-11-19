@@ -1,21 +1,9 @@
-import type { Model, ModelIndex, PartialModel } from '@/src/types/model';
-import type { Query, Statement } from '@/src/types/query';
-import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
+import type { ModelIndex, PartialModel } from '@/src/types/model';
+import type { Query } from '@/src/types/query';
 
-const PLURAL_SLUGS = {
-  field: 'fields',
-  index: 'indexes',
-  trigger: 'triggers',
-  preset: 'presets',
-};
-
-export const transformMetaQuery = (
-  query: Query,
-  models: Array<Model>,
-  dependencyStatements?: Array<Statement>,
-): Query => {
-  if ('add' in query) {
-    const details = query.add.model as PartialModel;
+export const transformMetaQuery = (query: Query): Query => {
+  if ('addModel' in query) {
+    const details = query.addModel as PartialModel;
 
     return {
       create: {
@@ -26,8 +14,8 @@ export const transformMetaQuery = (
     };
   }
 
-  if ('remove' in query) {
-    const slug = query.remove.model as string;
+  if ('removeModel' in query) {
+    const slug = query.removeModel as string;
 
     return {
       drop: {
@@ -38,29 +26,25 @@ export const transformMetaQuery = (
     };
   }
 
-  if ('alter' in query) {
-    const slug = query.alter.model as string;
-    const action = Object.keys(query.alter).filter((key) => key !== 'model')[0] as
-      | 'add'
-      | 'remove';
-    const type = Object.keys(query.alter[action])[0] as
-      | 'field'
-      | 'index'
-      | 'trigger'
-      | 'preset';
-    const pluralType = PLURAL_SLUGS[type];
-
-    const field = `${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}`;
-
-    let expression = '';
+  if ('alterModel' in query) {
+    const slug = query.alterModel as string;
+    const fullAction = Object.keys(query).filter((key) => key !== 'alterModel')[0] as
+      | 'addField'
+      | 'removeField'
+      | 'addIndex'
+      | 'removeIndex'
+      | 'addTrigger'
+      | 'removeTrigger';
+    const [action, type] = fullAction
+      .split(/(?=[A-Z])/)
+      .map((part) => part.toLowerCase()) as [
+      'add' | 'remove',
+      'field' | 'index' | 'trigger',
+    ];
 
     if (action === 'add') {
-      const item = query.alter[action][type] as Partial<ModelIndex>;
-
+      const item = query[fullAction] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}_slug`, ...item };
-      const itemDetails = JSON.stringify(completeItem);
-
-      expression = `json_insert(${field}, '$.${item.slug}', '${itemDetails}')`;
 
       return {
         create: {
@@ -74,9 +58,7 @@ export const transformMetaQuery = (
       };
     }
 
-    const itemSlug = query.alter[action][type] as string;
-
-    expression = `json_remove(${field}, '$.${itemSlug}')`;
+    const itemSlug = query[fullAction] as string;
 
     return {
       drop: {
