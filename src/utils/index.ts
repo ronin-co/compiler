@@ -9,7 +9,7 @@ import { handleWith } from '@/src/instructions/with';
 import type { Model } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import { addModelQueries, getModelBySlug } from '@/src/utils/model';
+import { getModelBySlug } from '@/src/utils/model';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -66,14 +66,6 @@ export const compileQueryInput = (
   const dependencyStatements: Array<Statement> = [];
 
   const returning = options?.returning ?? true;
-
-  // Generate additional dependency statements for meta queries, meaning queries that
-  // affect the database model.
-  addModelQueries(
-    models,
-    { queryType, queryModel, queryInstructions: instructions },
-    dependencyStatements,
-  );
 
   // Apply any presets that are potentially being selected by the query.
   if (instructions && Object.hasOwn(instructions, 'for')) {

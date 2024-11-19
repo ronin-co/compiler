@@ -36,7 +36,11 @@ export const compileQueries = (
   const mainStatements: Array<Statement> = [];
 
   for (const query of queries) {
-    const transformedQuery = transformMetaQuery(modelListWithPresets, query);
+    const transformedQuery = transformMetaQuery(
+      modelListWithPresets,
+      dependencyStatements,
+      query,
+    );
 
     const result = compileQueryInput(
       transformedQuery,

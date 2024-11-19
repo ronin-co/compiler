@@ -719,16 +719,16 @@ const getFieldStatement = (
  * dependency statements are used to alter the SQLite database model.
  *
  * @param models - A list of models.
- * @param queryDetails - The parsed details of the query that is being executed.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
+ * @param queryDetails - The parsed details of the query that is being executed.
  *
  * @returns The (possibly modified) query instructions.
  */
 export const addModelQueries = (
   models: Array<Model>,
-  queryDetails: ReturnType<typeof splitQuery>,
   dependencyStatements: Array<Statement>,
+  queryDetails: ReturnType<typeof splitQuery>,
 ) => {
   const { queryType, queryModel, queryInstructions } = queryDetails;
 
