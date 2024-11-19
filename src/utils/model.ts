@@ -775,26 +775,10 @@ export const addModelQueries = (
     }
   }
 
-  const slug: string | null = instructionList?.slug?.being || instructionList?.slug;
-
-  if (!slug) {
-    throw new RoninError({
-      message: `When ${queryTypeReadable} ${kind}, a \`slug\` field must be provided in the \`${instructionName}\` instruction.`,
-      code: 'MISSING_FIELD',
-      fields: ['slug'],
-    });
-  }
+  const slug: string = instructionList?.slug?.being || instructionList?.slug;
 
   const modelInstruction = instructionList?.model;
   const modelSlug = modelInstruction?.slug?.being || modelInstruction?.slug;
-
-  if (kind !== 'models' && !modelSlug) {
-    throw new RoninError({
-      message: `When ${queryTypeReadable} ${kind}, a \`model.slug\` field must be provided in the \`${instructionName}\` instruction.`,
-      code: 'MISSING_FIELD',
-      fields: ['model.slug'],
-    });
-  }
 
   const usableSlug = kind === 'models' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
