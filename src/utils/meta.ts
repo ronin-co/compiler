@@ -1,6 +1,8 @@
 import type { ModelIndex, PartialModel } from '@/src/types/model';
 import type { Query } from '@/src/types/query';
 
+const ACTION_REGEX = /(?=[A-Z])/;
+
 export const transformMetaQuery = (query: Query): Query => {
   if ('addModel' in query) {
     const details = query.addModel as PartialModel;
@@ -36,7 +38,7 @@ export const transformMetaQuery = (query: Query): Query => {
       | 'addTrigger'
       | 'removeTrigger';
     const [action, type] = fullAction
-      .split(/(?=[A-Z])/)
+      .split(ACTION_REGEX)
       .map((part) => part.toLowerCase()) as [
       'add' | 'remove',
       'field' | 'index' | 'trigger',
