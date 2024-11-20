@@ -147,10 +147,10 @@ test('set single record with empty `to` instruction', () => {
   expect(error).toHaveProperty('code', 'INVALID_TO_VALUE');
 });
 
-test('create single record with empty `to` instruction', () => {
+test('add single record with empty `to` instruction', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         account: {
           to: {},
         },
@@ -175,7 +175,7 @@ test('create single record with empty `to` instruction', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'When using a `create` query, the `to` instruction must be a non-empty object.',
+    'When using a `add` query, the `to` instruction must be a non-empty object.',
   );
   expect(error).toHaveProperty('code', 'INVALID_TO_VALUE');
 });

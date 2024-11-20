@@ -641,9 +641,9 @@ type QueryInstructionTypeClean = Exclude<
  * the `with` instruction.
  */
 const mappedInstructions: Partial<Record<QueryType, QueryInstructionTypeClean>> = {
-  create: 'to',
+  add: 'to',
   set: 'with',
-  drop: 'with',
+  delete: 'with',
 };
 
 /** A list of all RONIN data types and their respective column types in SQLite. */
@@ -733,7 +733,7 @@ export const addModelQueries = (
   const { queryType, queryModel, queryInstructions } = queryDetails;
 
   // Only continue if the query is a write query.
-  if (!['create', 'set', 'drop'].includes(queryType)) return;
+  if (!['add', 'set', 'delete'].includes(queryType)) return;
 
   // Only continue if the query addresses system models.
   if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return;
@@ -748,7 +748,7 @@ export const addModelQueries = (
   let queryTypeReadable: string | null = null;
 
   switch (queryType) {
-    case 'create': {
+    case 'add': {
       if (kind === 'models' || kind === 'indexes' || kind === 'triggers') {
         tableAction = 'CREATE';
       }
@@ -762,7 +762,7 @@ export const addModelQueries = (
       break;
     }
 
-    case 'drop': {
+    case 'delete': {
       if (kind === 'models' || kind === 'indexes' || kind === 'triggers') {
         tableAction = 'DROP';
       }
@@ -779,9 +779,7 @@ export const addModelQueries = (
   const usableSlug = kind === 'models' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
   const targetModel =
-    kind === 'models' && queryType === 'create'
-      ? null
-      : getModelBySlug(models, usableSlug);
+    kind === 'models' && queryType === 'add' ? null : getModelBySlug(models, usableSlug);
 
   if (kind === 'indexes') {
     const indexName = convertToSnakeCase(slug);
@@ -798,7 +796,7 @@ export const addModelQueries = (
     const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
-    if (queryType === 'create') {
+    if (queryType === 'add') {
       const model = targetModel as Model;
       const columns = fields.map((field) => {
         let fieldSelector = '';
@@ -847,7 +845,7 @@ export const addModelQueries = (
     const params: Array<unknown> = [];
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
-    if (queryType === 'create') {
+    if (queryType === 'add') {
       const currentModel = targetModel as Model;
 
       // When the trigger should fire and what type of query should cause it to fire.
@@ -936,7 +934,7 @@ export const addModelQueries = (
   const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (kind === 'models') {
-    if (queryType === 'create') {
+    if (queryType === 'add') {
       const newModel = queryInstructions.to as Model;
       const { fields } = newModel;
       const columns = fields
@@ -966,7 +964,7 @@ export const addModelQueries = (
 
       // Update the existing model in the list of models.
       Object.assign(targetModel as Model, queryInstructions.to);
-    } else if (queryType === 'drop') {
+    } else if (queryType === 'delete') {
       // Remove the model from the list of models.
       models.splice(models.indexOf(targetModel as Model), 1);
 
@@ -977,7 +975,7 @@ export const addModelQueries = (
   }
 
   if (kind === 'fields') {
-    if (queryType === 'create') {
+    if (queryType === 'add') {
       // Default field type.
       if (!instructionList.type) instructionList.type = 'string';
 
@@ -996,7 +994,7 @@ export const addModelQueries = (
           params: [],
         });
       }
-    } else if (queryType === 'drop') {
+    } else if (queryType === 'delete') {
       dependencyStatements.push({
         statement: `${statement} DROP COLUMN "${slug}"`,
         params: [],

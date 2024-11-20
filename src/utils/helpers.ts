@@ -291,7 +291,7 @@ export const expand = (obj: NestedObject) => {
  * @returns The type, model, and instructions of the provided query.
  */
 export const splitQuery = (query: Query) => {
-  // The type of query that is being executed (`create`, `get`, etc).
+  // The type of query that is being executed (`add`, `get`, etc).
   const queryType = Object.keys(query)[0] as QueryType;
 
   // The slug or plural slug of the RONIN model that the query will interact with.

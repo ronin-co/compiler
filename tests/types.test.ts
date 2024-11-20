@@ -28,10 +28,10 @@ test('get single record', () => {
   ]);
 });
 
-test('drop single record', () => {
+test('delete single record', () => {
   const queries: Array<Query> = [
     {
-      drop: {
+      delete: {
         account: {
           with: {
             handle: 'elaine',

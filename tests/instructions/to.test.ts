@@ -657,10 +657,10 @@ test('set single record to result of nested query', () => {
   ]);
 });
 
-test('create multiple records with nested sub query', () => {
+test('add multiple records with nested sub query', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         newAccounts: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
@@ -706,10 +706,10 @@ test('create multiple records with nested sub query', () => {
   ]);
 });
 
-test('create multiple records with nested sub query including additional fields', () => {
+test('add multiple records with nested sub query including additional fields', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         newAccounts: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
@@ -764,10 +764,10 @@ test('create multiple records with nested sub query including additional fields'
   ]);
 });
 
-test('create multiple records with nested sub query and specific fields', () => {
+test('add multiple records with nested sub query and specific fields', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         newAccounts: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
@@ -820,10 +820,10 @@ test('create multiple records with nested sub query and specific fields', () => 
   ]);
 });
 
-test('create multiple records with nested sub query and specific meta fields', () => {
+test('add multiple records with nested sub query and specific meta fields', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         newAccounts: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
@@ -877,10 +877,10 @@ test('create multiple records with nested sub query and specific meta fields', (
 
 // Ensure that an error is thrown for fields that don't exist in the target model, since
 // the value of the field cannot be used in those cases.
-test('try to create multiple records with nested sub query including non-existent fields', () => {
+test('try to add multiple records with nested sub query including non-existent fields', () => {
   const queries: Array<Query> = [
     {
-      create: {
+      add: {
         newAccounts: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {

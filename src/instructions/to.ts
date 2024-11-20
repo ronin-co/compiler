@@ -35,7 +35,7 @@ export const handleTo = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
-  queryType: 'create' | 'set',
+  queryType: 'add' | 'set',
   dependencyStatements: Array<Statement>,
   instructions: {
     with: NonNullable<SetInstructions['with']> | undefined;
@@ -50,13 +50,13 @@ export const handleTo = (
 
   // If records are being created, assign a default ID to them, unless a custom ID was
   // already provided in the query.
-  if (queryType === 'create') {
+  if (queryType === 'add') {
     defaultFields.id = toInstruction.id || generateRecordId(model.idPrefix);
   }
 
   defaultFields.ronin = {
     // If records are being created, set their creation time.
-    ...(queryType === 'create' ? { createdAt: currentTime } : {}),
+    ...(queryType === 'add' ? { createdAt: currentTime } : {}),
     // If records are being created or updated, set their update time.
     updatedAt: currentTime,
     // Allow for overwriting the default values provided above.
@@ -144,11 +144,10 @@ export const handleTo = (
       const associativeModelSlug = composeAssociationModelSlug(model, fieldDetails.field);
 
       const composeStatement = (
-        subQueryType: 'create' | 'drop',
+        subQueryType: 'add' | 'delete',
         value?: unknown,
       ): Statement => {
-        const source =
-          queryType === 'create' ? { id: toInstruction.id } : withInstruction;
+        const source = queryType === 'add' ? { id: toInstruction.id } : withInstruction;
         const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
@@ -157,9 +156,7 @@ export const handleTo = (
           {
             [subQueryType]: {
               [associativeModelSlug]:
-                subQueryType === 'create'
-                  ? { to: recordDetails }
-                  : { with: recordDetails },
+                subQueryType === 'add' ? { to: recordDetails } : { with: recordDetails },
             },
           },
           models,
@@ -169,18 +166,18 @@ export const handleTo = (
       };
 
       if (Array.isArray(fieldValue)) {
-        dependencyStatements.push(composeStatement('drop'));
+        dependencyStatements.push(composeStatement('delete'));
 
         for (const record of fieldValue) {
-          dependencyStatements.push(composeStatement('create', record));
+          dependencyStatements.push(composeStatement('add', record));
         }
       } else if (isObject(fieldValue)) {
         for (const recordToAdd of fieldValue.containing || []) {
-          dependencyStatements.push(composeStatement('create', recordToAdd));
+          dependencyStatements.push(composeStatement('add', recordToAdd));
         }
 
         for (const recordToRemove of fieldValue.notContaining || []) {
-          dependencyStatements.push(composeStatement('drop', recordToRemove));
+          dependencyStatements.push(composeStatement('delete', recordToRemove));
         }
       }
     }
@@ -188,10 +185,10 @@ export const handleTo = (
 
   let statement = composeConditions(models, model, statementParams, 'to', toInstruction, {
     parentModel,
-    type: queryType === 'create' ? 'fields' : undefined,
+    type: queryType === 'add' ? 'fields' : undefined,
   });
 
-  if (queryType === 'create') {
+  if (queryType === 'add') {
     const deepStatement = composeConditions(
       models,
       model,
