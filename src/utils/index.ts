@@ -85,20 +85,20 @@ export const compileQueryInput = (
       statement += `SELECT ${columns} FROM `;
       break;
 
-    case 'count':
-      statement += `SELECT COUNT(${columns}) FROM `;
-      break;
-
-    case 'delete':
-      statement += 'DELETE FROM ';
+    case 'set':
+      statement += 'UPDATE ';
       break;
 
     case 'add':
       statement += 'INSERT INTO ';
       break;
 
-    case 'set':
-      statement += 'UPDATE ';
+    case 'delete':
+      statement += 'DELETE FROM ';
+      break;
+
+    case 'count':
+      statement += `SELECT COUNT(${columns}) FROM `;
       break;
   }
 
