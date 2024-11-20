@@ -37,7 +37,7 @@ export type SetInstructions = z.infer<typeof SetInstructionsSchema>;
 export type AddQuery = z.infer<typeof AddQuerySchema>;
 export type AddInstructions = z.infer<typeof AddInstructionsSchema>;
 
-// Delete Queries.
+// Remove Queries.
 export type RemoveQuery = z.infer<typeof RemoveQuerySchema>;
 export type RemoveInstructions = z.infer<typeof RemoveInstructionsSchema>;
 
