@@ -643,7 +643,7 @@ type QueryInstructionTypeClean = Exclude<
 const mappedInstructions: Partial<Record<QueryType, QueryInstructionTypeClean>> = {
   create: 'to',
   set: 'with',
-  drop: 'with',
+  delete: 'with',
 };
 
 /** A list of all RONIN data types and their respective column types in SQLite. */
@@ -733,7 +733,7 @@ export const addModelQueries = (
   const { queryType, queryModel, queryInstructions } = queryDetails;
 
   // Only continue if the query is a write query.
-  if (!['create', 'set', 'drop'].includes(queryType)) return;
+  if (!['create', 'set', 'delete'].includes(queryType)) return;
 
   // Only continue if the query addresses system models.
   if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return;
@@ -762,7 +762,7 @@ export const addModelQueries = (
       break;
     }
 
-    case 'drop': {
+    case 'delete': {
       if (kind === 'models' || kind === 'indexes' || kind === 'triggers') {
         tableAction = 'DROP';
       }
@@ -966,7 +966,7 @@ export const addModelQueries = (
 
       // Update the existing model in the list of models.
       Object.assign(targetModel as Model, queryInstructions.to);
-    } else if (queryType === 'drop') {
+    } else if (queryType === 'delete') {
       // Remove the model from the list of models.
       models.splice(models.indexOf(targetModel as Model), 1);
 
@@ -996,7 +996,7 @@ export const addModelQueries = (
           params: [],
         });
       }
-    } else if (queryType === 'drop') {
+    } else if (queryType === 'delete') {
       dependencyStatements.push({
         statement: `${statement} DROP COLUMN "${slug}"`,
         params: [],

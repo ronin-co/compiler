@@ -89,7 +89,7 @@ export const compileQueryInput = (
       statement += `SELECT COUNT(${columns}) FROM `;
       break;
 
-    case 'drop':
+    case 'delete':
       statement += 'DELETE FROM ';
       break;
 
@@ -154,8 +154,8 @@ export const compileQueryInput = (
 
   const conditions: Array<string> = [];
 
-  // Queries of type "get", "set", "drop", or "count" all support filtering records, but
-  // those of type "create" do not.
+  // Queries of type "get", "set", "delete", or "count" all support filtering records,
+  // but those of type "create" do not.
   if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
     const withStatement = handleWith(
       models,
@@ -249,7 +249,7 @@ export const compileQueryInput = (
 
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
-  if (['create', 'set', 'drop'].includes(queryType) && returning) {
+  if (['create', 'set', 'delete'].includes(queryType) && returning) {
     statement += 'RETURNING * ';
   }
 

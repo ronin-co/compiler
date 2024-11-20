@@ -59,13 +59,13 @@ export const transformMetaQuery = (
     };
 
     addModelQueries(models, dependencyStatements, {
-      queryType: 'drop',
+      queryType: 'delete',
       queryModel: 'model',
       queryInstructions: instructions,
     });
 
     return {
-      drop: {
+      delete: {
         model: instructions,
       },
     };
@@ -153,13 +153,13 @@ export const transformMetaQuery = (
     };
 
     addModelQueries(models, dependencyStatements, {
-      queryType: 'drop',
+      queryType: 'delete',
       queryModel: type,
       queryInstructions: instructions,
     });
 
     return {
-      drop: {
+      delete: {
         [type]: instructions,
       },
     };

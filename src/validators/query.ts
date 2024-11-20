@@ -2,7 +2,7 @@ import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
-export const QueryTypeEnum = z.enum(['get', 'set', 'drop', 'create', 'count']);
+export const QueryTypeEnum = z.enum(['get', 'set', 'delete', 'create', 'count']);
 
 // Model Query Types.
 export const ModelQueryTypeEnum = z.enum(['add', 'alter', 'remove']);
@@ -251,7 +251,7 @@ export const DropInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
 export const DropQuerySchema = z.object({
-  drop: z.record(z.string(), DropInstructionsSchema),
+  delete: z.record(z.string(), DropInstructionsSchema),
 });
 
 // Count Queries.
@@ -290,7 +290,7 @@ export const QuerySchema = z
   .object({
     [QueryTypeEnum.Enum.count]: z.record(z.string(), CountInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.create]: z.record(z.string(), CreateInstructionsSchema),
-    [QueryTypeEnum.Enum.drop]: z.record(z.string(), DropInstructionsSchema),
+    [QueryTypeEnum.Enum.delete]: z.record(z.string(), DropInstructionsSchema),
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
 
