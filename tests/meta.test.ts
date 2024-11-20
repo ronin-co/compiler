@@ -195,10 +195,10 @@ test('update existing model (plural name)', () => {
   ]);
 });
 
-test('remove existing model', () => {
+test('drop existing model', () => {
   const queries: Array<Query> = [
     {
-      remove: {
+      drop: {
         model: 'account',
       },
     },
@@ -287,7 +287,7 @@ test('query a model that was just updated', () => {
 test('query a model that was just dropped', () => {
   const queries: Array<Query> = [
     {
-      remove: {
+      drop: {
         model: 'account',
       },
     },
@@ -501,12 +501,12 @@ test('update existing field (name)', () => {
   ]);
 });
 
-test('remove existing field', () => {
+test('drop existing field', () => {
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
-        remove: {
+        drop: {
           field: 'email',
         },
       },
@@ -801,12 +801,12 @@ test('add new unique index', () => {
   ]);
 });
 
-test('remove existing index', () => {
+test('drop existing index', () => {
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
-        remove: {
+        drop: {
           index: 'index_slug',
         },
       },
@@ -1319,12 +1319,12 @@ test('add new per-record trigger with filters for creating records', () => {
   ]);
 });
 
-test('remove existing trigger', () => {
+test('drop existing trigger', () => {
   const queries: Array<Query> = [
     {
       alter: {
         model: 'team',
-        remove: {
+        drop: {
           trigger: 'trigger_slug',
         },
       },
@@ -1447,12 +1447,12 @@ test('update existing preset', () => {
   ]);
 });
 
-test('remove existing preset', () => {
+test('drop existing preset', () => {
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
-        remove: {
+        drop: {
           preset: 'company_employees',
         },
       },

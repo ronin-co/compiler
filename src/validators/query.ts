@@ -5,7 +5,7 @@ import { z } from 'zod';
 export const QueryTypeEnum = z.enum(['get', 'set', 'delete', 'create', 'count']);
 
 // Model Query Types.
-export const ModelQueryTypeEnum = z.enum(['add', 'alter', 'remove']);
+export const ModelQueryTypeEnum = z.enum(['add', 'alter', 'drop']);
 export const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
 
 // Record.
@@ -331,12 +331,12 @@ export const QuerySchema = z
             ),
           }),
           z.object({
-            [ModelQueryTypeEnum.Enum.remove]: z.record(ModelEntityEnum, z.string()),
+            [ModelQueryTypeEnum.Enum.drop]: z.record(ModelEntityEnum, z.string()),
           }),
         ]),
       ),
 
-    [ModelQueryTypeEnum.Enum.remove]: z.object({
+    [ModelQueryTypeEnum.Enum.drop]: z.object({
       model: z.string(),
     }),
   })

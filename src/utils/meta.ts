@@ -9,7 +9,7 @@ import {
 
 /**
  * Handles queries that modify the database schema. Specifically, those are `add.model`,
- * `alter.model`, and `remove.model` queries.
+ * `alter.model`, and `drop.model` queries.
  *
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
@@ -51,8 +51,8 @@ export const transformMetaQuery = (
     };
   }
 
-  if (query.remove) {
-    const slug = query.remove.model;
+  if (query.drop) {
+    const slug = query.drop.model;
 
     const instructions = {
       with: { slug },
@@ -145,8 +145,8 @@ export const transformMetaQuery = (
       };
     }
 
-    const type = Object.keys(query.alter.remove)[0] as ModelEntity;
-    const itemSlug = query.alter.remove[type] as string;
+    const type = Object.keys(query.alter.drop)[0] as ModelEntity;
+    const itemSlug = query.alter.drop[type] as string;
 
     const instructions = {
       with: { model: { slug }, slug: itemSlug },
