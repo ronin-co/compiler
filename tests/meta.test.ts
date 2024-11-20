@@ -1150,10 +1150,10 @@ test('create new per-record trigger for creating records', () => {
   ]);
 });
 
-test('create new per-record trigger for deleting records', () => {
+test('create new per-record trigger for removing records', () => {
   const effectQueries = [
     {
-      delete: {
+      remove: {
         members: {
           with: {
             account: {

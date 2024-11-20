@@ -278,7 +278,7 @@ test('set single record to new many-cardinality link field (add)', () => {
   ]);
 });
 
-test('set single record to new many-cardinality link field (delete)', () => {
+test('set single record to new many-cardinality link field (remove)', () => {
   const queries: Array<Query> = [
     {
       set: {

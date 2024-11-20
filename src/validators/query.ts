@@ -2,7 +2,7 @@ import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
-export const QueryTypeEnum = z.enum(['get', 'set', 'add', 'delete', 'count']);
+export const QueryTypeEnum = z.enum(['get', 'set', 'add', 'remove', 'count']);
 
 // Model Query Types.
 export const ModelQueryTypeEnum = z.enum(['create', 'alter', 'drop']);
@@ -247,11 +247,11 @@ export const AddQuerySchema = z.object({
 });
 
 // Drop Queries.
-export const DeleteInstructionsSchema = InstructionsSchema.partial().omit({
+export const RemoveInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
-export const DeleteQuerySchema = z.object({
-  delete: z.record(z.string(), DeleteInstructionsSchema),
+export const RemoveQuerySchema = z.object({
+  remove: z.record(z.string(), RemoveInstructionsSchema),
 });
 
 // Count Queries.
@@ -267,7 +267,7 @@ export const CombinedInstructionsSchema = z.union([
   SetInstructionsSchema,
   CountInstructionsSchema,
   AddInstructionsSchema,
-  DeleteInstructionsSchema,
+  RemoveInstructionsSchema,
   GetInstructionsSchema,
 ]);
 export const InstructionSchema = z.enum([
@@ -291,7 +291,7 @@ export const QuerySchema = z
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
     [QueryTypeEnum.Enum.add]: z.record(z.string(), AddInstructionsSchema),
-    [QueryTypeEnum.Enum.delete]: z.record(z.string(), DeleteInstructionsSchema),
+    [QueryTypeEnum.Enum.remove]: z.record(z.string(), RemoveInstructionsSchema),
     [QueryTypeEnum.Enum.count]: z.record(z.string(), CountInstructionsSchema.nullable()),
 
     [ModelQueryTypeEnum.Enum.create]: z.union([
