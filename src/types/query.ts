@@ -1,11 +1,11 @@
 import type {
+  AddInstructionsSchema,
+  AddQuerySchema,
   CombinedInstructionsSchema,
   CountInstructionsSchema,
   CountQuerySchema,
-  CreateInstructionsSchema,
-  CreateQuerySchema,
-  DropInstructionsSchema,
-  DropQuerySchema,
+  DeleteInstructionsSchema,
+  DeleteQuerySchema,
   ExpressionSchema,
   GetInstructionsSchema,
   GetQuerySchema,
@@ -33,13 +33,13 @@ export type GetInstructions = z.infer<typeof GetInstructionsSchema>;
 export type SetQuery = z.infer<typeof SetQuerySchema>;
 export type SetInstructions = z.infer<typeof SetInstructionsSchema>;
 
-// Create Queries.
-export type CreateQuery = z.infer<typeof CreateQuerySchema>;
-export type CreateInstructions = z.infer<typeof CreateInstructionsSchema>;
+// Add Queries.
+export type AddQuery = z.infer<typeof AddQuerySchema>;
+export type AddInstructions = z.infer<typeof AddInstructionsSchema>;
 
-// Drop Queries.
-export type DropQuery = z.infer<typeof DropQuerySchema>;
-export type DropInstructions = z.infer<typeof DropInstructionsSchema>;
+// Delete Queries.
+export type DeleteQuery = z.infer<typeof DeleteQuerySchema>;
+export type DeleteInstructions = z.infer<typeof DeleteInstructionsSchema>;
 
 // Count Queries.
 export type CountQuery = z.infer<typeof CountQuerySchema>;

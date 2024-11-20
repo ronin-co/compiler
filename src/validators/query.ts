@@ -233,8 +233,8 @@ export const SetQuerySchema = z.object({
   set: z.record(z.string(), SetInstructionsSchema),
 });
 
-// Create Queries.
-export const CreateInstructionsSchema = InstructionsSchema.partial()
+// Add Queries.
+export const AddInstructionsSchema = InstructionsSchema.partial()
   .omit({ with: true, for: true })
   .extend({
     to: FieldSelector.refine(
@@ -242,16 +242,16 @@ export const CreateInstructionsSchema = InstructionsSchema.partial()
       'The `to` instruction must not be empty.',
     ),
   });
-export const CreateQuerySchema = z.object({
-  add: z.record(z.string(), CreateInstructionsSchema),
+export const AddQuerySchema = z.object({
+  add: z.record(z.string(), AddInstructionsSchema),
 });
 
 // Drop Queries.
-export const DropInstructionsSchema = InstructionsSchema.partial().omit({
+export const DeleteInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
-export const DropQuerySchema = z.object({
-  delete: z.record(z.string(), DropInstructionsSchema),
+export const DeleteQuerySchema = z.object({
+  delete: z.record(z.string(), DeleteInstructionsSchema),
 });
 
 // Count Queries.
@@ -266,8 +266,8 @@ export const CountQuerySchema = z.object({
 export const CombinedInstructionsSchema = z.union([
   SetInstructionsSchema,
   CountInstructionsSchema,
-  CreateInstructionsSchema,
-  DropInstructionsSchema,
+  AddInstructionsSchema,
+  DeleteInstructionsSchema,
   GetInstructionsSchema,
 ]);
 export const InstructionSchema = z.enum([
@@ -290,8 +290,8 @@ export const QuerySchema = z
   .object({
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
-    [QueryTypeEnum.Enum.add]: z.record(z.string(), CreateInstructionsSchema),
-    [QueryTypeEnum.Enum.delete]: z.record(z.string(), DropInstructionsSchema),
+    [QueryTypeEnum.Enum.add]: z.record(z.string(), AddInstructionsSchema),
+    [QueryTypeEnum.Enum.delete]: z.record(z.string(), DeleteInstructionsSchema),
     [QueryTypeEnum.Enum.count]: z.record(z.string(), CountInstructionsSchema.nullable()),
 
     [ModelQueryTypeEnum.Enum.create]: z.union([
