@@ -93,7 +93,7 @@ export const compileQueryInput = (
       statement += 'DELETE FROM ';
       break;
 
-    case 'create':
+    case 'add':
       statement += 'INSERT INTO ';
       break;
 
@@ -128,7 +128,7 @@ export const compileQueryInput = (
     statement += `"${model.table}" `;
   }
 
-  if (queryType === 'create' || queryType === 'set') {
+  if (queryType === 'add' || queryType === 'set') {
     // This validation must be performed before any default fields (such as `ronin`) are
     // added to the record. Otherwise there are always fields present.
     if (!isObject(instructions.to) || Object.keys(instructions.to).length === 0) {
@@ -155,8 +155,8 @@ export const compileQueryInput = (
   const conditions: Array<string> = [];
 
   // Queries of type "get", "set", "delete", or "count" all support filtering records,
-  // but those of type "create" do not.
-  if (queryType !== 'create' && instructions && Object.hasOwn(instructions, 'with')) {
+  // but those of type "add" do not.
+  if (queryType !== 'add' && instructions && Object.hasOwn(instructions, 'with')) {
     const withStatement = handleWith(
       models,
       model,
@@ -249,7 +249,7 @@ export const compileQueryInput = (
 
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
-  if (['create', 'set', 'delete'].includes(queryType) && returning) {
+  if (['add', 'set', 'delete'].includes(queryType) && returning) {
     statement += 'RETURNING * ';
   }
 

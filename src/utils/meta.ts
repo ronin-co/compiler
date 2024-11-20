@@ -8,7 +8,7 @@ import {
 } from '@/src/utils/model';
 
 /**
- * Handles queries that modify the database schema. Specifically, those are `add.model`,
+ * Handles queries that modify the DB schema. Specifically, those are `create.model`,
  * `alter.model`, and `drop.model` queries.
  *
  * @param models - A list of models.
@@ -23,11 +23,11 @@ export const transformMetaQuery = (
   dependencyStatements: Array<Statement>,
   query: Query,
 ): Query => {
-  if (query.add) {
-    const init = query.add.model;
+  if (query.create) {
+    const init = query.create.model;
     const details =
-      'options' in query.add
-        ? ({ slug: init, ...query.add.options } as PartialModel)
+      'options' in query.create
+        ? ({ slug: init, ...query.create.options } as PartialModel)
         : (init as PartialModel);
 
     // Compose default settings for the model.
@@ -39,13 +39,13 @@ export const transformMetaQuery = (
     };
 
     addModelQueries(models, dependencyStatements, {
-      queryType: 'create',
+      queryType: 'add',
       queryModel: 'model',
       queryInstructions: instructions,
     });
 
     return {
-      create: {
+      add: {
         model: instructions,
       },
     };
@@ -97,9 +97,9 @@ export const transformMetaQuery = (
       };
     }
 
-    if ('add' in query.alter) {
-      const type = Object.keys(query.alter.add)[0] as ModelEntity;
-      const item = query.alter.add[type] as Partial<ModelIndex>;
+    if ('create' in query.alter) {
+      const type = Object.keys(query.alter.create)[0] as ModelEntity;
+      const item = query.alter.create[type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}_slug`, ...item };
 
       const instructions = {
@@ -110,13 +110,13 @@ export const transformMetaQuery = (
       };
 
       addModelQueries(models, dependencyStatements, {
-        queryType: 'create',
+        queryType: 'add',
         queryModel: type,
         queryInstructions: instructions,
       });
 
       return {
-        create: {
+        add: {
           [type]: instructions,
         },
       };

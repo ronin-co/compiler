@@ -2,10 +2,10 @@ import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
-export const QueryTypeEnum = z.enum(['get', 'set', 'delete', 'create', 'count']);
+export const QueryTypeEnum = z.enum(['get', 'set', 'add', 'delete', 'count']);
 
 // Model Query Types.
-export const ModelQueryTypeEnum = z.enum(['add', 'alter', 'drop']);
+export const ModelQueryTypeEnum = z.enum(['create', 'alter', 'drop']);
 export const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
 
 // Record.
@@ -243,7 +243,7 @@ export const CreateInstructionsSchema = InstructionsSchema.partial()
     ),
   });
 export const CreateQuerySchema = z.object({
-  create: z.record(z.string(), CreateInstructionsSchema),
+  add: z.record(z.string(), CreateInstructionsSchema),
 });
 
 // Drop Queries.
@@ -288,13 +288,13 @@ export const QuerySchemaSchema = z.record(InstructionsSchema.partial());
 
 export const QuerySchema = z
   .object({
-    [QueryTypeEnum.Enum.count]: z.record(z.string(), CountInstructionsSchema.nullable()),
-    [QueryTypeEnum.Enum.create]: z.record(z.string(), CreateInstructionsSchema),
-    [QueryTypeEnum.Enum.delete]: z.record(z.string(), DropInstructionsSchema),
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
+    [QueryTypeEnum.Enum.add]: z.record(z.string(), CreateInstructionsSchema),
+    [QueryTypeEnum.Enum.delete]: z.record(z.string(), DropInstructionsSchema),
+    [QueryTypeEnum.Enum.count]: z.record(z.string(), CountInstructionsSchema.nullable()),
 
-    [ModelQueryTypeEnum.Enum.add]: z.union([
+    [ModelQueryTypeEnum.Enum.create]: z.union([
       z.object({
         model: z.string(),
         options: z.record(z.string(), z.any()),
@@ -314,7 +314,7 @@ export const QuerySchema = z
             options: z.record(z.string(), z.any()),
           }),
           z.object({
-            [ModelQueryTypeEnum.Enum.add]: z.union([
+            [ModelQueryTypeEnum.Enum.create]: z.union([
               z.record(ModelEntityEnum, z.string()).and(
                 z.object({
                   options: z.record(z.string(), z.any()),
