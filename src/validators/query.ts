@@ -297,7 +297,7 @@ export const QuerySchema = z
     [ModelQueryTypeEnum.Enum.create]: z.union([
       z.object({
         model: z.string(),
-        options: z.record(z.string(), z.any()),
+        to: z.record(z.string(), z.any()),
       }),
       z.object({
         model: z.record(z.string(), z.any()),
@@ -311,13 +311,13 @@ export const QuerySchema = z
       .and(
         z.union([
           z.object({
-            options: z.record(z.string(), z.any()),
+            to: z.record(z.string(), z.any()),
           }),
           z.object({
             [ModelQueryTypeEnum.Enum.create]: z.union([
               z.record(ModelEntityEnum, z.string()).and(
                 z.object({
-                  options: z.record(z.string(), z.any()),
+                  to: z.record(z.string(), z.any()),
                 }),
               ),
               z.record(ModelEntityEnum, z.record(z.string(), z.any())),
@@ -326,7 +326,7 @@ export const QuerySchema = z
           z.object({
             [ModelQueryTypeEnum.Enum.alter]: z.record(ModelEntityEnum, z.string()).and(
               z.object({
-                options: z.record(z.string(), z.any()),
+                to: z.record(z.string(), z.any()),
               }),
             ),
           }),

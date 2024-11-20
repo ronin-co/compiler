@@ -46,8 +46,7 @@ test('create new model', () => {
   const queries: Array<Query> = [
     {
       create: {
-        model: 'account',
-        options: { fields },
+        model: { slug: 'account', fields },
       },
     },
   ];
@@ -104,8 +103,7 @@ test('create new model with suitable default identifiers', () => {
   const queries: Array<Query> = [
     {
       create: {
-        model: 'account',
-        options: { fields },
+        model: { slug: 'account', fields },
       },
     },
   ];
@@ -125,7 +123,7 @@ test('update existing model (slug)', () => {
     {
       alter: {
         model: 'account',
-        options: {
+        to: {
           slug: 'user',
         },
       },
@@ -170,7 +168,7 @@ test('update existing model (plural name)', () => {
     {
       alter: {
         model: 'account',
-        options: {
+        to: {
           pluralName: 'Signups',
         },
       },
@@ -257,7 +255,7 @@ test('query a model that was just updated', () => {
     {
       alter: {
         model: 'account',
-        options: {
+        to: {
           slug: 'user',
         },
       },
@@ -426,7 +424,7 @@ test('update existing field (slug)', () => {
         model: 'account',
         alter: {
           field: 'email',
-          options: {
+          to: {
             slug: 'emailAddress',
           },
         },
@@ -470,7 +468,7 @@ test('update existing field (name)', () => {
         model: 'account',
         alter: {
           field: 'email',
-          options: {
+          to: {
             name: 'Email Address',
           },
         },
@@ -1417,7 +1415,7 @@ test('update existing preset', () => {
         model: 'account',
         alter: {
           preset: 'company_employees',
-          options: { instructions },
+          to: { instructions },
         },
       },
     },
@@ -1482,7 +1480,7 @@ test('try to update existing model that does not exist', () => {
     {
       alter: {
         model: 'account',
-        options: {
+        to: {
           slug: 'user',
         },
       },
