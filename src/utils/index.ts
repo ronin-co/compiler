@@ -93,7 +93,7 @@ export const compileQueryInput = (
       statement += 'INSERT INTO ';
       break;
 
-    case 'delete':
+    case 'remove':
       statement += 'DELETE FROM ';
       break;
 
@@ -154,7 +154,7 @@ export const compileQueryInput = (
 
   const conditions: Array<string> = [];
 
-  // Queries of type "get", "set", "delete", or "count" all support filtering records,
+  // Queries of type "get", "set", "remove", or "count" all support filtering records,
   // but those of type "add" do not.
   if (queryType !== 'add' && instructions && Object.hasOwn(instructions, 'with')) {
     const withStatement = handleWith(
@@ -249,7 +249,7 @@ export const compileQueryInput = (
 
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
-  if (['add', 'set', 'delete'].includes(queryType) && returning) {
+  if (['add', 'set', 'remove'].includes(queryType) && returning) {
     statement += 'RETURNING * ';
   }
 

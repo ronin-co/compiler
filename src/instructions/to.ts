@@ -144,7 +144,7 @@ export const handleTo = (
       const associativeModelSlug = composeAssociationModelSlug(model, fieldDetails.field);
 
       const composeStatement = (
-        subQueryType: 'add' | 'delete',
+        subQueryType: 'add' | 'remove',
         value?: unknown,
       ): Statement => {
         const source = queryType === 'add' ? { id: toInstruction.id } : withInstruction;
@@ -166,7 +166,7 @@ export const handleTo = (
       };
 
       if (Array.isArray(fieldValue)) {
-        dependencyStatements.push(composeStatement('delete'));
+        dependencyStatements.push(composeStatement('remove'));
 
         for (const record of fieldValue) {
           dependencyStatements.push(composeStatement('add', record));
@@ -177,7 +177,7 @@ export const handleTo = (
         }
 
         for (const recordToRemove of fieldValue.notContaining || []) {
-          dependencyStatements.push(composeStatement('delete', recordToRemove));
+          dependencyStatements.push(composeStatement('remove', recordToRemove));
         }
       }
     }
