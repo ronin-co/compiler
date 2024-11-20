@@ -26,8 +26,8 @@ export const transformMetaQuery = (
   if (query.create) {
     const init = query.create.model;
     const details =
-      'options' in query.create
-        ? ({ slug: init, ...query.create.options } as PartialModel)
+      'to' in query.create
+        ? ({ slug: init, ...query.create.to } as PartialModel)
         : (init as PartialModel);
 
     // Compose default settings for the model.
@@ -74,9 +74,9 @@ export const transformMetaQuery = (
   if (query.alter) {
     const slug = query.alter.model;
 
-    if ('options' in query.alter) {
+    if ('to' in query.alter) {
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(query.alter.options, false);
+      const modelWithFields = addDefaultModelFields(query.alter.to, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const instructions = {
@@ -125,7 +125,7 @@ export const transformMetaQuery = (
     if ('alter' in query.alter) {
       const type = Object.keys(query.alter.alter)[0] as ModelEntity;
       const itemSlug = query.alter.alter[type];
-      const newItem = query.alter.alter.options;
+      const newItem = query.alter.alter.to;
 
       const instructions = {
         with: { model: { slug }, slug: itemSlug },
