@@ -43,7 +43,11 @@ export const prepareStatementValue = (
   // If no list of statement values is available, that means we should inline the value,
   // which is desired in cases where there is no risk of SQL injection and where the
   // values must be plainly visible for manual human inspection.
-  if (!statementParams) return JSON.stringify(value);
+  if (!statementParams) {
+    const valueString =
+      typeof value === 'object' ? JSON.stringify(value) : value!.toString();
+    return `'${valueString}'`;
+  }
 
   let formattedValue = value;
 
