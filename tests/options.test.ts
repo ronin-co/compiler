@@ -5,9 +5,12 @@ import type { Query } from '@/src/types/query';
 test('inline statement values', () => {
   const queries: Array<Query> = [
     {
-      get: {
+      add: {
         account: {
-          with: { handle: 'elaine' },
+          to: {
+            handle: 'elaine',
+            emails: ['test@site.co', 'elaine@site.com'],
+          },
         },
       },
     },
@@ -21,6 +24,10 @@ test('inline statement values', () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'emails',
+          type: 'json',
+        },
       ],
     },
   ];
@@ -29,11 +36,8 @@ test('inline statement values', () => {
     inlineParams: true,
   });
 
-  expect(statements).toEqual([
-    {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" = "elaine") LIMIT 1',
-      params: [],
-      returning: true,
-    },
-  ]);
+  expect(statements[0].statement).toStartWith(
+    `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ('elaine', '["test@site.co","elaine@site.com"]'`,
+  );
+  expect(statements[0].params).toEqual([]);
 });
