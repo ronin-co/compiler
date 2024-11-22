@@ -699,10 +699,13 @@ export const addModelStatements = (
     let queryTypeDetails: unknown;
 
     if (action === 'create') {
-      const newModel = queryInstructions.to as Model;
-      const { fields } = newModel;
+      // Compose default settings for the model.
+      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, true);
+      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
+
+      const { fields } = modelWithPresets;
       const columns = fields
-        .map((field) => getFieldStatement(models, newModel, field))
+        .map((field) => getFieldStatement(models, modelWithPresets, field))
         .filter(Boolean);
 
       dependencyStatements.push({
@@ -711,13 +714,17 @@ export const addModelStatements = (
       });
 
       // Add the newly created model to the list of models.
-      models.push(newModel);
+      models.push(modelWithPresets);
 
-      queryTypeDetails = { to: newModel };
+      queryTypeDetails = { to: modelWithPresets };
     }
 
     if (action === 'alter') {
-      const newSlug = queryInstructions.to?.pluralSlug;
+      // Compose default settings for the model.
+      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, false);
+      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
+
+      const newSlug = modelWithPresets.pluralSlug;
 
       if (newSlug) {
         const newTable = convertToSnakeCase(newSlug);
@@ -731,13 +738,13 @@ export const addModelStatements = (
       }
 
       // Update the existing model in the list of models.
-      Object.assign(targetModel as Model, queryInstructions.to);
+      Object.assign(targetModel as Model, modelWithPresets);
 
       queryTypeDetails = {
         with: {
           slug: usableSlug,
         },
-        to: queryInstructions.to as Model,
+        to: modelWithPresets,
       };
     }
 

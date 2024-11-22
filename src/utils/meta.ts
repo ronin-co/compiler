@@ -1,11 +1,7 @@
 import type { Model } from '@/src/types/model';
 import type { ModelIndex, PartialModel } from '@/src/types/model';
 import type { ModelEntity, ModelQueryType, Query, Statement } from '@/src/types/query';
-import {
-  addDefaultModelFields,
-  addDefaultModelPresets,
-  addModelStatements,
-} from '@/src/utils/model';
+import { addModelStatements } from '@/src/utils/model';
 
 // Keeping these hardcoded instead of using `pluralize` is faster.
 export const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
@@ -41,10 +37,6 @@ export const transformMetaQuery = (
         ? ({ slug: init, ...query.create.to } as PartialModel)
         : (init as PartialModel);
 
-    // Compose default settings for the model.
-    const modelWithFields = addDefaultModelFields(details, true);
-    const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
-
     return addModelStatements(
       models,
       dependencyStatements,
@@ -53,7 +45,7 @@ export const transformMetaQuery = (
       'model',
       {
         queryInstructions: {
-          to: modelWithPresets,
+          to: details,
         },
       },
     );
@@ -78,10 +70,6 @@ export const transformMetaQuery = (
     const slug = query.alter.model;
 
     if ('to' in query.alter) {
-      // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(query.alter.to, false);
-      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
-
       return addModelStatements(
         models,
         dependencyStatements,
@@ -91,7 +79,7 @@ export const transformMetaQuery = (
         {
           queryInstructions: {
             with: { slug },
-            to: modelWithPresets,
+            to: query.alter.to,
           },
         },
       );
