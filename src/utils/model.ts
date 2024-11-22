@@ -346,7 +346,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
 ];
 
 /** These models are required by the system and are automatically made available. */
-const SYSTEM_MODELS: Array<PublicModel> = [
+const SYSTEM_MODELS: Array<PartialModel> = [
   {
     slug: 'model',
 
@@ -354,6 +354,9 @@ const SYSTEM_MODELS: Array<PublicModel> = [
       name: 'name',
       slug: 'slug',
     },
+
+    // This name mimics the `sqlite_schema` table in SQLite.
+    table: 'ronin_schema',
 
     fields: [
       { slug: 'name', type: 'string' },
