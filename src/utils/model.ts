@@ -637,7 +637,7 @@ const getFieldStatement = (
  *
  * @returns The (possibly modified) query instructions.
  */
-export const addModelQueries = (
+export const addModelStatements = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
   action: ModelQueryType,

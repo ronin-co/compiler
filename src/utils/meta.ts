@@ -5,7 +5,7 @@ import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
-  addModelQueries,
+  addModelStatements,
 } from '@/src/utils/model';
 import { prepareStatementValue } from '@/src/utils/statement';
 
@@ -51,7 +51,7 @@ export const transformMetaQuery = (
       to: modelWithPresets,
     };
 
-    addModelQueries(models, dependencyStatements, 'create', 'model', {
+    addModelStatements(models, dependencyStatements, 'create', 'model', {
       queryInstructions: instructions,
     });
 
@@ -69,7 +69,7 @@ export const transformMetaQuery = (
       with: { slug },
     };
 
-    addModelQueries(models, dependencyStatements, 'drop', 'model', {
+    addModelStatements(models, dependencyStatements, 'drop', 'model', {
       queryInstructions: instructions,
     });
 
@@ -93,7 +93,7 @@ export const transformMetaQuery = (
         to: modelWithPresets,
       };
 
-      addModelQueries(models, dependencyStatements, 'alter', 'model', {
+      addModelStatements(models, dependencyStatements, 'alter', 'model', {
         queryInstructions: instructions,
       });
 
@@ -125,11 +125,11 @@ export const transformMetaQuery = (
       jsonValue = { slug: item.slug || `${type}Slug`, ...item };
       jsonAction = 'insert';
 
-      addModelQueries(models, dependencyStatements, action, type, {
+      addModelStatements(models, dependencyStatements, action, type, {
         queryInstructions: {
           to: {
             model: { slug },
-            ...jsonValue,
+            ...(jsonValue as object),
           },
         },
       });
@@ -139,10 +139,10 @@ export const transformMetaQuery = (
       jsonValue = query.alter.alter.to;
       jsonAction = 'patch';
 
-      addModelQueries(models, dependencyStatements, action, type, {
+      addModelStatements(models, dependencyStatements, action, type, {
         queryInstructions: {
           with: { model: { slug }, slug: jsonSlug },
-          to: jsonValue,
+          to: jsonValue as object,
         },
       });
     }
@@ -150,7 +150,7 @@ export const transformMetaQuery = (
     if ('drop' in query.alter) {
       jsonAction = 'remove';
 
-      addModelQueries(models, dependencyStatements, action, type, {
+      addModelStatements(models, dependencyStatements, action, type, {
         queryInstructions: {
           with: { model: { slug }, slug: jsonSlug },
         },
