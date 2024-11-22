@@ -415,7 +415,7 @@ test('create new field with options', () => {
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
-  const newFieldDetails = {
+  const newFieldDetails: Partial<ModelField> = {
     slug: 'emailAddress',
   };
 
@@ -459,7 +459,7 @@ test('update existing field (slug)', () => {
 // Ensure that, if the `slug` of a field does not change during a model update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('update existing field (name)', () => {
-  const newFieldDetails = {
+  const newFieldDetails: Partial<ModelField> = {
     name: 'Email Address',
   };
 
@@ -1331,7 +1331,7 @@ test('create new preset', () => {
 });
 
 test('update existing preset', () => {
-  const newPresetDetails = {
+  const newPresetDetails: Partial<ModelPreset> = {
     instructions: {
       with: {
         email: {
