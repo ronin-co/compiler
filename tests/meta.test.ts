@@ -322,6 +322,7 @@ test('query a model that was just dropped', () => {
 
 test('create new field', () => {
   const field: ModelField = {
+    slug: 'email',
     type: 'string',
   };
 
@@ -346,13 +347,13 @@ test('create new field', () => {
 
   expect(statements).toEqual([
     {
-      statement: 'ALTER TABLE "accounts" ADD COLUMN "fieldSlug" TEXT',
+      statement: 'ALTER TABLE "accounts" ADD COLUMN "email" TEXT',
       params: [],
     },
     {
       statement: `UPDATE "models" SET "fields" = json_insert("fields", '$.fieldSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'fieldSlug', ...field }),
+        JSON.stringify(field),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
