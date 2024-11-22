@@ -75,7 +75,7 @@ export type ModelFieldReference = ModelFieldBasics & {
 
 export type ModelField = ModelFieldNormal | ModelFieldReference;
 
-export type ModelIndexField<T extends Array<ModelField>> = {
+export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
   /** The collating sequence used for text placed inside the field. */
   collation?: ModelFieldCollation;
   /** How the records in the index should be ordered. */
@@ -91,7 +91,7 @@ export type ModelIndexField<T extends Array<ModelField>> = {
     }
 );
 
-export type ModelIndex<T extends Array<ModelField>> = {
+export type ModelIndex<T extends Array<ModelField> = Array<ModelField>> = {
   /**
    * The list of fields in the model for which the index should be created.
    */
@@ -111,15 +111,15 @@ export type ModelIndex<T extends Array<ModelField>> = {
   filter?: WithInstruction;
 };
 
-export type ModelTriggerField = {
+export type ModelTriggerField<T extends Array<ModelField> = Array<ModelField>> = {
   /**
    * The slug of the field that should cause the trigger to fire if the value of the
    * field has changed.
    */
-  slug: string;
+  slug: T[number]['slug'];
 };
 
-export type ModelTrigger = {
+export type ModelTrigger<T extends Array<ModelField> = Array<ModelField>> = {
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a matching query is executed. */
@@ -127,7 +127,7 @@ export type ModelTrigger = {
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
   /** A list of field slugs for which the trigger should fire. */
-  fields?: Array<ModelTriggerField>;
+  fields?: Array<ModelTriggerField<T>>;
   /**
    * An object containing query instructions used to determine whether the trigger should
    * fire, or not.
@@ -149,8 +149,8 @@ export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   pluralSlug: string;
 
   identifiers: {
-    name: string;
-    slug: string;
+    name: T[number]['slug'];
+    slug: T[number]['slug'];
   };
   idPrefix: string;
 
@@ -175,7 +175,7 @@ export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   // add the default fields automatically, and those are enough to create a model.
   fields: T;
   indexes?: Array<ModelIndex<T>>;
-  triggers?: Array<ModelTrigger>;
+  triggers?: Array<ModelTrigger<T>>;
   presets?: Array<ModelPreset>;
 }
 
