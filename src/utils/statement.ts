@@ -27,7 +27,8 @@ import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 /**
  * Inserts a value into the list of statement values and returns a placeholder for it.
  *
- * @param statementParams - A list of values to be inserted into the final statements.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param value - The value that should be prepared for insertion.
  *
  * @returns A placeholder for the inserted value.
@@ -110,7 +111,8 @@ export const parseFieldExpression = (
  *
  * @param models - A list of models.
  * @param model - The specific model being addressed in the query.
- * @param statementParams - A list of values to be inserted into the final statements.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param instructionName - The name of the instruction that is being processed.
  * @param value - The value that the selected field should be compared with.
  * @param options - Additional options for customizing the behavior of the function.
@@ -179,7 +181,8 @@ export const composeFieldValues = (
  *
  * @param models - A list of models.
  * @param model - The specific model being addressed in the query.
- * @param statementParams - A list of values to be inserted into the final statements.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param instructionName - The name of the instruction that is being processed.
  * @param value - The value that the selected field should be compared with.
  * @param options - Additional options for customizing the behavior of the function.

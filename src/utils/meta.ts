@@ -1,11 +1,21 @@
 import type { Model } from '@/src/types/model';
 import type { ModelIndex, PartialModel } from '@/src/types/model';
 import type { ModelEntity, Query, Statement } from '@/src/types/query';
+import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
   addModelQueries,
 } from '@/src/utils/model';
+import { prepareStatementValue } from '@/src/utils/statement';
+
+// Keeping these hardcoded instead of using `pluralize` is faster.
+export const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
+  field: 'fields',
+  index: 'indexes',
+  trigger: 'triggers',
+  preset: 'presets',
+};
 
 /**
  * Handles queries that modify the DB schema. Specifically, those are `create.model`,
@@ -14,6 +24,8 @@ import {
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param query - The query that should potentially be transformed.
  *
  * @returns The transformed query.
@@ -21,6 +33,7 @@ import {
 export const transformMetaQuery = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
+  statementParams: Array<unknown> | null,
   query: Query,
 ): Query => {
   if (query.create) {
@@ -99,68 +112,94 @@ export const transformMetaQuery = (
 
     if ('create' in query.alter) {
       const type = Object.keys(query.alter.create)[0] as ModelEntity;
-      const item = query.alter.create[type] as Partial<ModelIndex>;
-      const completeItem = { slug: item.slug || `${type}_slug`, ...item };
+      const pluralType = PLURAL_MODEL_ENTITIES[type];
 
-      const instructions = {
-        to: {
-          model: { slug },
-          ...completeItem,
-        },
-      };
+      const item = query.alter.create[type] as Partial<ModelIndex>;
+      const completeItem = { slug: item.slug || `${type}Slug`, ...item };
 
       addModelQueries(models, dependencyStatements, {
         queryType: 'add',
         queryModel: type,
-        queryInstructions: instructions,
+        queryInstructions: {
+          to: {
+            model: { slug },
+            ...completeItem,
+          },
+        },
       });
 
+      const value = prepareStatementValue(statementParams, completeItem);
+      const json = `json_insert(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${completeItem.slug}', ${value})`;
+      const expression = { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json };
+
       return {
-        add: {
-          [type]: instructions,
+        set: {
+          model: {
+            with: { slug },
+            to: {
+              [pluralType]: expression,
+            },
+          },
         },
       };
     }
 
     if ('alter' in query.alter) {
       const type = Object.keys(query.alter.alter)[0] as ModelEntity;
+      const pluralType = PLURAL_MODEL_ENTITIES[type];
+
       const itemSlug = query.alter.alter[type];
       const newItem = query.alter.alter.to;
-
-      const instructions = {
-        with: { model: { slug }, slug: itemSlug },
-        to: newItem,
-      };
 
       addModelQueries(models, dependencyStatements, {
         queryType: 'set',
         queryModel: type,
-        queryInstructions: instructions,
+        queryInstructions: {
+          with: { model: { slug }, slug: itemSlug },
+          to: newItem,
+        },
       });
+
+      const value = prepareStatementValue(statementParams, newItem);
+      const json = `json_patch(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${itemSlug}', ${value})`;
+      const expression = { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json };
 
       return {
         set: {
-          [type]: instructions,
+          model: {
+            with: { slug },
+            to: {
+              [pluralType]: expression,
+            },
+          },
         },
       };
     }
 
     const type = Object.keys(query.alter.drop)[0] as ModelEntity;
-    const itemSlug = query.alter.drop[type] as string;
+    const pluralType = PLURAL_MODEL_ENTITIES[type];
 
-    const instructions = {
-      with: { model: { slug }, slug: itemSlug },
-    };
+    const itemSlug = query.alter.drop[type] as string;
 
     addModelQueries(models, dependencyStatements, {
       queryType: 'remove',
       queryModel: type,
-      queryInstructions: instructions,
+      queryInstructions: {
+        with: { model: { slug }, slug: itemSlug },
+      },
     });
 
+    const json = `json_insert(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${itemSlug}')`;
+    const expression = { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json };
+
     return {
-      remove: {
-        [type]: instructions,
+      set: {
+        model: {
+          with: { slug },
+          to: {
+            [pluralType]: expression,
+          },
+        },
       },
     };
   }

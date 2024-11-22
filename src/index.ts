@@ -36,16 +36,19 @@ export const compileQueries = (
   const mainStatements: Array<Statement> = [];
 
   for (const query of queries) {
+    const statementValues = options?.inlineParams ? null : [];
+
     const transformedQuery = transformMetaQuery(
       modelListWithPresets,
       dependencyStatements,
+      statementValues,
       query,
     );
 
     const result = compileQueryInput(
       transformedQuery,
       modelListWithPresets,
-      options?.inlineParams ? null : [],
+      statementValues,
     );
 
     // Every query can only produce one main statement (which can return output), but
