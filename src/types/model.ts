@@ -75,7 +75,7 @@ export type ModelFieldReference = ModelFieldBasics & {
 
 export type ModelField = ModelFieldNormal | ModelFieldReference;
 
-export type ModelIndexField = {
+export type ModelIndexField<T extends ModelField> = {
   /** The collating sequence used for text placed inside the field. */
   collation?: ModelFieldCollation;
   /** How the records in the index should be ordered. */
@@ -83,7 +83,7 @@ export type ModelIndexField = {
 } & (
   | {
       /** The field slug for which the index should be created. */
-      slug: string;
+      slug: T['slug'];
     }
   | {
       /** The field expression for which the index should be created. */
@@ -91,11 +91,11 @@ export type ModelIndexField = {
     }
 );
 
-export type ModelIndex = {
+export type ModelIndex<T extends ModelField> = {
   /**
    * The list of fields in the model for which the index should be created.
    */
-  fields: Array<ModelIndexField>;
+  fields: Array<ModelIndexField<T>>;
   /**
    * The identifier of the index.
    */
@@ -142,7 +142,7 @@ export type ModelPreset = {
   instructions: GetInstructions;
 };
 
-export interface Model {
+export interface Model<T extends ModelField = ModelField> {
   name: string;
   pluralName: string;
   slug: string;
@@ -173,8 +173,8 @@ export interface Model {
   // compiler always at least contain the default fields. For models that are passed into
   // the compiler from the outside, the fields are optional, because the compiler will
   // add the default fields automatically, and those are enough to create a model.
-  fields: Array<ModelField>;
-  indexes?: Array<ModelIndex>;
+  fields: Array<T>;
+  indexes?: Array<ModelIndex<T>>;
   triggers?: Array<ModelTrigger>;
   presets?: Array<ModelPreset>;
 }
@@ -195,3 +195,28 @@ export type PublicModel = Omit<
   // since the missing one will be generated automatically.
   identifiers?: Partial<Model['identifiers']>;
 };
+
+const model = <const T extends PublicModel>(_model: T) => {
+  return 'test';
+};
+
+model({
+  slug: 'account',
+
+  fields: [
+    {
+      slug: 'name',
+      type: 'string',
+    },
+  ],
+
+  indexes: [
+    {
+      fields: [
+        {
+          slug: 'notName',
+        },
+      ],
+    },
+  ],
+});
