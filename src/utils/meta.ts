@@ -116,17 +116,15 @@ export const transformMetaQuery = (
       const item = query.alter.create[type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}Slug`, ...item };
 
-      const instructions = {
-        to: {
-          model: { slug },
-          ...completeItem,
-        },
-      };
-
       addModelQueries(models, dependencyStatements, {
         queryType: 'add',
         queryModel: type,
-        queryInstructions: instructions,
+        queryInstructions: {
+          to: {
+            model: { slug },
+            ...completeItem,
+          },
+        },
       });
 
       const value = prepareStatementValue(statementParams, completeItem);
@@ -169,21 +167,29 @@ export const transformMetaQuery = (
     }
 
     const type = Object.keys(query.alter.drop)[0] as ModelEntity;
-    const itemSlug = query.alter.drop[type] as string;
+    const pluralType = PLURAL_MODEL_ENTITIES[type];
 
-    const instructions = {
-      with: { model: { slug }, slug: itemSlug },
-    };
+    const itemSlug = query.alter.drop[type] as string;
 
     addModelQueries(models, dependencyStatements, {
       queryType: 'remove',
       queryModel: type,
-      queryInstructions: instructions,
+      queryInstructions: {
+        with: { model: { slug }, slug: itemSlug },
+      },
     });
 
+    const json = `json_insert(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${itemSlug}')`;
+    const expression = { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json };
+
     return {
-      remove: {
-        [type]: instructions,
+      set: {
+        model: {
+          with: { slug },
+          to: {
+            [pluralType]: expression,
+          },
+        },
       },
     };
   }

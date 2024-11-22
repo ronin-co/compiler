@@ -522,9 +522,8 @@ test('drop existing field', () => {
       params: [],
     },
     {
-      statement:
-        'DELETE FROM "fields" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
-      params: ['account', 'email'],
+      statement: `UPDATE "models" SET "fields" = json_insert("fields", '$.email'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);
@@ -804,9 +803,8 @@ test('drop existing index', () => {
       params: [],
     },
     {
-      statement:
-        'DELETE FROM "indexes" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
-      params: ['account', 'indexSlug'],
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.indexSlug'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);
@@ -1280,9 +1278,8 @@ test('drop existing trigger', () => {
       params: [],
     },
     {
-      statement:
-        'DELETE FROM "triggers" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
-      params: ['team', 'triggerSlug'],
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'team'],
       returning: true,
     },
   ]);
@@ -1400,9 +1397,8 @@ test('drop existing preset', () => {
 
   expect(statements).toEqual([
     {
-      statement:
-        'DELETE FROM "presets" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
-      params: ['account', 'company_employees'],
+      statement: `UPDATE "models" SET "presets" = json_insert("presets", '$.company_employees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);
