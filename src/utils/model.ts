@@ -14,6 +14,7 @@ import type {
   ModelQueryType,
   Query,
   QueryInstructionType,
+  QueryType,
   Statement,
   WithInstruction,
 } from '@/src/types/query';
@@ -686,6 +687,107 @@ export const addModelStatements = (
   const targetModel =
     entity === 'model' && action === 'create' ? null : getModelBySlug(models, usableSlug);
 
+  const statement = `${tableAction} TABLE "${tableName}"`;
+
+  let queryTypeAction: QueryType;
+  let queryTypeDetails: unknown;
+
+  if (entity === 'model') {
+    if (action === 'create') {
+      queryTypeAction = 'add';
+
+      const newModel = queryInstructions.to as Model;
+      const { fields } = newModel;
+      const columns = fields
+        .map((field) => getFieldStatement(models, newModel, field))
+        .filter(Boolean);
+
+      dependencyStatements.push({
+        statement: `${statement} (${columns.join(', ')})`,
+        params: [],
+      });
+
+      // Add the newly created model to the list of models.
+      models.push(newModel);
+
+      queryTypeDetails = { to: newModel };
+    }
+
+    if (action === 'alter') {
+      queryTypeAction = 'set';
+
+      const newSlug = queryInstructions.to?.pluralSlug;
+
+      if (newSlug) {
+        const newTable = convertToSnakeCase(newSlug);
+
+        // Only push the statement if the table name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME TO "${newTable}"`,
+          params: [],
+        });
+      }
+
+      // Update the existing model in the list of models.
+      Object.assign(targetModel as Model, queryInstructions.to);
+
+      queryTypeDetails = {
+        with: {
+          slug: usableSlug,
+        },
+        to: queryInstructions.to as Model,
+      };
+    }
+
+    if (action === 'drop') {
+      queryTypeAction = 'remove';
+
+      // Remove the model from the list of models.
+      models.splice(models.indexOf(targetModel as Model), 1);
+
+      dependencyStatements.push({ statement, params: [] });
+
+      queryTypeDetails = {
+        with: { slug: usableSlug },
+      };
+    }
+
+    return {
+      [queryTypeAction]: {
+        model: queryTypeDetails,
+      },
+    };
+  }
+
+  if (entity === 'field') {
+    if (action === 'create') {
+      // Default field type.
+      if (!instructionList.type) instructionList.type = 'string';
+
+      dependencyStatements.push({
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
+        params: [],
+      });
+    } else if (action === 'alter') {
+      const newSlug = queryInstructions.to?.slug;
+
+      if (newSlug) {
+        // Only push the statement if the column name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
+          params: [],
+        });
+      }
+    } else if (action === 'drop') {
+      dependencyStatements.push({
+        statement: `${statement} DROP COLUMN "${slug}"`,
+        params: [],
+      });
+    }
+  }
+
   if (entity === 'index') {
     const indexName = convertToSnakeCase(slug);
 
@@ -834,107 +936,5 @@ export const addModelStatements = (
 
     dependencyStatements.push({ statement, params });
     return;
-  }
-
-  const statement = `${tableAction} TABLE "${tableName}"`;
-
-  if (entity === 'model') {
-    if (action === 'create') {
-      const newModel = queryInstructions.to as Model;
-      const { fields } = newModel;
-      const columns = fields
-        .map((field) => getFieldStatement(models, newModel, field))
-        .filter(Boolean);
-
-      dependencyStatements.push({
-        statement: `${statement} (${columns.join(', ')})`,
-        params: [],
-      });
-
-      // Add the newly created model to the list of models.
-      models.push(newModel);
-
-      return {
-        add: {
-          model: {
-            to: newModel,
-          },
-        },
-      };
-    }
-
-    if (action === 'alter') {
-      const newSlug = queryInstructions.to?.pluralSlug;
-
-      if (newSlug) {
-        const newTable = convertToSnakeCase(newSlug);
-
-        // Only push the statement if the table name is changing, otherwise we don't
-        // need it.
-        dependencyStatements.push({
-          statement: `${statement} RENAME TO "${newTable}"`,
-          params: [],
-        });
-      }
-
-      // Update the existing model in the list of models.
-      Object.assign(targetModel as Model, queryInstructions.to);
-
-      return {
-        set: {
-          model: {
-            with: {
-              slug: usableSlug,
-            },
-            to: queryInstructions.to as Model,
-          },
-        },
-      };
-    }
-
-    if (action === 'drop') {
-      // Remove the model from the list of models.
-      models.splice(models.indexOf(targetModel as Model), 1);
-
-      dependencyStatements.push({ statement, params: [] });
-
-      return {
-        remove: {
-          model: {
-            with: { slug: usableSlug },
-          },
-        },
-      };
-    }
-
-    return;
-  }
-
-  if (entity === 'field') {
-    if (action === 'create') {
-      // Default field type.
-      if (!instructionList.type) instructionList.type = 'string';
-
-      dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
-        params: [],
-      });
-    } else if (action === 'alter') {
-      const newSlug = queryInstructions.to?.slug;
-
-      if (newSlug) {
-        // Only push the statement if the column name is changing, otherwise we don't
-        // need it.
-        dependencyStatements.push({
-          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
-          params: [],
-        });
-      }
-    } else if (action === 'drop') {
-      dependencyStatements.push({
-        statement: `${statement} DROP COLUMN "${slug}"`,
-        params: [],
-      });
-    }
   }
 };
