@@ -104,23 +104,26 @@ export const transformMetaQuery = (
       };
     }
 
-    let jsonAction: string | undefined;
-    let jsonSlug: string | undefined;
-    let jsonValue: unknown | undefined;
-
     const action = Object.keys(query.alter).filter(
       (key) => key !== 'model',
     )[0] as ModelQueryType;
-    const type = Object.keys(
-      (query.alter as unknown as Record<ModelQueryType, ModelEntity>)[action],
-    )[0] as ModelEntity;
+    const details = (
+      query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
+    )[action];
+    const type = Object.keys(details)[0] as ModelEntity;
+
+    let jsonAction: string | undefined;
+    let jsonSlug: string = details[type];
+    let jsonValue: unknown | undefined;
 
     const pluralType = PLURAL_MODEL_ENTITIES[type];
 
     if ('create' in query.alter) {
       const item = query.alter.create[type] as Partial<ModelIndex>;
+
       jsonSlug = item.slug || `${type}Slug`;
       jsonValue = { slug: item.slug || `${type}Slug`, ...item };
+      jsonAction = 'insert';
 
       addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
@@ -130,13 +133,11 @@ export const transformMetaQuery = (
           },
         },
       });
-
-      jsonAction = 'insert';
     }
 
     if ('alter' in query.alter) {
-      jsonSlug = query.alter.alter[type];
       jsonValue = query.alter.alter.to;
+      jsonAction = 'patch';
 
       addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
@@ -144,20 +145,16 @@ export const transformMetaQuery = (
           to: jsonValue,
         },
       });
-
-      jsonAction = 'patch';
     }
 
     if ('drop' in query.alter) {
-      jsonSlug = query.alter.drop[type] as string;
+      jsonAction = 'remove';
 
       addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
           with: { model: { slug }, slug: jsonSlug },
         },
       });
-
-      jsonAction = 'remove';
     }
 
     let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${jsonSlug}'`;
