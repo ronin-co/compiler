@@ -415,15 +415,17 @@ test('create new field with options', () => {
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
+  const newFieldDetails = {
+    slug: 'emailAddress',
+  };
+
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         alter: {
           field: 'email',
-          to: {
-            slug: 'emailAddress',
-          },
+          to: newFieldDetails,
         },
       },
     },
@@ -443,13 +445,11 @@ test('update existing field (slug)', () => {
       params: [],
     },
     {
-      statement:
-        'UPDATE "fields" SET "slug" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      statement: `UPDATE "models" SET "fields" = json_patch("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        'emailAddress',
+        JSON.stringify(newFieldDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'email',
       ],
       returning: true,
     },
@@ -459,15 +459,17 @@ test('update existing field (slug)', () => {
 // Ensure that, if the `slug` of a field does not change during a model update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('update existing field (name)', () => {
+  const newFieldDetails = {
+    name: 'Email Address',
+  };
+
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         alter: {
           field: 'email',
-          to: {
-            name: 'Email Address',
-          },
+          to: newFieldDetails,
         },
       },
     },
@@ -483,13 +485,11 @@ test('update existing field (name)', () => {
 
   expect(statements).toEqual([
     {
-      statement:
-        'UPDATE "fields" SET "name" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      statement: `UPDATE "models" SET "fields" = json_patch("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        'Email Address',
+        JSON.stringify(newFieldDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'email',
       ],
       returning: true,
     },
@@ -1331,10 +1331,12 @@ test('create new preset', () => {
 });
 
 test('update existing preset', () => {
-  const instructions = {
-    with: {
-      email: {
-        endingWith: '@site.co',
+  const newPresetDetails = {
+    instructions: {
+      with: {
+        email: {
+          endingWith: '@site.co',
+        },
       },
     },
   };
@@ -1345,7 +1347,7 @@ test('update existing preset', () => {
         model: 'account',
         alter: {
           preset: 'company_employees',
-          to: { instructions },
+          to: newPresetDetails,
         },
       },
     },
@@ -1362,13 +1364,11 @@ test('update existing preset', () => {
 
   expect(statements).toEqual([
     {
-      statement:
-        'UPDATE "presets" SET "instructions" = ?1, "ronin.updatedAt" = ?2 WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?3) LIMIT 1) AND "slug" = ?4) RETURNING *',
+      statement: `UPDATE "models" SET "presets" = json_patch("presets", '$.company_employees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify(instructions),
+        JSON.stringify(newPresetDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'company_employees',
       ],
       returning: true,
     },

@@ -145,23 +145,32 @@ export const transformMetaQuery = (
 
     if ('alter' in query.alter) {
       const type = Object.keys(query.alter.alter)[0] as ModelEntity;
+      const pluralType = PLURAL_MODEL_ENTITIES[type];
+
       const itemSlug = query.alter.alter[type];
       const newItem = query.alter.alter.to;
-
-      const instructions = {
-        with: { model: { slug }, slug: itemSlug },
-        to: newItem,
-      };
 
       addModelQueries(models, dependencyStatements, {
         queryType: 'set',
         queryModel: type,
-        queryInstructions: instructions,
+        queryInstructions: {
+          with: { model: { slug }, slug: itemSlug },
+          to: newItem,
+        },
       });
+
+      const value = prepareStatementValue(statementParams, newItem);
+      const json = `json_patch(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${itemSlug}', ${value})`;
+      const expression = { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json };
 
       return {
         set: {
-          [type]: instructions,
+          model: {
+            with: { slug },
+            to: {
+              [pluralType]: expression,
+            },
+          },
         },
       };
     }
