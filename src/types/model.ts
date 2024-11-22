@@ -195,32 +195,3 @@ export type PublicModel<T extends Array<ModelField> = Array<ModelField>> = Omit<
   // since the missing one will be generated automatically.
   identifiers?: Partial<Model['identifiers']>;
 };
-
-const model = <const T extends Array<ModelField>>(_model: PublicModel<T>) => {
-  return 'test';
-};
-
-model({
-  slug: 'account',
-
-  fields: [
-    {
-      slug: 'foo',
-      type: 'string',
-    },
-    {
-      slug: 'bar',
-      type: 'number',
-    },
-  ],
-
-  indexes: [
-    {
-      fields: [
-        {
-          slug: 'foo',
-        },
-      ],
-    },
-  ],
-});
