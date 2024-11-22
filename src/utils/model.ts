@@ -14,7 +14,6 @@ import type {
   ModelQueryType,
   Query,
   QueryInstructionType,
-  QueryType,
   Statement,
   WithInstruction,
 } from '@/src/types/query';
@@ -28,7 +27,11 @@ import {
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { PLURAL_MODEL_ENTITIES } from '@/src/utils/meta';
-import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
+import {
+  getSymbol,
+  parseFieldExpression,
+  prepareStatementValue,
+} from '@/src/utils/statement';
 import title from 'title';
 
 /**
@@ -632,6 +635,8 @@ const getFieldStatement = (
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param action - The type of query that is being executed.
  * @param entity - The schema entity that is affected.
  * @param queryDetails - The parsed details of the query that is being executed.
@@ -641,10 +646,11 @@ const getFieldStatement = (
 export const addModelStatements = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
+  statementParams: Array<unknown> | null,
   action: ModelQueryType,
   entity: ModelEntity | 'model',
   queryDetails: Pick<ReturnType<typeof splitQuery>, 'queryInstructions'>,
-): Query | undefined => {
+): Query => {
   const { queryInstructions } = queryDetails;
 
   const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
@@ -689,13 +695,10 @@ export const addModelStatements = (
 
   const statement = `${tableAction} TABLE "${tableName}"`;
 
-  let queryTypeAction: QueryType;
-  let queryTypeDetails: unknown;
-
   if (entity === 'model') {
-    if (action === 'create') {
-      queryTypeAction = 'add';
+    let queryTypeDetails: unknown;
 
+    if (action === 'create') {
       const newModel = queryInstructions.to as Model;
       const { fields } = newModel;
       const columns = fields
@@ -714,8 +717,6 @@ export const addModelStatements = (
     }
 
     if (action === 'alter') {
-      queryTypeAction = 'set';
-
       const newSlug = queryInstructions.to?.pluralSlug;
 
       if (newSlug) {
@@ -741,8 +742,6 @@ export const addModelStatements = (
     }
 
     if (action === 'drop') {
-      queryTypeAction = 'remove';
-
       // Remove the model from the list of models.
       models.splice(models.indexOf(targetModel as Model), 1);
 
@@ -752,6 +751,9 @@ export const addModelStatements = (
         with: { slug: usableSlug },
       };
     }
+
+    const queryTypeAction =
+      action === 'create' ? 'add' : action === 'alter' ? 'set' : 'remove';
 
     return {
       [queryTypeAction]: {
@@ -843,7 +845,6 @@ export const addModelStatements = (
     }
 
     dependencyStatements.push({ statement, params });
-    return;
   }
 
   if (entity === 'trigger') {
@@ -935,6 +936,32 @@ export const addModelStatements = (
     }
 
     dependencyStatements.push({ statement, params });
-    return;
   }
+
+  const pluralType = PLURAL_MODEL_ENTITIES[entity];
+
+  const jsonAction =
+    action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
+
+  const jsonValue =
+    action === 'create'
+      ? { ...instructionList, model: undefined }
+      : action === 'alter'
+        ? queryInstructions.to
+        : null;
+
+  let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
+  if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
+  json += ')';
+
+  return {
+    set: {
+      model: {
+        with: { slug: usableSlug },
+        to: {
+          [pluralType]: { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json },
+        },
+      },
+    },
+  };
 };

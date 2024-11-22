@@ -1,13 +1,11 @@
 import type { Model } from '@/src/types/model';
 import type { ModelIndex, PartialModel } from '@/src/types/model';
 import type { ModelEntity, ModelQueryType, Query, Statement } from '@/src/types/query';
-import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
   addModelStatements,
 } from '@/src/utils/model';
-import { prepareStatementValue } from '@/src/utils/statement';
 
 // Keeping these hardcoded instead of using `pluralize` is faster.
 export const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
@@ -47,19 +45,33 @@ export const transformMetaQuery = (
     const modelWithFields = addDefaultModelFields(details, true);
     const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
-    return addModelStatements(models, dependencyStatements, 'create', 'model', {
-      queryInstructions: {
-        to: modelWithPresets,
+    return addModelStatements(
+      models,
+      dependencyStatements,
+      statementParams,
+      'create',
+      'model',
+      {
+        queryInstructions: {
+          to: modelWithPresets,
+        },
       },
-    }) as Query;
+    );
   }
 
   if (query.drop) {
-    return addModelStatements(models, dependencyStatements, 'drop', 'model', {
-      queryInstructions: {
-        with: { slug: query.drop.model },
+    return addModelStatements(
+      models,
+      dependencyStatements,
+      statementParams,
+      'drop',
+      'model',
+      {
+        queryInstructions: {
+          with: { slug: query.drop.model },
+        },
       },
-    }) as Query;
+    );
   }
 
   if (query.alter) {
@@ -70,12 +82,19 @@ export const transformMetaQuery = (
       const modelWithFields = addDefaultModelFields(query.alter.to, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
-      return addModelStatements(models, dependencyStatements, 'alter', 'model', {
-        queryInstructions: {
-          with: { slug },
-          to: modelWithPresets,
+      return addModelStatements(
+        models,
+        dependencyStatements,
+        statementParams,
+        'alter',
+        'model',
+        {
+          queryInstructions: {
+            with: { slug },
+            to: modelWithPresets,
+          },
         },
-      }) as Query;
+      );
     }
 
     const action = Object.keys(query.alter).filter(
@@ -86,65 +105,64 @@ export const transformMetaQuery = (
     )[action];
     const type = Object.keys(details)[0] as ModelEntity;
 
-    let jsonAction: string | undefined;
     let jsonSlug: string = details[type];
     let jsonValue: unknown | undefined;
-
-    const pluralType = PLURAL_MODEL_ENTITIES[type];
 
     if ('create' in query.alter) {
       const item = query.alter.create[type] as Partial<ModelIndex>;
 
       jsonSlug = item.slug || `${type}Slug`;
       jsonValue = { slug: item.slug || `${type}Slug`, ...item };
-      jsonAction = 'insert';
 
-      addModelStatements(models, dependencyStatements, action, type, {
-        queryInstructions: {
-          to: {
-            model: { slug },
-            ...(jsonValue as object),
+      return addModelStatements(
+        models,
+        dependencyStatements,
+        statementParams,
+        action,
+        type,
+        {
+          queryInstructions: {
+            to: {
+              model: { slug },
+              ...(jsonValue as object),
+            },
           },
         },
-      });
+      );
     }
 
     if ('alter' in query.alter) {
       jsonValue = query.alter.alter.to;
-      jsonAction = 'patch';
 
-      addModelStatements(models, dependencyStatements, action, type, {
-        queryInstructions: {
-          with: { model: { slug }, slug: jsonSlug },
-          to: jsonValue as object,
+      return addModelStatements(
+        models,
+        dependencyStatements,
+        statementParams,
+        action,
+        type,
+        {
+          queryInstructions: {
+            with: { model: { slug }, slug: jsonSlug },
+            to: jsonValue as object,
+          },
         },
-      });
+      );
     }
 
     if ('drop' in query.alter) {
-      jsonAction = 'remove';
-
-      addModelStatements(models, dependencyStatements, action, type, {
-        queryInstructions: {
-          with: { model: { slug }, slug: jsonSlug },
-        },
-      });
-    }
-
-    let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${jsonSlug}'`;
-    if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
-    json += ')';
-
-    return {
-      set: {
-        model: {
-          with: { slug },
-          to: {
-            [pluralType]: { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json },
+      return addModelStatements(
+        models,
+        dependencyStatements,
+        statementParams,
+        action,
+        type,
+        {
+          queryInstructions: {
+            with: { model: { slug }, slug: jsonSlug },
           },
         },
-      },
-    };
+      );
+    }
   }
 
   return query;
