@@ -368,10 +368,13 @@ const SYSTEM_MODELS: Array<PublicModel> = [
       { slug: 'identifiers.name', type: 'string' },
       { slug: 'identifiers.slug', type: 'string' },
 
-      { slug: 'fields', type: 'json' },
-      { slug: 'indexes', type: 'json' },
-      { slug: 'triggers', type: 'json' },
-      { slug: 'presets', type: 'json' },
+      // Providing an empty object as a default value allows us to use `json_insert`
+      // without needing to fall back to an empty object in the insertion statement,
+      // which makes the statement shorter.
+      { slug: 'fields', type: 'json', defaultValue: '{}' },
+      { slug: 'indexes', type: 'json', defaultValue: '{}' },
+      { slug: 'triggers', type: 'json', defaultValue: '{}' },
+      { slug: 'presets', type: 'json', defaultValue: '{}' },
     ],
   },
 ];
