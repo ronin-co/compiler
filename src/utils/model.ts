@@ -643,7 +643,7 @@ export const addModelStatements = (
   action: ModelQueryType,
   entity: ModelEntity | 'model',
   queryDetails: Pick<ReturnType<typeof splitQuery>, 'queryInstructions'>,
-) => {
+): Query | undefined => {
   const { queryInstructions } = queryDetails;
 
   const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
@@ -853,7 +853,17 @@ export const addModelStatements = (
 
       // Add the newly created model to the list of models.
       models.push(newModel);
-    } else if (action === 'alter') {
+
+      return {
+        add: {
+          model: {
+            to: newModel,
+          },
+        },
+      };
+    }
+
+    if (action === 'alter') {
       const newSlug = queryInstructions.to?.pluralSlug;
 
       if (newSlug) {
@@ -869,11 +879,32 @@ export const addModelStatements = (
 
       // Update the existing model in the list of models.
       Object.assign(targetModel as Model, queryInstructions.to);
-    } else if (action === 'drop') {
+
+      return {
+        set: {
+          model: {
+            with: {
+              slug: usableSlug,
+            },
+            to: queryInstructions.to as Model,
+          },
+        },
+      };
+    }
+
+    if (action === 'drop') {
       // Remove the model from the list of models.
       models.splice(models.indexOf(targetModel as Model), 1);
 
       dependencyStatements.push({ statement, params: [] });
+
+      return {
+        remove: {
+          model: {
+            with: { slug: usableSlug },
+          },
+        },
+      };
     }
 
     return;

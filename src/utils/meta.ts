@@ -47,37 +47,19 @@ export const transformMetaQuery = (
     const modelWithFields = addDefaultModelFields(details, true);
     const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
-    const instructions = {
-      to: modelWithPresets,
-    };
-
-    addModelStatements(models, dependencyStatements, 'create', 'model', {
-      queryInstructions: instructions,
-    });
-
-    return {
-      add: {
-        model: instructions,
+    return addModelStatements(models, dependencyStatements, 'create', 'model', {
+      queryInstructions: {
+        to: modelWithPresets,
       },
-    };
+    }) as Query;
   }
 
   if (query.drop) {
-    const slug = query.drop.model;
-
-    const instructions = {
-      with: { slug },
-    };
-
-    addModelStatements(models, dependencyStatements, 'drop', 'model', {
-      queryInstructions: instructions,
-    });
-
-    return {
-      remove: {
-        model: instructions,
+    return addModelStatements(models, dependencyStatements, 'drop', 'model', {
+      queryInstructions: {
+        with: { slug: query.drop.model },
       },
-    };
+    }) as Query;
   }
 
   if (query.alter) {
@@ -88,20 +70,12 @@ export const transformMetaQuery = (
       const modelWithFields = addDefaultModelFields(query.alter.to, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
-      const instructions = {
-        with: { slug },
-        to: modelWithPresets,
-      };
-
-      addModelStatements(models, dependencyStatements, 'alter', 'model', {
-        queryInstructions: instructions,
-      });
-
-      return {
-        set: {
-          model: instructions,
+      return addModelStatements(models, dependencyStatements, 'alter', 'model', {
+        queryInstructions: {
+          with: { slug },
+          to: modelWithPresets,
         },
-      };
+      }) as Query;
     }
 
     const action = Object.keys(query.alter).filter(
