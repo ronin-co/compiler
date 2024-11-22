@@ -9,6 +9,7 @@ import {
 } from '@/src/utils/model';
 import { prepareStatementValue } from '@/src/utils/statement';
 
+// Keeping these hardcoded instead of using `pluralize` is faster.
 const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
   field: 'fields',
   index: 'indexes',
