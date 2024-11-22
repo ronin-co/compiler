@@ -1,11 +1,20 @@
 import type { Model } from '@/src/types/model';
 import type { ModelIndex, PartialModel } from '@/src/types/model';
 import type { ModelEntity, Query, Statement } from '@/src/types/query';
+import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
   addModelQueries,
 } from '@/src/utils/model';
+import { prepareStatementValue } from '@/src/utils/statement';
+
+const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
+  field: 'fields',
+  index: 'indexes',
+  trigger: 'triggers',
+  preset: 'presets',
+};
 
 /**
  * Handles queries that modify the DB schema. Specifically, those are `create.model`,
@@ -14,6 +23,8 @@ import {
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
  * @param query - The query that should potentially be transformed.
  *
  * @returns The transformed query.
@@ -21,6 +32,7 @@ import {
 export const transformMetaQuery = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
+  statementParams: Array<unknown> | null,
   query: Query,
 ): Query => {
   if (query.create) {
@@ -99,6 +111,8 @@ export const transformMetaQuery = (
 
     if ('create' in query.alter) {
       const type = Object.keys(query.alter.create)[0] as ModelEntity;
+      const pluralType = PLURAL_MODEL_ENTITIES[type];
+
       const item = query.alter.create[type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}_slug`, ...item };
 
@@ -115,9 +129,18 @@ export const transformMetaQuery = (
         queryInstructions: instructions,
       });
 
+      const value = prepareStatementValue(statementParams, completeItem);
+      const json = `json_insert(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${completeItem.slug}', ${value})`;
+      const expression = { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json };
+
       return {
-        add: {
-          [type]: instructions,
+        set: {
+          model: {
+            with: { slug },
+            to: {
+              [pluralType]: expression,
+            },
+          },
         },
       };
     }

@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { type Model, compileQueries } from '@/src/index';
 import type { Query } from '@/src/types/query';
 
+import type { ModelPreset } from '@/src/types/model';
 import {
   RECORD_TIMESTAMP_REGEX,
   RONIN_MODEL_SYMBOLS,
@@ -9,6 +10,7 @@ import {
 } from '@/src/utils/helpers';
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS } from '@/src/utils/model';
+import type { ModelField, ModelIndex, ModelTrigger } from '../dist';
 
 test('create new model', () => {
   const fields = [
@@ -319,14 +321,16 @@ test('query a model that was just dropped', () => {
 });
 
 test('create new field', () => {
+  const field: ModelField = {
+    slug: 'email',
+  };
+
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          field: {
-            slug: 'email',
-          },
+          field,
         },
       },
     },
@@ -346,15 +350,11 @@ test('create new field', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "fields" ("model", "slug", "type", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+      statement: `UPDATE "models" SET "fields" = json_insert("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify(field),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'email',
-        'string',
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -362,19 +362,21 @@ test('create new field', () => {
 });
 
 test('create new field with options', () => {
+  const field: ModelField = {
+    slug: 'account',
+    type: 'link',
+    target: 'account',
+    actions: {
+      onDelete: 'CASCADE',
+    },
+  };
+
   const queries: Array<Query> = [
     {
       alter: {
         model: 'member',
         create: {
-          field: {
-            slug: 'account',
-            type: 'link',
-            target: 'account',
-            actions: {
-              onDelete: 'CASCADE',
-            },
-          },
+          field,
         },
       },
     },
@@ -398,17 +400,11 @@ test('create new field with options', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "fields" ("model", "slug", "type", "target", "actions.onDelete", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+      statement: `UPDATE "models" SET "fields" = json_insert("fields", '$.account', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify(field),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'member',
-        'account',
-        'link',
-        'account',
-        'CASCADE',
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -534,18 +530,20 @@ test('drop existing field', () => {
 });
 
 test('create new index', () => {
-  const fields = [
-    {
-      slug: 'email',
-    },
-  ];
+  const index: ModelIndex = {
+    fields: [
+      {
+        slug: 'email',
+      },
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          index: { fields },
+          index,
         },
       },
     },
@@ -566,15 +564,11 @@ test('create new index', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "indexes" ("model", "slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'index_slug', ...index }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'index_slug',
-        JSON.stringify(fields),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -582,15 +576,16 @@ test('create new index', () => {
 });
 
 test('create new index with filter', () => {
-  const fields = [
-    {
-      slug: 'email',
-    },
-  ];
-
-  const filterInstruction = {
-    email: {
-      endingWith: '@site.co',
+  const index: ModelIndex = {
+    fields: [
+      {
+        slug: 'email',
+      },
+    ],
+    filter: {
+      email: {
+        endingWith: '@site.co',
+      },
     },
   };
 
@@ -599,10 +594,7 @@ test('create new index with filter', () => {
       alter: {
         model: 'account',
         create: {
-          index: {
-            fields,
-            filter: filterInstruction,
-          },
+          index,
         },
       },
     },
@@ -624,16 +616,11 @@ test('create new index with filter', () => {
       params: ['@site.co'],
     },
     {
-      statement:
-        'INSERT INTO "indexes" ("model", "slug", "fields", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7) RETURNING *',
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'index_slug', ...index }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'index_slug',
-        JSON.stringify(fields),
-        JSON.stringify(filterInstruction),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -641,18 +628,20 @@ test('create new index with filter', () => {
 });
 
 test('create new index with field expressions', () => {
-  const fields = [
-    {
-      expression: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
-    },
-  ];
+  const index: ModelIndex = {
+    fields: [
+      {
+        expression: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
+      },
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          index: { fields },
+          index,
         },
       },
     },
@@ -682,15 +671,11 @@ test('create new index with field expressions', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "indexes" ("model", "slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'index_slug', ...index }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'index_slug',
-        JSON.stringify(fields),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -698,20 +683,22 @@ test('create new index with field expressions', () => {
 });
 
 test('create new index with ordered and collated fields', () => {
-  const fields = [
-    {
-      slug: 'email',
-      order: 'ASC',
-      collation: 'NOCASE',
-    },
-  ];
+  const index: ModelIndex = {
+    fields: [
+      {
+        slug: 'email',
+        order: 'ASC',
+        collation: 'NOCASE',
+      },
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          index: { fields },
+          index,
         },
       },
     },
@@ -732,15 +719,11 @@ test('create new index with ordered and collated fields', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "indexes" ("model", "slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'index_slug', ...index }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'index_slug',
-        JSON.stringify(fields),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -748,21 +731,21 @@ test('create new index with ordered and collated fields', () => {
 });
 
 test('create new unique index', () => {
-  const fields = [
-    {
-      slug: 'email',
-    },
-  ];
+  const index: ModelIndex = {
+    fields: [
+      {
+        slug: 'email',
+      },
+    ],
+    unique: true,
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          index: {
-            fields,
-            unique: true,
-          },
+          index,
         },
       },
     },
@@ -783,16 +766,11 @@ test('create new unique index', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "indexes" ("model", "slug", "fields", "unique", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7) RETURNING *',
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'index_slug', ...index }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'index_slug',
-        JSON.stringify(fields),
-        1,
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -834,28 +812,28 @@ test('drop existing index', () => {
 });
 
 test('create new trigger for creating records', () => {
-  const effectQueries = [
-    {
-      add: {
-        signup: {
-          to: {
-            year: 2000,
+  const trigger: ModelTrigger = {
+    when: 'AFTER',
+    action: 'INSERT',
+    effects: [
+      {
+        add: {
+          signup: {
+            to: {
+              year: 2000,
+            },
           },
         },
       },
-    },
-  ];
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          trigger: {
-            when: 'AFTER',
-            action: 'INSERT',
-            effects: effectQueries,
-          },
+          trigger,
         },
       },
     },
@@ -885,17 +863,11 @@ test('create new trigger for creating records', () => {
       ],
     },
     {
-      statement:
-        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'trigger_slug',
-        'AFTER',
-        'INSERT',
-        JSON.stringify(effectQueries),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -903,35 +875,33 @@ test('create new trigger for creating records', () => {
 });
 
 test('create new trigger for creating records with targeted fields', () => {
-  const effectQueries = [
-    {
-      add: {
-        signup: {
-          to: {
-            year: 2000,
+  const trigger: ModelTrigger = {
+    when: 'AFTER',
+    action: 'UPDATE',
+    effects: [
+      {
+        add: {
+          signup: {
+            to: {
+              year: 2000,
+            },
           },
         },
       },
-    },
-  ];
-
-  const fields = [
-    {
-      slug: 'email',
-    },
-  ];
+    ],
+    fields: [
+      {
+        slug: 'email',
+      },
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          trigger: {
-            when: 'AFTER',
-            action: 'UPDATE',
-            effects: effectQueries,
-            fields,
-          },
+          trigger,
         },
       },
     },
@@ -962,18 +932,11 @@ test('create new trigger for creating records with targeted fields', () => {
       ],
     },
     {
-      statement:
-        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'trigger_slug',
-        'AFTER',
-        'UPDATE',
-        JSON.stringify(effectQueries),
-        JSON.stringify(fields),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -981,37 +944,37 @@ test('create new trigger for creating records with targeted fields', () => {
 });
 
 test('create new trigger for creating records with multiple effects', () => {
-  const effectQueries = [
-    {
-      add: {
-        signup: {
-          to: {
-            year: 2000,
+  const trigger: ModelTrigger = {
+    when: 'AFTER',
+    action: 'INSERT',
+    effects: [
+      {
+        add: {
+          signup: {
+            to: {
+              year: 2000,
+            },
           },
         },
       },
-    },
-    {
-      add: {
-        candidate: {
-          to: {
-            year: 2020,
+      {
+        add: {
+          candidate: {
+            to: {
+              year: 2020,
+            },
           },
         },
       },
-    },
-  ];
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'account',
         create: {
-          trigger: {
-            when: 'AFTER',
-            action: 'INSERT',
-            effects: effectQueries,
-          },
+          trigger,
         },
       },
     },
@@ -1049,17 +1012,11 @@ test('create new trigger for creating records with multiple effects', () => {
       ],
     },
     {
-      statement:
-        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'trigger_slug',
-        'AFTER',
-        'INSERT',
-        JSON.stringify(effectQueries),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -1067,32 +1024,32 @@ test('create new trigger for creating records with multiple effects', () => {
 });
 
 test('create new per-record trigger for creating records', () => {
-  const effectQueries = [
-    {
-      add: {
-        member: {
-          to: {
-            account: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+  const trigger: ModelTrigger = {
+    when: 'AFTER',
+    action: 'INSERT',
+    effects: [
+      {
+        add: {
+          member: {
+            to: {
+              account: {
+                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+              },
+              role: 'owner',
+              pending: false,
             },
-            role: 'owner',
-            pending: false,
           },
         },
       },
-    },
-  ];
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'team',
         create: {
-          trigger: {
-            when: 'AFTER',
-            action: 'INSERT',
-            effects: effectQueries,
-          },
+          trigger,
         },
       },
     },
@@ -1133,17 +1090,11 @@ test('create new per-record trigger for creating records', () => {
       ],
     },
     {
-      statement:
-        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'team',
-        'trigger_slug',
-        'AFTER',
-        'INSERT',
-        JSON.stringify(effectQueries),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -1151,30 +1102,30 @@ test('create new per-record trigger for creating records', () => {
 });
 
 test('create new per-record trigger for removing records', () => {
-  const effectQueries = [
-    {
-      remove: {
-        members: {
-          with: {
-            account: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
+  const trigger: ModelTrigger = {
+    when: 'AFTER',
+    action: 'DELETE',
+    effects: [
+      {
+        remove: {
+          members: {
+            with: {
+              account: {
+                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
+              },
             },
           },
         },
       },
-    },
-  ];
+    ],
+  };
 
   const queries: Array<Query> = [
     {
       alter: {
         model: 'team',
         create: {
-          trigger: {
-            when: 'AFTER',
-            action: 'DELETE',
-            effects: effectQueries,
-          },
+          trigger,
         },
       },
     },
@@ -1209,17 +1160,11 @@ test('create new per-record trigger for removing records', () => {
       params: [],
     },
     {
-      statement:
-        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING *',
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'team',
-        'trigger_slug',
-        'AFTER',
-        'DELETE',
-        JSON.stringify(effectQueries),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -1227,25 +1172,28 @@ test('create new per-record trigger for removing records', () => {
 });
 
 test('create new per-record trigger with filters for creating records', () => {
-  const effectQueries = [
-    {
-      add: {
-        member: {
-          to: {
-            account: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+  const trigger: ModelTrigger = {
+    when: 'AFTER',
+    action: 'INSERT',
+    effects: [
+      {
+        add: {
+          member: {
+            to: {
+              account: {
+                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+              },
+              role: 'owner',
+              pending: false,
             },
-            role: 'owner',
-            pending: false,
           },
         },
       },
-    },
-  ];
-
-  const filterInstruction = {
-    handle: {
-      endingWith: '_hidden',
+    ],
+    filter: {
+      handle: {
+        endingWith: '_hidden',
+      },
     },
   };
 
@@ -1254,12 +1202,7 @@ test('create new per-record trigger with filters for creating records', () => {
       alter: {
         model: 'team',
         create: {
-          trigger: {
-            when: 'AFTER',
-            action: 'INSERT',
-            effects: effectQueries,
-            filter: filterInstruction,
-          },
+          trigger,
         },
       },
     },
@@ -1299,18 +1242,11 @@ test('create new per-record trigger with filters for creating records', () => {
       ],
     },
     {
-      statement:
-        'INSERT INTO "triggers" ("model", "slug", "when", "action", "effects", "filter", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'team',
-        'trigger_slug',
-        'AFTER',
-        'INSERT',
-        JSON.stringify(effectQueries),
-        JSON.stringify(filterInstruction),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
@@ -1352,10 +1288,13 @@ test('drop existing trigger', () => {
 });
 
 test('create new preset', () => {
-  const instructions = {
-    with: {
-      email: {
-        endingWith: '@company.co',
+  const preset: ModelPreset = {
+    slug: 'company_employees',
+    instructions: {
+      with: {
+        email: {
+          endingWith: '@company.co',
+        },
       },
     },
   };
@@ -1365,10 +1304,7 @@ test('create new preset', () => {
       alter: {
         model: 'account',
         create: {
-          preset: {
-            slug: 'company_employees',
-            instructions,
-          },
+          preset,
         },
       },
     },
@@ -1385,15 +1321,11 @@ test('create new preset', () => {
 
   expect(statements).toEqual([
     {
-      statement:
-        'INSERT INTO "presets" ("model", "slug", "instructions", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ((SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1), ?2, ?3, ?4, ?5, ?6) RETURNING *',
+      statement: `UPDATE "models" SET "presets" = json_insert("presets", '$.company_employees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
+        JSON.stringify(preset),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
-        'company_employees',
-        JSON.stringify(instructions),
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
