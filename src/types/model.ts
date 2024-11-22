@@ -75,7 +75,7 @@ export type ModelFieldReference = ModelFieldBasics & {
 
 export type ModelField = ModelFieldNormal | ModelFieldReference;
 
-export type ModelIndexField = {
+export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
   /** The collating sequence used for text placed inside the field. */
   collation?: ModelFieldCollation;
   /** How the records in the index should be ordered. */
@@ -83,7 +83,7 @@ export type ModelIndexField = {
 } & (
   | {
       /** The field slug for which the index should be created. */
-      slug: string;
+      slug: T[number]['slug'];
     }
   | {
       /** The field expression for which the index should be created. */
@@ -91,11 +91,11 @@ export type ModelIndexField = {
     }
 );
 
-export type ModelIndex = {
+export type ModelIndex<T extends Array<ModelField> = Array<ModelField>> = {
   /**
    * The list of fields in the model for which the index should be created.
    */
-  fields: Array<ModelIndexField>;
+  fields: Array<ModelIndexField<T>>;
   /**
    * The identifier of the index.
    */
@@ -111,15 +111,15 @@ export type ModelIndex = {
   filter?: WithInstruction;
 };
 
-export type ModelTriggerField = {
+export type ModelTriggerField<T extends Array<ModelField> = Array<ModelField>> = {
   /**
    * The slug of the field that should cause the trigger to fire if the value of the
    * field has changed.
    */
-  slug: string;
+  slug: T[number]['slug'];
 };
 
-export type ModelTrigger = {
+export type ModelTrigger<T extends Array<ModelField> = Array<ModelField>> = {
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a matching query is executed. */
@@ -127,7 +127,7 @@ export type ModelTrigger = {
   /** A list of queries that should be executed when the trigger fires. */
   effects: Array<Query>;
   /** A list of field slugs for which the trigger should fire. */
-  fields?: Array<ModelTriggerField>;
+  fields?: Array<ModelTriggerField<T>>;
   /**
    * An object containing query instructions used to determine whether the trigger should
    * fire, or not.
@@ -142,15 +142,15 @@ export type ModelPreset = {
   instructions: GetInstructions;
 };
 
-export interface Model {
+export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   name: string;
   pluralName: string;
   slug: string;
   pluralSlug: string;
 
   identifiers: {
-    name: string;
-    slug: string;
+    name: T[number]['slug'];
+    slug: T[number]['slug'];
   };
   idPrefix: string;
 
@@ -173,9 +173,9 @@ export interface Model {
   // compiler always at least contain the default fields. For models that are passed into
   // the compiler from the outside, the fields are optional, because the compiler will
   // add the default fields automatically, and those are enough to create a model.
-  fields: Array<ModelField>;
-  indexes?: Array<ModelIndex>;
-  triggers?: Array<ModelTrigger>;
+  fields: T;
+  indexes?: Array<ModelIndex<T>>;
+  triggers?: Array<ModelTrigger<T>>;
   presets?: Array<ModelPreset>;
 }
 
@@ -185,8 +185,8 @@ export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
 
 // In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicModel = Omit<
-  Partial<Model>,
+export type PublicModel<T extends Array<ModelField> = Array<ModelField>> = Omit<
+  Partial<Model<T>>,
   'slug' | 'identifiers' | 'associationSlug' | 'table' | 'tableAlias'
 > & {
   slug: Required<Model['slug']>;
