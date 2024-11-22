@@ -4,8 +4,8 @@ import { compileQueryInput } from '@/src/utils';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
-  addModelStatements,
   addSystemModels,
+  transformMetaQuery,
 } from '@/src/utils/model';
 
 /**
@@ -38,7 +38,7 @@ export const compileQueries = (
   for (const query of queries) {
     const statementValues = options?.inlineParams ? null : [];
 
-    const transformedQuery = addModelStatements(
+    const transformedQuery = transformMetaQuery(
       modelListWithPresets,
       dependencyStatements,
       statementValues,

@@ -648,7 +648,7 @@ const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
  *
  * @returns The transformed query.
  */
-export const addModelStatements = (
+export const transformMetaQuery = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
   statementParams: Array<unknown> | null,
