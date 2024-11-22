@@ -51,9 +51,7 @@ export const transformMetaQuery = (
       to: modelWithPresets,
     };
 
-    addModelQueries(models, dependencyStatements, {
-      queryType: 'add',
-      queryModel: 'model',
+    addModelQueries(models, dependencyStatements, 'add', 'model', {
       queryInstructions: instructions,
     });
 
@@ -71,9 +69,7 @@ export const transformMetaQuery = (
       with: { slug },
     };
 
-    addModelQueries(models, dependencyStatements, {
-      queryType: 'remove',
-      queryModel: 'model',
+    addModelQueries(models, dependencyStatements, 'remove', 'model', {
       queryInstructions: instructions,
     });
 
@@ -97,9 +93,7 @@ export const transformMetaQuery = (
         to: modelWithPresets,
       };
 
-      addModelQueries(models, dependencyStatements, {
-        queryType: 'set',
-        queryModel: 'model',
+      addModelQueries(models, dependencyStatements, 'set', 'model', {
         queryInstructions: instructions,
       });
 
@@ -117,9 +111,7 @@ export const transformMetaQuery = (
       const item = query.alter.create[type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}Slug`, ...item };
 
-      addModelQueries(models, dependencyStatements, {
-        queryType: 'add',
-        queryModel: type,
+      addModelQueries(models, dependencyStatements, 'add', type, {
         queryInstructions: {
           to: {
             model: { slug },
@@ -151,9 +143,7 @@ export const transformMetaQuery = (
       const itemSlug = query.alter.alter[type];
       const newItem = query.alter.alter.to;
 
-      addModelQueries(models, dependencyStatements, {
-        queryType: 'set',
-        queryModel: type,
+      addModelQueries(models, dependencyStatements, 'set', type, {
         queryInstructions: {
           with: { model: { slug }, slug: itemSlug },
           to: newItem,
@@ -181,9 +171,7 @@ export const transformMetaQuery = (
 
     const itemSlug = query.alter.drop[type] as string;
 
-    addModelQueries(models, dependencyStatements, {
-      queryType: 'remove',
-      queryModel: type,
+    addModelQueries(models, dependencyStatements, 'remove', type, {
       queryInstructions: {
         with: { model: { slug }, slug: itemSlug },
       },
