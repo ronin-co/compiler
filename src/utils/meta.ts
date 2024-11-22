@@ -51,7 +51,7 @@ export const transformMetaQuery = (
       to: modelWithPresets,
     };
 
-    addModelQueries(models, dependencyStatements, 'add', 'model', {
+    addModelQueries(models, dependencyStatements, 'create', 'model', {
       queryInstructions: instructions,
     });
 
@@ -69,7 +69,7 @@ export const transformMetaQuery = (
       with: { slug },
     };
 
-    addModelQueries(models, dependencyStatements, 'remove', 'model', {
+    addModelQueries(models, dependencyStatements, 'drop', 'model', {
       queryInstructions: instructions,
     });
 
@@ -93,7 +93,7 @@ export const transformMetaQuery = (
         to: modelWithPresets,
       };
 
-      addModelQueries(models, dependencyStatements, 'set', 'model', {
+      addModelQueries(models, dependencyStatements, 'alter', 'model', {
         queryInstructions: instructions,
       });
 
@@ -119,7 +119,7 @@ export const transformMetaQuery = (
       const item = query.alter.create[type] as Partial<ModelIndex>;
       const completeItem = { slug: item.slug || `${type}Slug`, ...item };
 
-      addModelQueries(models, dependencyStatements, 'add', type, {
+      addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
           to: {
             model: { slug },
@@ -136,7 +136,7 @@ export const transformMetaQuery = (
       const itemSlug = query.alter.alter[type];
       const newItem = query.alter.alter.to;
 
-      addModelQueries(models, dependencyStatements, 'set', type, {
+      addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
           with: { model: { slug }, slug: itemSlug },
           to: newItem,
@@ -150,7 +150,7 @@ export const transformMetaQuery = (
     if ('drop' in query.alter) {
       const itemSlug = query.alter.drop[type] as string;
 
-      addModelQueries(models, dependencyStatements, 'remove', type, {
+      addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
           with: { model: { slug }, slug: itemSlug },
         },
