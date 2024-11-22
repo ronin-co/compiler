@@ -25,6 +25,7 @@ import {
   type splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
+import { PLURAL_MODEL_ENTITIES } from '@/src/utils/meta';
 import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
 import title from 'title';
 
@@ -775,7 +776,7 @@ export const addModelQueries = (
       if (fields) {
         if (action !== 'UPDATE') {
           throw new RoninError({
-            message: `When ${queryTypeReadable} ${pluralize(queryModel)}, targeting specific fields requires the \`UPDATE\` action.`,
+            message: `When ${queryTypeReadable} ${PLURAL_MODEL_ENTITIES[queryModel]}, targeting specific fields requires the \`UPDATE\` action.`,
             code: 'INVALID_MODEL_VALUE',
             fields: ['action'],
           });
