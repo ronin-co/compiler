@@ -23,16 +23,16 @@ import {
   convertToCamelCase,
   convertToSnakeCase,
   findInObject,
-  type splitQuery,
+  splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { PLURAL_MODEL_ENTITIES } from '@/src/utils/meta';
 import {
   getSymbol,
   parseFieldExpression,
   prepareStatementValue,
 } from '@/src/utils/statement';
 import title from 'title';
+import type { ModelIndex } from '../../dist';
 
 /**
  * Finds a model by its slug or plural slug.
@@ -627,31 +627,111 @@ const getFieldStatement = (
   return statement;
 };
 
+// Keeping these hardcoded instead of using `pluralize` is faster.
+const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
+  field: 'fields',
+  index: 'indexes',
+  trigger: 'triggers',
+  preset: 'presets',
+};
+
 /**
- * Generates the necessary SQL dependency statements for queries such as `create.model`,
- * which are used to create, update, or delete models and fields. The generated
- * dependency statements are used to alter the SQLite database model.
+ * Handles queries that modify the DB schema. Specifically, those are `create.model`,
+ * `alter.model`, and `drop.model` queries.
  *
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
- * @param action - The type of query that is being executed.
- * @param entity - The schema entity that is affected.
- * @param queryDetails - The parsed details of the query that is being executed.
+ * @param query - The query that should potentially be transformed.
  *
- * @returns The (possibly modified) query instructions.
+ * @returns The transformed query.
  */
 export const addModelStatements = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
   statementParams: Array<unknown> | null,
-  action: ModelQueryType,
-  entity: ModelEntity | 'model',
-  queryDetails: Pick<ReturnType<typeof splitQuery>, 'queryInstructions'>,
+  query: Query,
 ): Query => {
-  const { queryInstructions } = queryDetails;
+  const { queryType } = splitQuery(query);
+
+  let action = queryType as ModelQueryType;
+  let entity: ModelEntity | 'model' = 'model';
+
+  let queryInstructions: unknown;
+
+  if (query.create) {
+    const init = query.create.model;
+    const details =
+      'to' in query.create
+        ? ({ slug: init, ...query.create.to } as PartialModel)
+        : (init as PartialModel);
+
+    queryInstructions = {
+      to: details,
+    };
+  }
+
+  if (query.drop) {
+    queryInstructions = {
+      with: { slug: query.drop.model },
+    };
+  }
+
+  if (query.alter) {
+    const modelSlugTest = query.alter.model;
+
+    if ('to' in query.alter) {
+      queryInstructions = {
+        with: { slug: modelSlugTest },
+        to: query.alter.to,
+      };
+    } else {
+      action = Object.keys(query.alter).filter(
+        (key) => key !== 'model',
+      )[0] as ModelQueryType;
+
+      const details = (
+        query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
+      )[action];
+      entity = Object.keys(details)[0] as ModelEntity;
+
+      let jsonSlug: string = details[entity];
+      let jsonValue: unknown | undefined;
+
+      if ('create' in query.alter) {
+        const item = query.alter.create[entity] as Partial<ModelIndex>;
+
+        jsonSlug = item.slug || `${entity}Slug`;
+        jsonValue = { slug: jsonSlug, ...item };
+
+        queryInstructions = {
+          to: {
+            model: { slug: modelSlugTest },
+            ...(jsonValue as object),
+          },
+        };
+      }
+
+      if ('alter' in query.alter) {
+        jsonValue = query.alter.alter.to;
+
+        queryInstructions = {
+          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
+          to: jsonValue as object,
+        };
+      }
+
+      if ('drop' in query.alter) {
+        queryInstructions = {
+          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
+        };
+      }
+    }
+  }
+
+  if (!queryInstructions) return query;
 
   const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
