@@ -80,7 +80,7 @@ export const transformMetaQuery = (
     };
   }
 
-  if ('alter' in query && query.alter) {
+  if (query.alter) {
     const slug = query.alter.model;
 
     if ('to' in query.alter) {
@@ -104,7 +104,9 @@ export const transformMetaQuery = (
       };
     }
 
-    let json: string | undefined;
+    let jsonAction: string | undefined;
+    let jsonSlug: string | undefined;
+    let jsonValue: unknown | undefined;
 
     const action = Object.keys(query.alter).filter(
       (key) => key !== 'model',
@@ -128,8 +130,9 @@ export const transformMetaQuery = (
         },
       });
 
-      const value = prepareStatementValue(statementParams, completeItem);
-      json = `json_insert(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${completeItem.slug}', ${value})`;
+      jsonAction = 'insert';
+      jsonSlug = completeItem.slug;
+      jsonValue = completeItem;
     }
 
     if ('alter' in query.alter) {
@@ -143,8 +146,9 @@ export const transformMetaQuery = (
         },
       });
 
-      const value = prepareStatementValue(statementParams, newItem);
-      json = `json_patch(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${itemSlug}', ${value})`;
+      jsonAction = 'patch';
+      jsonSlug = itemSlug;
+      jsonValue = newItem;
     }
 
     if ('drop' in query.alter) {
@@ -156,8 +160,13 @@ export const transformMetaQuery = (
         },
       });
 
-      json = `json_insert(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${itemSlug}')`;
+      jsonAction = 'remove';
+      jsonSlug = itemSlug;
     }
+
+    let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${jsonSlug}'`;
+    if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
+    json += ')';
 
     return {
       set: {
