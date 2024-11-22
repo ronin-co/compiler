@@ -119,49 +119,45 @@ export const transformMetaQuery = (
 
     if ('create' in query.alter) {
       const item = query.alter.create[type] as Partial<ModelIndex>;
-      const completeItem = { slug: item.slug || `${type}Slug`, ...item };
+      jsonSlug = item.slug || `${type}Slug`;
+      jsonValue = { slug: item.slug || `${type}Slug`, ...item };
 
       addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
           to: {
             model: { slug },
-            ...completeItem,
+            ...jsonValue,
           },
         },
       });
 
       jsonAction = 'insert';
-      jsonSlug = completeItem.slug;
-      jsonValue = completeItem;
     }
 
     if ('alter' in query.alter) {
-      const itemSlug = query.alter.alter[type];
-      const newItem = query.alter.alter.to;
+      jsonSlug = query.alter.alter[type];
+      jsonValue = query.alter.alter.to;
 
       addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
-          with: { model: { slug }, slug: itemSlug },
-          to: newItem,
+          with: { model: { slug }, slug: jsonSlug },
+          to: jsonValue,
         },
       });
 
       jsonAction = 'patch';
-      jsonSlug = itemSlug;
-      jsonValue = newItem;
     }
 
     if ('drop' in query.alter) {
-      const itemSlug = query.alter.drop[type] as string;
+      jsonSlug = query.alter.drop[type] as string;
 
       addModelQueries(models, dependencyStatements, action, type, {
         queryInstructions: {
-          with: { model: { slug }, slug: itemSlug },
+          with: { model: { slug }, slug: jsonSlug },
         },
       });
 
       jsonAction = 'remove';
-      jsonSlug = itemSlug;
     }
 
     let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${jsonSlug}'`;
