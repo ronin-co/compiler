@@ -114,7 +114,7 @@ export const transformMetaQuery = (
       const pluralType = PLURAL_MODEL_ENTITIES[type];
 
       const item = query.alter.create[type] as Partial<ModelIndex>;
-      const completeItem = { slug: item.slug || `${type}_slug`, ...item };
+      const completeItem = { slug: item.slug || `${type}Slug`, ...item };
 
       const instructions = {
         to: {

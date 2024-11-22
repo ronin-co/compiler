@@ -564,9 +564,9 @@ test('create new index', () => {
       params: [],
     },
     {
-      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'index_slug', ...index }),
+        JSON.stringify({ slug: 'indexSlug', ...index }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -616,9 +616,9 @@ test('create new index with filter', () => {
       params: ['@site.co'],
     },
     {
-      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'index_slug', ...index }),
+        JSON.stringify({ slug: 'indexSlug', ...index }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -671,9 +671,9 @@ test('create new index with field expressions', () => {
       params: [],
     },
     {
-      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'index_slug', ...index }),
+        JSON.stringify({ slug: 'indexSlug', ...index }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -719,9 +719,9 @@ test('create new index with ordered and collated fields', () => {
       params: [],
     },
     {
-      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'index_slug', ...index }),
+        JSON.stringify({ slug: 'indexSlug', ...index }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -766,9 +766,9 @@ test('create new unique index', () => {
       params: [],
     },
     {
-      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.index_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'index_slug', ...index }),
+        JSON.stringify({ slug: 'indexSlug', ...index }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -783,7 +783,7 @@ test('drop existing index', () => {
       alter: {
         model: 'account',
         drop: {
-          index: 'index_slug',
+          index: 'indexSlug',
         },
       },
     },
@@ -805,7 +805,7 @@ test('drop existing index', () => {
     {
       statement:
         'DELETE FROM "indexes" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
-      params: ['account', 'index_slug'],
+      params: ['account', 'indexSlug'],
       returning: true,
     },
   ]);
@@ -863,9 +863,9 @@ test('create new trigger for creating records', () => {
       ],
     },
     {
-      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -932,9 +932,9 @@ test('create new trigger for creating records with targeted fields', () => {
       ],
     },
     {
-      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -1012,9 +1012,9 @@ test('create new trigger for creating records with multiple effects', () => {
       ],
     },
     {
-      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -1090,9 +1090,9 @@ test('create new per-record trigger for creating records', () => {
       ],
     },
     {
-      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'team',
       ],
@@ -1160,9 +1160,9 @@ test('create new per-record trigger for removing records', () => {
       params: [],
     },
     {
-      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'team',
       ],
@@ -1242,9 +1242,9 @@ test('create new per-record trigger with filters for creating records', () => {
       ],
     },
     {
-      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.trigger_slug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify({ slug: 'trigger_slug', ...trigger }),
+        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'team',
       ],
@@ -1259,7 +1259,7 @@ test('drop existing trigger', () => {
       alter: {
         model: 'team',
         drop: {
-          trigger: 'trigger_slug',
+          trigger: 'triggerSlug',
         },
       },
     },
@@ -1281,7 +1281,7 @@ test('drop existing trigger', () => {
     {
       statement:
         'DELETE FROM "triggers" WHERE ("model" = (SELECT "id" FROM "models" WHERE ("slug" = ?1) LIMIT 1) AND "slug" = ?2) RETURNING *',
-      params: ['team', 'trigger_slug'],
+      params: ['team', 'triggerSlug'],
       returning: true,
     },
   ]);
