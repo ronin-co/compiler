@@ -185,7 +185,7 @@ export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
 
 // In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicModel<T extends Array<ModelField>> = Omit<
+export type PublicModel<T extends Array<ModelField> = Array<ModelField>> = Omit<
   Partial<Model<T>>,
   'slug' | 'identifiers' | 'associationSlug' | 'table' | 'tableAlias'
 > & {
