@@ -659,7 +659,7 @@ export const addModelStatements = (
   let action = queryType as ModelQueryType;
   let entity: ModelEntity | 'model' = 'model';
 
-  let queryInstructions: unknown;
+  let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
   if (query.create) {
     const init = query.create.model;
