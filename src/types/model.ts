@@ -75,7 +75,7 @@ export type ModelFieldReference = ModelFieldBasics & {
 
 export type ModelField = ModelFieldNormal | ModelFieldReference;
 
-export type ModelIndexField<T extends ModelField> = {
+export type ModelIndexField<T extends Array<ModelField>> = {
   /** The collating sequence used for text placed inside the field. */
   collation?: ModelFieldCollation;
   /** How the records in the index should be ordered. */
@@ -83,7 +83,7 @@ export type ModelIndexField<T extends ModelField> = {
 } & (
   | {
       /** The field slug for which the index should be created. */
-      slug: T['slug'];
+      slug: T[number]['slug'];
     }
   | {
       /** The field expression for which the index should be created. */
@@ -91,7 +91,7 @@ export type ModelIndexField<T extends ModelField> = {
     }
 );
 
-export type ModelIndex<T extends ModelField> = {
+export type ModelIndex<T extends Array<ModelField>> = {
   /**
    * The list of fields in the model for which the index should be created.
    */
@@ -142,7 +142,7 @@ export type ModelPreset = {
   instructions: GetInstructions;
 };
 
-export interface Model<T extends ModelField = ModelField> {
+export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   name: string;
   pluralName: string;
   slug: string;
@@ -173,7 +173,7 @@ export interface Model<T extends ModelField = ModelField> {
   // compiler always at least contain the default fields. For models that are passed into
   // the compiler from the outside, the fields are optional, because the compiler will
   // add the default fields automatically, and those are enough to create a model.
-  fields: Array<T>;
+  fields: T;
   indexes?: Array<ModelIndex<T>>;
   triggers?: Array<ModelTrigger>;
   presets?: Array<ModelPreset>;
@@ -185,8 +185,8 @@ export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
 
 // In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicModel = Omit<
-  Partial<Model>,
+export type PublicModel<T extends Array<ModelField>> = Omit<
+  Partial<Model<T>>,
   'slug' | 'identifiers' | 'associationSlug' | 'table' | 'tableAlias'
 > & {
   slug: Required<Model['slug']>;
@@ -196,7 +196,7 @@ export type PublicModel = Omit<
   identifiers?: Partial<Model['identifiers']>;
 };
 
-const model = <const T extends PublicModel>(_model: T) => {
+const model = <const T extends Array<ModelField>>(_model: PublicModel<T>) => {
   return 'test';
 };
 
@@ -205,8 +205,12 @@ model({
 
   fields: [
     {
-      slug: 'name',
+      slug: 'foo',
       type: 'string',
+    },
+    {
+      slug: 'bar',
+      type: 'number',
     },
   ],
 
@@ -214,7 +218,7 @@ model({
     {
       fields: [
         {
-          slug: 'notName',
+          slug: 'foo',
         },
       ],
     },
