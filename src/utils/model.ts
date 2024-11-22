@@ -374,105 +374,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'presets', type: 'json' },
     ],
   },
-  {
-    slug: 'field',
-
-    identifiers: {
-      name: 'name',
-      slug: 'slug',
-    },
-
-    fields: [
-      { slug: 'name', type: 'string' },
-      { slug: 'slug', type: 'string', required: true },
-      { slug: 'type', type: 'string', required: true },
-      {
-        slug: 'model',
-        type: 'link',
-        target: 'model',
-        required: true,
-      },
-      { slug: 'required', type: 'boolean' },
-      { slug: 'defaultValue', type: 'string' },
-      { slug: 'unique', type: 'boolean' },
-      { slug: 'autoIncrement', type: 'boolean' },
-
-      // Only allowed for fields of type "link".
-      { slug: 'target', type: 'string' },
-      { slug: 'kind', type: 'string' },
-      { slug: 'actions', type: 'group' },
-      { slug: 'actions.onDelete', type: 'string' },
-      { slug: 'actions.onUpdate', type: 'string' },
-    ],
-  },
-  {
-    slug: 'index',
-
-    identifiers: {
-      name: 'slug',
-      slug: 'slug',
-    },
-
-    fields: [
-      { slug: 'slug', type: 'string', required: true },
-      {
-        slug: 'model',
-        type: 'link',
-        target: 'model',
-        required: true,
-      },
-      { slug: 'unique', type: 'boolean' },
-      { slug: 'filter', type: 'json' },
-      { slug: 'fields', type: 'json', required: true },
-    ],
-  },
-  {
-    slug: 'trigger',
-
-    identifiers: {
-      name: 'slug',
-      slug: 'slug',
-    },
-
-    fields: [
-      { slug: 'slug', type: 'string', required: true },
-      {
-        slug: 'model',
-        type: 'link',
-        target: 'model',
-        required: true,
-      },
-      { slug: 'when', type: 'string', required: true },
-      { slug: 'action', type: 'string', required: true },
-      { slug: 'filter', type: 'json' },
-      { slug: 'effects', type: 'json', required: true },
-      { slug: 'fields', type: 'json' },
-    ],
-  },
-  {
-    slug: 'preset',
-
-    fields: [
-      { slug: 'slug', type: 'string', required: true },
-      {
-        slug: 'model',
-        type: 'link',
-        target: 'model',
-        required: true,
-      },
-      { slug: 'instructions', type: 'json', required: true },
-    ],
-  },
 ].map((model) => addDefaultModelFields(model as PublicModel, true));
-
-/**
- * We are computing this at the root level in order to avoid computing it again with
- * every function call.
- */
-const SYSTEM_MODEL_SLUGS = SYSTEM_MODELS.flatMap(({ slug, pluralSlug }) => [
-  slug,
-  pluralSlug,
-]);
 
 /**
  * Extends a list of models with automatically generated models that make writing
@@ -736,20 +638,17 @@ export const addModelQueries = (
   if (!['add', 'set', 'remove'].includes(queryType)) return;
 
   // Only continue if the query addresses system models.
-  if (!SYSTEM_MODEL_SLUGS.includes(queryModel)) return;
+  if (!['model', 'field', 'index', 'trigger', 'preset'].includes(queryModel)) return;
 
   const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
-
-  // Whether models or fields are being updated.
-  const kind = getModelBySlug(SYSTEM_MODELS, queryModel).pluralSlug;
 
   let tableAction = 'ALTER';
   let queryTypeReadable: string | null = null;
 
   switch (queryType) {
     case 'add': {
-      if (kind === 'models' || kind === 'indexes' || kind === 'triggers') {
+      if (queryModel === 'model' || queryModel === 'index' || queryModel === 'trigger') {
         tableAction = 'CREATE';
       }
       queryTypeReadable = 'creating';
@@ -757,13 +656,13 @@ export const addModelQueries = (
     }
 
     case 'set': {
-      if (kind === 'models') tableAction = 'ALTER';
+      if (queryModel === 'model') tableAction = 'ALTER';
       queryTypeReadable = 'updating';
       break;
     }
 
     case 'remove': {
-      if (kind === 'models' || kind === 'indexes' || kind === 'triggers') {
+      if (queryModel === 'model' || queryModel === 'index' || queryModel === 'trigger') {
         tableAction = 'DROP';
       }
       queryTypeReadable = 'deleting';
@@ -776,12 +675,14 @@ export const addModelQueries = (
   const modelInstruction = instructionList?.model;
   const modelSlug = modelInstruction?.slug?.being || modelInstruction?.slug;
 
-  const usableSlug = kind === 'models' ? slug : modelSlug;
+  const usableSlug = queryModel === 'model' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
   const targetModel =
-    kind === 'models' && queryType === 'add' ? null : getModelBySlug(models, usableSlug);
+    queryModel === 'model' && queryType === 'add'
+      ? null
+      : getModelBySlug(models, usableSlug);
 
-  if (kind === 'indexes') {
+  if (queryModel === 'index') {
     const indexName = convertToSnakeCase(slug);
 
     // Whether the index should only allow one record with a unique value for its fields.
@@ -839,7 +740,7 @@ export const addModelQueries = (
     return;
   }
 
-  if (kind === 'triggers') {
+  if (queryModel === 'trigger') {
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
@@ -868,7 +769,7 @@ export const addModelQueries = (
       if (fields) {
         if (action !== 'UPDATE') {
           throw new RoninError({
-            message: `When ${queryTypeReadable} ${kind}, targeting specific fields requires the \`UPDATE\` action.`,
+            message: `When ${queryTypeReadable} ${pluralize(queryModel)}, targeting specific fields requires the \`UPDATE\` action.`,
             code: 'INVALID_MODEL_VALUE',
             fields: ['action'],
           });
@@ -933,7 +834,7 @@ export const addModelQueries = (
 
   const statement = `${tableAction} TABLE "${tableName}"`;
 
-  if (kind === 'models') {
+  if (queryModel === 'model') {
     if (queryType === 'add') {
       const newModel = queryInstructions.to as Model;
       const { fields } = newModel;
@@ -974,7 +875,7 @@ export const addModelQueries = (
     return;
   }
 
-  if (kind === 'fields') {
+  if (queryModel === 'field') {
     if (queryType === 'add') {
       // Default field type.
       if (!instructionList.type) instructionList.type = 'string';
