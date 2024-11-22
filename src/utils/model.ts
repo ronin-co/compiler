@@ -346,7 +346,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
 ];
 
 /** These models are required by the system and are automatically made available. */
-const SYSTEM_MODELS: Array<Model> = [
+const SYSTEM_MODELS: Array<PublicModel> = [
   {
     slug: 'model',
 
@@ -374,7 +374,7 @@ const SYSTEM_MODELS: Array<Model> = [
       { slug: 'presets', type: 'json' },
     ],
   },
-].map((model) => addDefaultModelFields(model as PublicModel, true));
+];
 
 /**
  * Extends a list of models with automatically generated models that make writing
