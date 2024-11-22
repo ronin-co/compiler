@@ -351,7 +351,7 @@ test('create new field', () => {
       params: [],
     },
     {
-      statement: `UPDATE "models" SET "fields" = json_insert("fields", '$.fieldSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "models" SET "fields" = json_insert("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(field),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
