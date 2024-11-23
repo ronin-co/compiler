@@ -3,9 +3,7 @@ import type {
   Model,
   ModelField,
   ModelFieldReferenceAction,
-  ModelIndexField,
   ModelPreset,
-  ModelTriggerField,
   PartialModel,
   PublicModel,
 } from '@/src/types/model';
@@ -15,7 +13,6 @@ import type {
   Query,
   QueryInstructionType,
   Statement,
-  WithInstruction,
 } from '@/src/types/query';
 import {
   RONIN_MODEL_SYMBOLS,
@@ -32,7 +29,7 @@ import {
   prepareStatementValue,
 } from '@/src/utils/statement';
 import title from 'title';
-import type { ModelIndex } from '../../dist';
+import type { ModelIndex, ModelTrigger } from '../../dist';
 
 /**
  * Finds a model by its slug or plural slug.
@@ -638,23 +635,27 @@ export const transformMetaQuery = (
   const { queryType } = splitQuery(query);
   const subAltering = query.alter && !('to' in query.alter);
 
-  const action: ModelQueryType = subAltering
-    ? Object.keys(query.alter).filter((key) => key !== 'model')[0]
-    : queryType;
+  const action =
+    subAltering && query.alter
+      ? (Object.keys(query.alter).filter((key) => key !== 'model')[0] as ModelQueryType)
+      : (queryType as ModelQueryType);
 
   const actionReadable =
     action === 'create' ? 'creating' : action === 'alter' ? 'altering' : 'dropping';
 
-  const entity: ModelEntity | 'model' = subAltering
-    ? Object.keys(query.alter[action])[0]
-    : 'model';
+  const entity = (
+    subAltering && query.alter
+      ? Object.keys((query.alter as unknown as Record<ModelQueryType, string>)[action])[0]
+      : 'model'
+  ) as ModelEntity | 'model';
 
-  let slug: string | undefined =
-    entity === 'model' && action === 'create' ? null : query[queryType].model;
-  let modelSlug: string | undefined =
-    entity === 'model' && action === 'create' ? null : query[queryType].model;
+  let slug =
+    entity === 'model' && action === 'create'
+      ? null
+      : (query[queryType]!.model as string);
+  let modelSlug = slug;
 
-  let jsonValue: unknown | undefined;
+  let jsonValue: Record<string, unknown> | undefined;
 
   if (query.create) {
     const init = query.create.model;
@@ -663,17 +664,21 @@ export const transformMetaQuery = (
         ? ({ slug: init, ...query.create.to } as PartialModel)
         : (init as PartialModel);
 
-    slug = modelSlug = jsonValue.slug;
+    slug = modelSlug = jsonValue.slug as string;
   }
 
   if (query.alter) {
     if ('to' in query.alter) {
       jsonValue = query.alter.to;
     } else {
-      slug = query.alter[action][entity];
+      slug = (
+        query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
+      )[action][entity as ModelEntity];
 
       if ('create' in query.alter) {
-        const item = query.alter.create[entity] as Partial<ModelIndex>;
+        const item = (query.alter.create as unknown as Record<ModelEntity, ModelIndex>)[
+          entity as ModelEntity
+        ] as Partial<ModelIndex>;
 
         slug = item.slug || `${entity}Slug`;
         jsonValue = { slug, ...item };
@@ -700,8 +705,10 @@ export const transformMetaQuery = (
     let queryTypeDetails: unknown;
 
     if (action === 'create') {
+      const newModel = jsonValue as unknown as Model;
+
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(jsonValue as Model, true);
+      const modelWithFields = addDefaultModelFields(newModel, true);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const { fields } = modelWithPresets;
@@ -721,8 +728,10 @@ export const transformMetaQuery = (
     }
 
     if (action === 'alter' && targetModel) {
+      const newModel = jsonValue as unknown as Model;
+
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(jsonValue as Model, false);
+      const modelWithFields = addDefaultModelFields(newModel, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const newSlug = modelWithPresets.pluralSlug;
@@ -772,11 +781,13 @@ export const transformMetaQuery = (
 
   if (entity === 'field' && targetModel) {
     if (action === 'create') {
+      const newField = jsonValue as ModelField;
+
       // Default field type.
-      if (!jsonValue?.type) jsonValue.type = 'string';
+      newField.type = newField.type || 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel, jsonValue as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel, newField)}`,
         params: [],
       });
     } else if (action === 'alter') {
@@ -799,22 +810,14 @@ export const transformMetaQuery = (
   }
 
   if (entity === 'index' && targetModel) {
+    const newIndex = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
-    // Whether the index should only allow one record with a unique value for its fields.
-    const unique: boolean | undefined = jsonValue?.unique;
-
-    // The query instructions that should be used to filter the indexed records.
-    const filterQuery: WithInstruction = jsonValue?.filter;
-
-    // The specific fields that should be indexed.
-    const fields: Array<ModelIndexField> = jsonValue?.fields;
-
     const params: Array<unknown> = [];
-    let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
+    let statement = `${tableAction}${newIndex.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
-      const columns = fields.map((field) => {
+      const columns = newIndex.fields.map((field) => {
         let fieldSelector = '';
 
         // If the slug of a field is provided, find the field in the model, obtain its
@@ -845,8 +848,8 @@ export const transformMetaQuery = (
 
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
-      if (filterQuery) {
-        const withStatement = handleWith(models, targetModel, params, filterQuery);
+      if (newIndex.filter) {
+        const withStatement = handleWith(models, targetModel, params, newIndex.filter);
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -861,25 +864,13 @@ export const transformMetaQuery = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (action === 'create') {
-      // When the trigger should fire and what type of query should cause it to fire.
-      const { when, action } = jsonValue;
+      const newTrigger = jsonValue as ModelTrigger;
 
       // The different parts of the final statement.
-      const statementParts: Array<string> = [`${when} ${action}`];
+      const statementParts: Array<string> = [`${newTrigger.when} ${newTrigger.action}`];
 
-      // The query that will be executed when the trigger is fired.
-      const effectQueries: Array<Query> = jsonValue?.effects;
-
-      // The query instructions that are used to determine whether the trigger should be
-      // fired, or not.
-      const filterQuery: WithInstruction = jsonValue?.filter;
-
-      // The specific fields that should be targeted by the trigger. If those fields have
-      // changed, the trigger will be fired.
-      const fields: Array<ModelTriggerField> | undefined = jsonValue?.fields;
-
-      if (fields) {
-        if (action !== 'UPDATE') {
+      if (newTrigger.fields) {
+        if (newTrigger.action !== 'UPDATE') {
           throw new RoninError({
             message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, targeting specific fields requires the \`UPDATE\` action.`,
             code: 'INVALID_MODEL_VALUE',
@@ -887,7 +878,7 @@ export const transformMetaQuery = (
           });
         }
 
-        const fieldSelectors = fields.map((field) => {
+        const fieldSelectors = newTrigger.fields.map((field) => {
           return getFieldFromModel(targetModel, field.slug, 'to').fieldSelector;
         });
 
@@ -900,8 +891,8 @@ export const transformMetaQuery = (
       // specific record fields, that means the trigger must be executed on a per-record
       // basis, meaning "for each row", instead of on a per-query basis.
       if (
-        filterQuery ||
-        effectQueries.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
+        newTrigger.filter ||
+        newTrigger.effects.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
       ) {
         statementParts.push('FOR EACH ROW');
       }
@@ -909,9 +900,9 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the trigger. Those
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
-      if (filterQuery) {
+      if (newTrigger.filter) {
         const tableAlias =
-          action === 'DELETE'
+          newTrigger.action === 'DELETE'
             ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
             : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
 
@@ -919,14 +910,14 @@ export const transformMetaQuery = (
           models,
           { ...targetModel, tableAlias: tableAlias },
           params,
-          filterQuery,
+          newTrigger.filter,
         );
 
         statementParts.push('WHEN', `(${withStatement})`);
       }
 
       // Compile the effect queries into SQL statements.
-      const effectStatements = effectQueries.map((effectQuery) => {
+      const effectStatements = newTrigger.effects.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
           parentModel: targetModel,
