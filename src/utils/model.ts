@@ -541,25 +541,6 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   return model;
 };
 
-/** A union type of all query instructions, but without nested instructions. */
-type QueryInstructionTypeClean = Exclude<
-  QueryInstructionType,
-  'orderedBy.ascending' | 'orderedBy.descending'
->;
-
-/**
- * A list of RONIN query types and the respective query instruction from which values
- * should be read that are used for finding/targeting records.
- *
- * For example, the values used for targeting a record in a `set` query are placed in
- * the `with` instruction.
- */
-const mappedInstructions: Partial<Record<ModelQueryType, QueryInstructionTypeClean>> = {
-  create: 'to',
-  alter: 'with',
-  drop: 'with',
-};
-
 /** A list of all RONIN data types and their respective column types in SQLite. */
 const typesInSQLite = {
   link: 'TEXT',
@@ -671,38 +652,41 @@ export const transformMetaQuery = (
   let slug: string | undefined;
   let modelSlug: string | undefined;
 
+  let jsonValue: unknown | undefined;
+
   let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
   if (query.create) {
     const init = query.create.model;
-    const details =
+    jsonValue =
       'to' in query.create
         ? ({ slug: init, ...query.create.to } as PartialModel)
         : (init as PartialModel);
 
-    slug = modelSlug = details.slug;
+    slug = modelSlug = jsonValue.slug;
 
     queryInstructions = {
-      to: details,
+      to: jsonValue,
     };
   }
 
   if (query.drop) {
     slug = modelSlug = query.drop.model;
+    queryInstructions = {};
   }
 
   if (query.alter) {
     slug = modelSlug = query.alter.model;
 
     if ('to' in query.alter) {
+      jsonValue = query.alter.to;
+
       queryInstructions = {
         with: { slug: modelSlug },
         to: query.alter.to,
       };
     } else {
       slug = query.alter[action][entity];
-
-      let jsonValue: unknown | undefined;
 
       if ('create' in query.alter) {
         const item = query.alter.create[entity] as Partial<ModelIndex>;
@@ -728,24 +712,16 @@ export const transformMetaQuery = (
       }
 
       if ('drop' in query.alter) {
-        queryInstructions = {
-          with: { model: { slug: modelSlug }, slug },
-        };
+        queryInstructions = {};
       }
     }
   }
 
-  if (!((query.drop ? true : queryInstructions) && modelSlug && slug)) return query;
-
-  if (!queryInstructions) queryInstructions = {};
+  if (!(queryInstructions && modelSlug && slug)) return query;
 
   const tableAction = ['model', 'index', 'trigger'].includes(entity)
     ? action.toUpperCase()
     : 'ALTER';
-
-  const instructionList = queryInstructions[
-    mappedInstructions[action] as QueryInstructionTypeClean
-  ] as WithInstruction;
 
   const usableSlug = entity === 'model' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
@@ -759,7 +735,7 @@ export const transformMetaQuery = (
 
     if (action === 'create') {
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, true);
+      const modelWithFields = addDefaultModelFields(jsonValue as Model, true);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const { fields } = modelWithPresets;
@@ -780,7 +756,7 @@ export const transformMetaQuery = (
 
     if (action === 'alter') {
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, false);
+      const modelWithFields = addDefaultModelFields(jsonValue as Model, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const newSlug = modelWithPresets.pluralSlug;
@@ -831,14 +807,14 @@ export const transformMetaQuery = (
   if (entity === 'field') {
     if (action === 'create') {
       // Default field type.
-      if (!instructionList.type) instructionList.type = 'string';
+      if (!jsonValue?.type) jsonValue.type = 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, jsonValue as ModelField)}`,
         params: [],
       });
     } else if (action === 'alter') {
-      const newSlug = queryInstructions.to?.slug;
+      const newSlug = jsonValue?.slug;
 
       if (newSlug) {
         // Only push the statement if the column name is changing, otherwise we don't
@@ -860,13 +836,13 @@ export const transformMetaQuery = (
     const indexName = convertToSnakeCase(slug);
 
     // Whether the index should only allow one record with a unique value for its fields.
-    const unique: boolean | undefined = instructionList?.unique;
+    const unique: boolean | undefined = jsonValue?.unique;
 
     // The query instructions that should be used to filter the indexed records.
-    const filterQuery: WithInstruction = instructionList?.filter;
+    const filterQuery: WithInstruction = jsonValue?.filter;
 
     // The specific fields that should be indexed.
-    const fields: Array<ModelIndexField> = instructionList?.fields;
+    const fields: Array<ModelIndexField> = jsonValue?.fields;
 
     const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
@@ -923,21 +899,21 @@ export const transformMetaQuery = (
       const currentModel = targetModel as Model;
 
       // When the trigger should fire and what type of query should cause it to fire.
-      const { when, action } = instructionList;
+      const { when, action } = jsonValue;
 
       // The different parts of the final statement.
       const statementParts: Array<string> = [`${when} ${action}`];
 
       // The query that will be executed when the trigger is fired.
-      const effectQueries: Array<Query> = instructionList?.effects;
+      const effectQueries: Array<Query> = jsonValue?.effects;
 
       // The query instructions that are used to determine whether the trigger should be
       // fired, or not.
-      const filterQuery: WithInstruction = instructionList?.filter;
+      const filterQuery: WithInstruction = jsonValue?.filter;
 
       // The specific fields that should be targeted by the trigger. If those fields have
       // changed, the trigger will be fired.
-      const fields: Array<ModelTriggerField> | undefined = instructionList?.fields;
+      const fields: Array<ModelTriggerField> | undefined = jsonValue?.fields;
 
       if (fields) {
         if (action !== 'UPDATE') {
@@ -1009,15 +985,15 @@ export const transformMetaQuery = (
   const jsonAction =
     action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
 
-  const jsonValue =
+  const deepValue =
     action === 'create'
-      ? { ...instructionList, model: undefined }
+      ? { ...jsonValue, model: undefined }
       : action === 'alter'
-        ? queryInstructions.to
+        ? jsonValue
         : null;
 
   let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
-  if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
+  if (deepValue) json += `, ${prepareStatementValue(statementParams, deepValue)}`;
   json += ')';
 
   return {
