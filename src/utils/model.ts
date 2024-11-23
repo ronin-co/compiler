@@ -668,18 +668,19 @@ export const transformMetaQuery = (
     ? Object.keys(query.alter[action])[0]
     : 'model';
 
+  let slug: string | undefined;
   let modelSlug: string | undefined;
 
   let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
   if (query.create) {
-    modelSlug = query.create.model;
-
     const init = query.create.model;
     const details =
       'to' in query.create
         ? ({ slug: init, ...query.create.to } as PartialModel)
         : (init as PartialModel);
+
+    slug = modelSlug = details.slug;
 
     queryInstructions = {
       to: details,
@@ -687,7 +688,7 @@ export const transformMetaQuery = (
   }
 
   if (query.drop) {
-    modelSlug = query.drop.model;
+    slug = modelSlug = query.drop.model;
 
     queryInstructions = {
       with: { slug: query.drop.model },
@@ -695,7 +696,7 @@ export const transformMetaQuery = (
   }
 
   if (query.alter) {
-    modelSlug = query.alter.model;
+    slug = modelSlug = query.alter.model;
 
     if ('to' in query.alter) {
       queryInstructions = {
@@ -703,6 +704,8 @@ export const transformMetaQuery = (
         to: query.alter.to,
       };
     } else {
+      slug = query.alter[action][entity];
+
       let jsonSlug: string = query.alter[action][entity];
       let jsonValue: unknown | undefined;
 
@@ -710,6 +713,7 @@ export const transformMetaQuery = (
         const item = query.alter.create[entity] as Partial<ModelIndex>;
 
         jsonSlug = item.slug || `${entity}Slug`;
+        slug = jsonSlug;
         jsonValue = { slug: jsonSlug, ...item };
 
         queryInstructions = {
@@ -743,10 +747,11 @@ export const transformMetaQuery = (
     ? action.toUpperCase()
     : 'ALTER';
 
-  const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
-  const instructionList = queryInstructions[instructionName] as WithInstruction;
+  const instructionList = queryInstructions[
+    mappedInstructions[action] as QueryInstructionTypeClean
+  ] as WithInstruction;
 
-  const slug: string = instructionList?.slug?.being || instructionList?.slug;
+  // const slug: string = instructionList?.slug?.being || instructionList?.slug;
 
   const usableSlug = entity === 'model' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
