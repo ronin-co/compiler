@@ -267,18 +267,18 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
     copiedModel[setting] = generator(copiedModel[base]);
   }
 
-  const newFields = copiedModel.fields || [];
+  const fields = copiedModel.fields || [];
 
   // If the model is being newly created or if new fields were provided for an existing
   // model, we would like to re-generate the list of `identifiers` and attach the system
   // fields to the model.
-  if (isNew || newFields.length > 0) {
+  if (isNew || fields.length > 0) {
     if (!copiedModel.identifiers) copiedModel.identifiers = {};
 
     // Intelligently select a reasonable default for which field should be used as the
     // display name of the records in the model (e.g. used in lists on the dashboard).
     if (!copiedModel.identifiers.name) {
-      const suitableField = newFields.find(
+      const suitableField = fields.find(
         (field) =>
           field.type === 'string' &&
           field.required === true &&
@@ -291,7 +291,7 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
     // Intelligently select a reasonable default for which field should be used as the
     // slug of the records in the model (e.g. used in URLs on the dashboard).
     if (!copiedModel.identifiers.slug) {
-      const suitableField = newFields.find(
+      const suitableField = fields.find(
         (field) =>
           field.type === 'string' &&
           field.unique === true &&
@@ -302,7 +302,7 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
       copiedModel.identifiers.slug = suitableField?.slug || 'id';
     }
 
-    copiedModel.fields = [...SYSTEM_FIELDS, ...newFields];
+    copiedModel.fields = [...SYSTEM_FIELDS, ...fields];
   }
 
   return copiedModel as Model;
@@ -781,13 +781,13 @@ export const transformMetaQuery = (
 
   if (entity === 'field' && targetModel) {
     if (action === 'create') {
-      const newField = jsonValue as ModelField;
+      const field = jsonValue as ModelField;
 
       // Default field type.
-      newField.type = newField.type || 'string';
+      field.type = field.type || 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel, newField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel, field)}`,
         params: [],
       });
     } else if (action === 'alter') {
@@ -810,14 +810,14 @@ export const transformMetaQuery = (
   }
 
   if (entity === 'index' && targetModel) {
-    const newIndex = jsonValue as ModelIndex;
+    const index = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
-    let statement = `${tableAction}${newIndex.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
+    let statement = `${tableAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
-      const columns = newIndex.fields.map((field) => {
+      const columns = index.fields.map((field) => {
         let fieldSelector = '';
 
         // If the slug of a field is provided, find the field in the model, obtain its
@@ -848,8 +848,8 @@ export const transformMetaQuery = (
 
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
-      if (newIndex.filter) {
-        const withStatement = handleWith(models, targetModel, params, newIndex.filter);
+      if (index.filter) {
+        const withStatement = handleWith(models, targetModel, params, index.filter);
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -864,13 +864,13 @@ export const transformMetaQuery = (
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (action === 'create') {
-      const newTrigger = jsonValue as ModelTrigger;
+      const trigger = jsonValue as ModelTrigger;
 
       // The different parts of the final statement.
-      const statementParts: Array<string> = [`${newTrigger.when} ${newTrigger.action}`];
+      const statementParts: Array<string> = [`${trigger.when} ${trigger.action}`];
 
-      if (newTrigger.fields) {
-        if (newTrigger.action !== 'UPDATE') {
+      if (trigger.fields) {
+        if (trigger.action !== 'UPDATE') {
           throw new RoninError({
             message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, targeting specific fields requires the \`UPDATE\` action.`,
             code: 'INVALID_MODEL_VALUE',
@@ -878,7 +878,7 @@ export const transformMetaQuery = (
           });
         }
 
-        const fieldSelectors = newTrigger.fields.map((field) => {
+        const fieldSelectors = trigger.fields.map((field) => {
           return getFieldFromModel(targetModel, field.slug, 'to').fieldSelector;
         });
 
@@ -891,8 +891,8 @@ export const transformMetaQuery = (
       // specific record fields, that means the trigger must be executed on a per-record
       // basis, meaning "for each row", instead of on a per-query basis.
       if (
-        newTrigger.filter ||
-        newTrigger.effects.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
+        trigger.filter ||
+        trigger.effects.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
       ) {
         statementParts.push('FOR EACH ROW');
       }
@@ -900,9 +900,9 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the trigger. Those
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
-      if (newTrigger.filter) {
+      if (trigger.filter) {
         const tableAlias =
-          newTrigger.action === 'DELETE'
+          trigger.action === 'DELETE'
             ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
             : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
 
@@ -910,14 +910,14 @@ export const transformMetaQuery = (
           models,
           { ...targetModel, tableAlias: tableAlias },
           params,
-          newTrigger.filter,
+          trigger.filter,
         );
 
         statementParts.push('WHEN', `(${withStatement})`);
       }
 
       // Compile the effect queries into SQL statements.
-      const effectStatements = newTrigger.effects.map((effectQuery) => {
+      const effectStatements = trigger.effects.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
           parentModel: targetModel,
