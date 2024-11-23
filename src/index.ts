@@ -1,11 +1,11 @@
 import type { PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { compileQueryInput } from '@/src/utils';
-import { transformMetaQuery } from '@/src/utils/meta';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
   addSystemModels,
+  transformMetaQuery,
 } from '@/src/utils/model';
 
 /**

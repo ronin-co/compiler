@@ -10,9 +10,10 @@ import type {
   PublicModel,
 } from '@/src/types/model';
 import type {
+  ModelEntity,
+  ModelQueryType,
   Query,
   QueryInstructionType,
-  QueryType,
   Statement,
   WithInstruction,
 } from '@/src/types/query';
@@ -22,12 +23,16 @@ import {
   convertToCamelCase,
   convertToSnakeCase,
   findInObject,
-  type splitQuery,
+  splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { PLURAL_MODEL_ENTITIES } from '@/src/utils/meta';
-import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
+import {
+  getSymbol,
+  parseFieldExpression,
+  prepareStatementValue,
+} from '@/src/utils/statement';
 import title from 'title';
+import type { ModelIndex } from '../../dist';
 
 /**
  * Finds a model by its slug or plural slug.
@@ -549,10 +554,10 @@ type QueryInstructionTypeClean = Exclude<
  * For example, the values used for targeting a record in a `set` query are placed in
  * the `with` instruction.
  */
-const mappedInstructions: Partial<Record<QueryType, QueryInstructionTypeClean>> = {
-  add: 'to',
-  set: 'with',
-  remove: 'with',
+const mappedInstructions: Partial<Record<ModelQueryType, QueryInstructionTypeClean>> = {
+  create: 'to',
+  alter: 'with',
+  drop: 'with',
 };
 
 /** A list of all RONIN data types and their respective column types in SQLite. */
@@ -622,57 +627,138 @@ const getFieldStatement = (
   return statement;
 };
 
+// Keeping these hardcoded instead of using `pluralize` is faster.
+const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
+  field: 'fields',
+  index: 'indexes',
+  trigger: 'triggers',
+  preset: 'presets',
+};
+
 /**
- * Generates the necessary SQL dependency statements for queries such as `create.model`,
- * which are used to create, update, or delete models and fields. The generated
- * dependency statements are used to alter the SQLite database model.
+ * Handles queries that modify the DB schema. Specifically, those are `create.model`,
+ * `alter.model`, and `drop.model` queries.
  *
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
- * @param queryDetails - The parsed details of the query that is being executed.
+ * @param statementParams - A collection of values that will automatically be
+ * inserted into the query by SQLite.
+ * @param query - The query that should potentially be transformed.
  *
- * @returns The (possibly modified) query instructions.
+ * @returns The transformed query.
  */
-export const addModelQueries = (
+export const transformMetaQuery = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
-  queryDetails: ReturnType<typeof splitQuery>,
-) => {
-  const { queryType, queryModel, queryInstructions } = queryDetails;
+  statementParams: Array<unknown> | null,
+  query: Query,
+): Query => {
+  const { queryType } = splitQuery(query);
 
-  // Only continue if the query is a write query.
-  if (!['add', 'set', 'remove'].includes(queryType)) return;
+  let action = queryType as ModelQueryType;
+  let entity: ModelEntity | 'model' = 'model';
 
-  // Only continue if the query addresses system models.
-  if (!['model', 'field', 'index', 'trigger', 'preset'].includes(queryModel)) return;
+  let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
-  const instructionName = mappedInstructions[queryType] as QueryInstructionTypeClean;
+  if (query.create) {
+    const init = query.create.model;
+    const details =
+      'to' in query.create
+        ? ({ slug: init, ...query.create.to } as PartialModel)
+        : (init as PartialModel);
+
+    queryInstructions = {
+      to: details,
+    };
+  }
+
+  if (query.drop) {
+    queryInstructions = {
+      with: { slug: query.drop.model },
+    };
+  }
+
+  if (query.alter) {
+    const modelSlugTest = query.alter.model;
+
+    if ('to' in query.alter) {
+      queryInstructions = {
+        with: { slug: modelSlugTest },
+        to: query.alter.to,
+      };
+    } else {
+      action = Object.keys(query.alter).filter(
+        (key) => key !== 'model',
+      )[0] as ModelQueryType;
+
+      const details = (
+        query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
+      )[action];
+      entity = Object.keys(details)[0] as ModelEntity;
+
+      let jsonSlug: string = details[entity];
+      let jsonValue: unknown | undefined;
+
+      if ('create' in query.alter) {
+        const item = query.alter.create[entity] as Partial<ModelIndex>;
+
+        jsonSlug = item.slug || `${entity}Slug`;
+        jsonValue = { slug: jsonSlug, ...item };
+
+        queryInstructions = {
+          to: {
+            model: { slug: modelSlugTest },
+            ...(jsonValue as object),
+          },
+        };
+      }
+
+      if ('alter' in query.alter) {
+        jsonValue = query.alter.alter.to;
+
+        queryInstructions = {
+          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
+          to: jsonValue as object,
+        };
+      }
+
+      if ('drop' in query.alter) {
+        queryInstructions = {
+          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
+        };
+      }
+    }
+  }
+
+  if (!queryInstructions) return query;
+
+  const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
 
   let tableAction = 'ALTER';
-  let queryTypeReadable: string | null = null;
+  let actionReadable: string | null = null;
 
-  switch (queryType) {
-    case 'add': {
-      if (queryModel === 'model' || queryModel === 'index' || queryModel === 'trigger') {
+  switch (action) {
+    case 'create': {
+      if (entity === 'model' || entity === 'index' || entity === 'trigger') {
         tableAction = 'CREATE';
       }
-      queryTypeReadable = 'creating';
+      actionReadable = 'creating';
       break;
     }
 
-    case 'set': {
-      if (queryModel === 'model') tableAction = 'ALTER';
-      queryTypeReadable = 'updating';
+    case 'alter': {
+      if (entity === 'model') tableAction = 'ALTER';
+      actionReadable = 'updating';
       break;
     }
 
-    case 'remove': {
-      if (queryModel === 'model' || queryModel === 'index' || queryModel === 'trigger') {
+    case 'drop': {
+      if (entity === 'model' || entity === 'index' || entity === 'trigger') {
         tableAction = 'DROP';
       }
-      queryTypeReadable = 'deleting';
+      actionReadable = 'deleting';
       break;
     }
   }
@@ -682,14 +768,116 @@ export const addModelQueries = (
   const modelInstruction = instructionList?.model;
   const modelSlug = modelInstruction?.slug?.being || modelInstruction?.slug;
 
-  const usableSlug = queryModel === 'model' ? slug : modelSlug;
+  const usableSlug = entity === 'model' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
   const targetModel =
-    queryModel === 'model' && queryType === 'add'
-      ? null
-      : getModelBySlug(models, usableSlug);
+    entity === 'model' && action === 'create' ? null : getModelBySlug(models, usableSlug);
 
-  if (queryModel === 'index') {
+  const statement = `${tableAction} TABLE "${tableName}"`;
+
+  if (entity === 'model') {
+    let queryTypeDetails: unknown;
+
+    if (action === 'create') {
+      // Compose default settings for the model.
+      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, true);
+      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
+
+      const { fields } = modelWithPresets;
+      const columns = fields
+        .map((field) => getFieldStatement(models, modelWithPresets, field))
+        .filter(Boolean);
+
+      dependencyStatements.push({
+        statement: `${statement} (${columns.join(', ')})`,
+        params: [],
+      });
+
+      // Add the newly created model to the list of models.
+      models.push(modelWithPresets);
+
+      queryTypeDetails = { to: modelWithPresets };
+    }
+
+    if (action === 'alter') {
+      // Compose default settings for the model.
+      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, false);
+      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
+
+      const newSlug = modelWithPresets.pluralSlug;
+
+      if (newSlug) {
+        const newTable = convertToSnakeCase(newSlug);
+
+        // Only push the statement if the table name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME TO "${newTable}"`,
+          params: [],
+        });
+      }
+
+      // Update the existing model in the list of models.
+      Object.assign(targetModel as Model, modelWithPresets);
+
+      queryTypeDetails = {
+        with: {
+          slug: usableSlug,
+        },
+        to: modelWithPresets,
+      };
+    }
+
+    if (action === 'drop') {
+      // Remove the model from the list of models.
+      models.splice(models.indexOf(targetModel as Model), 1);
+
+      dependencyStatements.push({ statement, params: [] });
+
+      queryTypeDetails = {
+        with: { slug: usableSlug },
+      };
+    }
+
+    const queryTypeAction =
+      action === 'create' ? 'add' : action === 'alter' ? 'set' : 'remove';
+
+    return {
+      [queryTypeAction]: {
+        model: queryTypeDetails,
+      },
+    };
+  }
+
+  if (entity === 'field') {
+    if (action === 'create') {
+      // Default field type.
+      if (!instructionList.type) instructionList.type = 'string';
+
+      dependencyStatements.push({
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
+        params: [],
+      });
+    } else if (action === 'alter') {
+      const newSlug = queryInstructions.to?.slug;
+
+      if (newSlug) {
+        // Only push the statement if the column name is changing, otherwise we don't
+        // need it.
+        dependencyStatements.push({
+          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
+          params: [],
+        });
+      }
+    } else if (action === 'drop') {
+      dependencyStatements.push({
+        statement: `${statement} DROP COLUMN "${slug}"`,
+        params: [],
+      });
+    }
+  }
+
+  if (entity === 'index') {
     const indexName = convertToSnakeCase(slug);
 
     // Whether the index should only allow one record with a unique value for its fields.
@@ -704,7 +892,7 @@ export const addModelQueries = (
     const params: Array<unknown> = [];
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
-    if (queryType === 'add') {
+    if (action === 'create') {
       const model = targetModel as Model;
       const columns = fields.map((field) => {
         let fieldSelector = '';
@@ -744,16 +932,15 @@ export const addModelQueries = (
     }
 
     dependencyStatements.push({ statement, params });
-    return;
   }
 
-  if (queryModel === 'trigger') {
+  if (entity === 'trigger') {
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
-    if (queryType === 'add') {
+    if (action === 'create') {
       const currentModel = targetModel as Model;
 
       // When the trigger should fire and what type of query should cause it to fire.
@@ -776,7 +963,7 @@ export const addModelQueries = (
       if (fields) {
         if (action !== 'UPDATE') {
           throw new RoninError({
-            message: `When ${queryTypeReadable} ${PLURAL_MODEL_ENTITIES[queryModel]}, targeting specific fields requires the \`UPDATE\` action.`,
+            message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, targeting specific fields requires the \`UPDATE\` action.`,
             code: 'INVALID_MODEL_VALUE',
             fields: ['action'],
           });
@@ -836,77 +1023,32 @@ export const addModelQueries = (
     }
 
     dependencyStatements.push({ statement, params });
-    return;
   }
 
-  const statement = `${tableAction} TABLE "${tableName}"`;
+  const pluralType = PLURAL_MODEL_ENTITIES[entity];
 
-  if (queryModel === 'model') {
-    if (queryType === 'add') {
-      const newModel = queryInstructions.to as Model;
-      const { fields } = newModel;
-      const columns = fields
-        .map((field) => getFieldStatement(models, newModel, field))
-        .filter(Boolean);
+  const jsonAction =
+    action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
 
-      dependencyStatements.push({
-        statement: `${statement} (${columns.join(', ')})`,
-        params: [],
-      });
+  const jsonValue =
+    action === 'create'
+      ? { ...instructionList, model: undefined }
+      : action === 'alter'
+        ? queryInstructions.to
+        : null;
 
-      // Add the newly created model to the list of models.
-      models.push(newModel);
-    } else if (queryType === 'set') {
-      const newSlug = queryInstructions.to?.pluralSlug;
+  let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
+  if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
+  json += ')';
 
-      if (newSlug) {
-        const newTable = convertToSnakeCase(newSlug);
-
-        // Only push the statement if the table name is changing, otherwise we don't
-        // need it.
-        dependencyStatements.push({
-          statement: `${statement} RENAME TO "${newTable}"`,
-          params: [],
-        });
-      }
-
-      // Update the existing model in the list of models.
-      Object.assign(targetModel as Model, queryInstructions.to);
-    } else if (queryType === 'remove') {
-      // Remove the model from the list of models.
-      models.splice(models.indexOf(targetModel as Model), 1);
-
-      dependencyStatements.push({ statement, params: [] });
-    }
-
-    return;
-  }
-
-  if (queryModel === 'field') {
-    if (queryType === 'add') {
-      // Default field type.
-      if (!instructionList.type) instructionList.type = 'string';
-
-      dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
-        params: [],
-      });
-    } else if (queryType === 'set') {
-      const newSlug = queryInstructions.to?.slug;
-
-      if (newSlug) {
-        // Only push the statement if the column name is changing, otherwise we don't
-        // need it.
-        dependencyStatements.push({
-          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
-          params: [],
-        });
-      }
-    } else if (queryType === 'remove') {
-      dependencyStatements.push({
-        statement: `${statement} DROP COLUMN "${slug}"`,
-        params: [],
-      });
-    }
-  }
+  return {
+    set: {
+      model: {
+        with: { slug: usableSlug },
+        to: {
+          [pluralType]: { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json },
+        },
+      },
+    },
+  };
 };
