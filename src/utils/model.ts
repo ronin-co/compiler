@@ -267,18 +267,18 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
     copiedModel[setting] = generator(copiedModel[base]);
   }
 
-  const fields = copiedModel.fields || [];
+  const newFields = copiedModel.fields || [];
 
   // If the model is being newly created or if new fields were provided for an existing
   // model, we would like to re-generate the list of `identifiers` and attach the system
   // fields to the model.
-  if (isNew || fields.length > 0) {
+  if (isNew || newFields.length > 0) {
     if (!copiedModel.identifiers) copiedModel.identifiers = {};
 
     // Intelligently select a reasonable default for which field should be used as the
     // display name of the records in the model (e.g. used in lists on the dashboard).
     if (!copiedModel.identifiers.name) {
-      const suitableField = fields.find(
+      const suitableField = newFields.find(
         (field) =>
           field.type === 'string' &&
           field.required === true &&
@@ -291,7 +291,7 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
     // Intelligently select a reasonable default for which field should be used as the
     // slug of the records in the model (e.g. used in URLs on the dashboard).
     if (!copiedModel.identifiers.slug) {
-      const suitableField = fields.find(
+      const suitableField = newFields.find(
         (field) =>
           field.type === 'string' &&
           field.unique === true &&
@@ -302,7 +302,7 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
       copiedModel.identifiers.slug = suitableField?.slug || 'id';
     }
 
-    copiedModel.fields = [...SYSTEM_FIELDS, ...fields];
+    copiedModel.fields = [...SYSTEM_FIELDS, ...newFields];
   }
 
   return copiedModel as Model;
