@@ -706,15 +706,13 @@ export const transformMetaQuery = (
     } else {
       slug = query.alter[action][entity];
 
-      let jsonSlug: string = query.alter[action][entity];
       let jsonValue: unknown | undefined;
 
       if ('create' in query.alter) {
         const item = query.alter.create[entity] as Partial<ModelIndex>;
 
-        jsonSlug = item.slug || `${entity}Slug`;
-        slug = jsonSlug;
-        jsonValue = { slug: jsonSlug, ...item };
+        slug = item.slug || `${entity}Slug`;
+        jsonValue = { slug, ...item };
 
         queryInstructions = {
           to: {
@@ -728,14 +726,14 @@ export const transformMetaQuery = (
         jsonValue = query.alter.alter.to;
 
         queryInstructions = {
-          with: { model: { slug: modelSlug }, slug: jsonSlug },
+          with: { model: { slug: modelSlug }, slug },
           to: jsonValue as object,
         };
       }
 
       if ('drop' in query.alter) {
         queryInstructions = {
-          with: { model: { slug: modelSlug }, slug: jsonSlug },
+          with: { model: { slug: modelSlug }, slug },
         };
       }
     }
@@ -750,8 +748,6 @@ export const transformMetaQuery = (
   const instructionList = queryInstructions[
     mappedInstructions[action] as QueryInstructionTypeClean
   ] as WithInstruction;
-
-  // const slug: string = instructionList?.slug?.being || instructionList?.slug;
 
   const usableSlug = entity === 'model' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
