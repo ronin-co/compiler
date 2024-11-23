@@ -695,7 +695,7 @@ export const transformMetaQuery = (
     : 'ALTER';
 
   const tableName = convertToSnakeCase(pluralize(modelSlug));
-  const targetModel =
+  const model =
     action === 'create' && entity === 'model' ? null : getModelBySlug(models, modelSlug);
   const statement = `${tableAction} TABLE "${tableName}"`;
 
@@ -725,7 +725,7 @@ export const transformMetaQuery = (
       queryTypeDetails = { to: modelWithPresets };
     }
 
-    if (action === 'alter' && targetModel) {
+    if (action === 'alter' && model) {
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
@@ -746,7 +746,7 @@ export const transformMetaQuery = (
       }
 
       // Update the existing model in the list of models.
-      Object.assign(targetModel, modelWithPresets);
+      Object.assign(model, modelWithPresets);
 
       queryTypeDetails = {
         with: {
@@ -756,9 +756,9 @@ export const transformMetaQuery = (
       };
     }
 
-    if (action === 'drop' && targetModel) {
+    if (action === 'drop' && model) {
       // Remove the model from the list of models.
-      models.splice(models.indexOf(targetModel), 1);
+      models.splice(models.indexOf(model), 1);
 
       dependencyStatements.push({ statement, params: [] });
 
@@ -775,7 +775,7 @@ export const transformMetaQuery = (
     };
   }
 
-  if (entity === 'field' && targetModel) {
+  if (entity === 'field' && model) {
     if (action === 'create') {
       const field = jsonValue as ModelField;
 
@@ -783,7 +783,7 @@ export const transformMetaQuery = (
       field.type = field.type || 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel, field)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, model, field)}`,
         params: [],
       });
     } else if (action === 'alter') {
@@ -805,7 +805,7 @@ export const transformMetaQuery = (
     }
   }
 
-  if (entity === 'index' && targetModel) {
+  if (entity === 'index' && model) {
     const index = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
@@ -819,19 +819,14 @@ export const transformMetaQuery = (
         // If the slug of a field is provided, find the field in the model, obtain its
         // column selector, and place it in the SQL statement.
         if ('slug' in field) {
-          ({ fieldSelector } = getFieldFromModel(targetModel, field.slug, 'to'));
+          ({ fieldSelector } = getFieldFromModel(model, field.slug, 'to'));
         }
         // Alternatively, if an expression is provided instead of the slug of a field,
         // find all fields inside the expression, obtain their column selectors, and
         // insert them into the expression, after which the expression can be used in the
         // SQL statement.
         else if ('expression' in field) {
-          fieldSelector = parseFieldExpression(
-            targetModel,
-            'to',
-            field.expression,
-            targetModel,
-          );
+          fieldSelector = parseFieldExpression(model, 'to', field.expression);
         }
 
         if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
@@ -845,7 +840,7 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
       if (index.filter) {
-        const withStatement = handleWith(models, targetModel, params, index.filter);
+        const withStatement = handleWith(models, model, params, index.filter);
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -853,7 +848,7 @@ export const transformMetaQuery = (
     dependencyStatements.push({ statement, params });
   }
 
-  if (entity === 'trigger' && targetModel) {
+  if (entity === 'trigger' && model) {
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
@@ -875,7 +870,7 @@ export const transformMetaQuery = (
         }
 
         const fieldSelectors = trigger.fields.map((field) => {
-          return getFieldFromModel(targetModel, field.slug, 'to').fieldSelector;
+          return getFieldFromModel(model, field.slug, 'to').fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
@@ -904,7 +899,7 @@ export const transformMetaQuery = (
 
         const withStatement = handleWith(
           models,
-          { ...targetModel, tableAlias: tableAlias },
+          { ...model, tableAlias: tableAlias },
           params,
           trigger.filter,
         );
@@ -916,7 +911,7 @@ export const transformMetaQuery = (
       const effectStatements = trigger.effects.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
-          parentModel: targetModel,
+          parentModel: model,
         }).main.statement;
       });
 
