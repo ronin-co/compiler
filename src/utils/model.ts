@@ -661,13 +661,20 @@ export const transformMetaQuery = (
     ? Object.keys(query.alter).filter((key) => key !== 'model')[0]
     : queryType;
 
+  const actionReadable =
+    action === 'create' ? 'creating' : action === 'alter' ? 'altering' : 'dropping';
+
   const entity: ModelEntity | 'model' = subAltering
     ? Object.keys(query.alter[action])[0]
     : 'model';
 
+  let modelSlug: string | undefined;
+
   let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
   if (query.create) {
+    modelSlug = query.create.model;
+
     const init = query.create.model;
     const details =
       'to' in query.create
@@ -680,17 +687,19 @@ export const transformMetaQuery = (
   }
 
   if (query.drop) {
+    modelSlug = query.drop.model;
+
     queryInstructions = {
       with: { slug: query.drop.model },
     };
   }
 
   if (query.alter) {
-    const modelSlugTest = query.alter.model;
+    modelSlug = query.alter.model;
 
     if ('to' in query.alter) {
       queryInstructions = {
-        with: { slug: modelSlugTest },
+        with: { slug: modelSlug },
         to: query.alter.to,
       };
     } else {
@@ -705,7 +714,7 @@ export const transformMetaQuery = (
 
         queryInstructions = {
           to: {
-            model: { slug: modelSlugTest },
+            model: { slug: modelSlug },
             ...(jsonValue as object),
           },
         };
@@ -715,35 +724,29 @@ export const transformMetaQuery = (
         jsonValue = query.alter.alter.to;
 
         queryInstructions = {
-          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
+          with: { model: { slug: modelSlug }, slug: jsonSlug },
           to: jsonValue as object,
         };
       }
 
       if ('drop' in query.alter) {
         queryInstructions = {
-          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
+          with: { model: { slug: modelSlug }, slug: jsonSlug },
         };
       }
     }
   }
 
-  if (!queryInstructions) return query;
+  if (!(queryInstructions && modelSlug)) return query;
 
   const tableAction = ['model', 'index', 'trigger'].includes(entity)
     ? action.toUpperCase()
     : 'ALTER';
 
-  const actionReadable =
-    action === 'create' ? 'creating' : action === 'alter' ? 'altering' : 'dropping';
-
   const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
 
   const slug: string = instructionList?.slug?.being || instructionList?.slug;
-
-  const modelInstruction = instructionList?.model;
-  const modelSlug = modelInstruction?.slug?.being || modelInstruction?.slug;
 
   const usableSlug = entity === 'model' ? slug : modelSlug;
   const tableName = convertToSnakeCase(pluralize(usableSlug));
