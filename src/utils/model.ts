@@ -661,7 +661,9 @@ export const transformMetaQuery = (
     ? Object.keys(query.alter).filter((key) => key !== 'model')[0]
     : queryType;
 
-  const entity: ModelEntity = subAltering ? Object.keys(query.alter[action])[0] : 'model';
+  const entity: ModelEntity | 'model' = subAltering
+    ? Object.keys(query.alter[action])[0]
+    : 'model';
 
   let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
@@ -728,35 +730,15 @@ export const transformMetaQuery = (
 
   if (!queryInstructions) return query;
 
+  const tableAction = ['model', 'index', 'trigger'].includes(entity)
+    ? action.toUpperCase()
+    : 'ALTER';
+
+  const actionReadable =
+    action === 'create' ? 'creating' : action === 'alter' ? 'altering' : 'dropping';
+
   const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
   const instructionList = queryInstructions[instructionName] as WithInstruction;
-
-  let tableAction = 'ALTER';
-  let actionReadable: string | null = null;
-
-  switch (action) {
-    case 'create': {
-      if (entity === 'model' || entity === 'index' || entity === 'trigger') {
-        tableAction = 'CREATE';
-      }
-      actionReadable = 'creating';
-      break;
-    }
-
-    case 'alter': {
-      if (entity === 'model') tableAction = 'ALTER';
-      actionReadable = 'updating';
-      break;
-    }
-
-    case 'drop': {
-      if (entity === 'model' || entity === 'index' || entity === 'trigger') {
-        tableAction = 'DROP';
-      }
-      actionReadable = 'deleting';
-      break;
-    }
-  }
 
   const slug: string = instructionList?.slug?.being || instructionList?.slug;
 
