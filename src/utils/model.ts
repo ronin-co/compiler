@@ -695,11 +695,9 @@ export const transformMetaQuery = (
     ? action.toUpperCase()
     : 'ALTER';
 
-  const usableSlug = entity === 'model' ? slug : modelSlug;
-  const tableName = convertToSnakeCase(pluralize(usableSlug));
+  const tableName = convertToSnakeCase(pluralize(modelSlug));
   const targetModel =
-    entity === 'model' && action === 'create' ? null : getModelBySlug(models, usableSlug);
-
+    action === 'create' && entity === 'model' ? null : getModelBySlug(models, modelSlug);
   const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (entity === 'model') {
@@ -745,11 +743,11 @@ export const transformMetaQuery = (
       }
 
       // Update the existing model in the list of models.
-      Object.assign(targetModel as Model, modelWithPresets);
+      Object.assign(targetModel, modelWithPresets);
 
       queryTypeDetails = {
         with: {
-          slug: usableSlug,
+          slug: modelSlug,
         },
         to: modelWithPresets,
       };
@@ -757,12 +755,12 @@ export const transformMetaQuery = (
 
     if (action === 'drop') {
       // Remove the model from the list of models.
-      models.splice(models.indexOf(targetModel as Model), 1);
+      models.splice(models.indexOf(targetModel), 1);
 
       dependencyStatements.push({ statement, params: [] });
 
       queryTypeDetails = {
-        with: { slug: usableSlug },
+        with: { slug: modelSlug },
       };
     }
 
@@ -971,7 +969,7 @@ export const transformMetaQuery = (
   return {
     set: {
       model: {
-        with: { slug: usableSlug },
+        with: { slug: modelSlug },
         to: {
           [pluralType]: { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json },
         },
