@@ -655,9 +655,13 @@ export const transformMetaQuery = (
   query: Query,
 ): Query => {
   const { queryType } = splitQuery(query);
+  const subAltering = query.alter && !('to' in query.alter);
 
-  let action = queryType as ModelQueryType;
-  let entity: ModelEntity | 'model' = 'model';
+  const action: ModelQueryType = subAltering
+    ? Object.keys(query.alter).filter((key) => key !== 'model')[0]
+    : queryType;
+
+  const entity: ModelEntity = subAltering ? Object.keys(query.alter[action])[0] : 'model';
 
   let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
 
@@ -688,16 +692,7 @@ export const transformMetaQuery = (
         to: query.alter.to,
       };
     } else {
-      action = Object.keys(query.alter).filter(
-        (key) => key !== 'model',
-      )[0] as ModelQueryType;
-
-      const details = (
-        query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
-      )[action];
-      entity = Object.keys(details)[0] as ModelEntity;
-
-      let jsonSlug: string = details[entity];
+      let jsonSlug: string = query.alter[action][entity];
       let jsonValue: unknown | undefined;
 
       if ('create' in query.alter) {
