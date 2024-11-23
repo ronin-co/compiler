@@ -7,7 +7,7 @@ import type {
 
 type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
 
-export type ModelFieldBasics = {
+type ModelFieldBasics = {
   /** The label that should be used when displaying the field on the RONIN dashboard. */
   name?: string;
   /** Allows for addressing the field programmatically. */
