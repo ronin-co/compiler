@@ -654,8 +654,6 @@ export const transformMetaQuery = (
 
   let jsonValue: unknown | undefined;
 
-  let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
-
   if (query.create) {
     const init = query.create.model;
     jsonValue =
@@ -664,15 +662,10 @@ export const transformMetaQuery = (
         : (init as PartialModel);
 
     slug = modelSlug = jsonValue.slug;
-
-    queryInstructions = {
-      to: jsonValue,
-    };
   }
 
   if (query.drop) {
     slug = modelSlug = query.drop.model;
-    queryInstructions = {};
   }
 
   if (query.alter) {
@@ -680,11 +673,6 @@ export const transformMetaQuery = (
 
     if ('to' in query.alter) {
       jsonValue = query.alter.to;
-
-      queryInstructions = {
-        with: { slug: modelSlug },
-        to: query.alter.to,
-      };
     } else {
       slug = query.alter[action][entity];
 
@@ -693,31 +681,15 @@ export const transformMetaQuery = (
 
         slug = item.slug || `${entity}Slug`;
         jsonValue = { slug, ...item };
-
-        queryInstructions = {
-          to: {
-            model: { slug: modelSlug },
-            ...(jsonValue as object),
-          },
-        };
       }
 
       if ('alter' in query.alter) {
         jsonValue = query.alter.alter.to;
-
-        queryInstructions = {
-          with: { model: { slug: modelSlug }, slug },
-          to: jsonValue as object,
-        };
-      }
-
-      if ('drop' in query.alter) {
-        queryInstructions = {};
       }
     }
   }
 
-  if (!(queryInstructions && modelSlug && slug)) return query;
+  if (!(modelSlug && slug)) return query;
 
   const tableAction = ['model', 'index', 'trigger'].includes(entity)
     ? action.toUpperCase()
