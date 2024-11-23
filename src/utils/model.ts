@@ -649,8 +649,10 @@ export const transformMetaQuery = (
     ? Object.keys(query.alter[action])[0]
     : 'model';
 
-  let slug: string | undefined;
-  let modelSlug: string | undefined;
+  let slug: string | undefined =
+    entity === 'model' && action === 'create' ? null : query[queryType].model;
+  let modelSlug: string | undefined =
+    entity === 'model' && action === 'create' ? null : query[queryType].model;
 
   let jsonValue: unknown | undefined;
 
@@ -664,13 +666,7 @@ export const transformMetaQuery = (
     slug = modelSlug = jsonValue.slug;
   }
 
-  if (query.drop) {
-    slug = modelSlug = query.drop.model;
-  }
-
   if (query.alter) {
-    slug = modelSlug = query.alter.model;
-
     if ('to' in query.alter) {
       jsonValue = query.alter.to;
     } else {
@@ -724,7 +720,7 @@ export const transformMetaQuery = (
       queryTypeDetails = { to: modelWithPresets };
     }
 
-    if (action === 'alter') {
+    if (action === 'alter' && targetModel) {
       // Compose default settings for the model.
       const modelWithFields = addDefaultModelFields(jsonValue as Model, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
@@ -747,20 +743,20 @@ export const transformMetaQuery = (
 
       queryTypeDetails = {
         with: {
-          slug: modelSlug,
+          slug,
         },
         to: modelWithPresets,
       };
     }
 
-    if (action === 'drop') {
+    if (action === 'drop' && targetModel) {
       // Remove the model from the list of models.
       models.splice(models.indexOf(targetModel), 1);
 
       dependencyStatements.push({ statement, params: [] });
 
       queryTypeDetails = {
-        with: { slug: modelSlug },
+        with: { slug },
       };
     }
 
@@ -774,13 +770,13 @@ export const transformMetaQuery = (
     };
   }
 
-  if (entity === 'field') {
+  if (entity === 'field' && targetModel) {
     if (action === 'create') {
       // Default field type.
       if (!jsonValue?.type) jsonValue.type = 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, jsonValue as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel, jsonValue as ModelField)}`,
         params: [],
       });
     } else if (action === 'alter') {
@@ -802,7 +798,7 @@ export const transformMetaQuery = (
     }
   }
 
-  if (entity === 'index') {
+  if (entity === 'index' && targetModel) {
     const indexName = convertToSnakeCase(slug);
 
     // Whether the index should only allow one record with a unique value for its fields.
@@ -818,21 +814,25 @@ export const transformMetaQuery = (
     let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
-      const model = targetModel as Model;
       const columns = fields.map((field) => {
         let fieldSelector = '';
 
         // If the slug of a field is provided, find the field in the model, obtain its
         // column selector, and place it in the SQL statement.
         if ('slug' in field) {
-          ({ fieldSelector } = getFieldFromModel(model, field.slug, 'to'));
+          ({ fieldSelector } = getFieldFromModel(targetModel, field.slug, 'to'));
         }
         // Alternatively, if an expression is provided instead of the slug of a field,
         // find all fields inside the expression, obtain their column selectors, and
         // insert them into the expression, after which the expression can be used in the
         // SQL statement.
         else if ('expression' in field) {
-          fieldSelector = parseFieldExpression(model, 'to', field.expression, model);
+          fieldSelector = parseFieldExpression(
+            targetModel,
+            'to',
+            field.expression,
+            targetModel,
+          );
         }
 
         if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
@@ -846,12 +846,7 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
       if (filterQuery) {
-        const withStatement = handleWith(
-          models,
-          targetModel as Model,
-          params,
-          filterQuery,
-        );
+        const withStatement = handleWith(models, targetModel, params, filterQuery);
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -859,15 +854,13 @@ export const transformMetaQuery = (
     dependencyStatements.push({ statement, params });
   }
 
-  if (entity === 'trigger') {
+  if (entity === 'trigger' && targetModel) {
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (action === 'create') {
-      const currentModel = targetModel as Model;
-
       // When the trigger should fire and what type of query should cause it to fire.
       const { when, action } = jsonValue;
 
@@ -895,7 +888,7 @@ export const transformMetaQuery = (
         }
 
         const fieldSelectors = fields.map((field) => {
-          return getFieldFromModel(currentModel, field.slug, 'to').fieldSelector;
+          return getFieldFromModel(targetModel, field.slug, 'to').fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
@@ -924,7 +917,7 @@ export const transformMetaQuery = (
 
         const withStatement = handleWith(
           models,
-          { ...currentModel, tableAlias: tableAlias },
+          { ...targetModel, tableAlias: tableAlias },
           params,
           filterQuery,
         );
@@ -936,7 +929,7 @@ export const transformMetaQuery = (
       const effectStatements = effectQueries.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
-          parentModel: currentModel,
+          parentModel: targetModel,
         }).main.statement;
       });
 
@@ -955,15 +948,8 @@ export const transformMetaQuery = (
   const jsonAction =
     action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
 
-  const deepValue =
-    action === 'create'
-      ? { ...jsonValue, model: undefined }
-      : action === 'alter'
-        ? jsonValue
-        : null;
-
   let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
-  if (deepValue) json += `, ${prepareStatementValue(statementParams, deepValue)}`;
+  if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
   json += ')';
 
   return {
