@@ -684,9 +684,7 @@ export const transformMetaQuery = (
         jsonValue = { slug, ...item };
       }
 
-      if ('alter' in query.alter) {
-        jsonValue = query.alter.alter.to;
-      }
+      if ('alter' in query.alter) jsonValue = query.alter.alter.to;
     }
   }
 
@@ -764,9 +762,7 @@ export const transformMetaQuery = (
 
       dependencyStatements.push({ statement, params: [] });
 
-      queryTypeDetails = {
-        with: { slug },
-      };
+      queryTypeDetails = { with: { slug } };
     }
 
     const queryTypeAction =
