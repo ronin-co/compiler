@@ -1,7 +1,6 @@
 import { expect, test } from 'bun:test';
-import { type Model, compileQueries } from '@/src/index';
+import { type Model, type Query, compileQueries } from '@/src/index';
 import { CURSOR_NULL_PLACEHOLDER } from '@/src/instructions/before-after';
-import type { Query } from '@/src/types/query';
 import { RoninError } from '@/src/utils/helpers';
 
 test('get multiple records before cursor', () => {

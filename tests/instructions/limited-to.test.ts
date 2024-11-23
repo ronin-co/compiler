@@ -1,6 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, compileQueries } from '@/src/index';
-import type { Query } from '@/src/types/query';
+import { type Model, type Query, compileQueries } from '@/src/index';
 
 test('get multiple records limited to amount', () => {
   const queries: Array<Query> = [

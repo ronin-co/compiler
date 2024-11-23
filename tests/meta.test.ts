@@ -1,8 +1,14 @@
 import { expect, test } from 'bun:test';
-import { type Model, compileQueries } from '@/src/index';
-import type { Query } from '@/src/types/query';
+import {
+  type Model,
+  type ModelField,
+  type ModelIndex,
+  type ModelPreset,
+  type ModelTrigger,
+  type Query,
+  compileQueries,
+} from '@/src/index';
 
-import type { ModelPreset } from '@/src/types/model';
 import {
   RECORD_TIMESTAMP_REGEX,
   RONIN_MODEL_SYMBOLS,
@@ -10,7 +16,6 @@ import {
 } from '@/src/utils/helpers';
 import { RECORD_ID_REGEX } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS } from '@/src/utils/model';
-import type { ModelField, ModelIndex, ModelTrigger } from '../dist';
 
 test('create new model', () => {
   const fields = [

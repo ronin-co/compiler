@@ -3,9 +3,9 @@ import type {
   Model,
   ModelField,
   ModelFieldReferenceAction,
-  ModelIndexField,
+  ModelIndex,
   ModelPreset,
-  ModelTriggerField,
+  ModelTrigger,
   PartialModel,
   PublicModel,
 } from '@/src/types/model';
@@ -15,7 +15,6 @@ import type {
   Query,
   QueryInstructionType,
   Statement,
-  WithInstruction,
 } from '@/src/types/query';
 import {
   RONIN_MODEL_SYMBOLS,
@@ -32,7 +31,6 @@ import {
   prepareStatementValue,
 } from '@/src/utils/statement';
 import title from 'title';
-import type { ModelIndex } from '../../dist';
 
 /**
  * Finds a model by its slug or plural slug.
@@ -541,25 +539,6 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   return model;
 };
 
-/** A union type of all query instructions, but without nested instructions. */
-type QueryInstructionTypeClean = Exclude<
-  QueryInstructionType,
-  'orderedBy.ascending' | 'orderedBy.descending'
->;
-
-/**
- * A list of RONIN query types and the respective query instruction from which values
- * should be read that are used for finding/targeting records.
- *
- * For example, the values used for targeting a record in a `set` query are placed in
- * the `with` instruction.
- */
-const mappedInstructions: Partial<Record<ModelQueryType, QueryInstructionTypeClean>> = {
-  create: 'to',
-  alter: 'with',
-  drop: 'with',
-};
-
 /** A list of all RONIN data types and their respective column types in SQLite. */
 const typesInSQLite = {
   link: 'TEXT',
@@ -655,132 +634,80 @@ export const transformMetaQuery = (
   query: Query,
 ): Query => {
   const { queryType } = splitQuery(query);
+  const subAltering = query.alter && !('to' in query.alter);
 
-  let action = queryType as ModelQueryType;
-  let entity: ModelEntity | 'model' = 'model';
+  const action =
+    subAltering && query.alter
+      ? (Object.keys(query.alter).filter((key) => key !== 'model')[0] as ModelQueryType)
+      : (queryType as ModelQueryType);
 
-  let queryInstructions: ReturnType<typeof splitQuery>['queryInstructions'] | undefined;
+  const actionReadable =
+    action === 'create' ? 'creating' : action === 'alter' ? 'altering' : 'dropping';
+
+  const entity = (
+    subAltering && query.alter
+      ? Object.keys((query.alter as unknown as Record<ModelQueryType, string>)[action])[0]
+      : 'model'
+  ) as ModelEntity | 'model';
+
+  let slug =
+    entity === 'model' && action === 'create'
+      ? null
+      : (query[queryType]!.model as string);
+  let modelSlug = slug;
+
+  let jsonValue: Record<string, unknown> | undefined;
 
   if (query.create) {
     const init = query.create.model;
-    const details =
+    jsonValue =
       'to' in query.create
         ? ({ slug: init, ...query.create.to } as PartialModel)
         : (init as PartialModel);
 
-    queryInstructions = {
-      to: details,
-    };
-  }
-
-  if (query.drop) {
-    queryInstructions = {
-      with: { slug: query.drop.model },
-    };
+    slug = modelSlug = jsonValue.slug as string;
   }
 
   if (query.alter) {
-    const modelSlugTest = query.alter.model;
-
     if ('to' in query.alter) {
-      queryInstructions = {
-        with: { slug: modelSlugTest },
-        to: query.alter.to,
-      };
+      jsonValue = query.alter.to;
     } else {
-      action = Object.keys(query.alter).filter(
-        (key) => key !== 'model',
-      )[0] as ModelQueryType;
-
-      const details = (
+      slug = (
         query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
-      )[action];
-      entity = Object.keys(details)[0] as ModelEntity;
-
-      let jsonSlug: string = details[entity];
-      let jsonValue: unknown | undefined;
+      )[action][entity as ModelEntity];
 
       if ('create' in query.alter) {
-        const item = query.alter.create[entity] as Partial<ModelIndex>;
+        const item = (query.alter.create as unknown as Record<ModelEntity, ModelIndex>)[
+          entity as ModelEntity
+        ] as Partial<ModelIndex>;
 
-        jsonSlug = item.slug || `${entity}Slug`;
-        jsonValue = { slug: jsonSlug, ...item };
-
-        queryInstructions = {
-          to: {
-            model: { slug: modelSlugTest },
-            ...(jsonValue as object),
-          },
-        };
+        slug = item.slug || `${entity}Slug`;
+        jsonValue = { slug, ...item };
       }
 
-      if ('alter' in query.alter) {
-        jsonValue = query.alter.alter.to;
-
-        queryInstructions = {
-          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
-          to: jsonValue as object,
-        };
-      }
-
-      if ('drop' in query.alter) {
-        queryInstructions = {
-          with: { model: { slug: modelSlugTest }, slug: jsonSlug },
-        };
-      }
+      if ('alter' in query.alter) jsonValue = query.alter.alter.to;
     }
   }
 
-  if (!queryInstructions) return query;
+  if (!(modelSlug && slug)) return query;
 
-  const instructionName = mappedInstructions[action] as QueryInstructionTypeClean;
-  const instructionList = queryInstructions[instructionName] as WithInstruction;
+  const tableAction = ['model', 'index', 'trigger'].includes(entity)
+    ? action.toUpperCase()
+    : 'ALTER';
 
-  let tableAction = 'ALTER';
-  let actionReadable: string | null = null;
-
-  switch (action) {
-    case 'create': {
-      if (entity === 'model' || entity === 'index' || entity === 'trigger') {
-        tableAction = 'CREATE';
-      }
-      actionReadable = 'creating';
-      break;
-    }
-
-    case 'alter': {
-      if (entity === 'model') tableAction = 'ALTER';
-      actionReadable = 'updating';
-      break;
-    }
-
-    case 'drop': {
-      if (entity === 'model' || entity === 'index' || entity === 'trigger') {
-        tableAction = 'DROP';
-      }
-      actionReadable = 'deleting';
-      break;
-    }
-  }
-
-  const slug: string = instructionList?.slug?.being || instructionList?.slug;
-
-  const modelInstruction = instructionList?.model;
-  const modelSlug = modelInstruction?.slug?.being || modelInstruction?.slug;
-
-  const usableSlug = entity === 'model' ? slug : modelSlug;
-  const tableName = convertToSnakeCase(pluralize(usableSlug));
-  const targetModel =
-    entity === 'model' && action === 'create' ? null : getModelBySlug(models, usableSlug);
-
+  const tableName = convertToSnakeCase(pluralize(modelSlug));
+  const model =
+    action === 'create' && entity === 'model' ? null : getModelBySlug(models, modelSlug);
   const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (entity === 'model') {
     let queryTypeDetails: unknown;
 
     if (action === 'create') {
+      const newModel = jsonValue as unknown as Model;
+
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, true);
+      const modelWithFields = addDefaultModelFields(newModel, true);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const { fields } = modelWithPresets;
@@ -799,9 +726,11 @@ export const transformMetaQuery = (
       queryTypeDetails = { to: modelWithPresets };
     }
 
-    if (action === 'alter') {
+    if (action === 'alter' && model) {
+      const newModel = jsonValue as unknown as Model;
+
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(queryInstructions.to as Model, false);
+      const modelWithFields = addDefaultModelFields(newModel, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const newSlug = modelWithPresets.pluralSlug;
@@ -818,25 +747,23 @@ export const transformMetaQuery = (
       }
 
       // Update the existing model in the list of models.
-      Object.assign(targetModel as Model, modelWithPresets);
+      Object.assign(model, modelWithPresets);
 
       queryTypeDetails = {
         with: {
-          slug: usableSlug,
+          slug,
         },
         to: modelWithPresets,
       };
     }
 
-    if (action === 'drop') {
+    if (action === 'drop' && model) {
       // Remove the model from the list of models.
-      models.splice(models.indexOf(targetModel as Model), 1);
+      models.splice(models.indexOf(model), 1);
 
       dependencyStatements.push({ statement, params: [] });
 
-      queryTypeDetails = {
-        with: { slug: usableSlug },
-      };
+      queryTypeDetails = { with: { slug } };
     }
 
     const queryTypeAction =
@@ -849,17 +776,19 @@ export const transformMetaQuery = (
     };
   }
 
-  if (entity === 'field') {
+  if (entity === 'field' && model) {
     if (action === 'create') {
+      const field = jsonValue as ModelField;
+
       // Default field type.
-      if (!instructionList.type) instructionList.type = 'string';
+      field.type = field.type || 'string';
 
       dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, targetModel as Model, instructionList as ModelField)}`,
+        statement: `${statement} ADD COLUMN ${getFieldStatement(models, model, field)}`,
         params: [],
       });
     } else if (action === 'alter') {
-      const newSlug = queryInstructions.to?.slug;
+      const newSlug = jsonValue?.slug;
 
       if (newSlug) {
         // Only push the statement if the column name is changing, otherwise we don't
@@ -877,24 +806,15 @@ export const transformMetaQuery = (
     }
   }
 
-  if (entity === 'index') {
+  if (entity === 'index' && model) {
+    const index = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
-    // Whether the index should only allow one record with a unique value for its fields.
-    const unique: boolean | undefined = instructionList?.unique;
-
-    // The query instructions that should be used to filter the indexed records.
-    const filterQuery: WithInstruction = instructionList?.filter;
-
-    // The specific fields that should be indexed.
-    const fields: Array<ModelIndexField> = instructionList?.fields;
-
     const params: Array<unknown> = [];
-    let statement = `${tableAction}${unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
+    let statement = `${tableAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
-      const model = targetModel as Model;
-      const columns = fields.map((field) => {
+      const columns = index.fields.map((field) => {
         let fieldSelector = '';
 
         // If the slug of a field is provided, find the field in the model, obtain its
@@ -907,7 +827,7 @@ export const transformMetaQuery = (
         // insert them into the expression, after which the expression can be used in the
         // SQL statement.
         else if ('expression' in field) {
-          fieldSelector = parseFieldExpression(model, 'to', field.expression, model);
+          fieldSelector = parseFieldExpression(model, 'to', field.expression);
         }
 
         if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
@@ -920,13 +840,8 @@ export const transformMetaQuery = (
 
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
-      if (filterQuery) {
-        const withStatement = handleWith(
-          models,
-          targetModel as Model,
-          params,
-          filterQuery,
-        );
+      if (index.filter) {
+        const withStatement = handleWith(models, model, params, index.filter);
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -934,34 +849,20 @@ export const transformMetaQuery = (
     dependencyStatements.push({ statement, params });
   }
 
-  if (entity === 'trigger') {
+  if (entity === 'trigger' && model) {
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
     let statement = `${tableAction} TRIGGER "${triggerName}"`;
 
     if (action === 'create') {
-      const currentModel = targetModel as Model;
-
-      // When the trigger should fire and what type of query should cause it to fire.
-      const { when, action } = instructionList;
+      const trigger = jsonValue as ModelTrigger;
 
       // The different parts of the final statement.
-      const statementParts: Array<string> = [`${when} ${action}`];
+      const statementParts: Array<string> = [`${trigger.when} ${trigger.action}`];
 
-      // The query that will be executed when the trigger is fired.
-      const effectQueries: Array<Query> = instructionList?.effects;
-
-      // The query instructions that are used to determine whether the trigger should be
-      // fired, or not.
-      const filterQuery: WithInstruction = instructionList?.filter;
-
-      // The specific fields that should be targeted by the trigger. If those fields have
-      // changed, the trigger will be fired.
-      const fields: Array<ModelTriggerField> | undefined = instructionList?.fields;
-
-      if (fields) {
-        if (action !== 'UPDATE') {
+      if (trigger.fields) {
+        if (trigger.action !== 'UPDATE') {
           throw new RoninError({
             message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, targeting specific fields requires the \`UPDATE\` action.`,
             code: 'INVALID_MODEL_VALUE',
@@ -969,8 +870,8 @@ export const transformMetaQuery = (
           });
         }
 
-        const fieldSelectors = fields.map((field) => {
-          return getFieldFromModel(currentModel, field.slug, 'to').fieldSelector;
+        const fieldSelectors = trigger.fields.map((field) => {
+          return getFieldFromModel(model, field.slug, 'to').fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
@@ -982,8 +883,8 @@ export const transformMetaQuery = (
       // specific record fields, that means the trigger must be executed on a per-record
       // basis, meaning "for each row", instead of on a per-query basis.
       if (
-        filterQuery ||
-        effectQueries.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
+        trigger.filter ||
+        trigger.effects.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
       ) {
         statementParts.push('FOR EACH ROW');
       }
@@ -991,27 +892,27 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the trigger. Those
       // instructions will be validated for every row, and only if they match, the trigger
       // will then be fired.
-      if (filterQuery) {
+      if (trigger.filter) {
         const tableAlias =
-          action === 'DELETE'
+          trigger.action === 'DELETE'
             ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
             : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
 
         const withStatement = handleWith(
           models,
-          { ...currentModel, tableAlias: tableAlias },
+          { ...model, tableAlias: tableAlias },
           params,
-          filterQuery,
+          trigger.filter,
         );
 
         statementParts.push('WHEN', `(${withStatement})`);
       }
 
       // Compile the effect queries into SQL statements.
-      const effectStatements = effectQueries.map((effectQuery) => {
+      const effectStatements = trigger.effects.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
-          parentModel: currentModel,
+          parentModel: model,
         }).main.statement;
       });
 
@@ -1030,13 +931,6 @@ export const transformMetaQuery = (
   const jsonAction =
     action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
 
-  const jsonValue =
-    action === 'create'
-      ? { ...instructionList, model: undefined }
-      : action === 'alter'
-        ? queryInstructions.to
-        : null;
-
   let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
   if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
   json += ')';
@@ -1044,7 +938,7 @@ export const transformMetaQuery = (
   return {
     set: {
       model: {
-        with: { slug: usableSlug },
+        with: { slug: modelSlug },
         to: {
           [pluralType]: { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json },
         },

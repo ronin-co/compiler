@@ -1,6 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, compileQueries } from '@/src/index';
-import type { Query } from '@/src/types/query';
+import { type Model, type Query, compileQueries } from '@/src/index';
 
 import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
