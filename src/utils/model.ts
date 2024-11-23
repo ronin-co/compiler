@@ -689,10 +689,6 @@ export const transformMetaQuery = (
 
   if (query.drop) {
     slug = modelSlug = query.drop.model;
-
-    queryInstructions = {
-      with: { slug: query.drop.model },
-    };
   }
 
   if (query.alter) {
@@ -739,7 +735,9 @@ export const transformMetaQuery = (
     }
   }
 
-  if (!(queryInstructions && modelSlug)) return query;
+  if (!((query.drop ? true : queryInstructions) && modelSlug && slug)) return query;
+
+  if (!queryInstructions) queryInstructions = {};
 
   const tableAction = ['model', 'index', 'trigger'].includes(entity)
     ? action.toUpperCase()
