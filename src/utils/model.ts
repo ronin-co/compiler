@@ -3,7 +3,9 @@ import type {
   Model,
   ModelField,
   ModelFieldReferenceAction,
+  ModelIndex,
   ModelPreset,
+  ModelTrigger,
   PartialModel,
   PublicModel,
 } from '@/src/types/model';
@@ -29,7 +31,6 @@ import {
   prepareStatementValue,
 } from '@/src/utils/statement';
 import title from 'title';
-import type { ModelIndex, ModelTrigger } from '../../dist';
 
 /**
  * Finds a model by its slug or plural slug.

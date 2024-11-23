@@ -72,6 +72,7 @@ export type {
   ModelField,
   ModelIndex,
   ModelTrigger,
+  ModelPreset,
 } from '@/src/types/model';
 
 // Expose query types
