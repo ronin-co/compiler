@@ -962,11 +962,13 @@ export const transformMetaQuery = (
   }
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
+  const field = `${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}`;
 
-  const jsonAction =
-    action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
+  let json =
+    action === 'alter'
+      ? `json_patch(json_extract(${field}, '$.${slug}')`
+      : `json_${action === 'create' ? 'insert' : 'remove'}(${field}, '$.${slug}'`;
 
-  let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
   if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
   json += ')';
 
