@@ -615,6 +615,15 @@ const PLURAL_MODEL_ENTITIES: Record<ModelEntityType, string> = {
   preset: 'presets',
 };
 
+/**
+ * Converts an array of model entites (such as fields) to an object where the keys are
+ * the slugs of the entities and the values are their attributes.
+ *
+ * @param type The type of model entity to be processed.
+ * @param entities The list of the actual entities.
+ *
+ * @returns An object composed of the provided model entities.
+ */
 const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>) => {
   const entries = entities?.map((entity) => {
     const { slug, ...rest } =
@@ -721,6 +730,7 @@ export const transformMetaQuery = (
       const modelWithFields = addDefaultModelFields(newModel, true);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
+      // A list of all model entities, in the form of an object.
       const entities = Object.fromEntries(
         Object.entries(PLURAL_MODEL_ENTITIES).map(([type, pluralType]) => {
           const list = modelWithPresets[pluralType as keyof Model] as
