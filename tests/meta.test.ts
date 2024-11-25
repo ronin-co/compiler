@@ -73,7 +73,11 @@ test('create new model', () => {
         'INSERT INTO "ronin_schema" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12) RETURNING *',
       params: [
         'account',
-        JSON.stringify([...SYSTEM_FIELDS, ...fields]),
+        JSON.stringify(
+          Object.fromEntries(
+            [...SYSTEM_FIELDS, ...fields].map(({ slug, ...rest }) => [slug, rest]),
+          ),
+        ),
         'accounts',
         'Account',
         'Accounts',

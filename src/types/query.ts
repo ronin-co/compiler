@@ -80,7 +80,7 @@ export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema
 export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
 
 export type ModelQueryType = z.infer<typeof ModelQueryTypeEnum>;
-export type ModelEntity = z.infer<typeof ModelEntityEnum>;
+export type ModelEntityType = z.infer<typeof ModelEntityEnum>;
 
 export interface Statement {
   statement: string;
