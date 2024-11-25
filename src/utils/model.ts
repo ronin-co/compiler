@@ -1,6 +1,7 @@
 import { handleWith } from '@/src/instructions/with';
 import type {
   Model,
+  ModelEntity,
   ModelField,
   ModelFieldReferenceAction,
   ModelIndex,
@@ -10,7 +11,7 @@ import type {
   PublicModel,
 } from '@/src/types/model';
 import type {
-  ModelEntity,
+  ModelEntityType,
   ModelQueryType,
   Query,
   QueryInstructionType,
@@ -607,11 +608,30 @@ const getFieldStatement = (
 };
 
 // Keeping these hardcoded instead of using `pluralize` is faster.
-const PLURAL_MODEL_ENTITIES: Record<ModelEntity, string> = {
+const PLURAL_MODEL_ENTITIES: Record<ModelEntityType, string> = {
   field: 'fields',
   index: 'indexes',
   trigger: 'triggers',
   preset: 'presets',
+};
+
+/**
+ * Converts an array of model entites (such as fields) to an object where the keys are
+ * the slugs of the entities and the values are their attributes.
+ *
+ * @param type The type of model entity to be processed.
+ * @param entities The list of the actual entities.
+ *
+ * @returns An object composed of the provided model entities.
+ */
+const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>) => {
+  const entries = entities?.map((entity) => {
+    const { slug, ...rest } =
+      'slug' in entity ? entity : { slug: `${type}Slug`, ...entity };
+    return [slug, rest];
+  });
+
+  return entries ? Object.fromEntries(entries) : undefined;
 };
 
 /**
@@ -648,7 +668,7 @@ export const transformMetaQuery = (
     subAltering && query.alter
       ? Object.keys((query.alter as unknown as Record<ModelQueryType, string>)[action])[0]
       : 'model'
-  ) as ModelEntity | 'model';
+  ) as ModelEntityType | 'model';
 
   let slug =
     entity === 'model' && action === 'create'
@@ -673,13 +693,13 @@ export const transformMetaQuery = (
       jsonValue = query.alter.to;
     } else {
       slug = (
-        query.alter as unknown as Record<ModelQueryType, Record<ModelEntity, string>>
-      )[action][entity as ModelEntity];
+        query.alter as unknown as Record<ModelQueryType, Record<ModelEntityType, string>>
+      )[action][entity as ModelEntityType];
 
       if ('create' in query.alter) {
-        const item = (query.alter.create as unknown as Record<ModelEntity, ModelIndex>)[
-          entity as ModelEntity
-        ] as Partial<ModelIndex>;
+        const item = (
+          query.alter.create as unknown as Record<ModelEntityType, ModelIndex>
+        )[entity as ModelEntityType] as Partial<ModelIndex>;
 
         slug = item.slug || `${entity}Slug`;
         jsonValue = { slug, ...item };
@@ -710,8 +730,17 @@ export const transformMetaQuery = (
       const modelWithFields = addDefaultModelFields(newModel, true);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
-      const { fields } = modelWithPresets;
-      const columns = fields
+      // A list of all model entities, in the form of an object.
+      const entities = Object.fromEntries(
+        Object.entries(PLURAL_MODEL_ENTITIES).map(([type, pluralType]) => {
+          const list = modelWithPresets[pluralType as keyof Model] as
+            | Array<ModelEntity>
+            | undefined;
+          return [pluralType, formatModelEntity(type as ModelEntityType, list)];
+        }),
+      );
+
+      const columns = modelWithPresets.fields
         .map((field) => getFieldStatement(models, modelWithPresets, field))
         .filter(Boolean);
 
@@ -723,7 +752,13 @@ export const transformMetaQuery = (
       // Add the newly created model to the list of models.
       models.push(modelWithPresets);
 
-      queryTypeDetails = { to: modelWithPresets };
+      const finalModel = Object.assign({}, modelWithPresets);
+
+      for (const entity in entities) {
+        if (entities[entity]) finalModel[entity as keyof Model] = entities[entity];
+      }
+
+      queryTypeDetails = { to: finalModel };
     }
 
     if (action === 'alter' && model) {
