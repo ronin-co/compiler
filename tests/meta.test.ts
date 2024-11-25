@@ -454,7 +454,7 @@ test('update existing field (slug)', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_patch("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(newFieldDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -494,7 +494,7 @@ test('update existing field (name)', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_patch("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(newFieldDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1373,7 +1373,7 @@ test('update existing preset', () => {
 
   expect(statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_patch("presets", '$.company_employees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.company_employees', json_patch(json_extract("presets", '$.company_employees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(newPresetDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),

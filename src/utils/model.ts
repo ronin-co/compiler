@@ -962,13 +962,25 @@ export const transformMetaQuery = (
   }
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
+  const field = `${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}`;
 
-  const jsonAction =
-    action === 'create' ? 'insert' : action === 'alter' ? 'patch' : 'remove';
+  let json: string;
 
-  let json = `json_${jsonAction}(${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}, '$.${slug}'`;
-  if (jsonValue) json += `, ${prepareStatementValue(statementParams, jsonValue)}`;
-  json += ')';
+  switch (action) {
+    case 'create': {
+      const value = prepareStatementValue(statementParams, jsonValue);
+      json = `json_insert(${field}, '$.${slug}', ${value})`;
+      break;
+    }
+    case 'alter': {
+      const value = prepareStatementValue(statementParams, jsonValue);
+      json = `json_set(${field}, '$.${slug}', json_patch(json_extract(${field}, '$.${slug}'), ${value}))`;
+      break;
+    }
+    case 'drop': {
+      json = `json_remove(${field}, '$.${slug}')`;
+    }
+  }
 
   return {
     set: {
