@@ -1,7 +1,7 @@
 [test]
 coverage = true
 coverageThreshold = 1.0
-preload = ["./tests/setup.ts"]
+preload = ["./tests/fixtures/setup.ts"]
 
 [install]
 exact = true
