@@ -39,10 +39,10 @@ test('get single record with field being value', async () => {
     },
   ]);
 
-  const results = await queryDatabase(statements);
-  const finalResults = compileResults(results);
+  const engineResults = await queryDatabase(statements);
+  const results = compileResults(engineResults);
 
-  expect(finalResults).toEqual([
+  expect(results).toEqual([
     [
       {
         id: 'acc_39h8fhe98hefah8',
