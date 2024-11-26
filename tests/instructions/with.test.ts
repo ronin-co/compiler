@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { queryDatabase } from '@/fixtures/setup';
+import { type Model, type Query, compileQueries, compileResults } from '@/src/index';
 
-test('get single record with field being value', () => {
+test('get single record with field being value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -36,6 +37,20 @@ test('get single record with field being value', () => {
       params: ['elaine'],
       returning: true,
     },
+  ]);
+
+  const results = await queryDatabase(statements);
+  const finalResults = compileResults(results);
+
+  expect(finalResults).toEqual([
+    [
+      {
+        id: 'acc_39h8fhe98hefah8',
+        handle: 'elaine',
+        firstName: 'Elaine',
+        lastName: 'Jones',
+      },
+    ],
   ]);
 });
 

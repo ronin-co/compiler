@@ -7,6 +7,7 @@ import {
   addSystemModels,
   transformMetaQuery,
 } from '@/src/utils/model';
+import type { Row } from '@ronin/engine/types';
 
 /**
  * Composes SQL statements for the provided RONIN queries.
@@ -64,6 +65,10 @@ export const compileQueries = (
   // to produce output, and that output should be a 1:1 match between RONIN queries and
   // SQL statements, meaning one RONIN query should produce one main SQL statement.
   return [...dependencyStatements, ...mainStatements];
+};
+
+export const compileResults = (results: Array<Array<Row>>) => {
+  return results;
 };
 
 // Expose model types
