@@ -8,17 +8,17 @@ export type NativeRecord = Record<string, unknown> & {
   };
 };
 
-type SingleRecordResult = {
+export type SingleRecordResult = {
   record: NativeRecord | null;
 };
 
-type MultipleRecordResult = {
+export type MultipleRecordResult = {
   records: Array<NativeRecord>;
   moreAfter?: string;
   moreBefore?: string;
 };
 
-type AmountResult = {
+export type AmountResult = {
   amount: number;
 };
 

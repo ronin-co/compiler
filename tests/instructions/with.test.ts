@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { queryDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
+import type { SingleRecordResult } from '@/src/types/result';
 
 test('get single record with field being value', async () => {
   const queries: Array<Query> = [
@@ -40,8 +41,9 @@ test('get single record with field being value', async () => {
   ]);
 
   const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
 
-  expect(transaction.formatOutput(rows)[0]).toHaveProperty('record.handle', 'elaine');
+  expect(result.record?.handle).toBe('elaine');
 });
 
 test('get single record with field not being value', async () => {
@@ -82,11 +84,9 @@ test('get single record with field not being value', async () => {
   ]);
 
   const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
 
-  expect(transaction.formatOutput(rows)[0]).toHaveProperty(
-    'record.handle',
-    expect.not.stringContaining('elaine'),
-  );
+  expect(result.record?.handle).not.toBe('elaine');
 });
 
 test('get single record with field not being empty', async () => {
@@ -127,11 +127,9 @@ test('get single record with field not being empty', async () => {
   ]);
 
   const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
 
-  expect(transaction.formatOutput(rows)[0]).toHaveProperty(
-    'record.handle',
-    expect.stringMatching(/(.*)/),
-  );
+  expect(result.record?.handle).not.toBeNull();
 });
 
 test('get single record with field starting with value', async () => {
@@ -172,14 +170,12 @@ test('get single record with field starting with value', async () => {
   ]);
 
   const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
 
-  expect(transaction.formatOutput(rows)[0]).toHaveProperty(
-    'record.handle',
-    expect.stringMatching(/^el/),
-  );
+  expect(result.record?.handle).toStartWith('el');
 });
 
-test('get single record with field not starting with value', () => {
+test('get single record with field not starting with value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -215,9 +211,14 @@ test('get single record with field not starting with value', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).not.toStartWith('el');
 });
 
-test('get single record with field ending with value', () => {
+test('get single record with field ending with value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -253,9 +254,14 @@ test('get single record with field ending with value', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toEndWith('ne');
 });
 
-test('get single record with field not ending with value', () => {
+test('get single record with field not ending with value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -291,9 +297,14 @@ test('get single record with field not ending with value', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).not.toEndWith('ne');
 });
 
-test('get single record with field containing value', () => {
+test('get single record with field containing value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -329,9 +340,14 @@ test('get single record with field containing value', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toContain('ain');
 });
 
-test('get single record with field not containing value', () => {
+test('get single record with field not containing value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -367,16 +383,21 @@ test('get single record with field not containing value', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).not.toContain('ain');
 });
 
-test('get single record with field greater than value', () => {
+test('get single record with field greater than value', async () => {
   const queries: Array<Query> = [
     {
       get: {
         product: {
           with: {
             position: {
-              greaterThan: 5,
+              greaterThan: 1,
             },
           },
         },
@@ -401,10 +422,15 @@ test('get single record with field greater than value', () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" > ?1) LIMIT 1',
-      params: [5],
+      params: [1],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.position).toBeGreaterThan(1);
 });
 
 test('get single record with field greater or equal to value', () => {
