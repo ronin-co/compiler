@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { queryDatabase } from '@/fixtures/setup';
+import { queryDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 
 test('get single record with field being value', async () => {
