@@ -39,22 +39,29 @@ You will just need to make sure that, once you [create a pull request](https://d
 The programmatic API of the RONIN compiler looks like this:
 
 ```typescript
-import { Transaction, type Query } from '@ronin/compiler';
+import { Transaction } from '@ronin/compiler';
 
-const queries: Array<Query> = [
+const transaction = new Transaction([
   {
     create: { model: { slug: 'account' } }
   },
   {
     get: { accounts: null }
   }
-];
+]);
 
-const { statements } = new Transaction(queries);
+transaction.statements;
 // [{
 //   statement: 'SELECT * FROM "accounts"',
 //   params: [],
 //   returning: true,
+// }]
+
+transaction.models;
+// [{
+//   name: 'Account',
+//   slug: 'account'
+//   ...
 // }]
 ```
 
