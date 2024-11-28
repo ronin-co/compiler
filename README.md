@@ -94,9 +94,7 @@ The interface of creating new `Transaction` instances (thereby creating new tran
 define the smallest unit of workload that the compiler can operate on.
 
 Just like in the database, a transaction defines an atomic operation in which a list of queries is executed serially,
-and where each query can rely on the changes made by a previous one.
-
-In order to facilitate this, a programmatic interface that clarifies the accumulation of state is required (class instances).
+and where each query can rely on the changes made by a previous one. In order to facilitate this, a programmatic interface that clarifies the accumulation of state is required (class instances).
 
 For example, if one query creates a new model, every query after it within the same transaction must be able to
 interact with the records of that model, or update the model itself, thereby requiring the accumulation of state while
