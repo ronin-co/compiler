@@ -1131,7 +1131,7 @@ test('get single record with one of field values in group', async () => {
   ]);
 });
 
-test('get single record with name identifier', () => {
+test('get single record with name identifier', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -1151,12 +1151,20 @@ test('get single record with name identifier', () => {
       slug: 'account',
       fields: [
         {
-          slug: 'name',
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
+        {
+          slug: 'handle',
           type: 'string',
         },
       ],
       identifiers: {
-        name: 'name',
+        name: 'firstName',
       },
     },
   ];
@@ -1165,14 +1173,19 @@ test('get single record with name identifier', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE ("name" = ?1) LIMIT 1`,
+      statement: `SELECT * FROM "accounts" WHERE ("firstName" = ?1) LIMIT 1`,
       params: ['Elaine'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.firstName).toBe('Elaine');
 });
 
-test('get single record with slug identifier', () => {
+test('get single record with slug identifier', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -1195,6 +1208,14 @@ test('get single record with slug identifier', () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
       identifiers: {
         slug: 'handle',
@@ -1211,4 +1232,9 @@ test('get single record with slug identifier', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBe('elaine');
 });

@@ -108,13 +108,11 @@ export class Transaction {
   formatOutput(results: Array<Array<Row>>): Array<Result> {
     return results.map((result, index): Result => {
       const query = this.queries.at(-index) as Query;
-      const { queryType, queryModel } = splitQuery(query);
+      const { queryModel } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
       const single = queryModel !== model.pluralSlug;
 
       if (single) return { record: this.formatRecord(model, result[0] as NativeRecord) };
-
-      if (queryType === 'count') return { amount: result[0] as unknown as number };
 
       return {
         records: result.map((record) => this.formatRecord(model, record as NativeRecord)),
