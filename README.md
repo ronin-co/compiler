@@ -58,7 +58,7 @@ const { statements } = new Transaction(queries);
 // }]
 ```
 
-### Types
+#### Types
 
 In total, the following types are being exported:
 
