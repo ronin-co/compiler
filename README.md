@@ -43,8 +43,7 @@ import {
   Transaction,
 
   type Query,
-  type Model,
-  type Statement
+  type Model
 } from '@ronin/compiler';
 
 const queries: Array<Query> = [{
