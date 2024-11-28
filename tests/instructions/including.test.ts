@@ -31,7 +31,7 @@ test('get single record including unrelated record without filter', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -88,7 +88,7 @@ test('get single record including unrelated record with filter', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -127,7 +127,7 @@ test('get single record including unrelated records without filter', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -184,7 +184,7 @@ test('get single record including unrelated records with filter', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -227,7 +227,7 @@ test('get single record including unrelated ordered record', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -270,7 +270,7 @@ test('get single record including unrelated ordered records', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -300,7 +300,7 @@ test('get single record including ephemeral field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -342,7 +342,7 @@ test('get single record including ephemeral field containing expression', () => 
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -374,7 +374,7 @@ test('get single record including deeply nested ephemeral field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {

@@ -60,7 +60,7 @@ test('create new model', () => {
 
   const models: Array<Model> = [];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -121,7 +121,7 @@ test('create new model with suitable default identifiers', () => {
 
   const models: Array<Model> = [];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[1].params[7]).toEqual('name');
   expect(transaction.statements[1].params[8]).toEqual('handle');
@@ -147,7 +147,7 @@ test('update existing model (slug)', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -192,7 +192,7 @@ test('update existing model (plural name)', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -219,7 +219,7 @@ test('drop existing model', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -252,7 +252,7 @@ test('query a model that was just created', () => {
 
   const models: Array<Model> = [];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[2]).toEqual({
     statement: 'SELECT * FROM "accounts" LIMIT 1',
@@ -284,7 +284,7 @@ test('query a model that was just updated', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[2]).toEqual({
     statement: 'SELECT * FROM "users" LIMIT 1',
@@ -316,7 +316,7 @@ test('query a model that was just dropped', () => {
   let error: Error | undefined;
 
   try {
-    new Transaction(queries, models);
+    new Transaction(queries, { models });
   } catch (err) {
     error = err as Error;
   }
@@ -352,7 +352,7 @@ test('create new field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -401,7 +401,7 @@ test('create new field with options', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -446,7 +446,7 @@ test('update existing field (slug)', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -490,7 +490,7 @@ test('update existing field (name)', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -523,7 +523,7 @@ test('drop existing field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -565,7 +565,7 @@ test('create new index', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -616,7 +616,7 @@ test('create new index with filter', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -672,7 +672,7 @@ test('create new index with field expressions', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -720,7 +720,7 @@ test('create new index with ordered and collated fields', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -767,7 +767,7 @@ test('create new unique index', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -804,7 +804,7 @@ test('drop existing index', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -857,7 +857,7 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -926,7 +926,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1002,7 +1002,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1083,7 +1083,7 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1159,7 +1159,7 @@ test('create new per-record trigger for removing records', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1234,7 +1234,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1279,7 +1279,7 @@ test('drop existing trigger', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1324,7 +1324,7 @@ test('create new preset', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1369,7 +1369,7 @@ test('update existing preset', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1402,7 +1402,7 @@ test('drop existing preset', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -1430,7 +1430,7 @@ test('try to update existing model that does not exist', () => {
   let error: Error | undefined;
 
   try {
-    new Transaction(queries, models);
+    new Transaction(queries, { models });
   } catch (err) {
     error = err as Error;
   }
@@ -1486,7 +1486,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   let error: Error | undefined;
 
   try {
-    new Transaction(queries, models);
+    new Transaction(queries, { models });
   } catch (err) {
     error = err as Error;
   }

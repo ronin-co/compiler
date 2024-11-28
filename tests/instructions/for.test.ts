@@ -64,7 +64,7 @@ test('get single record for preset', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -148,7 +148,7 @@ test('get single record for preset containing field with condition', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -231,7 +231,7 @@ test('get single record for preset containing field without condition', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -291,7 +291,7 @@ test('get single record for preset on existing object instruction', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -347,7 +347,7 @@ test('get single record for preset on existing array instruction', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -386,7 +386,7 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -425,7 +425,7 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -463,7 +463,7 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -499,7 +499,7 @@ test('try get single record with non-existing preset', () => {
   let error: Error | undefined;
 
   try {
-    new Transaction(queries, models);
+    new Transaction(queries, { models });
   } catch (err) {
     error = err as Error;
   }

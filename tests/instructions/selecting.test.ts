@@ -18,7 +18,7 @@ test('get single record with specific field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -52,7 +52,7 @@ test('get single record with specific fields', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {

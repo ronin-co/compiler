@@ -29,7 +29,7 @@ test('get single record with field being value', async () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -80,7 +80,7 @@ test('get single record with field not being value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -118,7 +118,7 @@ test('get single record with field not being empty', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -156,7 +156,7 @@ test('get single record with field starting with value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -194,7 +194,7 @@ test('get single record with field not starting with value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -232,7 +232,7 @@ test('get single record with field ending with value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -270,7 +270,7 @@ test('get single record with field not ending with value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -308,7 +308,7 @@ test('get single record with field containing value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -346,7 +346,7 @@ test('get single record with field not containing value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -384,7 +384,7 @@ test('get single record with field greater than value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -422,7 +422,7 @@ test('get single record with field greater or equal to value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -460,7 +460,7 @@ test('get single record with field less than value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -498,7 +498,7 @@ test('get single record with field less or equal to value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -543,7 +543,7 @@ test('get single record with multiple fields being value', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -591,7 +591,7 @@ test('get single record with link field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -634,7 +634,7 @@ test('get single record with link field and id', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -678,7 +678,7 @@ test('get single record with link field and id with condition', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -716,7 +716,7 @@ test('get single record with json field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -761,7 +761,7 @@ test('get single record with one of fields', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -804,7 +804,7 @@ test('get single record with one of field conditions', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -842,7 +842,7 @@ test('get single record with one of field values', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -884,7 +884,7 @@ test('get single record with one of field values in group', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -925,7 +925,7 @@ test('get single record with name identifier', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -966,7 +966,7 @@ test('get single record with slug identifier', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
