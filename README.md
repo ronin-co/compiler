@@ -92,7 +92,7 @@ Whenever you make a change to the source code, it will then automatically be tra
 
 The interface of creating new `Transaction` instances (thereby creating new transactions) was chosen in order to define the smallest workload unit that the compiler can operate on.
 
-Just like for the database, a transaction for the compiler defines an atomic operation in which a list of queries can be executed serially, and where each query can rely on the changes made by a previous one. In order to facilitate this, a programmatic interface that clarifies the accumulation of local state is required (class instances).
+Just like for the database, a transaction for the compiler defines an [atomic operation](https://www.sqlite.org/lang_transaction.html) in which a list of queries can be executed serially, and where each query can rely on the changes made by a previous one. In order to facilitate this, a programmatic interface that clarifies the accumulation of local state is required (class instances).
 
 For example, if one query creates a new model, every query after it within the same transaction must be able to interact with the records of that model, or update the model itself, without roundtrips to the database, thereby requiring the accumulation of state while the transaction is being compiled.
 
