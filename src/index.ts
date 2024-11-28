@@ -1,5 +1,6 @@
 import type { PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
+import type { Result } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import {
   addDefaultModelFields,
@@ -7,7 +8,6 @@ import {
   addSystemModels,
   transformMetaQuery,
 } from '@/src/utils/model';
-import type { Row } from '@ronin/engine/types';
 
 /**
  * Composes SQL statements for the provided RONIN queries.
@@ -67,7 +67,7 @@ const compileQueries = (
   return [...dependencyStatements, ...mainStatements];
 };
 
-const compileResults = (results: Array<Array<Row>>) => {
+const compileResults = (results: Array<Result>) => {
   return results;
 };
 
@@ -82,7 +82,7 @@ export class Transaction {
     this.statements = compileQueries(queries, models, options);
   }
 
-  formatOutput(results: Array<Array<Row>>) {
+  formatOutput(results: Array<Result>) {
     return compileResults(results);
   }
 }
