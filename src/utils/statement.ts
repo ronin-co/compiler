@@ -145,7 +145,9 @@ export const composeFieldValues = (
   // Determine if the value of the field is a symbol.
   const symbol = getSymbol(value);
 
-  let conditionValue = value;
+  // Obtain the SQL syntax that should be used for the current condition.
+  const syntax = WITH_CONDITIONS[options.condition || 'being'](value);
+  let conditionValue = syntax[1];
 
   if (symbol) {
     // The value of the field is a RONIN expression, which we need to compile into an SQL
@@ -167,13 +169,13 @@ export const composeFieldValues = (
       })`;
     }
   } else if (collectStatementValue) {
-    conditionValue = prepareStatementValue(statementParams, value);
+    conditionValue = prepareStatementValue(statementParams, conditionValue);
   }
 
   if (options.type === 'fields') return conditionSelector;
   if (options.type === 'values') return conditionValue as string;
 
-  return `${conditionSelector} ${WITH_CONDITIONS[options.condition || 'being'](conditionValue, value)}`;
+  return `${conditionSelector} ${syntax[0]} ${conditionValue}`;
 };
 
 /**

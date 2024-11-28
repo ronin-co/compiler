@@ -56,13 +56,15 @@ transaction.statements;
 //   params: [],
 //   returning: true,
 // }]
+```
 
-transaction.models;
-// [{
-//   name: 'Account',
-//   slug: 'account'
-//   ...
-// }]
+Once the RONIN queries have been compiled down to SQL statements, the statements can be
+executed and their results can be formatted by the compiler as well:
+
+```typescript
+// `rows` are provided by the database engine
+
+const results: Array<Result> = transaction.prepareResults(rows);
 ```
 
 #### Types
