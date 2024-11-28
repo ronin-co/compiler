@@ -63,6 +63,13 @@ transaction.models;
 //   slug: 'account'
 //   ...
 // }]
+
+transaction.queries;
+// [{
+//   create: { model: { slug: 'account' }}
+// }, {
+//   get: { accounts: null }
+// }]
 ```
 
 #### Types
