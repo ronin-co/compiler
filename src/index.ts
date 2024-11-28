@@ -98,3 +98,6 @@ export type {
 
 // Expose query types
 export type { Query, Statement } from '@/src/types/query';
+
+// Expose result types
+export type { Result } from '@/src/types/result';
