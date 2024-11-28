@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
@@ -64,9 +64,9 @@ test('get single record for preset', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "views" WHERE ("space" = ?1) LIMIT 1',
       params: ['spa_m9h8oha94helaji'],
@@ -148,9 +148,9 @@ test('get single record for preset containing field with condition', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
@@ -231,9 +231,9 @@ test('get single record for preset containing field without condition', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
@@ -291,9 +291,9 @@ test('get single record for preset on existing object instruction', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'SELECT * FROM "members" WHERE ("space" = ?1 AND "account" = ?2) LIMIT 1',
@@ -347,9 +347,9 @@ test('get single record for preset on existing array instruction', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT "space", "account" FROM "members" LIMIT 1',
       params: [],
@@ -386,9 +386,9 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
@@ -425,9 +425,9 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_link_post_comments" as including_comments ON ("including_comments"."source" = "sub_posts"."id")`,
       params: [],
@@ -463,9 +463,9 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
       params: [],
@@ -499,7 +499,7 @@ test('try get single record with non-existing preset', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }

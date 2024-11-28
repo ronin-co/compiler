@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { queryDatabase } from '@/fixtures/setup';
+import { type Model, type Query, Transaction } from '@/src/index';
 
-test('get single record with field being value', () => {
+test('get single record with field being value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -28,14 +29,27 @@ test('get single record with field being value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1',
       params: ['elaine'],
       returning: true,
     },
+  ]);
+
+  const rows = await queryDatabase(transaction.statements);
+
+  expect(transaction.formatOutput(rows)).toEqual([
+    [
+      {
+        id: 'acc_39h8fhe98hefah8',
+        handle: 'elaine',
+        firstName: 'Elaine',
+        lastName: 'Jones',
+      },
+    ],
   ]);
 });
 
@@ -66,9 +80,9 @@ test('get single record with field not being value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" != ?1) LIMIT 1',
       params: ['elaine'],
@@ -104,9 +118,9 @@ test('get single record with field not being empty', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" IS NOT NULL) LIMIT 1',
       params: [],
@@ -142,9 +156,9 @@ test('get single record with field starting with value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1%) LIMIT 1',
       params: ['el'],
@@ -180,9 +194,9 @@ test('get single record with field not starting with value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1%) LIMIT 1',
       params: ['el'],
@@ -218,9 +232,9 @@ test('get single record with field ending with value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1) LIMIT 1',
       params: ['ne'],
@@ -256,9 +270,9 @@ test('get single record with field not ending with value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1) LIMIT 1',
       params: ['ne'],
@@ -294,9 +308,9 @@ test('get single record with field containing value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1%) LIMIT 1',
       params: ['ain'],
@@ -332,9 +346,9 @@ test('get single record with field not containing value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1%) LIMIT 1',
       params: ['ain'],
@@ -370,9 +384,9 @@ test('get single record with field greater than value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" > ?1) LIMIT 1',
       params: [5],
@@ -408,9 +422,9 @@ test('get single record with field greater or equal to value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" >= ?1) LIMIT 1',
       params: [5],
@@ -446,9 +460,9 @@ test('get single record with field less than value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" < ?1) LIMIT 1',
       params: [10],
@@ -484,9 +498,9 @@ test('get single record with field less or equal to value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" <= ?1) LIMIT 1',
       params: [10],
@@ -529,9 +543,9 @@ test('get single record with multiple fields being value', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" = ?1 AND "name" = ?2) LIMIT 1',
       params: ['elaine', 'Elaine'],
@@ -577,9 +591,9 @@ test('get single record with link field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'SELECT * FROM "members" WHERE ("account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1)) LIMIT 1',
@@ -620,9 +634,9 @@ test('get single record with link field and id', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
       params: ['mem_zgoj3xav8tpcte1s'],
@@ -664,9 +678,9 @@ test('get single record with link field and id with condition', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
       params: ['mem_zgoj3xav8tpcte1s'],
@@ -702,9 +716,9 @@ test('get single record with json field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
       params: ['receipts@ronin.co'],
@@ -747,9 +761,9 @@ test('get single record with one of fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "email" = ?2) LIMIT 1`,
       params: ['elaine', 'elaine@site.co'],
@@ -790,9 +804,9 @@ test('get single record with one of field conditions', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1`,
       params: ['elaine', 'david'],
@@ -828,9 +842,9 @@ test('get single record with one of field values', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "handle" = ?2) LIMIT 1`,
       params: ['elaine', 'david'],
@@ -870,9 +884,9 @@ test('get single record with one of field values in group', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "teams" WHERE ("billing.currency" = ?1 OR "billing.currency" = ?2) LIMIT 1`,
       params: ['EUR', 'USD'],
@@ -911,9 +925,9 @@ test('get single record with name identifier', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" WHERE ("name" = ?1) LIMIT 1`,
       params: ['Elaine'],
@@ -952,9 +966,9 @@ test('get single record with slug identifier', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1`,
       params: ['elaine'],

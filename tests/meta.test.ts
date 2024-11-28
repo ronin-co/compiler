@@ -6,7 +6,7 @@ import {
   type ModelPreset,
   type ModelTrigger,
   type Query,
-  compileQueries,
+  Transaction,
 } from '@/src/index';
 
 import {
@@ -60,9 +60,9 @@ test('create new model', () => {
 
   const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT, "name" TEXT GENERATED ALWAYS AS (UPPER(substr("handle", 1, 1)) || substr("handle", 2)) STORED)',
@@ -121,10 +121,10 @@ test('create new model with suitable default identifiers', () => {
 
   const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements[1].params[7]).toEqual('name');
-  expect(statements[1].params[8]).toEqual('handle');
+  expect(transaction.statements[1].params[7]).toEqual('name');
+  expect(transaction.statements[1].params[8]).toEqual('handle');
 });
 
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
@@ -147,9 +147,9 @@ test('update existing model (slug)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'ALTER TABLE "accounts" RENAME TO "users"',
       params: [],
@@ -192,9 +192,9 @@ test('update existing model (plural name)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'UPDATE "ronin_schema" SET "pluralName" = ?1, "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *',
@@ -219,9 +219,9 @@ test('drop existing model', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'DROP TABLE "accounts"',
       params: [],
@@ -252,9 +252,9 @@ test('query a model that was just created', () => {
 
   const models: Array<Model> = [];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements[2]).toEqual({
+  expect(transaction.statements[2]).toEqual({
     statement: 'SELECT * FROM "accounts" LIMIT 1',
     params: [],
     returning: true,
@@ -284,9 +284,9 @@ test('query a model that was just updated', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements[2]).toEqual({
+  expect(transaction.statements[2]).toEqual({
     statement: 'SELECT * FROM "users" LIMIT 1',
     params: [],
     returning: true,
@@ -316,7 +316,7 @@ test('query a model that was just dropped', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -352,9 +352,9 @@ test('create new field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'ALTER TABLE "accounts" ADD COLUMN "email" TEXT',
       params: [],
@@ -401,9 +401,9 @@ test('create new field with options', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'ALTER TABLE "members" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
@@ -446,9 +446,9 @@ test('update existing field (slug)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
       params: [],
@@ -490,9 +490,9 @@ test('update existing field (name)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
@@ -523,9 +523,9 @@ test('drop existing field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'ALTER TABLE "accounts" DROP COLUMN "email"',
       params: [],
@@ -565,9 +565,9 @@ test('create new index', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'CREATE INDEX "index_slug" ON "accounts" ("email")',
       params: [],
@@ -616,9 +616,9 @@ test('create new index with filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE INDEX "index_slug" ON "accounts" ("email") WHERE (("email" LIKE %?1))',
@@ -672,9 +672,9 @@ test('create new index with field expressions', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `CREATE INDEX "index_slug" ON "accounts" (LOWER("firstName" || ' ' || "lastName"))`,
       params: [],
@@ -720,9 +720,9 @@ test('create new index with ordered and collated fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'CREATE INDEX "index_slug" ON "accounts" ("email" COLLATE NOCASE ASC)',
       params: [],
@@ -767,9 +767,9 @@ test('create new unique index', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'CREATE UNIQUE INDEX "index_slug" ON "accounts" ("email")',
       params: [],
@@ -804,9 +804,9 @@ test('drop existing index', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'DROP INDEX "index_slug"',
       params: [],
@@ -857,9 +857,9 @@ test('create new trigger for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
@@ -926,9 +926,9 @@ test('create new trigger for creating records with targeted fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
@@ -1002,9 +1002,9 @@ test('create new trigger for creating records with multiple effects', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
@@ -1083,9 +1083,9 @@ test('create new per-record trigger for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
@@ -1159,9 +1159,9 @@ test('create new per-record trigger for removing records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TRIGGER "trigger_slug" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
@@ -1234,9 +1234,9 @@ test('create new per-record trigger with filters for creating records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
@@ -1279,9 +1279,9 @@ test('drop existing trigger', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'DROP TRIGGER "trigger_slug"',
       params: [],
@@ -1324,9 +1324,9 @@ test('create new preset', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.company_employees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
@@ -1369,9 +1369,9 @@ test('update existing preset', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.company_employees', json_patch(json_extract("presets", '$.company_employees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
@@ -1402,9 +1402,9 @@ test('drop existing preset', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.company_employees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
@@ -1430,7 +1430,7 @@ test('try to update existing model that does not exist', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1486,7 +1486,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }

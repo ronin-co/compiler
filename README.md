@@ -40,11 +40,10 @@ The programmatic API of the RONIN compiler looks like this:
 
 ```typescript
 import {
-  compileQueries,
+  Transaction,
 
   type Query,
-  type Model,
-  type Statement
+  type Model
 } from '@ronin/compiler';
 
 const queries: Array<Query> = [{
@@ -57,7 +56,7 @@ const models: Array<Model> = [{
   slug: 'account'
 }];
 
-const statements: Array<Statement> = compileQueries(queries, models);
+const { statements } = new Transaction(queries, models);
 // [{
 //   statement: 'SELECT * FROM "accounts"',
 //   params: [],
@@ -70,7 +69,7 @@ const statements: Array<Statement> = compileQueries(queries, models);
 To fine-tune the behavior of the compiler, you can pass the following options:
 
 ```typescript
-compileQueries(queries, models, {
+new Transaction(queries, models, {
   // Instead of returning an array of parameters for every statement (which allows for
   // preventing SQL injections), all parameters are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.
@@ -87,6 +86,16 @@ bun run dev
 ```
 
 Whenever you make a change to the source code, it will then automatically be transpiled again.
+
+### Mental Model
+
+The interface of creating new `Transaction` instances (thereby creating new transactions) was chosen in order to define the smallest workload unit that the compiler can operate on.
+
+Just like for the database, a transaction for the compiler defines an [atomic operation](https://www.sqlite.org/lang_transaction.html) in which a list of queries can be executed serially, and where each query can rely on the changes made by a previous one. In order to facilitate this, a programmatic interface that clarifies the accumulation of in-memory state is required (class instances).
+
+For example, if one query creates a new model, every query after it within the same transaction must be able to interact with the records of that model, or update the model itself, without roundtrips to the database, thereby requiring the accumulation of state while the transaction is being compiled.
+
+Furthermore, since every database transaction causes a [lock](https://www.sqlite.org/lockingv3.html), the database is inherently not locked between the execution of multiple transactions, which could cause the compilation inputs (e.g. models) of a `Transaction` to no longer be up-to-date. If the inputs have changed, a `new Transaction` should therefore be created.
 
 ### Running Tests
 

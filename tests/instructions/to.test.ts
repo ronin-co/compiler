@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 import {
   RECORD_ID_REGEX,
@@ -36,9 +36,9 @@ test('set single record to new string field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: ['mia', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
@@ -81,9 +81,9 @@ test('set single record to new string field with expression referencing fields',
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "accounts" SET "name" = UPPER(substr("handle", 1, 1)) || substr("handle", 2), "ronin.updatedAt" = ?1 WHERE ("handle" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
@@ -132,9 +132,9 @@ test('set single record to new one-cardinality link field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
@@ -186,9 +186,9 @@ test('set single record to new many-cardinality link field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1)',
       params: ['pos_zgoj3xav8tpcte1s'],
@@ -254,9 +254,9 @@ test('set single record to new many-cardinality link field (add)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
@@ -318,9 +318,9 @@ test('set single record to new many-cardinality link field (remove)', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
@@ -367,9 +367,9 @@ test('set single record to new json field with array', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: [
@@ -417,9 +417,9 @@ test('set single record to new json field with object', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
       params: [
@@ -466,9 +466,9 @@ test('set single record to new grouped string field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
@@ -527,9 +527,9 @@ test('set single record to new grouped link field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
@@ -576,9 +576,9 @@ test('set single record to new grouped json field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
@@ -641,9 +641,9 @@ test('set single record to result of nested query', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
@@ -694,9 +694,9 @@ test('add multiple records with nested sub query', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `INSERT INTO "new_accounts" SELECT * FROM "old_accounts" RETURNING *`,
       params: [],
@@ -751,9 +751,9 @@ test('add multiple records with nested sub query including additional fields', (
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" RETURNING *',
@@ -803,9 +803,9 @@ test('add multiple records with nested sub query and specific fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" RETURNING *',
@@ -859,9 +859,9 @@ test('add multiple records with nested sub query and specific meta fields', () =
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement:
         'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" RETURNING *',
@@ -921,7 +921,7 @@ test('try to add multiple records with nested sub query including non-existent f
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }

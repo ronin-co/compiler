@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
@@ -31,9 +31,9 @@ test('get single record including unrelated record without filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1`,
       params: [],
@@ -88,9 +88,9 @@ test('get single record including unrelated record with filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1`,
       params: [],
@@ -127,9 +127,9 @@ test('get single record including unrelated records without filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1`,
       params: [],
@@ -184,9 +184,9 @@ test('get single record including unrelated records with filter', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")`,
       params: [],
@@ -227,9 +227,9 @@ test('get single record including unrelated ordered record', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC LIMIT 1) as including_team LIMIT 1`,
       params: [],
@@ -270,9 +270,9 @@ test('get single record including unrelated ordered records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams LIMIT 1`,
       params: [],
@@ -300,9 +300,9 @@ test('get single record including ephemeral field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT *, ?1 as "name" FROM "spaces" LIMIT 1`,
       params: ['Example Space'],
@@ -342,9 +342,9 @@ test('get single record including ephemeral field containing expression', () => 
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT *, ("firstName" || ' ' || "lastName") as "name" FROM "accounts" LIMIT 1`,
       params: [],
@@ -374,9 +374,9 @@ test('get single record including deeply nested ephemeral field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT *, ?1 as "invoice.recipient" FROM "spaces" LIMIT 1`,
       params: ['receipts@site.co'],

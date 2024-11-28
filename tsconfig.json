@@ -25,7 +25,8 @@
 
       // Extra config
       "paths": {
-        "@/src/*": ["./src/*"]
+        "@/src/*": ["./src/*"],
+        "@/fixtures/*": ["./tests/fixtures/*"],
       }
     }
   }

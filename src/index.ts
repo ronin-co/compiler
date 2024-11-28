@@ -1,5 +1,6 @@
 import type { PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
+import type { Result } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import {
   addDefaultModelFields,
@@ -17,7 +18,7 @@ import {
  *
  * @returns The composed SQL statements.
  */
-export const compileQueries = (
+const compileQueries = (
   queries: Array<Query>,
   models: Array<PublicModel>,
   options?: {
@@ -65,6 +66,26 @@ export const compileQueries = (
   // SQL statements, meaning one RONIN query should produce one main SQL statement.
   return [...dependencyStatements, ...mainStatements];
 };
+
+const compileResults = (results: Array<Result>) => {
+  return results;
+};
+
+export class Transaction {
+  statements: Array<Statement>;
+
+  constructor(
+    queries: Array<Query>,
+    models: Array<PublicModel>,
+    options?: Parameters<typeof compileQueries>[2],
+  ) {
+    this.statements = compileQueries(queries, models, options);
+  }
+
+  formatOutput(results: Array<Result>) {
+    return compileResults(results);
+  }
+}
 
 // Expose model types
 export type {
