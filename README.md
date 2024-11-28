@@ -96,7 +96,7 @@ Just like in the database, a transaction defines an atomic operation in which a 
 
 For example, if one query creates a new model, every query after it within the same transaction must be able to interact with the records of that model, or update the model itself, thereby requiring the accumulation of state while the transaction is being compiled.
 
-Furthermore, since every transaction causes a database lock, the database is inherently not locked between the execution of multiple transactions, which could cause the inputs (arguments) of a new `Transaction` instance to change. So before a new transaction can be created, the freshness of the inputs (especially the models) must be ensured.
+Furthermore, since every transaction causes a database lock, the database is inherently not locked between the execution of multiple transactions, which could cause the inputs (arguments) of a `Transaction` instance to no longer be up-to-date. If the inputs have changed, a `new Transaction` should therefore be created.
 
 ### Running Tests
 
