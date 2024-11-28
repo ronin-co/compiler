@@ -110,13 +110,8 @@ export class Transaction {
       const query = this.queries.at(-index) as Query;
       const { queryModel } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
-      const single = queryModel !== model.pluralSlug;
 
-      if (single) return { record: this.formatRecord(model, result[0] as NativeRecord) };
-
-      return {
-        records: result.map((record) => this.formatRecord(model, record as NativeRecord)),
-      };
+      return { record: this.formatRecord(model, result[0] as NativeRecord) };
     });
   }
 }
