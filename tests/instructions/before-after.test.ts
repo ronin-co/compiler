@@ -21,7 +21,7 @@ test('get multiple records before cursor', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -59,7 +59,7 @@ test('get multiple records before cursor ordered by string field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -97,7 +97,7 @@ test('get multiple records before cursor ordered by boolean field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -135,7 +135,7 @@ test('get multiple records before cursor ordered by number field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -173,7 +173,7 @@ test('get multiple records before cursor ordered by empty string field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -211,7 +211,7 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -249,7 +249,7 @@ test('get multiple records before cursor ordered by empty number field', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -287,7 +287,7 @@ test('get multiple records before cursor while filtering', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models);
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
@@ -318,7 +318,7 @@ test('try to paginate without providing page size', () => {
   let error: Error | undefined;
 
   try {
-    new Transaction(queries, models);
+    new Transaction(queries, { models });
   } catch (err) {
     error = err as Error;
   }

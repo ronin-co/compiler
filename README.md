@@ -58,7 +58,9 @@ const { statements } = new Transaction(queries);
 // }]
 ```
 
-Additionally, following types are being exported:
+### Types
+
+In total, the following types are being exported:
 
 ```typescript
 import type {

@@ -31,7 +31,8 @@ test('inline statement values', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, models, {
+  const transaction = new Transaction(queries, {
+    models,
     inlineParams: true,
   });
 

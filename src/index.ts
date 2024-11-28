@@ -76,10 +76,9 @@ export class Transaction {
 
   constructor(
     queries: Array<Query>,
-    models: Array<PublicModel>,
-    options?: Parameters<typeof compileQueries>[2],
+    options?: Parameters<typeof compileQueries>[2] & { models?: Array<PublicModel> },
   ) {
-    this.statements = compileQueries(queries, models, options);
+    this.statements = compileQueries(queries, options?.models || [], options);
   }
 
   formatOutput(results: Array<Result>) {
