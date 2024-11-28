@@ -41,16 +41,12 @@ test('get single record with field being value', async () => {
 
   const rows = await queryDatabase(transaction.statements);
 
-  expect(transaction.formatOutput(rows)).toEqual([
-    [
-      {
-        id: 'acc_39h8fhe98hefah8',
-        handle: 'elaine',
-        firstName: 'Elaine',
-        lastName: 'Jones',
-      },
-    ],
-  ]);
+  expect(transaction.formatOutput(rows)[0]).toHaveProperty('record', {
+    id: 'acc_39h8fhe98hefah8',
+    handle: 'elaine',
+    firstName: 'Elaine',
+    lastName: 'Jones',
+  });
 });
 
 test('get single record with field not being value', () => {
