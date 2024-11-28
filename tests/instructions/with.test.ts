@@ -433,14 +433,14 @@ test('get single record with field greater than value', async () => {
   expect(result.record?.position).toBeGreaterThan(1);
 });
 
-test('get single record with field greater or equal to value', () => {
+test('get single record with field greater or equal to value', async () => {
   const queries: Array<Query> = [
     {
       get: {
         product: {
           with: {
             position: {
-              greaterOrEqual: 5,
+              greaterOrEqual: 2,
             },
           },
         },
@@ -465,20 +465,25 @@ test('get single record with field greater or equal to value', () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" >= ?1) LIMIT 1',
-      params: [5],
+      params: [2],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.position).toBeGreaterThanOrEqual(2);
 });
 
-test('get single record with field less than value', () => {
+test('get single record with field less than value', async () => {
   const queries: Array<Query> = [
     {
       get: {
         product: {
           with: {
             position: {
-              lessThan: 10,
+              lessThan: 3,
             },
           },
         },
@@ -503,20 +508,25 @@ test('get single record with field less than value', () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" < ?1) LIMIT 1',
-      params: [10],
+      params: [3],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.position).toBeLessThan(3);
 });
 
-test('get single record with field less or equal to value', () => {
+test('get single record with field less or equal to value', async () => {
   const queries: Array<Query> = [
     {
       get: {
         product: {
           with: {
             position: {
-              lessOrEqual: 10,
+              lessOrEqual: 3,
             },
           },
         },
@@ -541,13 +551,18 @@ test('get single record with field less or equal to value', () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "products" WHERE ("position" <= ?1) LIMIT 1',
-      params: [10],
+      params: [3],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.position).toBeLessThanOrEqual(3);
 });
 
-test('get single record with multiple fields being value', () => {
+test('get single record with multiple fields being value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -556,7 +571,7 @@ test('get single record with multiple fields being value', () => {
             handle: {
               being: 'elaine',
             },
-            name: {
+            firstName: {
               being: 'Elaine',
             },
           },
@@ -574,7 +589,7 @@ test('get single record with multiple fields being value', () => {
           type: 'string',
         },
         {
-          slug: 'name',
+          slug: 'firstName',
           type: 'string',
         },
       ],
@@ -585,11 +600,18 @@ test('get single record with multiple fields being value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" = ?1 AND "name" = ?2) LIMIT 1',
+      statement:
+        'SELECT * FROM "accounts" WHERE ("handle" = ?1 AND "firstName" = ?2) LIMIT 1',
       params: ['elaine', 'Elaine'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBe('elaine');
+  expect(result.record?.firstName).toBe('Elaine');
 });
 
 test('get single record with link field', () => {
