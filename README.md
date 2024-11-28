@@ -96,7 +96,7 @@ Just like for the database, a transaction for the compiler defines an atomic ope
 
 For example, if one query creates a new model, every query after it within the same transaction must be able to interact with the records of that model, or update the model itself, without roundtrips to the database, thereby requiring the accumulation of state while the transaction is being compiled.
 
-Furthermore, since every database transaction causes a [lock](https://www.sqlite.org/lockingv3.html), the database is inherently not locked between the execution of multiple transactions, which could cause the compilation arguments (e.g. models) of a `Transaction` to no longer be up-to-date. If the inputs have changed, a `new Transaction` should therefore be created.
+Furthermore, since every database transaction causes a [lock](https://www.sqlite.org/lockingv3.html), the database is inherently not locked between the execution of multiple transactions, which could cause the compilation inputs (e.g. models) of a `Transaction` to no longer be up-to-date. If the inputs have changed, a `new Transaction` should therefore be created.
 
 ### Running Tests
 
