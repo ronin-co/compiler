@@ -621,8 +621,8 @@ test('create new index with filter', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE INDEX "index_slug" ON "accounts" ("email") WHERE (("email" LIKE %?1))',
-      params: ['@site.co'],
+        'CREATE INDEX "index_slug" ON "accounts" ("email") WHERE (("email" LIKE ?1))',
+      params: ['%@site.co'],
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
@@ -1239,9 +1239,9 @@ test('create new per-record trigger with filters for creating records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE %?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE ?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
       params: [
-        '_hidden',
+        '%_hidden',
         'owner',
         0,
         expect.stringMatching(RECORD_ID_REGEX),

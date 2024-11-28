@@ -139,9 +139,6 @@ export const composeFieldValues = (
     instructionName,
   );
 
-  // If only the field selectors are being requested, do not register any values.
-  const collectStatementValue = options.type !== 'fields';
-
   // Determine if the value of the field is a symbol.
   const symbol = getSymbol(value);
 
@@ -161,19 +158,24 @@ export const composeFieldValues = (
 
     // The value of the field is a RONIN query, which we need to compile into an SQL
     // syntax that can be run.
-    if (symbol.type === 'query' && collectStatementValue) {
+    if (symbol.type === 'query' && options.type !== 'fields') {
       conditionValue = `(${
         compileQueryInput(symbol.value, models, statementParams).main.statement
       })`;
     }
-  } else if (collectStatementValue) {
-    conditionValue = prepareStatementValue(statementParams, value);
   }
 
   if (options.type === 'fields') return conditionSelector;
-  if (options.type === 'values') return conditionValue as string;
 
-  return `${conditionSelector} ${WITH_CONDITIONS[options.condition || 'being'](conditionValue, value)}`;
+  if (options.type === 'values') {
+    if (!symbol) conditionValue = prepareStatementValue(statementParams, value);
+    return conditionValue as string;
+  }
+
+  const statement = WITH_CONDITIONS[options.condition || 'being'](conditionValue, value);
+  if (!symbol) conditionValue = prepareStatementValue(statementParams, statement[1]);
+
+  return `${conditionSelector} ${statement[0]} ${conditionValue}`;
 };
 
 /**

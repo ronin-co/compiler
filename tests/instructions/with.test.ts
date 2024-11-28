@@ -134,7 +134,7 @@ test('get single record with field not being empty', async () => {
   );
 });
 
-test('get single record with field starting with value', () => {
+test('get single record with field starting with value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -165,11 +165,18 @@ test('get single record with field starting with value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1%) LIMIT 1',
-      params: ['el'],
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1) LIMIT 1',
+      params: ['el%'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+
+  expect(transaction.formatOutput(rows)[0]).toHaveProperty(
+    'record.handle',
+    expect.stringMatching(/^el/),
+  );
 });
 
 test('get single record with field not starting with value', () => {
@@ -203,8 +210,8 @@ test('get single record with field not starting with value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1%) LIMIT 1',
-      params: ['el'],
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1) LIMIT 1',
+      params: ['el%'],
       returning: true,
     },
   ]);
@@ -241,8 +248,8 @@ test('get single record with field ending with value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1) LIMIT 1',
-      params: ['ne'],
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1) LIMIT 1',
+      params: ['%ne'],
       returning: true,
     },
   ]);
@@ -279,8 +286,8 @@ test('get single record with field not ending with value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1) LIMIT 1',
-      params: ['ne'],
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1) LIMIT 1',
+      params: ['%ne'],
       returning: true,
     },
   ]);
@@ -317,8 +324,8 @@ test('get single record with field containing value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE %?1%) LIMIT 1',
-      params: ['ain'],
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" LIKE ?1) LIMIT 1',
+      params: ['%ain%'],
       returning: true,
     },
   ]);
@@ -355,8 +362,8 @@ test('get single record with field not containing value', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE %?1%) LIMIT 1',
-      params: ['ain'],
+      statement: 'SELECT * FROM "accounts" WHERE ("handle" NOT LIKE ?1) LIMIT 1',
+      params: ['%ain%'],
       returning: true,
     },
   ]);
