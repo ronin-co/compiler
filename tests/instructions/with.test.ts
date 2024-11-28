@@ -869,8 +869,8 @@ test('get single record with json field', async () => {
       get: {
         team: {
           with: {
-            billing: {
-              invoiceRecipient: 'receipts@site.org',
+            locations: {
+              europe: 'berlin',
             },
           },
         },
@@ -883,8 +883,16 @@ test('get single record with json field', async () => {
       slug: 'team',
       fields: [
         {
-          slug: 'billing',
+          slug: 'locations',
           type: 'json',
+        },
+        {
+          slug: 'billing',
+          type: 'group',
+        },
+        {
+          slug: 'billing.currency',
+          type: 'string',
         },
       ],
     },
@@ -894,8 +902,8 @@ test('get single record with json field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
-      params: ['receipts@site.org'],
+      statement: `SELECT * FROM "teams" WHERE (json_extract(locations, '$.europe') = ?1) LIMIT 1`,
+      params: ['berlin'],
       returning: true,
     },
   ]);
@@ -903,10 +911,10 @@ test('get single record with json field', async () => {
   const rows = await queryDatabase(transaction.statements);
   const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
 
-  expect(result.record?.billing).toHaveProperty('invoiceRecipient', 'receipts@site.org');
+  expect(result.record?.locations).toHaveProperty('europe', 'berlin');
 });
 
-test('get single record with one of fields', () => {
+test('get single record with one of fields', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -916,7 +924,7 @@ test('get single record with one of fields', () => {
               handle: 'elaine',
             },
             {
-              email: 'elaine@site.co',
+              firstName: 'David',
             },
           ],
         },
@@ -933,7 +941,11 @@ test('get single record with one of fields', () => {
           type: 'string',
         },
         {
-          slug: 'email',
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -944,14 +956,21 @@ test('get single record with one of fields', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "email" = ?2) LIMIT 1`,
-      params: ['elaine', 'elaine@site.co'],
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = ?1 OR "firstName" = ?2) LIMIT 1`,
+      params: ['elaine', 'David'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(
+    result.record?.handle === 'elaine' || result.record?.firstName === 'David',
+  ).toBeTrue();
 });
 
-test('get single record with one of field conditions', () => {
+test('get single record with one of field conditions', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -979,6 +998,14 @@ test('get single record with one of field conditions', () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -992,9 +1019,14 @@ test('get single record with one of field conditions', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
 });
 
-test('get single record with one of field values', () => {
+test('get single record with one of field values', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -1017,6 +1049,14 @@ test('get single record with one of field values', () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -1030,9 +1070,14 @@ test('get single record with one of field values', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
 });
 
-test('get single record with one of field values in group', () => {
+test('get single record with one of field values in group', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -1051,6 +1096,10 @@ test('get single record with one of field values in group', () => {
     {
       slug: 'team',
       fields: [
+        {
+          slug: 'locations',
+          type: 'json',
+        },
         {
           slug: 'billing',
           type: 'group',
@@ -1071,6 +1120,14 @@ test('get single record with one of field values in group', () => {
       params: ['EUR', 'USD'],
       returning: true,
     },
+  ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect((result.record?.billing as Record<string, unknown>).currency).toBeOneOf([
+    'EUR',
+    'USD',
   ]);
 });
 

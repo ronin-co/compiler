@@ -2,7 +2,7 @@ import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import type { NativeRecord, Result, Row } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { splitQuery } from '@/src/utils/helpers';
+import { expand, splitQuery } from '@/src/utils/helpers';
 import {
   addDefaultModelFields,
   addDefaultModelPresets,
@@ -96,12 +96,13 @@ export class Transaction {
 
       if (field.type === 'json') {
         formattedRecord[key] = JSON.parse(record[key] as string);
-      } else {
-        formattedRecord[key] = record[key];
+        continue;
       }
+
+      formattedRecord[key] = record[key];
     }
 
-    return formattedRecord;
+    return expand(formattedRecord) as NativeRecord;
   }
 
   formatOutput(results: Array<Array<Row>>): Array<Result> {
