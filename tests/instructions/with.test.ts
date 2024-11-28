@@ -44,7 +44,7 @@ test('get single record with field being value', async () => {
   expect(transaction.formatOutput(rows)[0]).toHaveProperty('record.handle', 'elaine');
 });
 
-test('get single record with field not being value', () => {
+test('get single record with field not being value', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -80,9 +80,16 @@ test('get single record with field not being value', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+
+  expect(transaction.formatOutput(rows)[0]).toHaveProperty(
+    'record.handle',
+    expect.not.stringContaining('elaine'),
+  );
 });
 
-test('get single record with field not being empty', () => {
+test('get single record with field not being empty', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -118,6 +125,13 @@ test('get single record with field not being empty', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+
+  expect(transaction.formatOutput(rows)[0]).toHaveProperty(
+    'record.handle',
+    expect.stringMatching(/(.*)/),
+  );
 });
 
 test('get single record with field starting with value', () => {
