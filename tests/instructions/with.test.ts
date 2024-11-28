@@ -614,7 +614,7 @@ test('get single record with multiple fields being value', async () => {
   expect(result.record?.firstName).toBe('Elaine');
 });
 
-test('get single record with link field', () => {
+test('get single record with link field', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -661,16 +661,28 @@ test('get single record with link field', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  const [[targetRecord]] = await queryDatabase([
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+  ]);
+
+  expect(result.record?.account).toBe(targetRecord.id);
 });
 
-test('get single record with link field and id', () => {
+test('get single record with link field and id', async () => {
   const queries: Array<Query> = [
     {
       get: {
         member: {
           with: {
             account: {
-              id: 'mem_zgoj3xav8tpcte1s',
+              id: 'acc_39h8fhe98hefah9',
             },
           },
         },
@@ -699,13 +711,18 @@ test('get single record with link field and id', () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
-      params: ['mem_zgoj3xav8tpcte1s'],
+      params: ['acc_39h8fhe98hefah9'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
 });
 
-test('get single record with link field and id with condition', () => {
+test('get single record with link field and id with condition', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -713,7 +730,7 @@ test('get single record with link field and id with condition', () => {
           with: {
             account: {
               id: {
-                being: 'mem_zgoj3xav8tpcte1s',
+                being: 'acc_39h8fhe98hefah9',
               },
             },
           },
@@ -743,10 +760,15 @@ test('get single record with link field and id with condition', () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
-      params: ['mem_zgoj3xav8tpcte1s'],
+      params: ['acc_39h8fhe98hefah9'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
 });
 
 test('get single record with json field', () => {
