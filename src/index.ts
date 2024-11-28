@@ -1,4 +1,4 @@
-import type { PublicModel } from '@/src/types/model';
+import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import type { NativeRecord, Result, Row } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
@@ -7,13 +7,14 @@ import {
   addDefaultModelFields,
   addDefaultModelPresets,
   addSystemModels,
+  getFieldFromModel,
   getModelBySlug,
   transformMetaQuery,
 } from '@/src/utils/model';
 
 export class Transaction {
   statements: Array<Statement>;
-  models: Array<PublicModel>;
+  models: Array<PrivateModel> = [];
 
   private queries: Array<Query>;
 
@@ -24,7 +25,6 @@ export class Transaction {
     const models = options?.models || [];
 
     this.statements = this.compileQueries(queries, models, options);
-    this.models = models;
     this.queries = queries;
   }
 
@@ -78,6 +78,8 @@ export class Transaction {
       mainStatements.push(result.main);
     }
 
+    this.models = modelListWithPresets;
+
     // First return all dependency statements, and then all main statements. This is
     // essential since the dependency statements are expected to not produce any output, so
     // they should be executed first. The main statements, on the other hand, are expected
@@ -86,6 +88,22 @@ export class Transaction {
     return [...dependencyStatements, ...mainStatements];
   };
 
+  private formatRecord(model: PrivateModel, record: NativeRecord): NativeRecord {
+    const formattedRecord = { ...record };
+
+    for (const key in record) {
+      const { field } = getFieldFromModel(model, key, 'to');
+
+      if (field.type === 'json') {
+        formattedRecord[key] = JSON.parse(record[key] as string);
+      } else {
+        formattedRecord[key] = record[key];
+      }
+    }
+
+    return formattedRecord;
+  }
+
   formatOutput(results: Array<Array<Row>>): Array<Result> {
     return results.map((result, index): Result => {
       const query = this.queries.at(-index) as Query;
@@ -93,11 +111,13 @@ export class Transaction {
       const model = getModelBySlug(this.models, queryModel);
       const single = queryModel !== model.pluralSlug;
 
-      if (single) return { record: result[0] as NativeRecord };
+      if (single) return { record: this.formatRecord(model, result[0] as NativeRecord) };
 
       if (queryType === 'count') return { amount: result[0] as unknown as number };
 
-      return { records: result as Array<NativeRecord> };
+      return {
+        records: result.map((record) => this.formatRecord(model, record as NativeRecord)),
+      };
     });
   }
 }

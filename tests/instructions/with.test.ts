@@ -26,6 +26,14 @@ test('get single record with field being value', async () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -67,6 +75,14 @@ test('get single record with field not being value', async () => {
       fields: [
         {
           slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -112,6 +128,14 @@ test('get single record with field not being empty', async () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -153,6 +177,14 @@ test('get single record with field starting with value', async () => {
       fields: [
         {
           slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -198,6 +230,14 @@ test('get single record with field not starting with value', async () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -239,6 +279,14 @@ test('get single record with field ending with value', async () => {
       fields: [
         {
           slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -284,6 +332,14 @@ test('get single record with field not ending with value', async () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -325,6 +381,14 @@ test('get single record with field containing value', async () => {
       fields: [
         {
           slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -370,6 +434,14 @@ test('get single record with field not containing value', async () => {
           slug: 'handle',
           type: 'string',
         },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -412,6 +484,10 @@ test('get single record with field greater than value', async () => {
         {
           slug: 'position',
           type: 'number',
+        },
+        {
+          slug: 'name',
+          type: 'string',
         },
       ],
     },
@@ -456,6 +532,10 @@ test('get single record with field greater or equal to value', async () => {
           slug: 'position',
           type: 'number',
         },
+        {
+          slug: 'name',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -499,6 +579,10 @@ test('get single record with field less than value', async () => {
           slug: 'position',
           type: 'number',
         },
+        {
+          slug: 'name',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -541,6 +625,10 @@ test('get single record with field less or equal to value', async () => {
         {
           slug: 'position',
           type: 'number',
+        },
+        {
+          slug: 'name',
+          type: 'string',
         },
       ],
     },
@@ -590,6 +678,10 @@ test('get single record with multiple fields being value', async () => {
         },
         {
           slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -771,14 +863,14 @@ test('get single record with link field and id with condition', async () => {
   expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
 });
 
-test('get single record with json field', () => {
+test('get single record with json field', async () => {
   const queries: Array<Query> = [
     {
       get: {
         team: {
           with: {
             billing: {
-              invoiceRecipient: 'receipts@ronin.co',
+              invoiceRecipient: 'receipts@site.org',
             },
           },
         },
@@ -803,10 +895,15 @@ test('get single record with json field', () => {
   expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "teams" WHERE (json_extract(billing, '$.invoiceRecipient') = ?1) LIMIT 1`,
-      params: ['receipts@ronin.co'],
+      params: ['receipts@site.org'],
       returning: true,
     },
   ]);
+
+  const rows = await queryDatabase(transaction.statements);
+  const result = transaction.formatOutput(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.billing).toHaveProperty('invoiceRecipient', 'receipts@site.org');
 });
 
 test('get single record with one of fields', () => {
