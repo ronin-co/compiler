@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, Transaction, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
@@ -499,7 +499,7 @@ test('try get single record with non-existing preset', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 test('inline statement values', () => {
   const queries: Array<Query> = [
@@ -31,12 +31,12 @@ test('inline statement values', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models, {
+  const transaction = new Transaction(queries, models, {
     inlineParams: true,
   });
 
-  expect(statements[0].statement).toStartWith(
+  expect(transaction.statements[0].statement).toStartWith(
     `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ('elaine', '["test@site.co","elaine@site.com"]'`,
   );
-  expect(statements[0].params).toEqual([]);
+  expect(transaction.statements[0].params).toEqual([]);
 });

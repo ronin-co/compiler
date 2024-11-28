@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 import { RoninError } from '@/src/utils/helpers';
 
@@ -25,7 +25,7 @@ test('get single record with non-existing field', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -56,7 +56,7 @@ test('get single record with non-existing model', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -97,7 +97,7 @@ test('get single record with empty `with` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -133,7 +133,7 @@ test('set single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -166,7 +166,7 @@ test('add single record with empty `to` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -199,7 +199,7 @@ test('get single record with `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -232,7 +232,7 @@ test('get single record with `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -266,7 +266,7 @@ test('get multiple records with `before` and `after` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -299,7 +299,7 @@ test('get multiple records with empty `before` instruction', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }

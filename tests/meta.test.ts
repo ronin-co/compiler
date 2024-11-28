@@ -7,7 +7,6 @@ import {
   type ModelTrigger,
   type Query,
   Transaction,
-  compileQueries,
 } from '@/src/index';
 
 import {
@@ -317,7 +316,7 @@ test('query a model that was just dropped', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1431,7 +1430,7 @@ test('try to update existing model that does not exist', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }
@@ -1487,7 +1486,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   let error: Error | undefined;
 
   try {
-    compileQueries(queries, models);
+    new Transaction(queries, models);
   } catch (err) {
     error = err as Error;
   }

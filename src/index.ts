@@ -18,7 +18,7 @@ import type { Row } from '@ronin/engine/types';
  *
  * @returns The composed SQL statements.
  */
-export const compileQueries = (
+const compileQueries = (
   queries: Array<Query>,
   models: Array<PublicModel>,
   options?: {
