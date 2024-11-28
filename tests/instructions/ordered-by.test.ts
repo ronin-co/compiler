@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
 test('get multiple records ordered by field', () => {
@@ -27,9 +27,9 @@ test('get multiple records ordered by field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC`,
       params: [],
@@ -71,9 +71,9 @@ test('get multiple records ordered by expression', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" ORDER BY ("firstName" || ' ' || "lastName") ASC`,
       params: [],
@@ -111,9 +111,9 @@ test('get multiple records ordered by multiple fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC`,
       params: [],

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 test('get multiple records limited to amount', () => {
   const queries: Array<Query> = [
@@ -18,9 +18,9 @@ test('get multiple records limited to amount', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 21`,
       params: [],

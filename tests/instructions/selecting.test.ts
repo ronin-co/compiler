@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 test('get single record with specific field', () => {
   const queries: Array<Query> = [
@@ -18,9 +18,9 @@ test('get single record with specific field', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT "id" FROM "categories" LIMIT 1',
       params: [],
@@ -52,9 +52,9 @@ test('get single record with specific fields', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT "id", "name" FROM "beaches" LIMIT 1',
       params: [],

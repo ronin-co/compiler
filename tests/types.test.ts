@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, compileQueries } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 
 test('get single record', () => {
   const queries: Array<Query> = [
@@ -16,9 +16,9 @@ test('get single record', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" LIMIT 1`,
       params: [],
@@ -52,9 +52,9 @@ test('remove single record', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'DELETE FROM "accounts" WHERE ("handle" = ?1) RETURNING *',
       params: ['elaine'],
@@ -78,9 +78,9 @@ test('count multiple records', () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction(queries, models);
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: `SELECT COUNT(*) FROM "accounts"`,
       params: [],
