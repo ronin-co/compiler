@@ -105,7 +105,7 @@ export class Transaction {
     return expand(formattedRecord) as NativeRecord;
   }
 
-  formatOutput(results: Array<Array<Row>>): Array<Result> {
+  prepareResults(results: Array<Array<Row>>): Array<Result> {
     return results.map((result, index): Result => {
       const query = this.queries.at(-index) as Query;
       const { queryModel } = splitQuery(query);
