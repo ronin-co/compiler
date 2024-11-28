@@ -62,7 +62,7 @@ Once the RONIN queries have been compiled down to SQL statements, the statements
 executed and their results can be formatted by the compiler as well:
 
 ```typescript
-const rows = await queryDatabase(...);
+// `rows` are provided by the database engine
 const results: Array<Result> = transaction.prepareResults(rows);
 ```
 
