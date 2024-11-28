@@ -40,7 +40,7 @@ The programmatic API of the RONIN compiler looks like this:
 
 ```typescript
 import {
-  compileQueries,
+  Transaction,
 
   type Query,
   type Model,
@@ -57,7 +57,7 @@ const models: Array<Model> = [{
   slug: 'account'
 }];
 
-const statements: Array<Statement> = compileQueries(queries, models);
+const { statements } = new Transaction(queries, models);
 // [{
 //   statement: 'SELECT * FROM "accounts"',
 //   params: [],
@@ -70,7 +70,7 @@ const statements: Array<Statement> = compileQueries(queries, models);
 To fine-tune the behavior of the compiler, you can pass the following options:
 
 ```typescript
-compileQueries(queries, models, {
+new Transaction(queries, models, {
   // Instead of returning an array of parameters for every statement (which allows for
   // preventing SQL injections), all parameters are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.

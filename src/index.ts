@@ -74,11 +74,12 @@ const compileResults = (results: Array<Array<Row>>) => {
 export class Transaction {
   statements: Array<Statement>;
 
-  constructor({
-    queries,
-    models,
-  }: { queries: Array<Query>; models: Array<PublicModel> }) {
-    this.statements = compileQueries(queries, models);
+  constructor(
+    queries: Array<Query>,
+    models: Array<PublicModel>,
+    options?: Parameters<typeof compileQueries>[2],
+  ) {
+    this.statements = compileQueries(queries, models, options);
   }
 
   formatOutput(results: Array<Array<Row>>) {

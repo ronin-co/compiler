@@ -29,7 +29,7 @@ test('get single record with field being value', async () => {
     },
   ];
 
-  const transaction = new Transaction({ queries, models });
+  const transaction = new Transaction(queries, models);
 
   expect(transaction.statements).toEqual([
     {
