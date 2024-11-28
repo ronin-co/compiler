@@ -21,8 +21,8 @@ const getMatcher = (value: unknown, negative: boolean): string => {
 };
 
 export const WITH_CONDITIONS = {
-  being: (value, baseValue) => [getMatcher(baseValue, false), value],
-  notBeing: (value, baseValue) => [getMatcher(baseValue, true), value],
+  being: (value) => [getMatcher(value, false), value],
+  notBeing: (value) => [getMatcher(value, true), value],
 
   startingWith: (value) => ['LIKE', `${value}%`],
   notStartingWith: (value) => ['NOT LIKE', `${value}%`],
@@ -40,7 +40,7 @@ export const WITH_CONDITIONS = {
   lessOrEqual: (value) => ['<=', value],
 } satisfies Record<string, WithMatcher>;
 
-type WithMatcher = (value: unknown, baseValue: unknown) => [string, unknown];
+type WithMatcher = (value: unknown) => [string, unknown];
 type WithCondition = keyof typeof WITH_CONDITIONS;
 
 type WithValue = string | number | null;
