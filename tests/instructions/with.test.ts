@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { queryDatabase } from '@/fixtures/setup';
-import { type Model, type Query, compileQueries, compileResults } from '@/src/index';
+import { type Model, type Query, Transaction, compileQueries } from '@/src/index';
 
 test('get single record with field being value', async () => {
   const queries: Array<Query> = [
@@ -29,9 +29,9 @@ test('get single record with field being value', async () => {
     },
   ];
 
-  const statements = compileQueries(queries, models);
+  const transaction = new Transaction({ queries, models });
 
-  expect(statements).toEqual([
+  expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "accounts" WHERE ("handle" = ?1) LIMIT 1',
       params: ['elaine'],
@@ -39,10 +39,9 @@ test('get single record with field being value', async () => {
     },
   ]);
 
-  const engineResults = await queryDatabase(statements);
-  const results = compileResults(engineResults);
+  const rows = await queryDatabase(transaction.statements);
 
-  expect(results).toEqual([
+  expect(transaction.formatOutput(rows)).toEqual([
     [
       {
         id: 'acc_39h8fhe98hefah8',

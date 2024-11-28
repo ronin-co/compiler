@@ -67,9 +67,24 @@ export const compileQueries = (
   return [...dependencyStatements, ...mainStatements];
 };
 
-export const compileResults = (results: Array<Array<Row>>) => {
+const compileResults = (results: Array<Array<Row>>) => {
   return results;
 };
+
+export class Transaction {
+  statements: Array<Statement>;
+
+  constructor({
+    queries,
+    models,
+  }: { queries: Array<Query>; models: Array<PublicModel> }) {
+    this.statements = compileQueries(queries, models);
+  }
+
+  formatOutput(results: Array<Array<Row>>) {
+    return compileResults(results);
+  }
+}
 
 // Expose model types
 export type {
