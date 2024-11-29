@@ -662,15 +662,15 @@ test('get single record with link field', async () => {
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
-
-  const [[targetRecord]] = await queryEphemeralDatabase(models, [
+  const [[targetRecord], ...rows] = await queryEphemeralDatabase(models, [
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
       params: [],
     },
+    ...transaction.statements,
   ]);
+
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.account).toBe(targetRecord.id);
 });
