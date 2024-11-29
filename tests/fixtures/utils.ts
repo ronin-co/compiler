@@ -24,15 +24,19 @@ const engine = new Engine({
 const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
   for (const model of models) {
     const query: Query = { create: { model } };
-    const { statements: modelStatements } = new Transaction([query], { models });
+    const modelTransaction = new Transaction([query], { models });
 
-    const data = fixtureData[model.slug as keyof typeof fixtureData];
-    if (!data) throw new Error(`No fixture data found for model "${model.slug}"`);
+    const updatedModel = modelTransaction.models.find((item) => {
+      return item.slug === model.slug;
+    }) as Model;
+
+    const data = fixtureData[updatedModel.slug as keyof typeof fixtureData];
+    if (!data) throw new Error(`No fixture data found for model "${updatedModel.name}"`);
 
     const formattedData = data.map((row) => {
       const newRow: Record<string, unknown> = {};
 
-      for (const field of model.fields || []) {
+      for (const field of updatedModel.fields || []) {
         const match = (row as Record<string, unknown>)[field.slug];
         if (typeof match === 'undefined') continue;
         newRow[field.slug] = match;
@@ -42,13 +46,16 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
     });
 
     const dataStatements = formattedData.map((row) => {
-      const query: Query = { add: { [model.slug]: { to: row } } };
+      const query: Query = { add: { [updatedModel.slug]: { to: row } } };
       const { statements } = new Transaction([query], { models });
 
       return statements[0];
     });
 
-    await engine.queryDatabase(databaseName, [modelStatements[0], ...dataStatements]);
+    await engine.queryDatabase(databaseName, [
+      modelTransaction.statements[0],
+      ...dataStatements,
+    ]);
   }
 };
 
