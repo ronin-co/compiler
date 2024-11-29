@@ -120,6 +120,10 @@ export type ModelTriggerField<T extends Array<ModelField> = Array<ModelField>> =
 };
 
 export type ModelTrigger<T extends Array<ModelField> = Array<ModelField>> = {
+  /**
+   * The identifier of the trigger.
+   */
+  slug?: string;
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a matching query is executed. */

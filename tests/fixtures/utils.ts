@@ -1,9 +1,9 @@
+import fixtureData from '@/fixtures/data.json';
 import { type Model, type Query, Transaction } from '@/src/index';
 import { Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
 import type { Row, Statement } from '@ronin/engine/types';
-import fixtureData from './data.json';
 
 const engine = new Engine({
   resolvers: [
@@ -53,7 +53,7 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
     });
 
     await engine.queryDatabase(databaseName, [
-      modelTransaction.statements[0],
+      ...modelTransaction.statements.filter((item) => !item.returning),
       ...dataStatements,
     ]);
   }

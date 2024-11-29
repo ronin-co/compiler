@@ -51,6 +51,8 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
 type RoninErrorCode =
   | 'MODEL_NOT_FOUND'
   | 'FIELD_NOT_FOUND'
+  | 'INDEX_NOT_FOUND'
+  | 'TRIGGER_NOT_FOUND'
   | 'PRESET_NOT_FOUND'
   | 'INVALID_WITH_VALUE'
   | 'INVALID_TO_VALUE'
@@ -61,6 +63,13 @@ type RoninErrorCode =
   | 'MUTUALLY_EXCLUSIVE_INSTRUCTIONS'
   | 'MISSING_INSTRUCTION'
   | 'MISSING_FIELD';
+
+export const MODEL_ENTITY_ERROR_CODES = {
+  field: 'FIELD_NOT_FOUND',
+  index: 'INDEX_NOT_FOUND',
+  trigger: 'TRIGGER_NOT_FOUND',
+  preset: 'PRESET_NOT_FOUND',
+} as const;
 
 interface Issue {
   message: string;

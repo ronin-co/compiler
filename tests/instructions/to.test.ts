@@ -1,6 +1,8 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
+import { queryEphemeralDatabase } from '@/fixtures/utils';
+import type { SingleRecordResult } from '@/src/types/result';
 import {
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
@@ -8,7 +10,7 @@ import {
   RoninError,
 } from '@/src/utils/helpers';
 
-test('set single record to new string field', () => {
+test('set single record to new string field', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -45,9 +47,14 @@ test('set single record to new string field', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBe('mia');
 });
 
-test('set single record to new string field with expression referencing fields', () => {
+test('set single record to new string field with expression referencing fields', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -56,8 +63,8 @@ test('set single record to new string field with expression referencing fields',
             handle: 'elaine',
           },
           to: {
-            name: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `UPPER(substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 1, 1)) || substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 2)`,
+            handle: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
             },
           },
         },
@@ -74,7 +81,11 @@ test('set single record to new string field with expression referencing fields',
           type: 'string',
         },
         {
-          slug: 'name',
+          slug: 'firstName',
+          type: 'string',
+        },
+        {
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -85,20 +96,25 @@ test('set single record to new string field with expression referencing fields',
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "name" = UPPER(substr("handle", 1, 1)) || substr("handle", 2), "ronin.updatedAt" = ?1 WHERE ("handle" = ?2) RETURNING *`,
+      statement: `UPDATE "accounts" SET "handle" = LOWER("firstName" || "lastName"), "ronin.updatedAt" = ?1 WHERE ("handle" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBe('elainejones');
 });
 
-test('set single record to new one-cardinality link field', () => {
+test('set single record to new one-cardinality link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         member: {
           with: {
-            id: 'mem_zgoj3xav8tpcte1s',
+            id: 'mem_39h8fhe98hefah9',
           },
           to: {
             account: {
@@ -140,23 +156,35 @@ test('set single record to new one-cardinality link field', () => {
       params: [
         'elaine',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'mem_zgoj3xav8tpcte1s',
+        'mem_39h8fhe98hefah9',
       ],
       returning: true,
     },
   ]);
+
+  const [[targetRecord], ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.account).toBe(targetRecord.id);
 });
 
 test('set single record to new many-cardinality link field', () => {
   const queries: Array<Query> = [
     {
       set: {
-        post: {
+        account: {
           with: {
-            id: 'pos_zgoj3xav8tpcte1s',
+            id: 'acc_39h8fhe98hefah8',
           },
           to: {
-            comments: [{ content: 'Great post!' }],
+            followers: [{ handle: 'david' }],
           },
         },
       },
@@ -165,22 +193,17 @@ test('set single record to new many-cardinality link field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
       fields: [
         {
-          slug: 'comments',
-          type: 'link',
-          target: 'comment',
-          kind: 'many',
-        },
-      ],
-    },
-    {
-      slug: 'comment',
-      fields: [
-        {
-          slug: 'content',
+          slug: 'handle',
           type: 'string',
+        },
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
         },
       ],
     },
@@ -190,15 +213,15 @@ test('set single record to new many-cardinality link field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1)',
-      params: ['pos_zgoj3xav8tpcte1s'],
+      statement: 'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1)',
+      params: ['acc_39h8fhe98hefah8'],
     },
     {
       statement:
-        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
-        'pos_zgoj3xav8tpcte1s',
-        'Great post!',
+        'acc_39h8fhe98hefah8',
+        'david',
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -206,8 +229,8 @@ test('set single record to new many-cardinality link field', () => {
     },
     {
       statement:
-        'UPDATE "posts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'pos_zgoj3xav8tpcte1s'],
+        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
       returning: true,
     },
   ]);

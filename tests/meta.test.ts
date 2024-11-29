@@ -443,6 +443,7 @@ test('update existing field (slug)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -487,6 +488,7 @@ test('update existing field (name)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -520,6 +522,7 @@ test('drop existing field', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -801,6 +804,13 @@ test('drop existing index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+      indexes: [
+        {
+          slug: 'indexSlug',
+          fields: [{ slug: 'email' }],
+        },
+      ],
     },
   ];
 
@@ -1276,6 +1286,18 @@ test('drop existing trigger', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
+      triggers: [
+        {
+          slug: 'triggerSlug',
+          when: 'AFTER',
+          action: 'INSERT',
+          effects: [
+            {
+              add: { member: { to: { account: 'test' } } },
+            },
+          ],
+        },
+      ],
     },
   ];
 
@@ -1296,7 +1318,7 @@ test('drop existing trigger', () => {
 
 test('create new preset', () => {
   const preset: ModelPreset = {
-    slug: 'company_employees',
+    slug: 'companyEmployees',
     instructions: {
       with: {
         email: {
@@ -1328,7 +1350,7 @@ test('create new preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.company_employees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(preset),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1355,7 +1377,7 @@ test('update existing preset', () => {
       alter: {
         model: 'account',
         alter: {
-          preset: 'company_employees',
+          preset: 'companyEmployees',
           to: newPresetDetails,
         },
       },
@@ -1366,6 +1388,12 @@ test('update existing preset', () => {
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
+      presets: [
+        {
+          slug: 'companyEmployees',
+          instructions: { with: { email: 'test@site.org' } },
+        },
+      ],
     },
   ];
 
@@ -1373,7 +1401,7 @@ test('update existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.company_employees', json_patch(json_extract("presets", '$.company_employees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.companyEmployees', json_patch(json_extract("presets", '$.companyEmployees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(newPresetDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1390,7 +1418,7 @@ test('drop existing preset', () => {
       alter: {
         model: 'account',
         drop: {
-          preset: 'company_employees',
+          preset: 'companyEmployees',
         },
       },
     },
@@ -1399,6 +1427,13 @@ test('drop existing preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+      presets: [
+        {
+          slug: 'companyEmployees',
+          instructions: { with: { email: 'test' } },
+        },
+      ],
     },
   ];
 
@@ -1406,7 +1441,7 @@ test('drop existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.company_employees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
@@ -1441,6 +1476,40 @@ test('try to update existing model that does not exist', () => {
     'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
+});
+
+test('try to update existing model entity that does not exist', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: 'email',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'No field with slug "email" defined in model "Account".',
+  );
+  expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
 
 test('try to create new trigger with targeted fields and wrong action', () => {
