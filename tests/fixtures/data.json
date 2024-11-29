@@ -1,0 +1,62 @@
+{
+    "account": [
+      {
+        "id": "acc_39h8fhe98hefah8",
+        "handle": "elaine",
+        "firstName": "Elaine",
+        "lastName": "Jones",
+        "ronin.locked": false,
+        "ronin.updatedAt": "2019-01-01T00:00:00Z",
+        "ronin.createdAt": "2019-01-01T00:00:00Z"
+      },
+      {
+        "id": "acc_39h8fhe98hefah9",
+        "handle": "david",
+        "firstName": "David",
+        "lastName": "Brown"
+      }
+    ],
+    "product": [
+      {
+        "id": "pro_39h8fhe98hefah8",
+        "name": "Apple",
+        "position": 1
+      },
+      {
+        "id": "pro_39h8fhe98hefah9",
+        "name": "Banana",
+        "position": 2
+      },
+      {
+        "id": "pro_39h8fhe98hefah0",
+        "name": "Cherry",
+        "position": 3
+      }
+    ],
+    "member": [
+      {
+        "id": "mem_39h8fhe98hefah8",
+        "account": "acc_39h8fhe98hefah8"
+      },
+      {
+        "id": "mem_39h8fhe98hefah9",
+        "account": "acc_39h8fhe98hefah9"
+      }
+    ],
+    "team": [
+      {
+        "id": "team_39h8fhe98hefah8",
+        "locations": {
+          "europe": "berlin"
+        },
+        "billing.currency": "EUR"
+      },
+      {
+        "id": "team_39h8fhe98hefah9",
+        "locations": {
+          "europe": "london"
+        },
+        "billing.currency": "GBP"
+      }
+    ]
+  }
