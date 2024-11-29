@@ -465,47 +465,6 @@ test('create new field with multi-cardinality relationship', () => {
   ]);
 });
 
-test('drop existing field with multi-cardinality relationship', () => {
-  const field: ModelField = {
-    slug: 'account',
-    type: 'link',
-    target: 'account',
-    kind: 'many',
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        drop: {
-          field: field.slug,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-      fields: [field],
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: 'DROP TABLE "ronin_link_account_accounts"',
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.account'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
-      returning: true,
-    },
-  ]);
-});
-
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
@@ -620,6 +579,47 @@ test('drop existing field', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.email'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
+      returning: true,
+    },
+  ]);
+});
+
+test('drop existing field with multi-cardinality relationship', () => {
+  const field: ModelField = {
+    slug: 'account',
+    type: 'link',
+    target: 'account',
+    kind: 'many',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: field.slug,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [field],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'DROP TABLE "ronin_link_account_accounts"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.account'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
