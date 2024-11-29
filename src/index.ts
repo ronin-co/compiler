@@ -4,11 +4,12 @@ import type { NativeRecord, Result, Row } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { expand, splitQuery } from '@/src/utils/helpers';
 import {
+  ROOT_MODEL,
   addDefaultModelFields,
   addDefaultModelPresets,
-  addSystemModels,
   getFieldFromModel,
   getModelBySlug,
+  getSystemModels,
   transformMetaQuery,
 } from '@/src/utils/model';
 
@@ -44,7 +45,11 @@ export class Transaction {
       inlineParams?: boolean;
     },
   ): Array<Statement> => {
-    const modelList = addSystemModels(models).map((model) => {
+    const modelList = [
+      ROOT_MODEL,
+      ...models.flatMap((model) => getSystemModels(models, model)),
+      ...models,
+    ].map((model) => {
       return addDefaultModelFields(model, true);
     });
 

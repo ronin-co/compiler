@@ -421,6 +421,51 @@ test('create new field with options', () => {
   ]);
 });
 
+test('create new field with multi-cardinality relationship', () => {
+  const field: ModelField = {
+    slug: 'account',
+    type: 'link',
+    target: 'account',
+    kind: 'many',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'ALTER TABLE "accounts" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      params: [
+        JSON.stringify(field),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'member',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
