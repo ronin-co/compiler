@@ -64,6 +64,13 @@ type RoninErrorCode =
   | 'MISSING_INSTRUCTION'
   | 'MISSING_FIELD';
 
+export const MODEL_ENTITY_ERROR_CODES = {
+  field: 'FIELD_NOT_FOUND',
+  index: 'INDEX_NOT_FOUND',
+  trigger: 'TRIGGER_NOT_FOUND',
+  preset: 'PRESET_NOT_FOUND',
+} as const;
+
 interface Issue {
   message: string;
   path: Array<string | number>;

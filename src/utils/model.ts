@@ -18,6 +18,7 @@ import type {
   Statement,
 } from '@/src/types/query';
 import {
+  MODEL_ENTITY_ERROR_CODES,
   RONIN_MODEL_SYMBOLS,
   RoninError,
   convertToCamelCase,
@@ -987,14 +988,7 @@ export const transformMetaQuery = (
   ) {
     throw new RoninError({
       message: `No ${entity} with slug "${slug}" defined in model "${existingModel.name}".`,
-      code: (
-        {
-          field: 'FIELD_NOT_FOUND',
-          index: 'INDEX_NOT_FOUND',
-          trigger: 'TRIGGER_NOT_FOUND',
-          preset: 'PRESET_NOT_FOUND',
-        } as const
-      )[entity],
+      code: MODEL_ENTITY_ERROR_CODES[entity],
     });
   }
 
