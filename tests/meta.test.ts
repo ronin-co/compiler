@@ -127,6 +127,36 @@ test('create new model with suitable default identifiers', () => {
   expect(transaction.statements[1].params[8]).toEqual('handle');
 });
 
+// Assert whether the system models associated with the model are correctly created.
+test('create new model that has system models associated with it', () => {
+  const fields = [
+    {
+      slug: 'account',
+      type: 'link',
+      target: 'account',
+      kind: 'many',
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        model: { slug: 'account', fields },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[1]).toEqual({
+    statement:
+      'CREATE TABLE "ronin_link_account_accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))',
+    params: [],
+  });
+});
+
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing model (slug)', () => {
@@ -232,6 +262,38 @@ test('drop existing model', () => {
       returning: true,
     },
   ]);
+});
+
+// Assert whether the system models associated with the model are correctly cleaned up.
+test('drop existing model that has system models associated with it', () => {
+  const queries: Array<Query> = [
+    {
+      drop: {
+        model: 'account',
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'account',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[1]).toEqual({
+    statement: 'DROP TABLE "ronin_link_account_accounts"',
+    params: [],
+  });
 });
 
 test('query a model that was just created', () => {
@@ -585,7 +647,7 @@ test('drop existing field', () => {
   ]);
 });
 
-test('drop existing field with multi-cardinality relationship', () => {
+test('drop existing field that has system models associated with it', () => {
   const field: ModelField = {
     slug: 'account',
     type: 'link',

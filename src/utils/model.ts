@@ -765,7 +765,10 @@ export const transformMetaQuery = (
 
       // Compose default settings for the model.
       const modelWithFields = addDefaultModelFields(newModel, true);
-      const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
+      const modelWithPresets = addDefaultModelPresets(
+        [...models, modelWithFields],
+        modelWithFields,
+      );
 
       // A list of all model entities, in the form of an object.
       const entities = Object.fromEntries(
