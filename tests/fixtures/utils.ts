@@ -53,7 +53,7 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
     });
 
     await engine.queryDatabase(databaseName, [
-      modelTransaction.statements[0],
+      ...modelTransaction.statements.filter((item) => !item.returning),
       ...dataStatements,
     ]);
   }
