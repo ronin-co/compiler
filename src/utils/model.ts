@@ -644,6 +644,34 @@ const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>)
 };
 
 /**
+ * Composes an SQL statement for creating or dropping a system model.
+ *
+ * @param models - A list of models.
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
+ * SQL statement, in order to prepare for it.
+ * @param action - Whether the system model should be created or dropped.
+ * @param systemModel - The affected system model.
+ *
+ * @returns Nothing. The `models` and `dependencyStatements` arrays are modified in place.
+ */
+const composeSystemModelStatement = (
+  models: Array<Model>,
+  dependencyStatements: Array<Statement>,
+  action: 'create' | 'drop',
+  systemModel: PartialModel,
+) => {
+  // Omit the `system` property.
+  const { system: _, ...systemModelClean } = systemModel;
+
+  const query: Query = {
+    [action]: { model: action === 'create' ? systemModelClean : systemModelClean.slug },
+  };
+  const statement = compileQueryInput(query, models, []);
+
+  dependencyStatements.push(...statement.dependencies);
+};
+
+/**
  * Handles queries that modify the DB schema. Specifically, those are `create.model`,
  * `alter.model`, and `drop.model` queries.
  *
@@ -768,6 +796,18 @@ export const transformMetaQuery = (
       }
 
       queryTypeDetails = { to: finalModel };
+
+      // Add any system models that might be needed by the model.
+      getSystemModels(models, modelWithPresets).map((systemModel) => {
+        // Compose the SQL statement for adding the system model.
+        // This modifies the original `models` array and adds the system model to it.
+        return composeSystemModelStatement(
+          models,
+          dependencyStatements,
+          'create',
+          systemModel,
+        );
+      });
     }
 
     if (action === 'alter' && model) {
@@ -808,6 +848,20 @@ export const transformMetaQuery = (
       dependencyStatements.push({ statement, params: [] });
 
       queryTypeDetails = { with: { slug } };
+
+      // Remove all system models that are associated with the model.
+      models
+        .filter(({ system }) => system?.model === model.slug)
+        .map((systemModel) => {
+          // Compose the SQL statement for removing the system model.
+          // This modifies the original `models` array and removes the system model from it.
+          return composeSystemModelStatement(
+            models,
+            dependencyStatements,
+            'drop',
+            systemModel,
+          );
+        });
     }
 
     const queryTypeAction =
@@ -1047,10 +1101,7 @@ export const transformMetaQuery = (
     const exists = newSystemModels.find((model) => model.slug === systemModel.slug);
     if (exists) continue;
 
-    const query: Query = { drop: { model: systemModel.slug } };
-    const statement = compileQueryInput(query, models, []);
-
-    dependencyStatements.push(...statement.dependencies);
+    composeSystemModelStatement(models, dependencyStatements, 'drop', systemModel);
   }
 
   // Add any new system models that don't yet exist.
@@ -1058,13 +1109,7 @@ export const transformMetaQuery = (
     const exists = currentSystemModels.find((model) => model.slug === systemModel.slug);
     if (exists) continue;
 
-    // Omit the `system` property.
-    const { system: _, ...systemModelClean } = systemModel;
-
-    const query: Query = { create: { model: systemModelClean } };
-    const statement = compileQueryInput(query, models, []);
-
-    dependencyStatements.push(...statement.dependencies);
+    composeSystemModelStatement(models, dependencyStatements, 'create', systemModel);
   }
 
   return {
