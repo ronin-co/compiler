@@ -13,10 +13,11 @@ export const engine = new Engine({
   ],
 });
 
-export const prepareDatabase = async (models: Array<Model>) => {
+export const prepareDatabase = async (databaseName: string, models: Array<Model>) => {
   for (const model of models) {
     const query: Query = { create: { model } };
     const { statements: modelStatements } = new Transaction([query], {
+      models,
       inlineParams: true,
     });
 
@@ -38,13 +39,13 @@ export const prepareDatabase = async (models: Array<Model>) => {
     const dataStatements = formattedData.map((row) => {
       const query: Query = { add: { [model.slug]: { to: row } } };
       const { statements } = new Transaction([query], {
-        models: [model],
+        models,
         inlineParams: true,
       });
       return statements[0];
     });
 
-    await engine.queryDatabase('test', [modelStatements[0], ...dataStatements]);
+    await engine.queryDatabase(databaseName, [modelStatements[0], ...dataStatements]);
   }
 };
 
@@ -52,8 +53,15 @@ export const queryDatabase = async (
   models: Array<Model>,
   statements: Array<Statement>,
 ): Promise<Array<Array<Row>>> => {
-  await prepareDatabase(models);
+  const databaseName = Math.random().toString(36).substring(7);
+  await engine.createDatabase(databaseName);
 
-  const results = await engine.queryDatabase('test', statements);
-  return results.map((result) => result.rows);
+  await prepareDatabase(databaseName, models);
+
+  const results = await engine.queryDatabase(databaseName, statements);
+  const formattedResults = results.map((result) => result.rows);
+
+  await engine.deleteDatabase(databaseName);
+
+  return formattedResults;
 };
