@@ -421,6 +421,51 @@ test('create new field with options', () => {
   ]);
 });
 
+test('create new field with multi-cardinality relationship', () => {
+  const field: ModelField = {
+    slug: 'account',
+    type: 'link',
+    target: 'account',
+    kind: 'many',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'ALTER TABLE "accounts" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      params: [
+        JSON.stringify(field),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'member',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
@@ -1296,7 +1341,7 @@ test('drop existing trigger', () => {
 
 test('create new preset', () => {
   const preset: ModelPreset = {
-    slug: 'company_employees',
+    slug: 'companyEmployees',
     instructions: {
       with: {
         email: {
@@ -1328,7 +1373,7 @@ test('create new preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.company_employees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(preset),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1355,7 +1400,7 @@ test('update existing preset', () => {
       alter: {
         model: 'account',
         alter: {
-          preset: 'company_employees',
+          preset: 'companyEmployees',
           to: newPresetDetails,
         },
       },
@@ -1366,6 +1411,12 @@ test('update existing preset', () => {
     {
       slug: 'account',
       fields: [{ slug: 'email', type: 'string' }],
+      presets: [
+        {
+          slug: 'companyEmployees',
+          instructions: { with: { email: 'test@site.org' } },
+        },
+      ],
     },
   ];
 
@@ -1373,7 +1424,7 @@ test('update existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.company_employees', json_patch(json_extract("presets", '$.company_employees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.companyEmployees', json_patch(json_extract("presets", '$.companyEmployees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(newPresetDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1390,7 +1441,7 @@ test('drop existing preset', () => {
       alter: {
         model: 'account',
         drop: {
-          preset: 'company_employees',
+          preset: 'companyEmployees',
         },
       },
     },
@@ -1406,7 +1457,7 @@ test('drop existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.company_employees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },

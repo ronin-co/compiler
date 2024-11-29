@@ -558,7 +558,7 @@ const typesInSQLite = {
  * @param model - The model that contains the field.
  * @param field - The field of a RONIN model.
  *
- * @returns The SQL syntax for the provided field.
+ * @returns The SQL syntax for the provided field, or `null` if none should be generated.
  */
 const getFieldStatement = (
   models: Array<Model>,
@@ -589,6 +589,10 @@ const getFieldStatement = (
   }
 
   if (field.type === 'link') {
+    // Link fields with the cardinality "many" do not exist as columns in the database.
+    // Instead, they are added in the output transformation of the compiler.
+    if (field.kind === 'many') return null;
+
     const actions = field.actions || {};
     const targetTable = getModelBySlug(models, field.target).table;
 
@@ -608,12 +612,12 @@ const getFieldStatement = (
 };
 
 // Keeping these hardcoded instead of using `pluralize` is faster.
-const PLURAL_MODEL_ENTITIES: Record<ModelEntityType, string> = {
+const PLURAL_MODEL_ENTITIES = {
   field: 'fields',
   index: 'indexes',
   trigger: 'triggers',
   preset: 'presets',
-};
+} as const;
 
 /**
  * Converts an array of model entites (such as fields) to an object where the keys are
@@ -811,17 +815,25 @@ export const transformMetaQuery = (
     };
   }
 
-  if (entity === 'field' && model) {
+  // Entities can only be created, altered, or dropped on existing models, so the model
+  // is guaranteed to exist.
+  const existingModel = model as Model;
+
+  if (entity === 'field') {
     if (action === 'create') {
       const field = jsonValue as ModelField;
 
       // Default field type.
       field.type = field.type || 'string';
 
-      dependencyStatements.push({
-        statement: `${statement} ADD COLUMN ${getFieldStatement(models, model, field)}`,
-        params: [],
-      });
+      const fieldStatement = getFieldStatement(models, existingModel, field);
+
+      if (fieldStatement) {
+        dependencyStatements.push({
+          statement: `${statement} ADD COLUMN ${fieldStatement}`,
+          params: [],
+        });
+      }
     } else if (action === 'alter') {
       const newSlug = jsonValue?.slug;
 
@@ -841,7 +853,7 @@ export const transformMetaQuery = (
     }
   }
 
-  if (entity === 'index' && model) {
+  if (entity === 'index') {
     const index = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
@@ -855,14 +867,14 @@ export const transformMetaQuery = (
         // If the slug of a field is provided, find the field in the model, obtain its
         // column selector, and place it in the SQL statement.
         if ('slug' in field) {
-          ({ fieldSelector } = getFieldFromModel(model, field.slug, 'to'));
+          ({ fieldSelector } = getFieldFromModel(existingModel, field.slug, 'to'));
         }
         // Alternatively, if an expression is provided instead of the slug of a field,
         // find all fields inside the expression, obtain their column selectors, and
         // insert them into the expression, after which the expression can be used in the
         // SQL statement.
         else if ('expression' in field) {
-          fieldSelector = parseFieldExpression(model, 'to', field.expression);
+          fieldSelector = parseFieldExpression(existingModel, 'to', field.expression);
         }
 
         if (field.collation) fieldSelector += ` COLLATE ${field.collation}`;
@@ -876,7 +888,7 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
       if (index.filter) {
-        const withStatement = handleWith(models, model, params, index.filter);
+        const withStatement = handleWith(models, existingModel, params, index.filter);
         statement += ` WHERE (${withStatement})`;
       }
     }
@@ -884,7 +896,7 @@ export const transformMetaQuery = (
     dependencyStatements.push({ statement, params });
   }
 
-  if (entity === 'trigger' && model) {
+  if (entity === 'trigger') {
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
@@ -906,7 +918,7 @@ export const transformMetaQuery = (
         }
 
         const fieldSelectors = trigger.fields.map((field) => {
-          return getFieldFromModel(model, field.slug, 'to').fieldSelector;
+          return getFieldFromModel(existingModel, field.slug, 'to').fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
@@ -935,7 +947,7 @@ export const transformMetaQuery = (
 
         const withStatement = handleWith(
           models,
-          { ...model, tableAlias: tableAlias },
+          { ...existingModel, tableAlias: tableAlias },
           params,
           trigger.filter,
         );
@@ -947,7 +959,7 @@ export const transformMetaQuery = (
       const effectStatements = trigger.effects.map((effectQuery) => {
         return compileQueryInput(effectQuery, models, params, {
           returning: false,
-          parentModel: model,
+          parentModel: existingModel,
         }).main.statement;
       });
 
@@ -970,15 +982,37 @@ export const transformMetaQuery = (
     case 'create': {
       const value = prepareStatementValue(statementParams, jsonValue);
       json = `json_insert(${field}, '$.${slug}', ${value})`;
+
+      // Add the newly created entity to the model.
+      (existingModel[pluralType] as Array<ModelEntity>) = [
+        ...(existingModel[pluralType] || []),
+        jsonValue,
+      ] as Array<ModelEntity>;
+
       break;
     }
     case 'alter': {
       const value = prepareStatementValue(statementParams, jsonValue);
       json = `json_set(${field}, '$.${slug}', json_patch(json_extract(${field}, '$.${slug}'), ${value}))`;
+
+      // Update the existing entity in the model.
+      const targetEntityItem = existingModel[pluralType]?.findIndex(
+        (entity) => entity.slug === slug,
+      ) as number;
+      const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
+      targetEntity[targetEntityItem] = jsonValue as ModelEntity;
+
       break;
     }
     case 'drop': {
       json = `json_remove(${field}, '$.${slug}')`;
+
+      // Remove the existing entity from the model.
+      const targetEntityItem = existingModel[pluralType]?.findIndex(
+        (entity) => entity.slug === slug,
+      ) as number;
+      const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
+      delete targetEntity[targetEntityItem];
     }
   }
 
