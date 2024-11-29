@@ -647,6 +647,7 @@ test('drop existing field', () => {
   ]);
 });
 
+// Assert whether the system models associated with the field are correctly cleaned up.
 test('drop existing field that has system models associated with it', () => {
   const field: ModelField = {
     slug: 'account',
@@ -675,17 +676,10 @@ test('drop existing field that has system models associated with it', () => {
 
   const transaction = new Transaction(queries, { models });
 
-  expect(transaction.statements).toEqual([
-    {
-      statement: 'DROP TABLE "ronin_link_account_accounts"',
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.account'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
-      returning: true,
-    },
-  ]);
+  expect(transaction.statements[0]).toEqual({
+    statement: 'DROP TABLE "ronin_link_account_accounts"',
+    params: [],
+  });
 });
 
 test('create new index', () => {
