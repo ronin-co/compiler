@@ -824,6 +824,25 @@ export const transformMetaQuery = (
   // is guaranteed to exist.
   const existingModel = model as Model;
 
+  const pluralType = PLURAL_MODEL_ENTITIES[entity];
+
+  const targetEntityIndex = existingModel[pluralType]?.findIndex(
+    (entity) => entity.slug === slug,
+  );
+
+  // Throw an error if the entity that was targeted is not available in the model.
+  if (
+    (action === 'alter' || action === 'drop') &&
+    (typeof targetEntityIndex === 'undefined' || targetEntityIndex === -1)
+  ) {
+    throw new RoninError({
+      message: `No ${entity} with slug "${slug}" defined in model "${existingModel.name}".`,
+      code: MODEL_ENTITY_ERROR_CODES[entity],
+    });
+  }
+
+  const existingEntity = existingModel[pluralType]?.[targetEntityIndex as number];
+
   if (entity === 'field') {
     if (action === 'create') {
       const field = jsonValue as ModelField;
@@ -851,10 +870,14 @@ export const transformMetaQuery = (
         });
       }
     } else if (action === 'drop') {
-      dependencyStatements.push({
-        statement: `${statement} DROP COLUMN "${slug}"`,
-        params: [],
-      });
+      const existingField = existingEntity as ModelField;
+
+      if (!(existingField.type === 'link' && existingField.kind === 'many')) {
+        dependencyStatements.push({
+          statement: `${statement} DROP COLUMN "${slug}"`,
+          params: [],
+        });
+      }
     }
   }
 
@@ -978,23 +1001,7 @@ export const transformMetaQuery = (
     dependencyStatements.push({ statement, params });
   }
 
-  const pluralType = PLURAL_MODEL_ENTITIES[entity];
   const field = `${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}`;
-
-  const targetEntityIndex = existingModel[pluralType]?.findIndex(
-    (entity) => entity.slug === slug,
-  );
-
-  // Throw an error if the entity that was targeted is not available in the model.
-  if (
-    (action === 'alter' || action === 'drop') &&
-    (typeof targetEntityIndex === 'undefined' || targetEntityIndex === -1)
-  ) {
-    throw new RoninError({
-      message: `No ${entity} with slug "${slug}" defined in model "${existingModel.name}".`,
-      code: MODEL_ENTITY_ERROR_CODES[entity],
-    });
-  }
 
   let json: string;
 
@@ -1026,12 +1033,39 @@ export const transformMetaQuery = (
 
       // Remove the existing entity from the model.
       const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
-      delete targetEntity[targetEntityIndex as number];
+      targetEntity.splice(targetEntityIndex as number, 1);
     }
   }
 
-  // const currentSystemModels = models.filter((model) => model.system?.model === existingModel.slug);
-  // const newSystemModels = getSystemModels(models, existingModel);
+  const currentSystemModels = models.filter(({ system }) => {
+    return system?.model === existingModel.slug;
+  });
+  const newSystemModels = getSystemModels(models, existingModel);
+
+  // Remove any system models that are no longer required.
+  for (const systemModel of currentSystemModels) {
+    const exists = newSystemModels.find((model) => model.slug === systemModel.slug);
+    if (exists) continue;
+
+    const query: Query = { drop: { model: systemModel.slug } };
+    const statement = compileQueryInput(query, models, []);
+
+    dependencyStatements.push(...statement.dependencies);
+  }
+
+  // Add any new system models that don't yet exist.
+  for (const systemModel of newSystemModels) {
+    const exists = currentSystemModels.find((model) => model.slug === systemModel.slug);
+    if (exists) continue;
+
+    // Omit the `system` property.
+    const { system: _, ...systemModelClean } = systemModel;
+
+    const query: Query = { create: { model: systemModelClean } };
+    const statement = compileQueryInput(query, models, []);
+
+    dependencyStatements.push(...statement.dependencies);
+  }
 
   return {
     set: {

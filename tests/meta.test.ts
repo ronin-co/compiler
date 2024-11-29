@@ -450,8 +450,7 @@ test('create new field with multi-cardinality relationship', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'ALTER TABLE "accounts" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
+      statement: `CREATE TABLE "ronin_link_account_accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
       params: [],
     },
     {
@@ -459,8 +458,49 @@ test('create new field with multi-cardinality relationship', () => {
       params: [
         JSON.stringify(field),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'member',
+        'account',
       ],
+      returning: true,
+    },
+  ]);
+});
+
+test('drop existing field with multi-cardinality relationship', () => {
+  const field: ModelField = {
+    slug: 'account',
+    type: 'link',
+    target: 'account',
+    kind: 'many',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: field.slug,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [field],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'DROP TABLE "ronin_link_account_accounts"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.account'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
     },
   ]);

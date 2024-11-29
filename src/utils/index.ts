@@ -9,7 +9,7 @@ import { handleWith } from '@/src/instructions/with';
 import type { Model } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import { getModelBySlug } from '@/src/utils/model';
+import { getModelBySlug, transformMetaQuery } from '@/src/utils/model';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -24,7 +24,7 @@ import { formatIdentifiers } from '@/src/utils/statement';
  * @returns The composed SQL statement.
  */
 export const compileQueryInput = (
-  query: Query,
+  defaultQuery: Query,
   models: Array<Model>,
   // In order to prevent SQL injections and allow for faster query execution, we're not
   // inserting any values into the SQL statement directly. Instead, we will pass them to
@@ -45,6 +45,21 @@ export const compileQueryInput = (
     parentModel?: Model;
   },
 ): { dependencies: Array<Statement>; main: Statement } => {
+  // A list of write statements that are required to be executed before the main read
+  // statement. Their output is not relevant for the main statement, as they are merely
+  // used to update the database in a way that is required for the main read statement
+  // to return the expected results.
+  const dependencyStatements: Array<Statement> = [];
+
+  // If the query is a meta query of type `create`, `alter`, or `drop`, we need to
+  // transform it into a regular query before it can be processed further.
+  const query = transformMetaQuery(
+    models,
+    dependencyStatements,
+    statementParams,
+    defaultQuery,
+  );
+
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
   const { queryType, queryModel, queryInstructions } = parsedQuery;
@@ -58,12 +73,6 @@ export const compileQueryInput = (
   // Walk deeper into the query, to the level on which the actual instructions (such as
   // `with` and `including`) are located.
   let instructions = formatIdentifiers(model, queryInstructions);
-
-  // A list of write statements that are required to be executed before the main read
-  // statement. Their output is not relevant for the main statement, as they are merely
-  // used to update the database in a way that is required for the main read statement
-  // to return the expected results.
-  const dependencyStatements: Array<Statement> = [];
 
   const returning = options?.returning ?? true;
 

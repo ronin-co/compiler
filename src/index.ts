@@ -10,7 +10,6 @@ import {
   getFieldFromModel,
   getModelBySlug,
   getSystemModels,
-  transformMetaQuery,
 } from '@/src/utils/model';
 
 export class Transaction {
@@ -61,19 +60,10 @@ export class Transaction {
     const mainStatements: Array<Statement> = [];
 
     for (const query of queries) {
-      const statementValues = options?.inlineParams ? null : [];
-
-      const transformedQuery = transformMetaQuery(
-        modelListWithPresets,
-        dependencyStatements,
-        statementValues,
-        query,
-      );
-
       const result = compileQueryInput(
-        transformedQuery,
+        query,
         modelListWithPresets,
-        statementValues,
+        options?.inlineParams ? null : [],
       );
 
       // Every query can only produce one main statement (which can return output), but
