@@ -51,6 +51,8 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
 type RoninErrorCode =
   | 'MODEL_NOT_FOUND'
   | 'FIELD_NOT_FOUND'
+  | 'INDEX_NOT_FOUND'
+  | 'TRIGGER_NOT_FOUND'
   | 'PRESET_NOT_FOUND'
   | 'INVALID_WITH_VALUE'
   | 'INVALID_TO_VALUE'

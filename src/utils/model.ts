@@ -976,6 +976,28 @@ export const transformMetaQuery = (
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
   const field = `${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}`;
 
+  const targetEntityIndex = existingModel[pluralType]?.findIndex(
+    (entity) => entity.slug === slug,
+  );
+
+  // Throw an error if the entity that was targeted is not available in the model.
+  if (
+    (action === 'alter' || action === 'drop') &&
+    (typeof targetEntityIndex === 'undefined' || targetEntityIndex === -1)
+  ) {
+    throw new RoninError({
+      message: `No ${entity} with slug "${slug}" defined in model "${existingModel.name}".`,
+      code: (
+        {
+          field: 'FIELD_NOT_FOUND',
+          index: 'INDEX_NOT_FOUND',
+          trigger: 'TRIGGER_NOT_FOUND',
+          preset: 'PRESET_NOT_FOUND',
+        } as const
+      )[entity],
+    });
+  }
+
   let json: string;
 
   switch (action) {
@@ -996,11 +1018,8 @@ export const transformMetaQuery = (
       json = `json_set(${field}, '$.${slug}', json_patch(json_extract(${field}, '$.${slug}'), ${value}))`;
 
       // Update the existing entity in the model.
-      const targetEntityItem = existingModel[pluralType]?.findIndex(
-        (entity) => entity.slug === slug,
-      ) as number;
       const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
-      targetEntity[targetEntityItem] = jsonValue as ModelEntity;
+      targetEntity[targetEntityIndex as number] = jsonValue as ModelEntity;
 
       break;
     }
@@ -1008,11 +1027,8 @@ export const transformMetaQuery = (
       json = `json_remove(${field}, '$.${slug}')`;
 
       // Remove the existing entity from the model.
-      const targetEntityItem = existingModel[pluralType]?.findIndex(
-        (entity) => entity.slug === slug,
-      ) as number;
       const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
-      delete targetEntity[targetEntityItem];
+      delete targetEntity[targetEntityIndex as number];
     }
   }
 

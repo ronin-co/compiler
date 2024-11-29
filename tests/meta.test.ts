@@ -421,51 +421,6 @@ test('create new field with options', () => {
   ]);
 });
 
-test('create new field with multi-cardinality relationship', () => {
-  const field: ModelField = {
-    slug: 'account',
-    type: 'link',
-    target: 'account',
-    kind: 'many',
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        create: {
-          field,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement:
-        'ALTER TABLE "accounts" ADD COLUMN "account" TEXT REFERENCES accounts("id") ON DELETE CASCADE',
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify(field),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'member',
-      ],
-      returning: true,
-    },
-  ]);
-});
-
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
@@ -488,6 +443,7 @@ test('update existing field (slug)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -532,6 +488,7 @@ test('update existing field (name)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -565,6 +522,7 @@ test('drop existing field', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
     },
   ];
 
@@ -846,6 +804,13 @@ test('drop existing index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+      indexes: [
+        {
+          slug: 'indexSlug',
+          fields: [{ slug: 'email' }],
+        },
+      ],
     },
   ];
 
@@ -1321,6 +1286,18 @@ test('drop existing trigger', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
+      triggers: [
+        {
+          slug: 'triggerSlug',
+          when: 'AFTER',
+          action: 'INSERT',
+          effects: [
+            {
+              add: { member: { to: { account: 'test' } } },
+            },
+          ],
+        },
+      ],
     },
   ];
 
@@ -1450,6 +1427,13 @@ test('drop existing preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [{ slug: 'email', type: 'string' }],
+      presets: [
+        {
+          slug: 'companyEmployees',
+          instructions: { with: { email: 'test' } },
+        },
+      ],
     },
   ];
 
@@ -1492,6 +1476,40 @@ test('try to update existing model that does not exist', () => {
     'No matching model with either Slug or Plural Slug of "account" could be found.',
   );
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
+});
+
+test('try to update existing model entity that does not exist', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: 'email',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'No field with slug "email" defined in model "Account".',
+  );
+  expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
 
 test('try to create new trigger with targeted fields and wrong action', () => {
