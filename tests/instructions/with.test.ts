@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { queryDatabase } from '@/fixtures/utils';
+import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
 
@@ -40,7 +40,7 @@ test('get single record with field being value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toBe('elaine');
@@ -83,7 +83,7 @@ test('get single record with field not being value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).not.toBe('elaine');
@@ -126,7 +126,7 @@ test('get single record with field not being empty', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).not.toBeNull();
@@ -169,7 +169,7 @@ test('get single record with field starting with value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toStartWith('el');
@@ -212,7 +212,7 @@ test('get single record with field not starting with value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).not.toStartWith('el');
@@ -255,7 +255,7 @@ test('get single record with field ending with value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toEndWith('ne');
@@ -298,7 +298,7 @@ test('get single record with field not ending with value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).not.toEndWith('ne');
@@ -341,7 +341,7 @@ test('get single record with field containing value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toContain('ain');
@@ -384,7 +384,7 @@ test('get single record with field not containing value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).not.toContain('ain');
@@ -427,7 +427,7 @@ test('get single record with field greater than value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.position).toBeGreaterThan(1);
@@ -470,7 +470,7 @@ test('get single record with field greater or equal to value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.position).toBeGreaterThanOrEqual(2);
@@ -513,7 +513,7 @@ test('get single record with field less than value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.position).toBeLessThan(3);
@@ -556,7 +556,7 @@ test('get single record with field less or equal to value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.position).toBeLessThanOrEqual(3);
@@ -607,7 +607,7 @@ test('get single record with multiple fields being value', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toBe('elaine');
@@ -662,10 +662,10 @@ test('get single record with link field', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
-  const [[targetRecord]] = await queryDatabase(models, [
+  const [[targetRecord]] = await queryEphemeralDatabase(models, [
     {
       statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
       params: [],
@@ -716,7 +716,7 @@ test('get single record with link field and id', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
@@ -765,7 +765,7 @@ test('get single record with link field and id with condition', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
@@ -808,7 +808,7 @@ test('get single record with json field', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.locations).toHaveProperty('europe', 'berlin');
@@ -858,7 +858,7 @@ test('get single record with one of fields', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(
@@ -908,7 +908,7 @@ test('get single record with one of field conditions', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
@@ -951,7 +951,7 @@ test('get single record with one of field values', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
@@ -998,7 +998,7 @@ test('get single record with one of field values in group', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect((result.record?.billing as Record<string, unknown>).currency).toBeOneOf([
@@ -1047,7 +1047,7 @@ test('get single record with name identifier', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.firstName).toBe('Elaine');
@@ -1093,7 +1093,7 @@ test('get single record with slug identifier', async () => {
     },
   ]);
 
-  const rows = await queryDatabase(models, transaction.statements);
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toBe('elaine');

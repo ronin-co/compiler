@@ -67,7 +67,7 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
  *
  * @returns A list of rows resulting from the executed statements.
  */
-export const queryDatabase = async (
+export const queryEphemeralDatabase = async (
   models: Array<Model>,
   statements: Array<Statement>,
 ): Promise<Array<Array<Row>>> => {
