@@ -657,7 +657,7 @@ const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>)
  *
  * @returns Nothing. The `models` and `dependencyStatements` arrays are modified in place.
  */
-const composeSystemModelStatement = (
+const handleSystemModel = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
   action: 'create' | 'alter' | 'drop',
@@ -808,12 +808,7 @@ export const transformMetaQuery = (
       getSystemModels(models, modelWithPresets).map((systemModel) => {
         // Compose the SQL statement for adding the system model.
         // This modifies the original `models` array and adds the system model to it.
-        return composeSystemModelStatement(
-          models,
-          dependencyStatements,
-          'create',
-          systemModel,
-        );
+        return handleSystemModel(models, dependencyStatements, 'create', systemModel);
       });
     }
 
@@ -859,12 +854,7 @@ export const transformMetaQuery = (
         .map((systemModel) => {
           // Compose the SQL statement for removing the system model.
           // This modifies the original `models` array and removes the system model from it.
-          return composeSystemModelStatement(
-            models,
-            dependencyStatements,
-            'drop',
-            systemModel,
-          );
+          return handleSystemModel(models, dependencyStatements, 'drop', systemModel);
         });
     }
 
@@ -1152,18 +1142,12 @@ export const transformMetaQuery = (
       // Determine if the slug of the system model has changed. If so, alter the
       // respective table.
       if (exists.slug !== systemModel.slug) {
-        composeSystemModelStatement(
-          models,
-          dependencyStatements,
-          'alter',
-          systemModel,
-          exists,
-        );
+        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
       }
       continue;
     }
 
-    composeSystemModelStatement(models, dependencyStatements, 'drop', systemModel);
+    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
   }
 
   // Add any new system models that don't yet exist.
@@ -1172,7 +1156,7 @@ export const transformMetaQuery = (
     const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
     if (exists) continue;
 
-    composeSystemModelStatement(models, dependencyStatements, 'create', systemModel);
+    handleSystemModel(models, dependencyStatements, 'create', systemModel);
   }
 
   return {
