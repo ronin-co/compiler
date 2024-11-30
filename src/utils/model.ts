@@ -897,6 +897,13 @@ export const transformMetaQuery = (
   if (entity === 'field') {
     const statement = `ALTER TABLE "${existingModel.table}"`;
 
+    // If the field is of type "link" and the cardinality is "many", that means it does
+    // not exist as a column in the database, so we don't need to generate statements for
+    // modifying that respective column. The field is handled in the compiler instead.
+    const existingField = existingEntity as ModelField | undefined;
+    const existingLinkField =
+      existingField?.type === 'link' && existingField.kind === 'many';
+
     if (action === 'create') {
       const field = jsonValue as ModelField;
 
@@ -914,23 +921,19 @@ export const transformMetaQuery = (
     } else if (action === 'alter') {
       const newSlug = jsonValue?.slug;
 
-      if (newSlug) {
-        // Only push the statement if the column name is changing, otherwise we don't
-        // need it.
+      // Only push the statement if the column name is changing, otherwise we don't
+      // need it.
+      if (newSlug && !existingLinkField) {
         dependencyStatements.push({
           statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
           params: [],
         });
       }
-    } else if (action === 'drop') {
-      const existingField = existingEntity as ModelField;
-
-      if (!(existingField.type === 'link' && existingField.kind === 'many')) {
-        dependencyStatements.push({
-          statement: `${statement} DROP COLUMN "${slug}"`,
-          params: [],
-        });
-      }
+    } else if (action === 'drop' && !existingLinkField) {
+      dependencyStatements.push({
+        statement: `${statement} DROP COLUMN "${slug}"`,
+        params: [],
+      });
     }
   }
 

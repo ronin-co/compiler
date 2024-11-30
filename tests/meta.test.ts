@@ -483,7 +483,7 @@ test('create new field with options', () => {
   ]);
 });
 
-test('create new field with multi-cardinality relationship', () => {
+test('create new field with many-cardinality relationship', () => {
   const field: ModelField = {
     slug: 'followers',
     type: 'link',
@@ -572,6 +572,58 @@ test('alter existing field (slug)', () => {
   ]);
 });
 
+// Assert that the tables of the system models associated with the field are correctly
+// renamed when the column of the field is renamed.
+test('alter existing field (slug) with many-cardinality relationship', () => {
+  const newFieldDetails: Partial<ModelField> = {
+    slug: 'subscribers',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        alter: {
+          field: 'followers',
+          to: newFieldDetails,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.followers', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      params: [
+        JSON.stringify(newFieldDetails),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'account',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a field does not change during a model update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('alter existing field (name)', () => {
@@ -647,7 +699,8 @@ test('drop existing field', () => {
   ]);
 });
 
-// Assert whether the system models associated with the field are correctly cleaned up.
+// Assert whether the system models associated with the field are correctly cleaned up
+// and that no `ALTER TABLE` statement is generated for the field.
 test('drop existing field that has system models associated with it', () => {
   const field: ModelField = {
     slug: 'followers',
@@ -676,15 +729,22 @@ test('drop existing field that has system models associated with it', () => {
 
   const transaction = new Transaction(queries, { models });
 
-  expect(transaction.statements[0]).toEqual({
-    statement: 'DROP TABLE "ronin_link_account_followers"',
-    params: [],
-  });
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'DROP TABLE "ronin_link_account_followers"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.followers'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
+      returning: true,
+    },
+  ]);
 });
 
 // Assert that only the system models associated with the dropped field are cleaned up,
 // and that the other system models associated with the same model are left untouched.
-test('drop existing field on model with other multi-cardinality fields', () => {
+test('drop existing field on model with other many-cardinality fields', () => {
   const queries: Array<Query> = [
     {
       alter: {
