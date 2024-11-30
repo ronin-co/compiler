@@ -159,7 +159,7 @@ test('create new model that has system models associated with it', () => {
 
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
 // statement is generated for it.
-test('update existing model (slug)', () => {
+test('alter existing model (slug)', () => {
   const queries: Array<Query> = [
     {
       alter: {
@@ -204,7 +204,7 @@ test('update existing model (slug)', () => {
 
 // Ensure that, if the `slug` of a model does not change during an update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
-test('update existing model (plural name)', () => {
+test('alter existing model (plural name)', () => {
   const queries: Array<Query> = [
     {
       alter: {
@@ -529,7 +529,7 @@ test('create new field with multi-cardinality relationship', () => {
 
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
-test('update existing field (slug)', () => {
+test('alter existing field (slug)', () => {
   const newFieldDetails: Partial<ModelField> = {
     slug: 'emailAddress',
   };
@@ -574,7 +574,7 @@ test('update existing field (slug)', () => {
 
 // Ensure that, if the `slug` of a field does not change during a model update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
-test('update existing field (name)', () => {
+test('alter existing field (name)', () => {
   const newFieldDetails: Partial<ModelField> = {
     name: 'Email Address',
   };
@@ -1544,7 +1544,7 @@ test('create new preset', () => {
   ]);
 });
 
-test('update existing preset', () => {
+test('alter existing preset', () => {
   const newPresetDetails: Partial<ModelPreset> = {
     instructions: {
       with: {
@@ -1631,7 +1631,7 @@ test('drop existing preset', () => {
   ]);
 });
 
-test('try to update existing model that does not exist', () => {
+test('try to alter existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
       alter: {
@@ -1661,7 +1661,7 @@ test('try to update existing model that does not exist', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
-test('try to update existing model entity that does not exist', () => {
+test('try to alter existing model entity that does not exist', () => {
   const queries: Array<Query> = [
     {
       alter: {
