@@ -682,6 +682,48 @@ test('drop existing field that has system models associated with it', () => {
   });
 });
 
+// Assert that only the system models associated with the dropped field are cleaned up,
+// and that the other system models associated with the same model are left untouched.
+test('drop existing field on model with other multi-cardinality fields', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: 'subscribers',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+        {
+          slug: 'subscribers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[0]).toEqual({
+    statement: 'DROP TABLE "ronin_link_account_subscribers"',
+    params: [],
+  });
+});
+
 test('create new index', () => {
   const index: ModelIndex = {
     fields: [
