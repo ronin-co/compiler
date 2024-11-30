@@ -1145,9 +1145,17 @@ export const transformMetaQuery = (
   // Add any new system models that don't yet exist.
   for (const systemModel of newSystemModels) {
     // Check if there are any system models that already exist.
-    const exists = currentSystemModels.find(
-      (model) => model.system?.model === systemModel.system?.model,
-    );
+    const exists = currentSystemModels.find((model) => {
+      return (
+        model.system?.model === systemModel.system?.model &&
+        existingModel.fields.findIndex(
+          (item) => item.slug === (model.system?.associationSlug as string),
+        ) ===
+          modelBeforeUpdate?.fields.findIndex(
+            (item) => item.slug === (systemModel.system?.associationSlug as string),
+          )
+      );
+    });
     if (exists) continue;
 
     composeSystemModelStatement(models, dependencyStatements, 'create', systemModel);
