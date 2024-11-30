@@ -647,21 +647,22 @@ const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>)
 };
 
 /**
- * Composes an SQL statement for creating or dropping a system model.
+ * Composes an SQL statement for creating, altering, or dropping a system model.
  *
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
- * @param action - Whether the system model should be created or dropped.
+ * @param action - Whether the system model should be created, altered, or dropped.
  * @param systemModel - The affected system model.
  *
  * @returns Nothing. The `models` and `dependencyStatements` arrays are modified in place.
  */
-const composeSystemModelStatement = (
+const handleSystemModel = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
-  action: 'create' | 'drop',
+  action: 'create' | 'alter' | 'drop',
   systemModel: PartialModel,
+  newModel?: PartialModel,
 ) => {
   // Omit the `system` property.
   const { system: _, ...systemModelClean } = systemModel;
@@ -669,6 +670,12 @@ const composeSystemModelStatement = (
   const query: Query = {
     [action]: { model: action === 'create' ? systemModelClean : systemModelClean.slug },
   };
+
+  if (action === 'alter' && newModel) {
+    const { system: _, ...newModelClean } = newModel;
+    (query.alter as Query & { to: PartialModel }).to = newModelClean;
+  }
+
   const statement = compileQueryInput(query, models, []);
 
   dependencyStatements.push(...statement.dependencies);
@@ -801,12 +808,7 @@ export const transformMetaQuery = (
       getSystemModels(models, modelWithPresets).map((systemModel) => {
         // Compose the SQL statement for adding the system model.
         // This modifies the original `models` array and adds the system model to it.
-        return composeSystemModelStatement(
-          models,
-          dependencyStatements,
-          'create',
-          systemModel,
-        );
+        return handleSystemModel(models, dependencyStatements, 'create', systemModel);
       });
     }
 
@@ -852,12 +854,7 @@ export const transformMetaQuery = (
         .map((systemModel) => {
           // Compose the SQL statement for removing the system model.
           // This modifies the original `models` array and removes the system model from it.
-          return composeSystemModelStatement(
-            models,
-            dependencyStatements,
-            'drop',
-            systemModel,
-          );
+          return handleSystemModel(models, dependencyStatements, 'drop', systemModel);
         });
     }
 
@@ -873,6 +870,7 @@ export const transformMetaQuery = (
 
   // Entities can only be created, altered, or dropped on existing models, so the model
   // is guaranteed to exist.
+  const modelBeforeUpdate = structuredClone(model);
   const existingModel = model as Model;
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
@@ -897,6 +895,13 @@ export const transformMetaQuery = (
   if (entity === 'field') {
     const statement = `ALTER TABLE "${existingModel.table}"`;
 
+    // If the field is of type "link" and the cardinality is "many", that means it does
+    // not exist as a column in the database, so we don't need to generate statements for
+    // modifying that respective column. The field is handled in the compiler instead.
+    const existingField = existingEntity as ModelField | undefined;
+    const existingLinkField =
+      existingField?.type === 'link' && existingField.kind === 'many';
+
     if (action === 'create') {
       const field = jsonValue as ModelField;
 
@@ -914,23 +919,19 @@ export const transformMetaQuery = (
     } else if (action === 'alter') {
       const newSlug = jsonValue?.slug;
 
-      if (newSlug) {
-        // Only push the statement if the column name is changing, otherwise we don't
-        // need it.
+      // Only push the statement if the column name is changing, otherwise we don't
+      // need it.
+      if (newSlug && !existingLinkField) {
         dependencyStatements.push({
           statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
           params: [],
         });
       }
-    } else if (action === 'drop') {
-      const existingField = existingEntity as ModelField;
-
-      if (!(existingField.type === 'link' && existingField.kind === 'many')) {
-        dependencyStatements.push({
-          statement: `${statement} DROP COLUMN "${slug}"`,
-          params: [],
-        });
-      }
+    } else if (action === 'drop' && !existingLinkField) {
+      dependencyStatements.push({
+        statement: `${statement} DROP COLUMN "${slug}"`,
+        params: [],
+      });
     }
   }
 
@@ -1079,7 +1080,7 @@ export const transformMetaQuery = (
 
       // Update the existing entity in the model.
       const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
-      targetEntity[targetEntityIndex as number] = jsonValue as ModelEntity;
+      Object.assign(targetEntity[targetEntityIndex as number], jsonValue);
 
       break;
     }
@@ -1095,24 +1096,67 @@ export const transformMetaQuery = (
   const currentSystemModels = models.filter(({ system }) => {
     return system?.model === existingModel.slug;
   });
+
   const newSystemModels = getSystemModels(models, existingModel);
+
+  /**
+   * Determines whether a system model should continue to exist, or not.
+   *
+   * @param oldSystemModel - The old system model that currently already exists.
+   * @param newSystemModel - A new system model to compare it against.
+   *
+   * @returns Whether the system model should continue to exist.
+   */
+  const matchSystemModels = (
+    oldSystemModel: PartialModel,
+    newSystemModel: PartialModel,
+  ) => {
+    const conditions: Array<boolean> = [
+      oldSystemModel.system?.model === newSystemModel.system?.model,
+    ];
+
+    // If an old system model is acting as an associative model between two
+    // manually-defined models, we need to check whether the new system model is used for
+    // the same model field.
+    if (oldSystemModel.system?.associationSlug) {
+      const oldFieldIndex = modelBeforeUpdate?.fields.findIndex((item) => {
+        return item.slug === (newSystemModel.system?.associationSlug as string);
+      });
+
+      const newFieldIndex = existingModel.fields.findIndex((item) => {
+        return item.slug === (oldSystemModel.system?.associationSlug as string);
+      });
+
+      conditions.push(oldFieldIndex === newFieldIndex);
+    }
+
+    return conditions.every((condition) => condition === true);
+  };
 
   // Remove any system models that are no longer required.
   for (const systemModel of currentSystemModels) {
     // Check if there are any system models that should continue to exist.
-    const exists = newSystemModels.find((model) => model.slug === systemModel.slug);
-    if (exists) continue;
+    const exists = newSystemModels.find(matchSystemModels.bind(null, systemModel));
 
-    composeSystemModelStatement(models, dependencyStatements, 'drop', systemModel);
+    if (exists) {
+      // Determine if the slug of the system model has changed. If so, alter the
+      // respective table.
+      if (exists.slug !== systemModel.slug) {
+        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
+      }
+      continue;
+    }
+
+    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
   }
 
   // Add any new system models that don't yet exist.
   for (const systemModel of newSystemModels) {
     // Check if there are any system models that already exist.
-    const exists = currentSystemModels.find((model) => model.slug === systemModel.slug);
+    const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
     if (exists) continue;
 
-    composeSystemModelStatement(models, dependencyStatements, 'create', systemModel);
+    handleSystemModel(models, dependencyStatements, 'create', systemModel);
   }
 
   return {
