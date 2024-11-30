@@ -748,14 +748,8 @@ export const transformMetaQuery = (
 
   if (!(modelSlug && slug)) return query;
 
-  const tableAction = ['model', 'index', 'trigger'].includes(entity)
-    ? action.toUpperCase()
-    : 'ALTER';
-
-  const tableName = convertToSnakeCase(pluralize(modelSlug));
   const model =
     action === 'create' && entity === 'model' ? null : getModelBySlug(models, modelSlug);
-  const statement = `${tableAction} TABLE "${tableName}"`;
 
   if (entity === 'model') {
     let queryTypeDetails: unknown;
@@ -785,7 +779,7 @@ export const transformMetaQuery = (
         .filter(Boolean);
 
       dependencyStatements.push({
-        statement: `${statement} (${columns.join(', ')})`,
+        statement: `CREATE TABLE "${modelWithPresets.table}" (${columns.join(', ')})`,
         params: [],
       });
 
@@ -820,15 +814,12 @@ export const transformMetaQuery = (
       const modelWithFields = addDefaultModelFields(newModel, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
-      const newSlug = modelWithPresets.pluralSlug;
+      const newTableName = modelWithPresets.table;
 
-      if (newSlug) {
-        const newTable = convertToSnakeCase(newSlug);
-
-        // Only push the statement if the table name is changing, otherwise we don't
-        // need it.
+      // Only push the statement if the table name changed, otherwise we don't need it.
+      if (newTableName) {
         dependencyStatements.push({
-          statement: `${statement} RENAME TO "${newTable}"`,
+          statement: `ALTER TABLE "${model.table}" RENAME TO "${newTableName}"`,
           params: [],
         });
       }
@@ -848,7 +839,7 @@ export const transformMetaQuery = (
       // Remove the model from the list of models.
       models.splice(models.indexOf(model), 1);
 
-      dependencyStatements.push({ statement, params: [] });
+      dependencyStatements.push({ statement: `DROP TABLE "${model.table}"`, params: [] });
 
       queryTypeDetails = { with: { slug } };
 
@@ -901,6 +892,8 @@ export const transformMetaQuery = (
   const existingEntity = existingModel[pluralType]?.[targetEntityIndex as number];
 
   if (entity === 'field') {
+    const statement = `ALTER TABLE "${existingModel.table}"`;
+
     if (action === 'create') {
       const field = jsonValue as ModelField;
 
@@ -938,12 +931,14 @@ export const transformMetaQuery = (
     }
   }
 
+  const statementAction = action.toUpperCase();
+
   if (entity === 'index') {
     const index = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
-    let statement = `${tableAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
+    let statement = `${statementAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
       const columns = index.fields.map((field) => {
@@ -968,7 +963,7 @@ export const transformMetaQuery = (
         return fieldSelector;
       });
 
-      statement += ` ON "${tableName}" (${columns.join(', ')})`;
+      statement += ` ON "${existingModel.table}" (${columns.join(', ')})`;
 
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
@@ -985,7 +980,7 @@ export const transformMetaQuery = (
     const triggerName = convertToSnakeCase(slug);
 
     const params: Array<unknown> = [];
-    let statement = `${tableAction} TRIGGER "${triggerName}"`;
+    let statement = `${statementAction} TRIGGER "${triggerName}"`;
 
     if (action === 'create') {
       const trigger = jsonValue as ModelTrigger;
@@ -1009,7 +1004,7 @@ export const transformMetaQuery = (
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);
       }
 
-      statementParts.push('ON', `"${tableName}"`);
+      statementParts.push('ON', `"${existingModel.table}"`);
 
       // If filtering instructions were defined, or if the effect query references
       // specific record fields, that means the trigger must be executed on a per-record
@@ -1101,6 +1096,7 @@ export const transformMetaQuery = (
 
   // Remove any system models that are no longer required.
   for (const systemModel of currentSystemModels) {
+    // Check if there are any system models that should continue to exist.
     const exists = newSystemModels.find((model) => model.slug === systemModel.slug);
     if (exists) continue;
 
@@ -1109,6 +1105,7 @@ export const transformMetaQuery = (
 
   // Add any new system models that don't yet exist.
   for (const systemModel of newSystemModels) {
+    // Check if there are any system models that already exist.
     const exists = currentSystemModels.find((model) => model.slug === systemModel.slug);
     if (exists) continue;
 

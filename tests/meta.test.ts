@@ -131,7 +131,7 @@ test('create new model with suitable default identifiers', () => {
 test('create new model that has system models associated with it', () => {
   const fields = [
     {
-      slug: 'account',
+      slug: 'followers',
       type: 'link',
       target: 'account',
       kind: 'many',
@@ -152,7 +152,7 @@ test('create new model that has system models associated with it', () => {
 
   expect(transaction.statements[1]).toEqual({
     statement:
-      'CREATE TABLE "ronin_link_account_accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))',
+      'CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))',
     params: [],
   });
 });
@@ -279,7 +279,7 @@ test('drop existing model that has system models associated with it', () => {
       slug: 'account',
       fields: [
         {
-          slug: 'account',
+          slug: 'followers',
           type: 'link',
           target: 'account',
           kind: 'many',
@@ -291,7 +291,7 @@ test('drop existing model that has system models associated with it', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[1]).toEqual({
-    statement: 'DROP TABLE "ronin_link_account_accounts"',
+    statement: 'DROP TABLE "ronin_link_account_followers"',
     params: [],
   });
 });
@@ -485,7 +485,7 @@ test('create new field with options', () => {
 
 test('create new field with multi-cardinality relationship', () => {
   const field: ModelField = {
-    slug: 'account',
+    slug: 'followers',
     type: 'link',
     target: 'account',
     kind: 'many',
@@ -512,11 +512,11 @@ test('create new field with multi-cardinality relationship', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_link_account_accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.followers', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(field),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -650,7 +650,7 @@ test('drop existing field', () => {
 // Assert whether the system models associated with the field are correctly cleaned up.
 test('drop existing field that has system models associated with it', () => {
   const field: ModelField = {
-    slug: 'account',
+    slug: 'followers',
     type: 'link',
     target: 'account',
     kind: 'many',
@@ -677,7 +677,7 @@ test('drop existing field that has system models associated with it', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[0]).toEqual({
-    statement: 'DROP TABLE "ronin_link_account_accounts"',
+    statement: 'DROP TABLE "ronin_link_account_followers"',
     params: [],
   });
 });
