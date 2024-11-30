@@ -1109,20 +1109,44 @@ export const transformMetaQuery = (
 
   const newSystemModels = getSystemModels(models, existingModel);
 
+  /**
+   * Determines whether a system model should continue to exist, or not.
+   *
+   * @param oldSystemModel - The old system model that currently already exists.
+   * @param newSystemModel - A new system model to compare it against.
+   *
+   * @returns Whether the system model should continue to exist.
+   */
+  const matchSystemModels = (
+    oldSystemModel: PartialModel,
+    newSystemModel: PartialModel,
+  ) => {
+    const conditions: Array<boolean> = [
+      oldSystemModel.system?.model === newSystemModel.system?.model,
+    ];
+
+    // If an old system model is acting as an associative model between two
+    // manually-defined models, we need to check whether the new system model is used for
+    // that same field.
+    if (oldSystemModel.system?.associationSlug) {
+      const oldFieldIndex = modelBeforeUpdate?.fields.findIndex((item) => {
+        return item.slug === (newSystemModel.system?.associationSlug as string);
+      });
+
+      const newFieldIndex = existingModel.fields.findIndex((item) => {
+        return item.slug === (oldSystemModel.system?.associationSlug as string);
+      });
+
+      conditions.push(oldFieldIndex === newFieldIndex);
+    }
+
+    return conditions.every((condition) => condition === true);
+  };
+
   // Remove any system models that are no longer required.
   for (const systemModel of currentSystemModels) {
     // Check if there are any system models that should continue to exist.
-    const exists = newSystemModels.find((model) => {
-      return (
-        model.system?.model === systemModel.system?.model &&
-        existingModel.fields.findIndex(
-          (item) => item.slug === (model.system?.associationSlug as string),
-        ) ===
-          modelBeforeUpdate?.fields.findIndex(
-            (item) => item.slug === (systemModel.system?.associationSlug as string),
-          )
-      );
-    });
+    const exists = newSystemModels.find(matchSystemModels.bind(null, systemModel));
 
     if (exists) {
       // Determine if the slug of the system model has changed. If so, alter the
@@ -1145,17 +1169,7 @@ export const transformMetaQuery = (
   // Add any new system models that don't yet exist.
   for (const systemModel of newSystemModels) {
     // Check if there are any system models that already exist.
-    const exists = currentSystemModels.find((model) => {
-      return (
-        model.system?.model === systemModel.system?.model &&
-        existingModel.fields.findIndex(
-          (item) => item.slug === (model.system?.associationSlug as string),
-        ) ===
-          modelBeforeUpdate?.fields.findIndex(
-            (item) => item.slug === (systemModel.system?.associationSlug as string),
-          )
-      );
-    });
+    const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
     if (exists) continue;
 
     composeSystemModelStatement(models, dependencyStatements, 'create', systemModel);
