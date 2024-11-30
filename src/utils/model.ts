@@ -351,7 +351,10 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
   },
 ];
 
-/** This models is required by the system and is automatically made available. */
+/**
+ * This model defines the architecture of the `ronin_schema` table, which is RONIN's
+ * equivalent to the native `sqlite_schema` table provided by SQLite.
+ */
 export const ROOT_MODEL: PartialModel = {
   slug: 'model',
 
