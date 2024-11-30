@@ -1117,7 +1117,7 @@ export const transformMetaQuery = (
 
     // If an old system model is acting as an associative model between two
     // manually-defined models, we need to check whether the new system model is used for
-    // that same field.
+    // the same model field.
     if (oldSystemModel.system?.associationSlug) {
       const oldFieldIndex = modelBeforeUpdate?.fields.findIndex((item) => {
         return item.slug === (newSystemModel.system?.associationSlug as string);
