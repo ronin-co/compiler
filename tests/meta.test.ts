@@ -127,6 +127,36 @@ test('create new model with suitable default identifiers', () => {
   expect(transaction.statements[1].params[8]).toEqual('handle');
 });
 
+// Assert whether the system models associated with the model are correctly created.
+test('create new model that has system models associated with it', () => {
+  const fields = [
+    {
+      slug: 'followers',
+      type: 'link',
+      target: 'account',
+      kind: 'many',
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        model: { slug: 'account', fields },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[1]).toEqual({
+    statement:
+      'CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))',
+    params: [],
+  });
+});
+
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing model (slug)', () => {
@@ -232,6 +262,38 @@ test('drop existing model', () => {
       returning: true,
     },
   ]);
+});
+
+// Assert whether the system models associated with the model are correctly cleaned up.
+test('drop existing model that has system models associated with it', () => {
+  const queries: Array<Query> = [
+    {
+      drop: {
+        model: 'account',
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[1]).toEqual({
+    statement: 'DROP TABLE "ronin_link_account_followers"',
+    params: [],
+  });
 });
 
 test('query a model that was just created', () => {
@@ -421,6 +483,50 @@ test('create new field with options', () => {
   ]);
 });
 
+test('create new field with multi-cardinality relationship', () => {
+  const field: ModelField = {
+    slug: 'followers',
+    type: 'link',
+    target: 'account',
+    kind: 'many',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.followers', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      params: [
+        JSON.stringify(field),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        'account',
+      ],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('update existing field (slug)', () => {
@@ -539,6 +645,83 @@ test('drop existing field', () => {
       returning: true,
     },
   ]);
+});
+
+// Assert whether the system models associated with the field are correctly cleaned up.
+test('drop existing field that has system models associated with it', () => {
+  const field: ModelField = {
+    slug: 'followers',
+    type: 'link',
+    target: 'account',
+    kind: 'many',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: field.slug,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [field],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[0]).toEqual({
+    statement: 'DROP TABLE "ronin_link_account_followers"',
+    params: [],
+  });
+});
+
+// Assert that only the system models associated with the dropped field are cleaned up,
+// and that the other system models associated with the same model are left untouched.
+test('drop existing field on model with other multi-cardinality fields', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: 'subscribers',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+        {
+          slug: 'subscribers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[0]).toEqual({
+    statement: 'DROP TABLE "ronin_link_account_subscribers"',
+    params: [],
+  });
 });
 
 test('create new index', () => {

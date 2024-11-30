@@ -169,11 +169,19 @@ export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   tableAlias?: string;
 
   /**
-   * If the model is used to associate two models with each other (in the case of
-   * many-cardinality link fields), this property should contain the field slug to which
-   * the associative model should be mounted on the source model.
+   * Details that identify the model as a model that was automatically created by RONIN,
+   * instead of being manually created by a developer.
    */
-  associationSlug?: string;
+  system?: {
+    /** The model that caused the system model to get created. */
+    model: string | 'root';
+    /**
+     * If the model is used to associate two models with each other (in the case of
+     * many-cardinality link fields), this property should contain the field slug to
+     * which the associative model should be mounted on the source model.
+     */
+    associationSlug?: string;
+  };
 
   // Fields are not optional for internal models, because internal models within the
   // compiler always at least contain the default fields. For models that are passed into
@@ -193,7 +201,7 @@ export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
 // which is the required bare minimum.
 export type PublicModel<T extends Array<ModelField> = Array<ModelField>> = Omit<
   Partial<Model<T>>,
-  'slug' | 'identifiers' | 'associationSlug' | 'table' | 'tableAlias'
+  'slug' | 'identifiers' | 'system' | 'table' | 'tableAlias'
 > & {
   slug: Required<Model['slug']>;
 

@@ -4,12 +4,12 @@ import type { NativeRecord, Result, Row } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { expand, splitQuery } from '@/src/utils/helpers';
 import {
+  ROOT_MODEL,
   addDefaultModelFields,
   addDefaultModelPresets,
-  addSystemModels,
   getFieldFromModel,
   getModelBySlug,
-  transformMetaQuery,
+  getSystemModels,
 } from '@/src/utils/model';
 
 export class Transaction {
@@ -44,7 +44,11 @@ export class Transaction {
       inlineParams?: boolean;
     },
   ): Array<Statement> => {
-    const modelList = addSystemModels(models).map((model) => {
+    const modelList = [
+      ROOT_MODEL,
+      ...models.flatMap((model) => getSystemModels(models, model)),
+      ...models,
+    ].map((model) => {
       return addDefaultModelFields(model, true);
     });
 
@@ -56,19 +60,10 @@ export class Transaction {
     const mainStatements: Array<Statement> = [];
 
     for (const query of queries) {
-      const statementValues = options?.inlineParams ? null : [];
-
-      const transformedQuery = transformMetaQuery(
-        modelListWithPresets,
-        dependencyStatements,
-        statementValues,
-        query,
-      );
-
       const result = compileQueryInput(
-        transformedQuery,
+        query,
         modelListWithPresets,
-        statementValues,
+        options?.inlineParams ? null : [],
       );
 
       // Every query can only produce one main statement (which can return output), but
