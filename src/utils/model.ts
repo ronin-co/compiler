@@ -1082,7 +1082,7 @@ export const transformMetaQuery = (
 
       // Update the existing entity in the model.
       const targetEntity = existingModel[pluralType] as Array<ModelEntity>;
-      targetEntity[targetEntityIndex as number] = jsonValue as ModelEntity;
+      Object.assign(targetEntity[targetEntityIndex as number], jsonValue);
 
       break;
     }
