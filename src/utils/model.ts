@@ -647,12 +647,12 @@ const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>)
 };
 
 /**
- * Composes an SQL statement for creating or dropping a system model.
+ * Composes an SQL statement for creating, altering, or dropping a system model.
  *
  * @param models - A list of models.
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
- * @param action - Whether the system model should be created or dropped.
+ * @param action - Whether the system model should be created, altered, or dropped.
  * @param systemModel - The affected system model.
  *
  * @returns Nothing. The `models` and `dependencyStatements` arrays are modified in place.
@@ -660,8 +660,9 @@ const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>)
 const composeSystemModelStatement = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
-  action: 'create' | 'drop',
+  action: 'create' | 'alter' | 'drop',
   systemModel: PartialModel,
+  newModel?: PartialModel,
 ) => {
   // Omit the `system` property.
   const { system: _, ...systemModelClean } = systemModel;
@@ -669,6 +670,12 @@ const composeSystemModelStatement = (
   const query: Query = {
     [action]: { model: action === 'create' ? systemModelClean : systemModelClean.slug },
   };
+
+  if (action === 'alter' && newModel) {
+    const { system: _, ...newModelClean } = newModel;
+    (query.alter as Query & { to: PartialModel }).to = newModelClean;
+  }
+
   const statement = compileQueryInput(query, models, []);
 
   dependencyStatements.push(...statement.dependencies);
@@ -873,6 +880,7 @@ export const transformMetaQuery = (
 
   // Entities can only be created, altered, or dropped on existing models, so the model
   // is guaranteed to exist.
+  const modelBeforeUpdate = structuredClone(model);
   const existingModel = model as Model;
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
@@ -1098,13 +1106,38 @@ export const transformMetaQuery = (
   const currentSystemModels = models.filter(({ system }) => {
     return system?.model === existingModel.slug;
   });
+
   const newSystemModels = getSystemModels(models, existingModel);
 
   // Remove any system models that are no longer required.
   for (const systemModel of currentSystemModels) {
     // Check if there are any system models that should continue to exist.
-    const exists = newSystemModels.find((model) => model.slug === systemModel.slug);
-    if (exists) continue;
+    const exists = newSystemModels.find((model) => {
+      return (
+        model.system?.model === systemModel.system?.model &&
+        existingModel.fields.findIndex(
+          (item) => item.slug === (model.system?.associationSlug as string),
+        ) ===
+          modelBeforeUpdate?.fields.findIndex(
+            (item) => item.slug === (systemModel.system?.associationSlug as string),
+          )
+      );
+    });
+
+    if (exists) {
+      // Determine if the slug of the system model has changed. If so, alter the
+      // respective table.
+      if (exists.slug !== systemModel.slug) {
+        composeSystemModelStatement(
+          models,
+          dependencyStatements,
+          'alter',
+          systemModel,
+          exists,
+        );
+      }
+      continue;
+    }
 
     composeSystemModelStatement(models, dependencyStatements, 'drop', systemModel);
   }
@@ -1112,7 +1145,9 @@ export const transformMetaQuery = (
   // Add any new system models that don't yet exist.
   for (const systemModel of newSystemModels) {
     // Check if there are any system models that already exist.
-    const exists = currentSystemModels.find((model) => model.slug === systemModel.slug);
+    const exists = currentSystemModels.find(
+      (model) => model.system?.model === systemModel.system?.model,
+    );
     if (exists) continue;
 
     composeSystemModelStatement(models, dependencyStatements, 'create', systemModel);

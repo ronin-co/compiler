@@ -609,11 +609,12 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'ALTER TABLE "accounts" RENAME COLUMN "email" TO "emailAddress"',
+      statement:
+        'ALTER TABLE "ronin_link_account_followers" RENAME TO "ronin_link_account_subscribers"',
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.followers', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.followers', json_patch(json_extract("fields", '$.followers'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
         JSON.stringify(newFieldDetails),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
