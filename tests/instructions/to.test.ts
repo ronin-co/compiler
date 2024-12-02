@@ -239,19 +239,20 @@ test('set single record to new many-cardinality link field', async () => {
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
   expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
-test('set single record to new many-cardinality link field (add)', () => {
+test('set single record to new many-cardinality link field (add)', async () => {
   const queries: Array<Query> = [
     {
       set: {
-        post: {
+        account: {
           with: {
-            id: 'pos_zgoj3xav8tpcte1s',
+            id: 'acc_39h8fhe98hefah8',
           },
           to: {
-            comments: {
-              containing: [{ content: 'Great post!' }],
+            followers: {
+              containing: [{ handle: 'david' }],
             },
           },
         },
@@ -261,22 +262,17 @@ test('set single record to new many-cardinality link field (add)', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
       fields: [
         {
-          slug: 'comments',
-          type: 'link',
-          target: 'comment',
-          kind: 'many',
-        },
-      ],
-    },
-    {
-      slug: 'comment',
-      fields: [
-        {
-          slug: 'content',
+          slug: 'handle',
           type: 'string',
+        },
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
         },
       ],
     },
@@ -287,10 +283,10 @@ test('set single record to new many-cardinality link field (add)', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
-        'pos_zgoj3xav8tpcte1s',
-        'Great post!',
+        'acc_39h8fhe98hefah8',
+        'david',
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -298,11 +294,17 @@ test('set single record to new many-cardinality link field (add)', () => {
     },
     {
       statement:
-        'UPDATE "posts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'pos_zgoj3xav8tpcte1s'],
+        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
 test('set single record to new many-cardinality link field (remove)', () => {
