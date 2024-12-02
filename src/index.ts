@@ -109,8 +109,13 @@ export class Transaction {
 
     return relevantResults.map((result, index): Result => {
       const query = this.queries.at(-index) as Query;
-      const { queryModel, queryInstructions } = splitQuery(query);
+      const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
+
+      // The query is expected to count records.
+      if (queryType === 'count') {
+        return { amount: result[0]['COUNT(*)'] as number };
+      }
 
       // Whether the query will interact with a single record, or multiple at the same time.
       const single = queryModel !== model.pluralSlug;
