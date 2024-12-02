@@ -74,6 +74,17 @@ export const handleTo = (
       splitQuery(symbol.value);
     const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
+    // If specific fields were selected by the sub query, we also need to include the
+    // ID field, since we can't generate fresh IDs for every record that is being added
+    // by the sub query, since the ID would have to be generated in JavaScript (due to
+    // the specific ID format RONIN is using) and we don't know how many records will be
+    // added by the sub query.
+    if (subQueryInstructions?.selecting) {
+      const currentFields = new Set(subQueryInstructions.selecting);
+      currentFields.add('id');
+      subQueryInstructions.selecting = Array.from(currentFields);
+    }
+
     const subQuerySelectedFields = subQueryInstructions?.selecting;
     const subQueryIncludedFields = subQueryInstructions?.including;
 
@@ -122,7 +133,25 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(symbol.value, models, statementParams).main.statement;
+    let statement = '';
+
+    // If specific fields were selected by the sub query, we need to list their respective
+    // column names in the SQL statement, so that SQLite can reliably associate the values
+    // retrieved by the sub query with the correct columns in the root query.
+    if (subQuerySelectedFields) {
+      const selectedFields = [
+        ...subQueryFields,
+        ...defaultFieldsToAdd.map(([key]) => key),
+      ];
+      const columns = selectedFields.map((field) => {
+        return getFieldFromModel(model, field, 'to').fieldSelector;
+      });
+
+      statement = `(${columns.join(', ')}) `;
+    }
+
+    statement += compileQueryInput(symbol.value, models, statementParams).main.statement;
+    return statement;
   }
 
   // Assign default field values to the provided instruction.

@@ -42,14 +42,14 @@
     ],
     "team": [
       {
-        "id": "team_39h8fhe98hefah8",
+        "id": "tea_39h8fhe98hefah8",
         "locations": {
           "europe": "berlin"
         },
         "billing.currency": "EUR"
       },
       {
-        "id": "team_39h8fhe98hefah9",
+        "id": "tea_39h8fhe98hefah9",
         "locations": {
           "europe": "london"
         },

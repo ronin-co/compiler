@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
 import { queryEphemeralDatabase } from '@/fixtures/utils';
-import type { SingleRecordResult } from '@/src/types/result';
+import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 import {
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
@@ -175,7 +175,7 @@ test('set single record to new one-cardinality link field', async () => {
   expect(result.record?.account).toBe(targetRecord.id);
 });
 
-test('set single record to new many-cardinality link field', () => {
+test('set single record to new many-cardinality link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -234,19 +234,25 @@ test('set single record to new many-cardinality link field', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
-test('set single record to new many-cardinality link field (add)', () => {
+test('set single record to new many-cardinality link field (add)', async () => {
   const queries: Array<Query> = [
     {
       set: {
-        post: {
+        account: {
           with: {
-            id: 'pos_zgoj3xav8tpcte1s',
+            id: 'acc_39h8fhe98hefah8',
           },
           to: {
-            comments: {
-              containing: [{ content: 'Great post!' }],
+            followers: {
+              containing: [{ handle: 'david' }],
             },
           },
         },
@@ -256,22 +262,17 @@ test('set single record to new many-cardinality link field (add)', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
       fields: [
         {
-          slug: 'comments',
-          type: 'link',
-          target: 'comment',
-          kind: 'many',
-        },
-      ],
-    },
-    {
-      slug: 'comment',
-      fields: [
-        {
-          slug: 'content',
+          slug: 'handle',
           type: 'string',
+        },
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
         },
       ],
     },
@@ -282,10 +283,10 @@ test('set single record to new many-cardinality link field (add)', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "ronin_link_post_comments" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1), ?3, ?4, ?5)',
+        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
-        'pos_zgoj3xav8tpcte1s',
-        'Great post!',
+        'acc_39h8fhe98hefah8',
+        'david',
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -293,24 +294,30 @@ test('set single record to new many-cardinality link field (add)', () => {
     },
     {
       statement:
-        'UPDATE "posts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'pos_zgoj3xav8tpcte1s'],
+        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
-test('set single record to new many-cardinality link field (remove)', () => {
+test('set single record to new many-cardinality link field (remove)', async () => {
   const queries: Array<Query> = [
     {
       set: {
-        post: {
+        account: {
           with: {
-            id: 'pos_zgoj3xav8tpcte1s',
+            id: 'acc_39h8fhe98hefah8',
           },
           to: {
-            comments: {
-              notContaining: [{ content: 'Great post!' }],
+            followers: {
+              notContaining: [{ handle: 'david' }],
             },
           },
         },
@@ -320,22 +327,17 @@ test('set single record to new many-cardinality link field (remove)', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
       fields: [
         {
-          slug: 'comments',
-          type: 'link',
-          target: 'comment',
-          kind: 'many',
-        },
-      ],
-    },
-    {
-      slug: 'comment',
-      fields: [
-        {
-          slug: 'content',
+          slug: 'handle',
           type: 'string',
+        },
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
         },
       ],
     },
@@ -346,19 +348,25 @@ test('set single record to new many-cardinality link field (remove)', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
-      params: ['pos_zgoj3xav8tpcte1s', 'Great post!'],
+        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['acc_39h8fhe98hefah8', 'david'],
     },
     {
       statement:
-        'UPDATE "posts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'pos_zgoj3xav8tpcte1s'],
+        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
-test('set single record to new json field with array', () => {
+test('set single record to new json field with array', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -403,9 +411,14 @@ test('set single record to new json field with array', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.emails).toEqual(['elaine@site.co', 'elaine@company.co']);
 });
 
-test('set single record to new json field with object', () => {
+test('set single record to new json field with object', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -453,15 +466,23 @@ test('set single record to new json field with object', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.emails).toEqual({
+    site: 'elaine@site.co',
+    hobby: 'dancer@dancing.co',
+  });
 });
 
-test('set single record to new grouped string field', () => {
+test('set single record to new grouped string field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah8',
           },
           to: {
             billing: {
@@ -497,20 +518,25 @@ test('set single record to new grouped string field', () => {
       params: [
         'USD',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah8',
       ],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect((result.record?.billing as { currency: string })?.currency).toBe('USD');
 });
 
-test('set single record to new grouped link field', () => {
+test('set single record to new grouped link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah8',
           },
           to: {
             billing: {
@@ -558,20 +584,32 @@ test('set single record to new grouped link field', () => {
       params: [
         'elaine',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah8',
       ],
       returning: true,
     },
   ]);
+
+  const [[targetRecord], ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect((result.record?.billing as { manager: string })?.manager).toBe(targetRecord.id);
 });
 
-test('set single record to new grouped json field', () => {
+test('set single record to new grouped json field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah9',
           },
           to: {
             billing: {
@@ -607,28 +645,35 @@ test('set single record to new grouped json field', () => {
       params: [
         '["receipts@test.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah9',
       ],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(
+    (result.record?.billing as { invoiceRecipients: Array<string> })?.invoiceRecipients,
+  ).toEqual(['receipts@test.co']);
 });
 
-test('set single record to result of nested query', () => {
+test('set single record to result of nested query', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah9',
           },
           to: {
             name: {
               [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   account: {
-                    with: { handle: 'elaine' },
-                    selecting: ['name'],
+                    with: { handle: 'david' },
+                    selecting: ['lastName'],
                   },
                 },
               },
@@ -657,7 +702,7 @@ test('set single record to result of nested query', () => {
           type: 'string',
         },
         {
-          slug: 'name',
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -668,26 +713,38 @@ test('set single record to result of nested query', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
-        'elaine',
+        'david',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah9',
       ],
       returning: true,
     },
   ]);
+
+  const [[targetRecord], ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT lastName FROM "accounts" WHERE ("handle" = 'david') LIMIT 1`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.name).toBe(targetRecord.lastName);
 });
 
-test('add multiple records with nested sub query', () => {
+test('add multiple records with nested sub query', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: null,
+                accounts: null,
               },
             },
           },
@@ -698,7 +755,7 @@ test('add multiple records with nested sub query', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
+      slug: 'account',
       fields: [
         {
           slug: 'handle',
@@ -707,7 +764,7 @@ test('add multiple records with nested sub query', () => {
       ],
     },
     {
-      slug: 'newAccount',
+      slug: 'user',
       fields: [
         {
           slug: 'handle',
@@ -721,24 +778,38 @@ test('add multiple records with nested sub query', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `INSERT INTO "new_accounts" SELECT * FROM "old_accounts" RETURNING *`,
+      statement: 'INSERT INTO "users" SELECT * FROM "accounts" RETURNING *',
       params: [],
       returning: true,
     },
   ]);
+
+  const [targetRecords, ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records.map(({ handle }) => ({ handle }))).toEqual(
+    targetRecords.map(({ handle }) => ({ handle })),
+  );
 });
 
-test('add multiple records with nested sub query including additional fields', () => {
+test('add multiple records with nested sub query including additional fields', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: {
+                accounts: {
                   including: {
-                    firstName: 'custom-first-name',
+                    nonExistingField: 'Custom Field Value',
                   },
                 },
               },
@@ -751,7 +822,7 @@ test('add multiple records with nested sub query including additional fields', (
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
+      slug: 'account',
       fields: [
         {
           slug: 'handle',
@@ -760,14 +831,14 @@ test('add multiple records with nested sub query including additional fields', (
       ],
     },
     {
-      slug: 'newAccount',
+      slug: 'user',
       fields: [
         {
           slug: 'handle',
           type: 'string',
         },
         {
-          slug: 'firstName',
+          slug: 'nonExistingField',
           type: 'string',
         },
       ],
@@ -779,22 +850,34 @@ test('add multiple records with nested sub query including additional fields', (
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" RETURNING *',
-      params: ['custom-first-name'],
+        'INSERT INTO "users" SELECT *, ?1 as "nonExistingField" FROM "accounts" RETURNING *',
+      params: ['Custom Field Value'],
       returning: true,
+    },
+  ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records).toMatchObject([
+    {
+      nonExistingField: 'Custom Field Value',
+    },
+    {
+      nonExistingField: 'Custom Field Value',
     },
   ]);
 });
 
-test('add multiple records with nested sub query and specific fields', () => {
+test('add multiple records with nested sub query and specific fields', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: {
+                accounts: {
                   selecting: ['handle'],
                 },
               },
@@ -807,7 +890,7 @@ test('add multiple records with nested sub query and specific fields', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
+      slug: 'account',
       fields: [
         {
           slug: 'handle',
@@ -816,7 +899,7 @@ test('add multiple records with nested sub query and specific fields', () => {
       ],
     },
     {
-      slug: 'newAccount',
+      slug: 'user',
       fields: [
         {
           slug: 'handle',
@@ -831,26 +914,39 @@ test('add multiple records with nested sub query and specific fields', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT "handle", ?1 as "id", ?2 as "ronin.createdAt", ?3 as "ronin.updatedAt" FROM "old_accounts" RETURNING *',
+        'INSERT INTO "users" ("handle", "id", "ronin.createdAt", "ronin.updatedAt") SELECT "handle", "id", ?1 as "ronin.createdAt", ?2 as "ronin.updatedAt" FROM "accounts" RETURNING *',
       params: [
-        expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
       returning: true,
     },
   ]);
+
+  const [targetRecords, ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records.map(({ handle }) => ({ handle }))).toEqual(
+    targetRecords.map(({ handle }) => ({ handle })),
+  );
 });
 
-test('add multiple records with nested sub query and specific meta fields', () => {
+test('add multiple records with nested sub query and specific meta fields', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: {
+                accounts: {
                   selecting: ['ronin.updatedAt'],
                 },
               },
@@ -863,22 +959,10 @@ test('add multiple records with nested sub query and specific meta fields', () =
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-      ],
+      slug: 'account',
     },
     {
-      slug: 'newAccount',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-      ],
+      slug: 'user',
     },
   ];
 
@@ -887,14 +971,29 @@ test('add multiple records with nested sub query and specific meta fields', () =
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" RETURNING *',
-      params: [
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'INSERT INTO "users" ("ronin.updatedAt", "id", "ronin.createdAt") SELECT "ronin.updatedAt", "id", ?1 as "ronin.createdAt" FROM "accounts" RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX)],
       returning: true,
     },
   ]);
+
+  const [targetRecords, ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(
+    result.records.map(({ ronin: { updatedAt } }) => ({ ronin: { updatedAt } })),
+  ).toEqual(
+    targetRecords.map((targetRecord) => ({
+      ronin: { updatedAt: targetRecord['ronin.updatedAt'] },
+    })),
+  );
 });
 
 // Ensure that an error is thrown for fields that don't exist in the target model, since

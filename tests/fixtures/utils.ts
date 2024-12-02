@@ -30,8 +30,7 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
       return item.slug === model.slug;
     }) as Model;
 
-    const data = fixtureData[updatedModel.slug as keyof typeof fixtureData];
-    if (!data) throw new Error(`No fixture data found for model "${updatedModel.name}"`);
+    const data = fixtureData[updatedModel.slug as keyof typeof fixtureData] || [];
 
     const formattedData = data.map((row) => {
       const newRow: Record<string, unknown> = {};
