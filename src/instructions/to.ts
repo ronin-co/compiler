@@ -134,12 +134,17 @@ export const handleTo = (
 
     let statement = '';
 
+    // If specific fields were selected by the sub query, we need to list their respective
+    // column names in the SQL statement, so that SQLite can reliably associate the
+    // values retrieved by the sub query with the correct columns in the root query.
     if (subQuerySelectedFields) {
-      const columns = [...subQueryFields, ...defaultFieldsToAdd.map(([key]) => key)].map(
-        (field) => {
-          return getFieldFromModel(model, field, 'to').fieldSelector;
-        },
-      );
+      const selectedFields = [
+        ...subQueryFields,
+        ...defaultFieldsToAdd.map(([key]) => key),
+      ];
+      const columns = selectedFields.map((field) => {
+        return getFieldFromModel(model, field, 'to').fieldSelector;
+      });
 
       statement = `(${columns.join(', ')}) `;
     }
