@@ -101,7 +101,12 @@ export class Transaction {
   }
 
   prepareResults(results: Array<Array<Row>>): Array<Result> {
-    return results.map((result, index): Result => {
+    // Filter out results whose statements are not expected to return any data.
+    const relevantResults = results.filter((_, index) => {
+      return this.statements[index].returning;
+    });
+
+    return relevantResults.map((result, index): Result => {
       const query = this.queries.at(-index) as Query;
       const { queryModel } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);

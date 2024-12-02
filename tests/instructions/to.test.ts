@@ -175,7 +175,7 @@ test('set single record to new one-cardinality link field', async () => {
   expect(result.record?.account).toBe(targetRecord.id);
 });
 
-test('set single record to new many-cardinality link field', () => {
+test('set single record to new many-cardinality link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -234,6 +234,11 @@ test('set single record to new many-cardinality link field', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.followers).toBeUndefined();
 });
 
 test('set single record to new many-cardinality link field (add)', () => {
