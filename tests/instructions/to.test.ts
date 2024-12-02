@@ -1,14 +1,13 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
-import { queryEphemeralDatabase } from '@/fixtures/utils';
-import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 import {
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
-  RONIN_MODEL_SYMBOLS,
-  RoninError,
-} from '@/src/utils/helpers';
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
+import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
+import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('set single record to new string field', async () => {
   const queries: Array<Query> = [
@@ -114,7 +113,7 @@ test('set single record to new one-cardinality link field', async () => {
       set: {
         member: {
           with: {
-            id: 'mem_39h8fhe98hefah9',
+            id: 'mem_39h8fhe98hefah9j',
           },
           to: {
             account: {
@@ -156,7 +155,7 @@ test('set single record to new one-cardinality link field', async () => {
       params: [
         'elaine',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'mem_39h8fhe98hefah9',
+        'mem_39h8fhe98hefah9j',
       ],
       returning: true,
     },
@@ -181,7 +180,7 @@ test('set single record to new many-cardinality link field', async () => {
       set: {
         account: {
           with: {
-            id: 'acc_39h8fhe98hefah8',
+            id: 'acc_39h8fhe98hefah8j',
           },
           to: {
             followers: [{ handle: 'david' }],
@@ -214,13 +213,13 @@ test('set single record to new many-cardinality link field', async () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1)',
-      params: ['acc_39h8fhe98hefah8'],
+      params: ['acc_39h8fhe98hefah8j'],
     },
     {
       statement:
         'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
-        'acc_39h8fhe98hefah8',
+        'acc_39h8fhe98hefah8j',
         'david',
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -230,7 +229,7 @@ test('set single record to new many-cardinality link field', async () => {
     {
       statement:
         'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -248,7 +247,7 @@ test('set single record to new many-cardinality link field (add)', async () => {
       set: {
         account: {
           with: {
-            id: 'acc_39h8fhe98hefah8',
+            id: 'acc_39h8fhe98hefah8j',
           },
           to: {
             followers: {
@@ -285,7 +284,7 @@ test('set single record to new many-cardinality link field (add)', async () => {
       statement:
         'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
       params: [
-        'acc_39h8fhe98hefah8',
+        'acc_39h8fhe98hefah8j',
         'david',
         expect.stringMatching(RECORD_ID_REGEX),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -295,7 +294,7 @@ test('set single record to new many-cardinality link field (add)', async () => {
     {
       statement:
         'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -313,7 +312,7 @@ test('set single record to new many-cardinality link field (remove)', async () =
       set: {
         account: {
           with: {
-            id: 'acc_39h8fhe98hefah8',
+            id: 'acc_39h8fhe98hefah8j',
           },
           to: {
             followers: {
@@ -349,12 +348,12 @@ test('set single record to new many-cardinality link field (remove)', async () =
     {
       statement:
         'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['acc_39h8fhe98hefah8', 'david'],
+      params: ['acc_39h8fhe98hefah8j', 'david'],
     },
     {
       statement:
         'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -482,7 +481,7 @@ test('set single record to new grouped string field', async () => {
       set: {
         team: {
           with: {
-            id: 'tea_39h8fhe98hefah8',
+            id: 'tea_39h8fhe98hefah8j',
           },
           to: {
             billing: {
@@ -518,7 +517,7 @@ test('set single record to new grouped string field', async () => {
       params: [
         'USD',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah8',
+        'tea_39h8fhe98hefah8j',
       ],
       returning: true,
     },
@@ -536,7 +535,7 @@ test('set single record to new grouped link field', async () => {
       set: {
         team: {
           with: {
-            id: 'tea_39h8fhe98hefah8',
+            id: 'tea_39h8fhe98hefah8j',
           },
           to: {
             billing: {
@@ -584,7 +583,7 @@ test('set single record to new grouped link field', async () => {
       params: [
         'elaine',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah8',
+        'tea_39h8fhe98hefah8j',
       ],
       returning: true,
     },
@@ -609,7 +608,7 @@ test('set single record to new grouped json field', async () => {
       set: {
         team: {
           with: {
-            id: 'tea_39h8fhe98hefah9',
+            id: 'tea_39h8fhe98hefah9j',
           },
           to: {
             billing: {
@@ -645,7 +644,7 @@ test('set single record to new grouped json field', async () => {
       params: [
         '["receipts@test.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah9',
+        'tea_39h8fhe98hefah9j',
       ],
       returning: true,
     },
@@ -665,7 +664,7 @@ test('set single record to result of nested query', async () => {
       set: {
         team: {
           with: {
-            id: 'tea_39h8fhe98hefah9',
+            id: 'tea_39h8fhe98hefah9j',
           },
           to: {
             name: {
@@ -717,7 +716,7 @@ test('set single record to result of nested query', async () => {
       params: [
         'david',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah9',
+        'tea_39h8fhe98hefah9j',
       ],
       returning: true,
     },

@@ -7,7 +7,7 @@ import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
  * Generates the SQL syntax for the `orderedBy` query instruction, which allows for
  * ordering the list of records that are returned.
  *
- * @param model - The model being addressed in the query.
+ * @param model - The model associated with the current query.
  * @param instruction - The `orderedBy` instruction provided in the current query.
  *
  * @returns The SQL syntax for the provided `orderedBy` instruction.

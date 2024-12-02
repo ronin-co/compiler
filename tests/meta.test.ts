@@ -9,12 +9,8 @@ import {
   Transaction,
 } from '@/src/index';
 
-import {
-  RECORD_TIMESTAMP_REGEX,
-  RONIN_MODEL_SYMBOLS,
-  RoninError,
-} from '@/src/utils/helpers';
-import { RECORD_ID_REGEX } from '@/src/utils/helpers';
+import { RECORD_ID_REGEX, RECORD_TIMESTAMP_REGEX } from '@/fixtures/utils';
+import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS } from '@/src/utils/model';
 
 test('create new model', () => {

@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
-import { CURSOR_NULL_PLACEHOLDER } from '@/src/instructions/before-after';
 import { RoninError } from '@/src/utils/helpers';
+import { CURSOR_NULL_PLACEHOLDER } from '@/src/utils/pagination';
 
 test('get multiple records before cursor', () => {
   const queries: Array<Query> = [

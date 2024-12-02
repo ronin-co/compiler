@@ -1,7 +1,9 @@
 import { expect, test } from 'bun:test';
+import { RECORD_ID_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
+import type { SingleRecordResult } from '@/src/types/result';
 
-test('get single record with specific field', () => {
+test('get single record with specific field', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -27,9 +29,16 @@ test('get single record with specific field', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+  });
 });
 
-test('get single record with specific fields', () => {
+test('get single record with specific fields', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -61,4 +70,12 @@ test('get single record with specific fields', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+  });
 });

@@ -5,6 +5,15 @@ import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
 import type { Row, Statement } from '@ronin/engine/types';
 
+/** A regex for asserting RONIN record IDs. */
+export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
+
+/** A regex for asserting RONIN record timestamps. */
+export const RECORD_TIMESTAMP_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+
+/** A regex for asserting RONIN pagination cursors. */
+export const PAGINATION_CURSOR_REGEX = /^(?:[a-zA-Z0-9_]+,)*[a-zA-Z0-9_]*\d{13}$/;
+
 const engine = new Engine({
   resolvers: [
     new MemoryResolver({

@@ -1,8 +1,10 @@
 import { expect, test } from 'bun:test';
+import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
+import type { MultipleRecordResult } from '@/src/types/result';
 import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
-test('get multiple records ordered by field', () => {
+test('get multiple records ordered by field', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -36,9 +38,21 @@ test('get multiple records ordered by field', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records).toMatchObject([
+    {
+      handle: 'david',
+    },
+    {
+      handle: 'elaine',
+    },
+  ]);
 });
 
-test('get multiple records ordered by expression', () => {
+test('get multiple records ordered by expression', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -80,15 +94,29 @@ test('get multiple records ordered by expression', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records).toMatchObject([
+    {
+      firstName: 'David',
+      lastName: 'Brown',
+    },
+    {
+      firstName: 'Elaine',
+      lastName: 'Jones',
+    },
+  ]);
 });
 
-test('get multiple records ordered by multiple fields', () => {
+test('get multiple records ordered by multiple fields', async () => {
   const queries: Array<Query> = [
     {
       get: {
         accounts: {
           orderedBy: {
-            ascending: ['handle', 'name'],
+            ascending: ['handle', 'lastName'],
           },
         },
       },
@@ -104,7 +132,7 @@ test('get multiple records ordered by multiple fields', () => {
           type: 'string',
         },
         {
-          slug: 'name',
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -115,9 +143,23 @@ test('get multiple records ordered by multiple fields', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "name" COLLATE NOCASE ASC`,
+      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "lastName" COLLATE NOCASE ASC`,
       params: [],
       returning: true,
+    },
+  ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records).toMatchObject([
+    {
+      handle: 'david',
+      lastName: 'Brown',
+    },
+    {
+      handle: 'elaine',
+      lastName: 'Jones',
     },
   ]);
 });

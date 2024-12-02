@@ -2,12 +2,8 @@ import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
 import { RoninError } from '@/src/utils/helpers';
 import { getFieldFromModel } from '@/src/utils/model';
+import { CURSOR_NULL_PLACEHOLDER, CURSOR_SEPARATOR } from '@/src/utils/pagination';
 import { prepareStatementValue } from '@/src/utils/statement';
-
-// The separator and NULL placeholder have to be somewhat unique so that they don't
-// conflict with any other row values that might be used in the cursor.
-export const CURSOR_SEPARATOR = ',';
-export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
 
 /**
  * Generates SQL syntax for the `before` or `after` query instructions, which are used
@@ -17,7 +13,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
  * `moreBefore` and `moreAfter` properties available on a list of records
  * retrieved from RONIN.
  *
- * @param model - The model being addressed in the query.
+ * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
