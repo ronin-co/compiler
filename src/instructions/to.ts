@@ -136,8 +136,8 @@ export const handleTo = (
     let statement = '';
 
     // If specific fields were selected by the sub query, we need to list their respective
-    // column names in the SQL statement, so that SQLite can reliably associate the
-    // values retrieved by the sub query with the correct columns in the root query.
+    // column names in the SQL statement, so that SQLite can reliably associate the values
+    // retrieved by the sub query with the correct columns in the root query.
     if (subQuerySelectedFields) {
       const selectedFields = [
         ...subQueryFields,
