@@ -603,13 +603,13 @@ test('set single record to new grouped link field', async () => {
   expect((result.record?.billing as { manager: string })?.manager).toBe(targetRecord.id);
 });
 
-test('set single record to new grouped json field', () => {
+test('set single record to new grouped json field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah9',
           },
           to: {
             billing: {
@@ -645,28 +645,35 @@ test('set single record to new grouped json field', () => {
       params: [
         '["receipts@test.co"]',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah9',
       ],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(
+    (result.record?.billing as { invoiceRecipients: Array<string> })?.invoiceRecipients,
+  ).toEqual(['receipts@test.co']);
 });
 
-test('set single record to result of nested query', () => {
+test('set single record to result of nested query', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah9',
           },
           to: {
             name: {
               [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
                   account: {
-                    with: { handle: 'elaine' },
-                    selecting: ['name'],
+                    with: { handle: 'david' },
+                    selecting: ['lastName'],
                   },
                 },
               },
@@ -695,7 +702,7 @@ test('set single record to result of nested query', () => {
           type: 'string',
         },
         {
-          slug: 'name',
+          slug: 'lastName',
           type: 'string',
         },
       ],
@@ -706,15 +713,27 @@ test('set single record to result of nested query', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "name" = (SELECT "name" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
+      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
       params: [
-        'elaine',
+        'david',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah9',
       ],
       returning: true,
     },
   ]);
+
+  const [[targetRecord], ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT lastName FROM "accounts" WHERE ("handle" = 'david') LIMIT 1`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.name).toBe(targetRecord.lastName);
 });
 
 test('add multiple records with nested sub query', () => {
