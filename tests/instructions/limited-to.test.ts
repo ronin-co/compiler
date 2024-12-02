@@ -1,8 +1,7 @@
 import { expect, test } from 'bun:test';
-import { queryEphemeralDatabase } from '@/fixtures/utils';
+import { PAGINATION_CURSOR_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { MultipleRecordResult } from '@/src/types/result';
-import { PAGINATION_CURSOR_REGEX } from '@/src/utils/helpers';
 
 test('get multiple records limited to amount', async () => {
   const queries: Array<Query> = [

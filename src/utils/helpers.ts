@@ -3,15 +3,6 @@ import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
 
 import { init as cuid } from '@paralleldrive/cuid2';
 
-/** A regex for asserting RONIN record IDs. */
-export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
-
-/** A regex for asserting RONIN record timestamps. */
-export const RECORD_TIMESTAMP_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
-
-/** A regex for asserting RONIN pagination cursors. */
-export const PAGINATION_CURSOR_REGEX = /^\d{13}$/;
-
 /**
  * A list of placeholders that can be located inside queries after those queries were
  * serialized into JSON objects.

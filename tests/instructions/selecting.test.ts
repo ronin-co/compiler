@@ -1,8 +1,7 @@
 import { expect, test } from 'bun:test';
-import { queryEphemeralDatabase } from '@/fixtures/utils';
+import { RECORD_ID_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
-import { RECORD_ID_REGEX } from '@/src/utils/helpers';
 
 test('get single record with specific field', async () => {
   const queries: Array<Query> = [
