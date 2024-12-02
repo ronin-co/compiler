@@ -74,6 +74,16 @@ export const handleTo = (
       splitQuery(symbol.value);
     const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
+    // If specific fields were selected by the sub query, we also need to include the
+    // ID field, since we can't generate fresh IDs for every record that is being added
+    // by the sub query, since the ID would have to be generated in JavaScript and we
+    // don't know how many records will be added by the sub query.
+    if (subQueryInstructions?.selecting) {
+      const currentFields = new Set(subQueryInstructions.selecting);
+      currentFields.add('id');
+      subQueryInstructions.selecting = Array.from(currentFields);
+    }
+
     const subQuerySelectedFields = subQueryInstructions?.selecting;
     const subQueryIncludedFields = subQueryInstructions?.including;
 
@@ -122,7 +132,20 @@ export const handleTo = (
       } as unknown as Array<string>;
     }
 
-    return compileQueryInput(symbol.value, models, statementParams).main.statement;
+    let statement = '';
+
+    if (subQuerySelectedFields) {
+      const columns = [...subQueryFields, ...defaultFieldsToAdd.map(([key]) => key)].map(
+        (field) => {
+          return getFieldFromModel(model, field, 'to').fieldSelector;
+        },
+      );
+
+      statement = `(${columns.join(', ')}) `;
+    }
+
+    statement += compileQueryInput(symbol.value, models, statementParams).main.statement;
+    return statement;
   }
 
   // Assign default field values to the provided instruction.
