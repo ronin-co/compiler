@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
 import { queryEphemeralDatabase } from '@/fixtures/utils';
-import type { SingleRecordResult } from '@/src/types/result';
+import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 import {
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
@@ -736,15 +736,15 @@ test('set single record to result of nested query', async () => {
   expect(result.record?.name).toBe(targetRecord.lastName);
 });
 
-test('add multiple records with nested sub query', () => {
+test('add multiple records with nested sub query', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: null,
+                accounts: null,
               },
             },
           },
@@ -755,7 +755,7 @@ test('add multiple records with nested sub query', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
+      slug: 'account',
       fields: [
         {
           slug: 'handle',
@@ -764,7 +764,7 @@ test('add multiple records with nested sub query', () => {
       ],
     },
     {
-      slug: 'newAccount',
+      slug: 'user',
       fields: [
         {
           slug: 'handle',
@@ -778,11 +778,25 @@ test('add multiple records with nested sub query', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `INSERT INTO "new_accounts" SELECT * FROM "old_accounts" RETURNING *`,
+      statement: 'INSERT INTO "users" SELECT * FROM "accounts" RETURNING *',
       params: [],
       returning: true,
     },
   ]);
+
+  const [targetRecords, ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records.map(({ handle }) => ({ handle }))).toEqual(
+    targetRecords.map(({ handle }) => ({ handle })),
+  );
 });
 
 test('add multiple records with nested sub query including additional fields', () => {

@@ -111,7 +111,20 @@ export class Transaction {
       const { queryModel } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
 
-      return { record: this.formatRecord(model, result[0] as NativeRecord) };
+      // Whether the query will interact with a single record, or multiple at the same time.
+      const single = queryModel !== model.pluralSlug;
+
+      // The query is targeting a single record
+      if (single) {
+        return { record: this.formatRecord(model, result[0] as NativeRecord) };
+      }
+
+      // The query is targeting multiple records
+      return {
+        records: result.map((resultItem) => {
+          return this.formatRecord(model, resultItem as NativeRecord);
+        }),
+      };
     });
   }
 }
