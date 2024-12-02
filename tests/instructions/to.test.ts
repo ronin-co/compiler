@@ -366,7 +366,7 @@ test('set single record to new many-cardinality link field (remove)', async () =
   expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
-test('set single record to new json field with array', () => {
+test('set single record to new json field with array', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -411,9 +411,14 @@ test('set single record to new json field with array', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.emails).toEqual(['elaine@site.co', 'elaine@company.co']);
 });
 
-test('set single record to new json field with object', () => {
+test('set single record to new json field with object', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -461,15 +466,23 @@ test('set single record to new json field with object', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.emails).toEqual({
+    site: 'elaine@site.co',
+    hobby: 'dancer@dancing.co',
+  });
 });
 
-test('set single record to new grouped string field', () => {
+test('set single record to new grouped string field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah8',
           },
           to: {
             billing: {
@@ -505,20 +518,25 @@ test('set single record to new grouped string field', () => {
       params: [
         'USD',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah8',
       ],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect((result.record?.billing as { currency: string })?.currency).toBe('USD');
 });
 
-test('set single record to new grouped link field', () => {
+test('set single record to new grouped link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         team: {
           with: {
-            id: 'tea_zgoj3xav8tpcte1s',
+            id: 'tea_39h8fhe98hefah8',
           },
           to: {
             billing: {
@@ -566,11 +584,23 @@ test('set single record to new grouped link field', () => {
       params: [
         'elaine',
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_zgoj3xav8tpcte1s',
+        'tea_39h8fhe98hefah8',
       ],
       returning: true,
     },
   ]);
+
+  const [[targetRecord], ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect((result.record?.billing as { manager: string })?.manager).toBe(targetRecord.id);
 });
 
 test('set single record to new grouped json field', () => {
