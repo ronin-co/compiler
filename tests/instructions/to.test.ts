@@ -307,17 +307,17 @@ test('set single record to new many-cardinality link field (add)', async () => {
   expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
-test('set single record to new many-cardinality link field (remove)', () => {
+test('set single record to new many-cardinality link field (remove)', async () => {
   const queries: Array<Query> = [
     {
       set: {
-        post: {
+        account: {
           with: {
-            id: 'pos_zgoj3xav8tpcte1s',
+            id: 'acc_39h8fhe98hefah8',
           },
           to: {
-            comments: {
-              notContaining: [{ content: 'Great post!' }],
+            followers: {
+              notContaining: [{ handle: 'david' }],
             },
           },
         },
@@ -327,22 +327,17 @@ test('set single record to new many-cardinality link field (remove)', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
       fields: [
         {
-          slug: 'comments',
-          type: 'link',
-          target: 'comment',
-          kind: 'many',
-        },
-      ],
-    },
-    {
-      slug: 'comment',
-      fields: [
-        {
-          slug: 'content',
+          slug: 'handle',
           type: 'string',
+        },
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
         },
       ],
     },
@@ -353,16 +348,22 @@ test('set single record to new many-cardinality link field (remove)', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'DELETE FROM "ronin_link_post_comments" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "comments" WHERE ("content" = ?2) LIMIT 1))',
-      params: ['pos_zgoj3xav8tpcte1s', 'Great post!'],
+        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['acc_39h8fhe98hefah8', 'david'],
     },
     {
       statement:
-        'UPDATE "posts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'pos_zgoj3xav8tpcte1s'],
+        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8'],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
 
 test('set single record to new json field with array', () => {
