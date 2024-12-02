@@ -56,6 +56,20 @@
         "billing.currency": "GBP"
       }
     ],
+    "beach": [
+      {
+        "id": "bea_39h8fhe98hefah8j",
+        "name": "Bondi"
+      },
+      {
+        "id": "bea_39h8fhe98hefah9j",
+        "name": "Manly"
+      },
+      {
+        "id": "bea_39h8fhe98hefah0j",
+        "name": "Coogee"
+      }
+    ],
     "category": [
       {
         "id": "cat_39h8fhe98hefah8j",

@@ -43,7 +43,7 @@ test('get single record with specific fields', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        category: {
+        beach: {
           selecting: ['id', 'name'],
         },
       },
@@ -52,7 +52,7 @@ test('get single record with specific fields', async () => {
 
   const models: Array<Model> = [
     {
-      slug: 'category',
+      slug: 'beach',
       fields: [
         {
           slug: 'name',
@@ -66,7 +66,7 @@ test('get single record with specific fields', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT "id", "name" FROM "categories" LIMIT 1',
+      statement: 'SELECT "id", "name" FROM "beaches" LIMIT 1',
       params: [],
       returning: true,
     },
