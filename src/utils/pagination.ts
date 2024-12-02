@@ -38,10 +38,6 @@ export const generatePaginationCursor = (
     // If the field is of type "date", we convert its value to a timestamp.
     if (field.type === 'date') return new Date(property as string).getTime();
 
-    // If the field is of type "link", we use the `id` field as the cursor if the field
-    // is expanded, meaning if it contains the full resolved record.
-    if (field.type === 'link') return (property as { id?: string }).id || property;
-
     return property;
   });
 
