@@ -8,7 +8,7 @@ test('get single record with specific field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        product: {
+        category: {
           selecting: ['id'],
         },
       },
@@ -17,7 +17,7 @@ test('get single record with specific field', async () => {
 
   const models: Array<Model> = [
     {
-      slug: 'product',
+      slug: 'category',
     },
   ];
 
@@ -25,7 +25,7 @@ test('get single record with specific field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT "id" FROM "products" LIMIT 1',
+      statement: 'SELECT "id" FROM "categories" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -43,7 +43,7 @@ test('get single record with specific fields', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        product: {
+        category: {
           selecting: ['id', 'name'],
         },
       },
@@ -52,7 +52,7 @@ test('get single record with specific fields', async () => {
 
   const models: Array<Model> = [
     {
-      slug: 'product',
+      slug: 'category',
       fields: [
         {
           slug: 'name',
@@ -66,7 +66,7 @@ test('get single record with specific fields', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT "id", "name" FROM "products" LIMIT 1',
+      statement: 'SELECT "id", "name" FROM "categories" LIMIT 1',
       params: [],
       returning: true,
     },

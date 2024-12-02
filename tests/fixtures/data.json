@@ -55,5 +55,15 @@
         },
         "billing.currency": "GBP"
       }
+    ],
+    "category": [
+      {
+        "id": "cat_39h8fhe98hefah8j",
+        "name": "Fruit"
+      },
+      {
+        "id": "cat_39h8fhe98hefah9j",
+        "name": "Vegetable"
+      }
     ]
   }
