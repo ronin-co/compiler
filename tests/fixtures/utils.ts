@@ -12,7 +12,7 @@ export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
 export const RECORD_TIMESTAMP_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 
 /** A regex for asserting RONIN pagination cursors. */
-export const PAGINATION_CURSOR_REGEX = /^\d{13}$/;
+export const PAGINATION_CURSOR_REGEX = /^(?:[a-zA-Z0-9_]+,)*[a-zA-Z0-9_]*\d{13}$/;
 
 const engine = new Engine({
   resolvers: [
