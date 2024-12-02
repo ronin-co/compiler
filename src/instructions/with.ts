@@ -54,7 +54,7 @@ export type { WithValue, WithValueOptions, WithFilters, WithCondition };
  * the records that should be addressed.
  *
  * @param models - A list of models.
- * @param model - The model being addressed in the query.
+ * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instruction - The `with` instruction included in a query.

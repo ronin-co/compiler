@@ -1,6 +1,6 @@
 import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
-import type { NativeRecord, Result, Row } from '@/src/types/result';
+import type { MultipleRecordResult, NativeRecord, Result, Row } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { expand, splitQuery } from '@/src/utils/helpers';
 import {
@@ -11,6 +11,7 @@ import {
   getModelBySlug,
   getSystemModels,
 } from '@/src/utils/model';
+import { generatePaginationCursor } from '@/src/utils/pagination';
 
 export class Transaction {
   statements: Array<Statement>;
@@ -108,7 +109,7 @@ export class Transaction {
 
     return relevantResults.map((result, index): Result => {
       const query = this.queries.at(-index) as Query;
-      const { queryModel } = splitQuery(query);
+      const { queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
 
       // Whether the query will interact with a single record, or multiple at the same time.
@@ -119,12 +120,45 @@ export class Transaction {
         return { record: this.formatRecord(model, result[0] as NativeRecord) };
       }
 
+      const pageSize = queryInstructions?.limitedTo;
+
       // The query is targeting multiple records.
-      return {
+      const output: MultipleRecordResult = {
         records: result.map((resultItem) => {
           return this.formatRecord(model, resultItem as NativeRecord);
         }),
       };
+
+      // If the amount of records was limited to a specific amount, that means pagination
+      // should be activated. This is only possible if the query matched any records.
+      if (pageSize && output.records.length > 0) {
+        // Pagination cursor for the previous page. Only available if an existing
+        // cursor was provided in the query instructions.
+        if (queryInstructions?.before || queryInstructions?.after) {
+          const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
+          const firstRecord = output.records[0] as NativeRecord;
+
+          output[direction] = generatePaginationCursor(
+            model,
+            queryInstructions.orderedBy,
+            firstRecord,
+          );
+        }
+
+        // Pagination cursor for the next page.
+        if (output.records.length > pageSize) {
+          const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
+          const lastRecord = output.records.pop() as NativeRecord;
+
+          output[direction] = generatePaginationCursor(
+            model,
+            queryInstructions.orderedBy,
+            lastRecord,
+          );
+        }
+      }
+
+      return output;
     });
   }
 }
