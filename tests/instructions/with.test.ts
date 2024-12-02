@@ -682,7 +682,7 @@ test('get single record with link field and id', async () => {
         member: {
           with: {
             account: {
-              id: 'acc_39h8fhe98hefah9',
+              id: 'acc_39h8fhe98hefah9j',
             },
           },
         },
@@ -711,7 +711,7 @@ test('get single record with link field and id', async () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
-      params: ['acc_39h8fhe98hefah9'],
+      params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
@@ -719,7 +719,7 @@ test('get single record with link field and id', async () => {
   const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
-  expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
+  expect(result.record?.account).toBe('acc_39h8fhe98hefah9j');
 });
 
 test('get single record with link field and id with condition', async () => {
@@ -730,7 +730,7 @@ test('get single record with link field and id with condition', async () => {
           with: {
             account: {
               id: {
-                being: 'acc_39h8fhe98hefah9',
+                being: 'acc_39h8fhe98hefah9j',
               },
             },
           },
@@ -760,7 +760,7 @@ test('get single record with link field and id with condition', async () => {
   expect(transaction.statements).toEqual([
     {
       statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
-      params: ['acc_39h8fhe98hefah9'],
+      params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
@@ -768,7 +768,7 @@ test('get single record with link field and id with condition', async () => {
   const rows = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
-  expect(result.record?.account).toBe('acc_39h8fhe98hefah9');
+  expect(result.record?.account).toBe('acc_39h8fhe98hefah9j');
 });
 
 test('get single record with json field', async () => {
