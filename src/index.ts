@@ -114,12 +114,12 @@ export class Transaction {
       // Whether the query will interact with a single record, or multiple at the same time.
       const single = queryModel !== model.pluralSlug;
 
-      // The query is targeting a single record
+      // The query is targeting a single record.
       if (single) {
         return { record: this.formatRecord(model, result[0] as NativeRecord) };
       }
 
-      // The query is targeting multiple records
+      // The query is targeting multiple records.
       return {
         records: result.map((resultItem) => {
           return this.formatRecord(model, resultItem as NativeRecord);
