@@ -938,15 +938,15 @@ test('add multiple records with nested sub query and specific fields', async () 
   );
 });
 
-test('add multiple records with nested sub query and specific meta fields', () => {
+test('add multiple records with nested sub query and specific meta fields', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: {
+                accounts: {
                   selecting: ['ronin.updatedAt'],
                 },
               },
@@ -959,22 +959,10 @@ test('add multiple records with nested sub query and specific meta fields', () =
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-      ],
+      slug: 'account',
     },
     {
-      slug: 'newAccount',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-      ],
+      slug: 'user',
     },
   ];
 
@@ -983,14 +971,29 @@ test('add multiple records with nested sub query and specific meta fields', () =
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT "ronin.updatedAt", ?1 as "id", ?2 as "ronin.createdAt" FROM "old_accounts" RETURNING *',
-      params: [
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'INSERT INTO "users" ("ronin.updatedAt", "id", "ronin.createdAt") SELECT "ronin.updatedAt", "id", ?1 as "ronin.createdAt" FROM "accounts" RETURNING *',
+      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX)],
       returning: true,
     },
   ]);
+
+  const [targetRecords, ...rows] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
+
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(
+    result.records.map(({ ronin: { updatedAt } }) => ({ ronin: { updatedAt } })),
+  ).toEqual(
+    targetRecords.map((targetRecord) => ({
+      ronin: { updatedAt: targetRecord['ronin.updatedAt'] },
+    })),
+  );
 });
 
 // Ensure that an error is thrown for fields that don't exist in the target model, since
