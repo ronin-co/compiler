@@ -1,7 +1,9 @@
 import { expect, test } from 'bun:test';
+import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
+import type { SingleRecordResult } from '@/src/types/result';
 
-test('inline statement values', () => {
+test('inline statement values', async () => {
   const queries: Array<Query> = [
     {
       add: {
@@ -40,4 +42,12 @@ test('inline statement values', () => {
     `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ('elaine', '["test@site.co","elaine@site.com"]'`,
   );
   expect(transaction.statements[0].params).toEqual([]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    handle: 'elaine',
+    emails: ['test@site.co', 'elaine@site.com'],
+  });
 });
