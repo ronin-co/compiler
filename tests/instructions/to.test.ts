@@ -799,17 +799,17 @@ test('add multiple records with nested sub query', async () => {
   );
 });
 
-test('add multiple records with nested sub query including additional fields', () => {
+test('add multiple records with nested sub query including additional fields', async () => {
   const queries: Array<Query> = [
     {
       add: {
-        newAccounts: {
+        users: {
           to: {
             [RONIN_MODEL_SYMBOLS.QUERY]: {
               get: {
-                oldAccounts: {
+                accounts: {
                   including: {
-                    firstName: 'custom-first-name',
+                    nonExistingField: 'Custom Field Value',
                   },
                 },
               },
@@ -822,7 +822,7 @@ test('add multiple records with nested sub query including additional fields', (
 
   const models: Array<Model> = [
     {
-      slug: 'oldAccount',
+      slug: 'account',
       fields: [
         {
           slug: 'handle',
@@ -831,14 +831,14 @@ test('add multiple records with nested sub query including additional fields', (
       ],
     },
     {
-      slug: 'newAccount',
+      slug: 'user',
       fields: [
         {
           slug: 'handle',
           type: 'string',
         },
         {
-          slug: 'firstName',
+          slug: 'nonExistingField',
           type: 'string',
         },
       ],
@@ -850,9 +850,21 @@ test('add multiple records with nested sub query including additional fields', (
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "new_accounts" SELECT *, ?1 as "firstName" FROM "old_accounts" RETURNING *',
-      params: ['custom-first-name'],
+        'INSERT INTO "users" SELECT *, ?1 as "nonExistingField" FROM "accounts" RETURNING *',
+      params: ['Custom Field Value'],
       returning: true,
+    },
+  ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  expect(result.records).toMatchObject([
+    {
+      nonExistingField: 'Custom Field Value',
+    },
+    {
+      nonExistingField: 'Custom Field Value',
     },
   ]);
 });
