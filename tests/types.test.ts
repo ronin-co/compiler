@@ -1,7 +1,9 @@
 import { expect, test } from 'bun:test';
+import { RECORD_ID_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
+import type { AmountResult, SingleRecordResult } from '@/src/types/result';
 
-test('get single record', () => {
+test('get single record', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -20,14 +22,19 @@ test('get single record', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" LIMIT 1`,
+      statement: 'SELECT * FROM "accounts" LIMIT 1',
       params: [],
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.id).toMatch(RECORD_ID_REGEX);
 });
 
-test('remove single record', () => {
+test('remove single record', async () => {
   const queries: Array<Query> = [
     {
       remove: {
@@ -61,9 +68,14 @@ test('remove single record', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+
+  expect(result.record?.id).toMatch(RECORD_ID_REGEX);
 });
 
-test('count multiple records', () => {
+test('count multiple records', async () => {
   const queries: Array<Query> = [
     {
       count: {
@@ -87,4 +99,9 @@ test('count multiple records', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as AmountResult;
+
+  expect(result.amount).toBeNumber();
 });
