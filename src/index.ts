@@ -115,8 +115,8 @@ class Transaction {
     return expand(record) as NativeRecord;
   }
 
-  // prepareResults: (results: Array<Array<RawRow>>, raw?: true) => Array<Result>;
-  // prepareResults: (results: Array<Array<ObjectRow>>, raw?: false) => Array<Result>;
+  prepareResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
+  prepareResults(results: Array<Array<ObjectRow>>, raw?: false): Array<Result>;
 
   /**
    * Format the results returned from the database into RONIN records.
