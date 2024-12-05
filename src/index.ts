@@ -13,16 +13,25 @@ import {
 } from '@/src/utils/model';
 import { generatePaginationCursor } from '@/src/utils/pagination';
 
+interface TransactionOptions {
+  /** A list of models that already exist in the database. */
+  models?: Array<PublicModel>;
+  /**
+   * Place statement parameters directly inside the statement strings instead of
+   * separating them out into a dedicated `params` array.
+   */
+  inlineParams?: boolean;
+  /** Alias column names that are duplicated when joining multiple tables. */
+  expandColumns?: boolean;
+}
+
 export class Transaction {
   statements: Array<Statement>;
   models: Array<PrivateModel> = [];
 
   private queries: Array<Query>;
 
-  constructor(
-    queries: Array<Query>,
-    options?: Parameters<typeof this.compileQueries>[2] & { models?: Array<PublicModel> },
-  ) {
+  constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
 
     this.statements = this.compileQueries(queries, models, options);
@@ -41,9 +50,7 @@ export class Transaction {
   private compileQueries = (
     queries: Array<Query>,
     models: Array<PublicModel>,
-    options?: {
-      inlineParams?: boolean;
-    },
+    options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
     const modelList = [
       ROOT_MODEL,
