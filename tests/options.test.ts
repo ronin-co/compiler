@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
-import type { SingleRecordResult } from '@/src/types/result';
+import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('inline statement parameters', async () => {
@@ -53,7 +53,7 @@ test('inline statement parameters', async () => {
   });
 });
 
-test('expand column names', () => {
+test('expand column names', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -105,4 +105,9 @@ test('expand column names', () => {
       returning: true,
     },
   ]);
+
+  const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+
+  console.log(result);
 });

@@ -1,4 +1,7 @@
-export type Row = Record<string, unknown>;
+export type RawRow = Array<unknown>;
+export type ObjectRow = Record<string, unknown>;
+
+export type Row = RawRow | ObjectRow;
 
 export type NativeRecord = Record<string, unknown> & {
   id: string;

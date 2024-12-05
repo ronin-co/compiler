@@ -1,13 +1,18 @@
 import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
-import type { MultipleRecordResult, NativeRecord, Result, Row } from '@/src/types/result';
+import type {
+  MultipleRecordResult,
+  NativeRecord,
+  RawRow,
+  Result,
+  Row,
+} from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { expand, omit, splitQuery } from '@/src/utils/helpers';
 import {
   ROOT_MODEL,
   addDefaultModelFields,
   addDefaultModelPresets,
-  getFieldFromModel,
   getModelBySlug,
   getSystemModels,
 } from '@/src/utils/model';
@@ -92,21 +97,22 @@ class Transaction {
     return [...dependencyStatements, ...mainStatements];
   };
 
-  private formatRecord(model: PrivateModel, record: NativeRecord): NativeRecord {
-    const formattedRecord = { ...record };
+  private formatRow(model: PrivateModel, row: RawRow): NativeRecord {
+    const record: Partial<NativeRecord> = {};
 
-    for (const key in record) {
-      const { field } = getFieldFromModel(model, key, 'to');
+    for (let index = 0; index < row.length; index++) {
+      const value = row[index];
+      const field = model.fields[index];
 
       if (field.type === 'json') {
-        formattedRecord[key] = JSON.parse(record[key] as string);
+        record[field.slug] = JSON.parse(value as string);
         continue;
       }
 
-      formattedRecord[key] = record[key];
+      record[field.slug] = value;
     }
 
-    return expand(formattedRecord) as NativeRecord;
+    return expand(record) as NativeRecord;
   }
 
   prepareResults(results: Array<Array<Row>>): Array<Result> {
@@ -115,14 +121,22 @@ class Transaction {
       return this.statements[index].returning;
     });
 
-    return relevantResults.map((result, index): Result => {
+    const normalizedResults: Array<Array<RawRow>> = relevantResults.map((rows) => {
+      return rows.map((row) => {
+        if (Array.isArray(row)) return row;
+        if (row['COUNT(*)']) return [row['COUNT(*)']];
+        return Object.values(row);
+      });
+    });
+
+    return normalizedResults.map((rows, index): Result => {
       const query = this.queries.at(-index) as Query;
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
 
       // The query is expected to count records.
       if (queryType === 'count') {
-        return { amount: result[0]['COUNT(*)'] as number };
+        return { amount: rows[0][0] as number };
       }
 
       // Whether the query will interact with a single record, or multiple at the same time.
@@ -130,16 +144,14 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: this.formatRecord(model, result[0] as NativeRecord) };
+        return { record: this.formatRow(model, rows[0]) };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: result.map((resultItem) => {
-          return this.formatRecord(model, resultItem as NativeRecord);
-        }),
+        records: rows.map((row) => this.formatRow(model, row)),
       };
 
       // If the amount of records was limited to a specific amount, that means pagination
