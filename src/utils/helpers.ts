@@ -38,7 +38,7 @@ export const RONIN_MODEL_SYMBOLS = {
  * A regular expression for matching the symbol that represents a field of a model.
  */
 export const RONIN_MODEL_FIELD_REGEX = new RegExp(
-  `${RONIN_MODEL_SYMBOLS.FIELD}[_a-zA-Z0-9]+`,
+  `${RONIN_MODEL_SYMBOLS.FIELD}[_a-zA-Z0-9.]+`,
   'g',
 );
 
@@ -200,6 +200,49 @@ export const isObject = (value: unknown): boolean =>
   value != null && typeof value === 'object' && Array.isArray(value) === false;
 
 /**
+ * Checks if the provided value contains a RONIN model symbol (a represenation of a
+ * particular entity inside a query, such as an expression or a sub query) and returns
+ * its type and value.
+ *
+ * @param value - The value that should be checked.
+ *
+ * @returns The type and value of the symbol, if the provided value contains one.
+ */
+export const getSymbol = (
+  value: unknown,
+):
+  | {
+      type: 'query';
+      value: Query;
+    }
+  | {
+      type: 'expression';
+      value: string;
+    }
+  | null => {
+  if (!isObject(value)) return null;
+  const objectValue = value as
+    | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>
+    | Record<typeof RONIN_MODEL_SYMBOLS.EXPRESSION, string>;
+
+  if (RONIN_MODEL_SYMBOLS.QUERY in objectValue) {
+    return {
+      type: 'query',
+      value: objectValue[RONIN_MODEL_SYMBOLS.QUERY],
+    };
+  }
+
+  if (RONIN_MODEL_SYMBOLS.EXPRESSION in objectValue) {
+    return {
+      type: 'expression',
+      value: objectValue[RONIN_MODEL_SYMBOLS.EXPRESSION],
+    };
+  }
+
+  return null;
+};
+
+/**
  * Finds all string values that match a given pattern in an object. If needed, it also
  * replaces them.
  *
@@ -256,11 +299,12 @@ type NestedObject = {
 export const flatten = (obj: NestedObject, prefix = '', res: NestedObject = {}) => {
   for (const key in obj) {
     const path = prefix ? `${prefix}.${key}` : key;
+    const value = obj[key];
 
-    if (typeof obj[key] === 'object' && obj[key] !== null) {
-      flatten(obj[key] as NestedObject, path, res);
+    if (typeof value === 'object' && value !== null && !getSymbol(value)) {
+      flatten(value as NestedObject, path, res);
     } else {
-      res[path] = obj[key];
+      res[path] = value;
     }
   }
   return res;

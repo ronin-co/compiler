@@ -2,8 +2,9 @@ import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
+import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
-test('inline statement values', async () => {
+test('inline statement parameters', async () => {
   const queries: Array<Query> = [
     {
       add: {
@@ -50,4 +51,58 @@ test('inline statement values', async () => {
     handle: 'elaine',
     emails: ['test@site.co', 'elaine@site.com'],
   });
+});
+
+test('expand column names', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          including: {
+            account: {
+              [RONIN_MODEL_SYMBOLS.QUERY]: {
+                get: {
+                  account: {
+                    with: {
+                      id: {
+                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}account`,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT *, "including_account"."id" as "including_account.id", "including_account"."ronin.locked" as "including_account.ronin.locked", "including_account"."ronin.createdAt" as "including_account.ronin.createdAt", "including_account"."ronin.createdBy" as "including_account.ronin.createdBy", "including_account"."ronin.updatedAt" as "including_account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "including_account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
 });

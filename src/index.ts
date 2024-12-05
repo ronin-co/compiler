@@ -72,6 +72,7 @@ class Transaction {
         query,
         modelListWithPresets,
         options?.inlineParams ? null : [],
+        { expandColumns: options?.expandColumns },
       );
 
       // Every query can only produce one main statement (which can return output), but

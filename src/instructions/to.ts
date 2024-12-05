@@ -4,6 +4,7 @@ import {
   expand,
   flatten,
   generateRecordId,
+  getSymbol,
   isObject,
   splitQuery,
 } from '@/src/utils/helpers';
@@ -13,7 +14,7 @@ import {
   getFieldFromModel,
   getModelBySlug,
 } from '@/src/utils/model';
-import { composeConditions, getSymbol } from '@/src/utils/statement';
+import { composeConditions } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `to` query instruction, which allows for providing

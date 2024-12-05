@@ -1,10 +1,10 @@
 import type { WithFilters } from '@/src/instructions/with';
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { splitQuery } from '@/src/utils/helpers';
+import { getSymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { getModelBySlug } from '@/src/utils/model';
-import { composeConditions, getSymbol } from '@/src/utils/statement';
+import { composeConditions } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `including` query instruction, which allows for
