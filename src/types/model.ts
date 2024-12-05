@@ -201,7 +201,7 @@ export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
 // which is the required bare minimum.
 export type PublicModel<T extends Array<ModelField> = Array<ModelField>> = Omit<
   Partial<Model<T>>,
-  'slug' | 'identifiers' | 'system' | 'table' | 'tableAlias'
+  'slug' | 'identifiers' | 'system' | 'tableAlias'
 > & {
   slug: Required<Model['slug']>;
 

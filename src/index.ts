@@ -2,7 +2,7 @@ import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import type { MultipleRecordResult, NativeRecord, Result, Row } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { expand, splitQuery } from '@/src/utils/helpers';
+import { expand, omit, splitQuery } from '@/src/utils/helpers';
 import {
   ROOT_MODEL,
   addDefaultModelFields,
@@ -25,7 +25,7 @@ interface TransactionOptions {
   expandColumns?: boolean;
 }
 
-export class Transaction {
+class Transaction {
   statements: Array<Statement>;
   models: Array<PrivateModel> = [];
 
@@ -189,3 +189,9 @@ export type { Query, Statement } from '@/src/types/query';
 
 // Expose result types
 export type { Result } from '@/src/types/result';
+
+// Strip any properties from the root model that are internal
+const CLEAN_ROOT_MODEL = omit(ROOT_MODEL, ['system']) as PublicModel;
+
+// Expose the main `Transaction` entrypoint and the root model
+export { Transaction, CLEAN_ROOT_MODEL as ROOT_MODEL };

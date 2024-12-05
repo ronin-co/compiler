@@ -6,6 +6,7 @@ import {
   type ModelPreset,
   type ModelTrigger,
   type Query,
+  ROOT_MODEL,
   Transaction,
 } from '@/src/index';
 
@@ -1684,6 +1685,50 @@ test('drop existing preset', () => {
       statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
       params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
       returning: true,
+    },
+  ]);
+});
+
+// Assert that no entry in `ronin_schema` is created when the root model is created.
+test('create the root model', () => {
+  const queries: Array<Query> = [
+    {
+      create: {
+        model: ROOT_MODEL,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT {}, "indexes" TEXT DEFAULT {}, "triggers" TEXT DEFAULT {}, "presets" TEXT DEFAULT {})',
+      params: [],
+    },
+  ]);
+});
+
+test('drop the root model', () => {
+  const queries: Array<Query> = [
+    {
+      drop: {
+        model: ROOT_MODEL.slug,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'DROP TABLE "ronin_schema"',
+      params: [],
     },
   ]);
 });
