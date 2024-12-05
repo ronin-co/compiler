@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
-import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('get single record for preset', () => {
   const queries: Array<Query> = [
@@ -129,10 +129,10 @@ test('get single record for preset containing field with condition', () => {
             with: {
               space: {
                 notBeing: {
-                  [RONIN_MODEL_SYMBOLS.QUERY]: {
+                  [QUERY_SYMBOLS.QUERY]: {
                     get: {
                       member: {
-                        with: { account: RONIN_MODEL_SYMBOLS.VALUE },
+                        with: { account: QUERY_SYMBOLS.VALUE },
                         orderedBy: { descending: ['activeAt'] },
                         selecting: ['space'],
                       },
@@ -213,10 +213,10 @@ test('get single record for preset containing field without condition', () => {
           instructions: {
             with: {
               space: {
-                [RONIN_MODEL_SYMBOLS.QUERY]: {
+                [QUERY_SYMBOLS.QUERY]: {
                   get: {
                     member: {
-                      with: { account: RONIN_MODEL_SYMBOLS.VALUE },
+                      with: { account: QUERY_SYMBOLS.VALUE },
                       orderedBy: { descending: ['activeAt'] },
                       selecting: ['space'],
                     },

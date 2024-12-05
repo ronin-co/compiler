@@ -19,7 +19,7 @@ import type {
 } from '@/src/types/query';
 import {
   MODEL_ENTITY_ERROR_CODES,
-  RONIN_MODEL_SYMBOLS,
+  QUERY_SYMBOLS,
   RoninError,
   convertToCamelCase,
   convertToSnakeCase,
@@ -86,8 +86,8 @@ const getFieldSelector = (
   fieldPath: string,
   instructionName: QueryInstructionType,
 ) => {
-  const symbol = model.tableAlias?.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)
-    ? `${model.tableAlias.replace(RONIN_MODEL_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
+  const symbol = model.tableAlias?.startsWith(QUERY_SYMBOLS.FIELD_PARENT)
+    ? `${model.tableAlias.replace(QUERY_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
     : '';
   const tablePrefix = symbol || (model.tableAlias ? `"${model.tableAlias}".` : '');
 
@@ -475,14 +475,14 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
         instructions: {
           including: {
             [field.slug]: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   [relatedModel.slug]: {
                     with: {
                       // Compare the `id` field of the related model to the link field on
                       // the root model (`field.slug`).
                       id: {
-                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}${field.slug}`,
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}${field.slug}`,
                       },
                     },
                   },
@@ -520,12 +520,12 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
       instructions: {
         including: {
           [presetSlug]: {
-            [RONIN_MODEL_SYMBOLS.QUERY]: {
+            [QUERY_SYMBOLS.QUERY]: {
               get: {
                 [pluralSlug]: {
                   with: {
                     [childField.slug]: {
-                      [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}id`,
+                      [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
                     },
                   },
                 },
@@ -1023,7 +1023,7 @@ export const transformMetaQuery = (
       // basis, meaning "for each row", instead of on a per-query basis.
       if (
         trigger.filter ||
-        trigger.effects.some((query) => findInObject(query, RONIN_MODEL_SYMBOLS.FIELD))
+        trigger.effects.some((query) => findInObject(query, QUERY_SYMBOLS.FIELD))
       ) {
         statementParts.push('FOR EACH ROW');
       }
@@ -1034,8 +1034,8 @@ export const transformMetaQuery = (
       if (trigger.filter) {
         const tableAlias =
           trigger.action === 'DELETE'
-            ? RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD
-            : RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
+            ? QUERY_SYMBOLS.FIELD_PARENT_OLD
+            : QUERY_SYMBOLS.FIELD_PARENT_NEW;
 
         const withStatement = handleWith(
           models,
@@ -1065,7 +1065,7 @@ export const transformMetaQuery = (
     dependencyStatements.push({ statement, params });
   }
 
-  const field = `${RONIN_MODEL_SYMBOLS.FIELD}${pluralType}`;
+  const field = `${QUERY_SYMBOLS.FIELD}${pluralType}`;
 
   let json: string;
 
@@ -1172,7 +1172,7 @@ export const transformMetaQuery = (
       model: {
         with: { slug: modelSlug },
         to: {
-          [pluralType]: { [RONIN_MODEL_SYMBOLS.EXPRESSION]: json },
+          [pluralType]: { [QUERY_SYMBOLS.EXPRESSION]: json },
         },
       },
     },

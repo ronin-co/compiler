@@ -11,7 +11,7 @@ import { init as cuid } from '@paralleldrive/cuid2';
  * query is nested into a query, the nested query will be marked with `__RONIN_QUERY`,
  * which allows for distinguishing that nested query from an object of instructions.
  */
-export const RONIN_MODEL_SYMBOLS = {
+export const QUERY_SYMBOLS = {
   // Represents a sub query.
   QUERY: '__RONIN_QUERY',
 
@@ -38,7 +38,7 @@ export const RONIN_MODEL_SYMBOLS = {
  * A regular expression for matching the symbol that represents a field of a model.
  */
 export const RONIN_MODEL_FIELD_REGEX = new RegExp(
-  `${RONIN_MODEL_SYMBOLS.FIELD}[_a-zA-Z0-9.]+`,
+  `${QUERY_SYMBOLS.FIELD}[_a-zA-Z0-9.]+`,
   'g',
 );
 
@@ -222,20 +222,20 @@ export const getSymbol = (
   | null => {
   if (!isObject(value)) return null;
   const objectValue = value as
-    | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>
-    | Record<typeof RONIN_MODEL_SYMBOLS.EXPRESSION, string>;
+    | Record<typeof QUERY_SYMBOLS.QUERY, Query>
+    | Record<typeof QUERY_SYMBOLS.EXPRESSION, string>;
 
-  if (RONIN_MODEL_SYMBOLS.QUERY in objectValue) {
+  if (QUERY_SYMBOLS.QUERY in objectValue) {
     return {
       type: 'query',
-      value: objectValue[RONIN_MODEL_SYMBOLS.QUERY],
+      value: objectValue[QUERY_SYMBOLS.QUERY],
     };
   }
 
-  if (RONIN_MODEL_SYMBOLS.EXPRESSION in objectValue) {
+  if (QUERY_SYMBOLS.EXPRESSION in objectValue) {
     return {
       type: 'expression',
-      value: objectValue[RONIN_MODEL_SYMBOLS.EXPRESSION],
+      value: objectValue[QUERY_SYMBOLS.EXPRESSION],
     };
   }
 

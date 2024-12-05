@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { MultipleRecordResult } from '@/src/types/result';
-import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('get multiple records ordered by field', async () => {
   const queries: Array<Query> = [
@@ -60,7 +60,7 @@ test('get multiple records ordered by expression', async () => {
           orderedBy: {
             ascending: [
               {
-                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName`,
+                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD}firstName || ' ' || ${QUERY_SYMBOLS.FIELD}lastName`,
               },
             ],
           },

@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
-import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('get single record including unrelated record without filter', () => {
   const queries: Array<Query> = [
@@ -10,7 +10,7 @@ test('get single record including unrelated record without filter', () => {
         view: {
           including: {
             team: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   team: null,
                 },
@@ -49,12 +49,12 @@ test('get single record including unrelated record with filter', () => {
         view: {
           including: {
             team: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   team: {
                     with: {
                       handle: {
-                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}label`,
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}label`,
                       },
                     },
                   },
@@ -106,7 +106,7 @@ test('get single record including unrelated records without filter', () => {
         view: {
           including: {
             teams: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   teams: null,
                 },
@@ -145,12 +145,12 @@ test('get single record including unrelated records with filter', () => {
         view: {
           including: {
             teams: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   teams: {
                     with: {
                       handle: {
-                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}label`,
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}label`,
                       },
                     },
                   },
@@ -202,7 +202,7 @@ test('get single record including unrelated ordered record', () => {
         view: {
           including: {
             team: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   team: {
                     orderedBy: {
@@ -245,7 +245,7 @@ test('get single record including unrelated ordered records', () => {
         view: {
           including: {
             teams: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   teams: {
                     orderedBy: {
@@ -318,7 +318,7 @@ test('get single record including ephemeral field containing expression', () => 
         account: {
           including: {
             name: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName`,
+              [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD}firstName || ' ' || ${QUERY_SYMBOLS.FIELD}lastName`,
             },
           },
         },
