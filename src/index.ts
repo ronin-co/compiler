@@ -43,6 +43,7 @@ export class Transaction {
     models: Array<PublicModel>,
     options?: {
       inlineParams?: boolean;
+      expandColumns?: boolean;
     },
   ): Array<Statement> => {
     const modelList = [

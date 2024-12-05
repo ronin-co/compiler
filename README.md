@@ -103,7 +103,24 @@ new Transaction(queries, {
   // Instead of returning an array of parameters for every statement (which allows for
   // preventing SQL injections), all parameters are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.
-  inlineParams: true
+  inlineParams: true,
+
+  // By default, in the generated SQL statements, the compiler does not alias columns if
+  // multiple different tables with the same column names are being joined. Only the table
+  // names themselves are aliased.
+  //
+  // This ensures the cleanest possible SQL statements in conjunction with the default
+  // behavior of SQLite (and all other SQL databases), where the result of a statement is
+  // a list (array) of values, which are inherently not prone to conflicts.
+  //
+  // If the driver being used instead returns an object for every row, the driver must
+  // ensure the uniqueness of every key in that object, which means prefixing duplicated
+  // column names with the name of the respective table, if multiple tables are joined.
+  // Drivers that return objects for rows offer this behavior as an option that is
+  // usually called "expand columns". If the driver being used does not offer such an
+  // option, you can instead activate the option in the compiler, which results in longer
+  // SQL statements because any duplicated column name is aliased.
+  expandColumns: true
 });
 ```
 
