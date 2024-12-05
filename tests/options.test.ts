@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
-import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('inline statement parameters', async () => {
   const queries: Array<Query> = [
@@ -60,12 +60,12 @@ test('expand column names', () => {
         member: {
           including: {
             account: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   account: {
                     with: {
                       id: {
-                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}account`,
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}account`,
                       },
                     },
                   },

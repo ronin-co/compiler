@@ -11,7 +11,7 @@ import {
 } from '@/src/index';
 
 import { RECORD_ID_REGEX, RECORD_TIMESTAMP_REGEX } from '@/fixtures/utils';
-import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS } from '@/src/utils/model';
 
 test('create new model', () => {
@@ -26,7 +26,7 @@ test('create new model', () => {
       required: true,
       unique: true,
       check: {
-        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `length(${RONIN_MODEL_SYMBOLS.FIELD}handle) >= 3`,
+        [QUERY_SYMBOLS.EXPRESSION]: `length(${QUERY_SYMBOLS.FIELD}handle) >= 3`,
       },
       collation: 'NOCASE',
     },
@@ -41,7 +41,7 @@ test('create new model', () => {
       computedAs: {
         kind: 'STORED',
         value: {
-          [RONIN_MODEL_SYMBOLS.EXPRESSION]: `UPPER(substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 1, 1)) || substr(${RONIN_MODEL_SYMBOLS.FIELD}handle, 2)`,
+          [QUERY_SYMBOLS.EXPRESSION]: `UPPER(substr(${QUERY_SYMBOLS.FIELD}handle, 1, 1)) || substr(${QUERY_SYMBOLS.FIELD}handle, 2)`,
         },
       },
     },
@@ -884,7 +884,7 @@ test('create new index with field expressions', () => {
   const index: ModelIndex = {
     fields: [
       {
-        expression: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ' ' || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
+        expression: `LOWER(${QUERY_SYMBOLS.FIELD}firstName || ' ' || ${QUERY_SYMBOLS.FIELD}lastName)`,
       },
     ],
   };
@@ -1292,7 +1292,7 @@ test('create new per-record trigger for creating records', () => {
           member: {
             to: {
               account: {
-                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
               },
               role: 'owner',
               pending: false,
@@ -1370,7 +1370,7 @@ test('create new per-record trigger for removing records', () => {
           members: {
             with: {
               account: {
-                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
+                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
               },
             },
           },
@@ -1440,7 +1440,7 @@ test('create new per-record trigger with filters for creating records', () => {
           member: {
             to: {
               account: {
-                [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
               },
               role: 'owner',
               pending: false,

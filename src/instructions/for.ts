@@ -1,11 +1,6 @@
 import type { Model } from '@/src/types/model';
 import type { Instructions, SetInstructions } from '@/src/types/query';
-import {
-  RONIN_MODEL_SYMBOLS,
-  RoninError,
-  findInObject,
-  isObject,
-} from '@/src/utils/helpers';
+import { QUERY_SYMBOLS, RoninError, findInObject, isObject } from '@/src/utils/helpers';
 
 /**
  * Generates the SQL syntax for the `for` query instruction, which allows for quickly
@@ -43,8 +38,8 @@ export const handleFor = (
     // If an argument was provided for the preset, find the respective placeholders
     // inside the preset and replace them with the value of the actual argument.
     if (arg !== null) {
-      findInObject(replacedForFilter, RONIN_MODEL_SYMBOLS.VALUE, (match: string) =>
-        match.replace(RONIN_MODEL_SYMBOLS.VALUE, arg),
+      findInObject(replacedForFilter, QUERY_SYMBOLS.VALUE, (match: string) =>
+        match.replace(QUERY_SYMBOLS.VALUE, arg),
       );
     }
 

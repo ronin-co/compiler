@@ -1,6 +1,6 @@
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { RONIN_MODEL_SYMBOLS, flatten, getSymbol, splitQuery } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS, flatten, getSymbol, splitQuery } from '@/src/utils/helpers';
 import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
 
@@ -81,7 +81,7 @@ export const handleSelecting = (
             const value = parseFieldExpression(
               { ...queryModel, tableAlias: tableName },
               'including',
-              `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
+              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
             );
 
             return {

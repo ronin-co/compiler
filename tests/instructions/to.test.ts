@@ -7,7 +7,7 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
-import { RONIN_MODEL_SYMBOLS, RoninError } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('set single record to new string field', async () => {
   const queries: Array<Query> = [
@@ -63,7 +63,7 @@ test('set single record to new string field with expression referencing fields',
           },
           to: {
             handle: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `LOWER(${RONIN_MODEL_SYMBOLS.FIELD}firstName || ${RONIN_MODEL_SYMBOLS.FIELD}lastName)`,
+              [QUERY_SYMBOLS.EXPRESSION]: `LOWER(${QUERY_SYMBOLS.FIELD}firstName || ${QUERY_SYMBOLS.FIELD}lastName)`,
             },
           },
         },
@@ -668,7 +668,7 @@ test('set single record to result of nested query', async () => {
           },
           to: {
             name: {
-              [RONIN_MODEL_SYMBOLS.QUERY]: {
+              [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   account: {
                     with: { handle: 'david' },
@@ -741,7 +741,7 @@ test('add multiple records with nested sub query', async () => {
       add: {
         users: {
           to: {
-            [RONIN_MODEL_SYMBOLS.QUERY]: {
+            [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: null,
               },
@@ -804,7 +804,7 @@ test('add multiple records with nested sub query including additional fields', a
       add: {
         users: {
           to: {
-            [RONIN_MODEL_SYMBOLS.QUERY]: {
+            [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: {
                   including: {
@@ -874,7 +874,7 @@ test('add multiple records with nested sub query and specific fields', async () 
       add: {
         users: {
           to: {
-            [RONIN_MODEL_SYMBOLS.QUERY]: {
+            [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: {
                   selecting: ['handle'],
@@ -943,7 +943,7 @@ test('add multiple records with nested sub query and specific meta fields', asyn
       add: {
         users: {
           to: {
-            [RONIN_MODEL_SYMBOLS.QUERY]: {
+            [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: {
                   selecting: ['ronin.updatedAt'],
@@ -1003,7 +1003,7 @@ test('try to add multiple records with nested sub query including non-existent f
       add: {
         newAccounts: {
           to: {
-            [RONIN_MODEL_SYMBOLS.QUERY]: {
+            [QUERY_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: {
                   including: {

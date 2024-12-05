@@ -1,4 +1,4 @@
-import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
@@ -20,7 +20,7 @@ export const FieldSelector = z.record(FieldValue);
 
 // Expression
 export const ExpressionSchema = z.object({
-  [RONIN_MODEL_SYMBOLS.EXPRESSION]: z.string(),
+  [QUERY_SYMBOLS.EXPRESSION]: z.string(),
 });
 
 // With Instructions.

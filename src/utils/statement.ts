@@ -7,8 +7,8 @@ import type {
   WithInstruction,
 } from '@/src/types/query';
 import {
+  QUERY_SYMBOLS,
   RONIN_MODEL_FIELD_REGEX,
-  RONIN_MODEL_SYMBOLS,
   RoninError,
   getSymbol,
   isObject,
@@ -81,22 +81,22 @@ export const parseFieldExpression = (
   parentModel?: Model,
 ) => {
   return expression.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
-    let toReplace: string = RONIN_MODEL_SYMBOLS.FIELD;
+    let toReplace: string = QUERY_SYMBOLS.FIELD;
     let rootModel: Model = model;
 
     // If a parent field is being referenced inside the value of the field, we need to
     // obtain the field from the parent model instead of the current model.
-    if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT)) {
+    if (match.startsWith(QUERY_SYMBOLS.FIELD_PARENT)) {
       rootModel = parentModel as Model;
-      toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT;
+      toReplace = QUERY_SYMBOLS.FIELD_PARENT;
 
       // If the old or new value of a field in the parent model is being referenced, we
       // can't use the table name directly and instead have to resort to using special
       // keywords such as `OLD` and `NEW` as the table names, which SQLite will handle.
-      if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD)) {
-        rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_OLD;
-      } else if (match.startsWith(RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW)) {
-        rootModel.tableAlias = toReplace = RONIN_MODEL_SYMBOLS.FIELD_PARENT_NEW;
+      if (match.startsWith(QUERY_SYMBOLS.FIELD_PARENT_OLD)) {
+        rootModel.tableAlias = toReplace = QUERY_SYMBOLS.FIELD_PARENT_OLD;
+      } else if (match.startsWith(QUERY_SYMBOLS.FIELD_PARENT_NEW)) {
+        rootModel.tableAlias = toReplace = QUERY_SYMBOLS.FIELD_PARENT_NEW;
       }
     }
 
@@ -126,7 +126,7 @@ export const composeFieldValues = (
   model: Model,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
+  value: WithValue | Record<typeof QUERY_SYMBOLS.QUERY, Query>,
   options: {
     fieldSlug: string;
     type?: 'fields' | 'values';
@@ -197,7 +197,7 @@ export const composeConditions = (
   model: Model,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value: WithFilters | WithValueOptions | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>,
+  value: WithFilters | WithValueOptions | Record<typeof QUERY_SYMBOLS.QUERY, Query>,
   options: Omit<Parameters<typeof composeFieldValues>[5], 'fieldSlug'> & {
     fieldSlug?: string;
   },
@@ -258,7 +258,7 @@ export const composeConditions = (
       const keys = Object.keys(value as object);
       const values = Object.values(value as object);
 
-      let recordTarget: WithValue | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>;
+      let recordTarget: WithValue | Record<typeof QUERY_SYMBOLS.QUERY, Query>;
 
       // If only a single key is present, and it's "id", then we can simplify the query a
       // bit in favor of performance, because the stored value of a link field in SQLite
@@ -280,7 +280,7 @@ export const composeConditions = (
         };
 
         recordTarget = {
-          [RONIN_MODEL_SYMBOLS.QUERY]: subQuery,
+          [QUERY_SYMBOLS.QUERY]: subQuery,
         };
       }
 
