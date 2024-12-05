@@ -1712,6 +1712,27 @@ test('create the root model', () => {
   ]);
 });
 
+test('drop the root model', () => {
+  const queries: Array<Query> = [
+    {
+      drop: {
+        model: ROOT_MODEL.slug,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'DROP TABLE "ronin_schema"',
+      params: [],
+    },
+  ]);
+});
+
 test('try to alter existing model that does not exist', () => {
   const queries: Array<Query> = [
     {
