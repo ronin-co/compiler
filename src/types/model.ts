@@ -53,7 +53,7 @@ type ModelFieldBasics = {
 };
 
 type ModelFieldNormal = ModelFieldBasics & {
-  type: 'string' | 'number' | 'boolean' | 'date' | 'json' | 'group';
+  type: 'string' | 'number' | 'boolean' | 'date' | 'json';
 };
 
 export type ModelFieldReferenceAction =

@@ -475,7 +475,7 @@ test('set single record to new json field with object', async () => {
   });
 });
 
-test('set single record to new grouped string field', async () => {
+test('set single record to new nested string field', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -497,10 +497,6 @@ test('set single record to new grouped string field', async () => {
     {
       slug: 'team',
       fields: [
-        {
-          slug: 'billing',
-          type: 'group',
-        },
         {
           slug: 'billing.currency',
           type: 'string',
@@ -529,7 +525,7 @@ test('set single record to new grouped string field', async () => {
   expect((result.record?.billing as { currency: string })?.currency).toBe('USD');
 });
 
-test('set single record to new grouped link field', async () => {
+test('set single record to new nested link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -562,10 +558,6 @@ test('set single record to new grouped link field', async () => {
     {
       slug: 'team',
       fields: [
-        {
-          slug: 'billing',
-          type: 'group',
-        },
         {
           slug: 'billing.manager',
           type: 'link',
@@ -602,7 +594,7 @@ test('set single record to new grouped link field', async () => {
   expect((result.record?.billing as { manager: string })?.manager).toBe(targetRecord.id);
 });
 
-test('set single record to new grouped json field', async () => {
+test('set single record to new nested json field', async () => {
   const queries: Array<Query> = [
     {
       set: {
@@ -624,10 +616,6 @@ test('set single record to new grouped json field', async () => {
     {
       slug: 'team',
       fields: [
-        {
-          slug: 'billing',
-          type: 'group',
-        },
         {
           slug: 'billing.invoiceRecipients',
           type: 'json',

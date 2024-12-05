@@ -317,11 +317,6 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
     displayAs: 'single-line',
   },
   {
-    name: 'RONIN',
-    type: 'group',
-    slug: 'ronin',
-  },
-  {
     name: 'RONIN - Locked',
     type: 'boolean',
     slug: 'ronin.locked',
@@ -375,7 +370,6 @@ export const ROOT_MODEL: PartialModel = {
     { slug: 'idPrefix', type: 'string' },
     { slug: 'table', type: 'string' },
 
-    { slug: 'identifiers', type: 'group' },
     { slug: 'identifiers.name', type: 'string' },
     { slug: 'identifiers.slug', type: 'string' },
 
@@ -570,8 +564,6 @@ const getFieldStatement = (
   model: Model,
   field: ModelField,
 ): string | null => {
-  if (field.type === 'group') return null;
-
   let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
 
   if (field.slug === 'id') statement += ' PRIMARY KEY';

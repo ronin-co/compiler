@@ -957,7 +957,7 @@ test('get single record with one of field values', async () => {
   expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
 });
 
-test('get single record with one of field values in group', async () => {
+test('get single record with one of nested field values', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -976,10 +976,6 @@ test('get single record with one of field values in group', async () => {
     {
       slug: 'team',
       fields: [
-        {
-          slug: 'billing',
-          type: 'group',
-        },
         {
           slug: 'billing.currency',
           type: 'string',

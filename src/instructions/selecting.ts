@@ -72,7 +72,6 @@ export const handleSelecting = (
 
           const duplicatedFields = queryModel.fields
             .filter((field) => {
-              if (field.type === 'group') return null;
               return model.fields.some((modelField) => modelField.slug === field.slug);
             })
             .filter((item) => item !== null);
