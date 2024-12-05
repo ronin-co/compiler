@@ -195,3 +195,6 @@ const CLEAN_ROOT_MODEL = omit(ROOT_MODEL, ['system']) as PublicModel;
 
 // Expose the main `Transaction` entrypoint and the root model
 export { Transaction, CLEAN_ROOT_MODEL as ROOT_MODEL };
+
+// Expose model symbols
+export { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
