@@ -25,7 +25,7 @@ interface TransactionOptions {
   expandColumns?: boolean;
 }
 
-export class Transaction {
+class Transaction {
   statements: Array<Statement>;
   models: Array<PrivateModel> = [];
 
@@ -189,3 +189,6 @@ export type { Query, Statement } from '@/src/types/query';
 
 // Expose result types
 export type { Result } from '@/src/types/result';
+
+// Expose the main `Transaction` entrypoint and the root model
+export { Transaction, ROOT_MODEL };
