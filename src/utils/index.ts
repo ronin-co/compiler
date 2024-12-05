@@ -86,6 +86,7 @@ export const compileQueryInput = (
 
   // A list of columns that should be selected when querying records.
   const { columns, isJoining } = handleSelecting(
+    models,
     model,
     statementParams,
     {

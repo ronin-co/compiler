@@ -24,14 +24,11 @@ import {
   convertToCamelCase,
   convertToSnakeCase,
   findInObject,
+  getSymbol,
   splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import {
-  getSymbol,
-  parseFieldExpression,
-  prepareStatementValue,
-} from '@/src/utils/statement';
+import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
 import title from 'title';
 
 /**

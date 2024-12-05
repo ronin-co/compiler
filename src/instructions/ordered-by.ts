@@ -1,7 +1,8 @@
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
+import { getSymbol } from '@/src/utils/helpers';
 import { getFieldFromModel } from '@/src/utils/model';
-import { getSymbol, parseFieldExpression } from '@/src/utils/statement';
+import { parseFieldExpression } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `orderedBy` query instruction, which allows for

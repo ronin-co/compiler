@@ -10,6 +10,7 @@ import {
   RONIN_MODEL_FIELD_REGEX,
   RONIN_MODEL_SYMBOLS,
   RoninError,
+  getSymbol,
   isObject,
 } from '@/src/utils/helpers';
 
@@ -401,47 +402,4 @@ export const formatIdentifiers = (
     ...queryInstructions,
     [type]: newNestedInstructions,
   } as Instructions & SetInstructions;
-};
-
-/**
- * Checks if the provided value contains a RONIN model symbol (a represenation of a
- * particular entity inside a query, such as an expression or a sub query) and returns
- * its type and value.
- *
- * @param value - The value that should be checked.
- *
- * @returns The type and value of the symbol, if the provided value contains one.
- */
-export const getSymbol = (
-  value: unknown,
-):
-  | {
-      type: 'query';
-      value: Query;
-    }
-  | {
-      type: 'expression';
-      value: string;
-    }
-  | null => {
-  if (!isObject(value)) return null;
-  const objectValue = value as
-    | Record<typeof RONIN_MODEL_SYMBOLS.QUERY, Query>
-    | Record<typeof RONIN_MODEL_SYMBOLS.EXPRESSION, string>;
-
-  if (RONIN_MODEL_SYMBOLS.QUERY in objectValue) {
-    return {
-      type: 'query',
-      value: objectValue[RONIN_MODEL_SYMBOLS.QUERY],
-    };
-  }
-
-  if (RONIN_MODEL_SYMBOLS.EXPRESSION in objectValue) {
-    return {
-      type: 'expression',
-      value: objectValue[RONIN_MODEL_SYMBOLS.EXPRESSION],
-    };
-  }
-
-  return null;
 };

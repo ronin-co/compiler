@@ -1,17 +1,14 @@
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { flatten, splitQuery } from '@/src/utils/helpers';
-import { getFieldFromModel } from '@/src/utils/model';
-import {
-  getSymbol,
-  parseFieldExpression,
-  prepareStatementValue,
-} from '@/src/utils/statement';
+import { RONIN_MODEL_SYMBOLS, flatten, getSymbol, splitQuery } from '@/src/utils/helpers';
+import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
+import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `selecting` query instruction, which allows for
  * selecting a list of columns from rows.
  *
+ * @param models - A list of models.
  * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
@@ -21,6 +18,7 @@ import {
  * @returns An SQL string containing the columns that should be selected.
  */
 export const handleSelecting = (
+  models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
   instructions: {
@@ -32,8 +30,7 @@ export const handleSelecting = (
     expandColumns?: boolean;
   },
 ): { columns: string; isJoining: boolean } => {
-  // A map of table names to be joined (keys) and their respecptive model slugs (values).
-  const includedTables = new Map<string, string>();
+  let isJoining = false;
 
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
@@ -54,24 +51,37 @@ export const handleSelecting = (
     // the case of sub queries resulting in multiple records, it's the only way to
     // include multiple rows of another table.
     const filteredObject = Object.entries(instructions.including)
-      .map(([key, value]) => {
+      .flatMap(([key, value]) => {
         const symbol = getSymbol(value);
 
-        if (symbol) {
-          if (symbol.type === 'query') {
-            const { queryModel } = splitQuery(symbol.value);
-            includedTables.set(`including_${key}`, queryModel);
-            return null;
-          }
+        if (symbol?.type === 'query') {
+          isJoining = true;
 
-          if (symbol.type === 'expression') {
-            value = parseFieldExpression(model, 'including', symbol.value);
-          }
+          if (!options?.expandColumns) return null;
+
+          const { queryModel: queryModelSlug } = splitQuery(symbol.value);
+          const queryModel = getModelBySlug(models, queryModelSlug);
+          const tableName = `including_${key}`;
+
+          const duplicatedFields = queryModel.fields
+            .filter((field) => {
+              if (field.type === 'group') return null;
+              return model.fields.some((modelField) => modelField.slug === field.slug);
+            })
+            .filter((item) => item !== null);
+
+          return duplicatedFields.map((field) => ({
+            key: `${tableName}.${field.slug}`,
+            value: {
+              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
+            },
+          }));
         }
 
-        return [key, value];
+        return { key, value };
       })
-      .filter((entry) => entry !== null);
+      .filter((entry) => entry !== null)
+      .map((entry) => [entry.key, entry.value]);
 
     // Flatten the object to handle deeply nested ephemeral fields, which are the result
     // of developers providing objects as values in the `including` instruction.
@@ -83,6 +93,12 @@ export const handleSelecting = (
       statement += newObjectEntries
         // Format the fields into a comma-separated list of SQL columns.
         .map(([key, value]) => {
+          const symbol = getSymbol(value);
+
+          if (symbol?.type === 'expression') {
+            value = parseFieldExpression(model, 'including', symbol.value);
+          }
+
           if (typeof value === 'string' && value.startsWith('"'))
             return `(${value}) as "${key}"`;
           return `${prepareStatementValue(statementParams, value)} as "${key}"`;
@@ -91,5 +107,5 @@ export const handleSelecting = (
     }
   }
 
-  return { columns: statement, isJoining: includedTables.size > 0 };
+  return { columns: statement, isJoining };
 };
