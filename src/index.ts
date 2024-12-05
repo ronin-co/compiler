@@ -3,9 +3,9 @@ import type { Query, Statement } from '@/src/types/query';
 import type {
   MultipleRecordResult,
   NativeRecord,
+  ObjectRow,
   RawRow,
   Result,
-  Row,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { expand, omit, splitQuery } from '@/src/utils/helpers';
@@ -115,24 +115,45 @@ class Transaction {
     return expand(record) as NativeRecord;
   }
 
-  prepareResults(results: Array<Array<Row>>): Array<Result> {
+  // prepareResults: (results: Array<Array<RawRow>>, raw?: true) => Array<Result>;
+  // prepareResults: (results: Array<Array<ObjectRow>>, raw?: false) => Array<Result>;
+
+  /**
+   * Format the results returned from the database into RONIN records.
+   *
+   * @param results - A list of results from the database, where each result is an array
+   * of rows.
+   * @param raw - By default, rows are expected to be arrays of values, which is how SQL
+   * databases return rows by default. If the driver being used returns rows as objects
+   * instead, this option should be set to `false`.
+   *
+   * @returns A list of formatted RONIN results, where each result is either a single
+   * RONIN record, an array of RONIN records, or a count result.
+   */
+  prepareResults(
+    results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
+    raw = false,
+  ): Array<Result> {
     // Filter out results whose statements are not expected to return any data.
     const relevantResults = results.filter((_, index) => {
       return this.statements[index].returning;
     });
 
-    const normalizedResults: Array<Array<RawRow>> = relevantResults.map((rows) => {
-      return rows.map((row) => {
-        if (Array.isArray(row)) return row;
-        if (row['COUNT(*)']) return [row['COUNT(*)']];
-        return Object.values(row);
-      });
-    });
+    const normalizedResults: Array<Array<RawRow>> = raw
+      ? (relevantResults as Array<Array<RawRow>>)
+      : relevantResults.map((rows) => {
+          return rows.map((row) => {
+            if (Array.isArray(row)) return row;
+            if (row['COUNT(*)']) return [row['COUNT(*)']];
+            return Object.values(row);
+          });
+        });
 
     return normalizedResults.map((rows, index): Result => {
       const query = this.queries.at(-index) as Query;
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
+
       const selectedFields = queryInstructions?.selecting
         ? model.fields.filter((field) => {
             return queryInstructions.selecting?.includes(field.slug);
