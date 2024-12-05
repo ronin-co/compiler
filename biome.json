@@ -40,8 +40,7 @@
       "nursery": {
         "all": true,
         "useSortedClasses": "warn",
-        "noSecrets": "off",
-        "noExportedImports": "off"
+        "noSecrets": "off"
       },
       "performance": {
         "all": true,

@@ -692,14 +692,14 @@ const handleSystemModel = (
  * inserted into the query by SQLite.
  * @param query - The query that should potentially be transformed.
  *
- * @returns The transformed query.
+ * @returns The transformed query or `null` if no further query processing should happen.
  */
 export const transformMetaQuery = (
   models: Array<Model>,
   dependencyStatements: Array<Statement>,
   statementParams: Array<unknown> | null,
   query: Query,
-): Query => {
+): Query | null => {
   const { queryType } = splitQuery(query);
   const subAltering = query.alter && !('to' in query.alter);
 
@@ -762,7 +762,7 @@ export const transformMetaQuery = (
     action === 'create' && entity === 'model' ? null : getModelBySlug(models, modelSlug);
 
   if (entity === 'model') {
-    let queryTypeDetails: unknown;
+    let queryTypeDetails: { to?: PartialModel } | { with?: PartialModel } = {};
 
     if (action === 'create') {
       const newModel = jsonValue as unknown as Model;
@@ -857,6 +857,17 @@ export const transformMetaQuery = (
           return handleSystemModel(models, dependencyStatements, 'drop', systemModel);
         });
     }
+
+    const modelSlug =
+      'to' in queryTypeDetails
+        ? queryTypeDetails?.to?.slug
+        : 'with' in queryTypeDetails
+          ? queryTypeDetails?.with?.slug
+          : undefined;
+
+    // If the root model is being created or dropped, altering the `ronin_schema` table
+    // is not necessary, since that table is created precisely for that model.
+    if (modelSlug === 'model') return null;
 
     const queryTypeAction =
       action === 'create' ? 'add' : action === 'alter' ? 'set' : 'remove';

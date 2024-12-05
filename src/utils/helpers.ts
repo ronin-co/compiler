@@ -267,6 +267,22 @@ export const flatten = (obj: NestedObject, prefix = '', res: NestedObject = {}) 
 };
 
 /**
+ * Omits properties from an object.
+ *
+ * @param obj - The object from which properties should be omitted.
+ * @param properties - The properties that should be omitted.
+ *
+ * @returns The object without the omitted properties.
+ */
+export const omit = <T extends Record<string, unknown>, K extends keyof T>(
+  obj: T,
+  properties: Array<K>,
+): Omit<T, K> =>
+  Object.fromEntries(
+    Object.entries(obj).filter(([key]) => !properties.includes(key as K)),
+  ) as Omit<T, K>;
+
+/**
  * Converts a flat object whose keys all sit on the same level (at the root) into an
  * object of nested objects.
  *
