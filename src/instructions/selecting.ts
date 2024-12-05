@@ -45,12 +45,16 @@ export const handleSelecting = (
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
   if (instructions.including) {
+    // Flatten the object to handle deeply nested ephemeral fields, which are the result
+    // of developers providing objects as values in the `including` instruction.
+    const flatObject = flatten(instructions.including);
+
     // Filter out any fields whose value is a sub query, as those fields are instead
     // converted into SQL JOINs in the `handleIncluding` function, which, in the case of
     // sub queries resulting in a single record, is more performance-efficient, and in
     // the case of sub queries resulting in multiple records, it's the only way to
     // include multiple rows of another table.
-    const filteredObject = Object.entries(instructions.including)
+    const filteredObject: Array<[string, unknown]> = Object.entries(flatObject)
       .flatMap(([key, value]) => {
         const symbol = getSymbol(value);
 
@@ -73,12 +77,24 @@ export const handleSelecting = (
             })
             .filter((item) => item !== null);
 
-          return duplicatedFields.map((field) => ({
-            key: `${tableName}.${field.slug}`,
-            value: {
-              [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
-            },
-          }));
+          return duplicatedFields.map((field) => {
+            const value = parseFieldExpression(
+              { ...queryModel, tableAlias: tableName },
+              'including',
+              `${RONIN_MODEL_SYMBOLS.FIELD}${field.slug}`,
+            );
+
+            return {
+              key: `${tableName}.${field.slug}`,
+              value,
+            };
+          });
+        }
+
+        if (symbol?.type === 'expression') {
+          value = `(${parseFieldExpression(model, 'including', symbol.value)})`;
+        } else {
+          value = prepareStatementValue(statementParams, value);
         }
 
         return { key, value };
@@ -86,26 +102,13 @@ export const handleSelecting = (
       .filter((entry) => entry !== null)
       .map((entry) => [entry.key, entry.value]);
 
-    // Flatten the object to handle deeply nested ephemeral fields, which are the result
-    // of developers providing objects as values in the `including` instruction.
-    const newObjectEntries = Object.entries(flatten(Object.fromEntries(filteredObject)));
-
-    if (newObjectEntries.length > 0) {
+    if (filteredObject.length > 0) {
       statement += ', ';
 
-      statement += newObjectEntries
-        // Format the fields into a comma-separated list of SQL columns.
-        .map(([key, value]) => {
-          const symbol = getSymbol(value);
+      // Format the fields into a comma-separated list of SQL columns.
+      statement += filteredObject
 
-          if (symbol?.type === 'expression') {
-            value = `(${parseFieldExpression(model, 'including', symbol.value)})`;
-          } else {
-            value = prepareStatementValue(statementParams, value);
-          }
-
-          return `${value} as "${key}"`;
-        })
+        .map(([key, value]) => `${value} as "${key}"`)
         .join(', ');
     }
   }

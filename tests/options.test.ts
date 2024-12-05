@@ -100,7 +100,7 @@ test('expand column names', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ("id") as "including_account.id", ("ronin".locked) as "including_account.ronin.locked", ("ronin".createdAt) as "including_account.ronin.createdAt", ("ronin".createdBy) as "including_account.ronin.createdBy", ("ronin".updatedAt) as "including_account.ronin.updatedAt", ("ronin".updatedBy) as "including_account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT *, "including_account"."id" as "including_account.id", "including_account"."ronin".locked as "including_account.ronin.locked", "including_account"."ronin".createdAt as "including_account.ronin.createdAt", "including_account"."ronin".createdBy as "including_account.ronin.createdBy", "including_account"."ronin".updatedAt as "including_account.ronin.updatedAt", "including_account"."ronin".updatedBy as "including_account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
