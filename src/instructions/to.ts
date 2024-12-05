@@ -164,9 +164,9 @@ export const handleTo = (
   // direct link.
   for (const fieldSlug in toInstruction) {
     const fieldValue = toInstruction[fieldSlug];
-    const fieldDetails = getFieldFromModel(model, fieldSlug, 'to');
+    const fieldDetails = getFieldFromModel(model, fieldSlug, 'to', false);
 
-    if (fieldDetails.field.type === 'link' && fieldDetails.field.kind === 'many') {
+    if (fieldDetails?.field.type === 'link' && fieldDetails.field.kind === 'many') {
       // Remove the field from the `to` instruction as it will be handled using
       // separate queries.
       delete toInstruction[fieldSlug];

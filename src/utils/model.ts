@@ -104,6 +104,27 @@ const getFieldSelector = (
   return `${tablePrefix}"${fieldPath}"`;
 };
 
+export function getFieldFromModel(
+  model: Model,
+  fieldPath: string,
+  instructionName: QueryInstructionType,
+  shouldThrow?: true,
+): { field: ModelField; fieldSelector: string };
+
+export function getFieldFromModel(
+  model: Model,
+  fieldPath: string,
+  instructionName: QueryInstructionType,
+  shouldThrow?: false,
+): { field: ModelField; fieldSelector: string } | null;
+
+export function getFieldFromModel(
+  model: Model,
+  fieldPath: string,
+  instructionName: QueryInstructionType,
+  shouldThrow: boolean,
+): { field: ModelField; fieldSelector: string } | null;
+
 /**
  * Obtains a field from a given model using its path.
  *
@@ -111,14 +132,16 @@ const getFieldSelector = (
  * @param fieldPath - The path of the field to retrieve. Supports dot notation for
  * accessing nested fields.
  * @param instructionName - The name of the query instruction that is being used.
+ * @param shouldThrow - Whether to throw an error if the field is not found.
  *
  * @returns The requested field of the model, and its SQL selector.
  */
-export const getFieldFromModel = (
+export function getFieldFromModel(
   model: Model,
   fieldPath: string,
   instructionName: QueryInstructionType,
-): { field: ModelField; fieldSelector: string } => {
+  shouldThrow = true,
+): { field: ModelField; fieldSelector: string } | null {
   const errorPrefix = `Field "${fieldPath}" defined for \`${instructionName}\``;
   const modelFields = model.fields || [];
 
@@ -143,17 +166,21 @@ export const getFieldFromModel = (
   modelField = modelFields.find((field) => field.slug === fieldPath);
 
   if (!modelField) {
-    throw new RoninError({
-      message: `${errorPrefix} does not exist in model "${model.name}".`,
-      code: 'FIELD_NOT_FOUND',
-      field: fieldPath,
-      queries: null,
-    });
+    if (shouldThrow) {
+      throw new RoninError({
+        message: `${errorPrefix} does not exist in model "${model.name}".`,
+        code: 'FIELD_NOT_FOUND',
+        field: fieldPath,
+        queries: null,
+      });
+    }
+
+    return null;
   }
 
   const fieldSelector = getFieldSelector(model, modelField, fieldPath, instructionName);
   return { field: modelField, fieldSelector };
-};
+}
 
 /**
  * Converts a slug to a readable name by splitting it on uppercase characters
