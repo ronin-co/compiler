@@ -1,6 +1,6 @@
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { flatten } from '@/src/utils/helpers';
+import { flatten, splitQuery } from '@/src/utils/helpers';
 import { getFieldFromModel } from '@/src/utils/model';
 import {
   getSymbol,
@@ -16,6 +16,7 @@ import {
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
+ * @param options - Additional options for customizing the behavior of the function.
  *
  * @returns An SQL string containing the columns that should be selected.
  */
@@ -26,8 +27,13 @@ export const handleSelecting = (
     selecting: Instructions['selecting'];
     including: Instructions['including'];
   },
+  options?: {
+    /** Alias column names that are duplicated when joining multiple tables. */
+    expandColumns?: boolean;
+  },
 ): { columns: string; isJoining: boolean } => {
-  let isJoining = false;
+  // A map of table names to be joined (keys) and their respecptive model slugs (values).
+  const includedTables = new Map<string, string>();
 
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
@@ -53,7 +59,8 @@ export const handleSelecting = (
 
         if (symbol) {
           if (symbol.type === 'query') {
-            isJoining = true;
+            const { queryModel } = splitQuery(symbol.value);
+            includedTables.set(`including_${key}`, queryModel);
             return null;
           }
 
@@ -84,5 +91,5 @@ export const handleSelecting = (
     }
   }
 
-  return { columns: statement, isJoining };
+  return { columns: statement, isJoining: includedTables.size > 0 };
 };

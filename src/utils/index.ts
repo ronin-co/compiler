@@ -33,9 +33,7 @@ export const compileQueryInput = (
   // be provided as values.
   statementParams: Array<unknown> | null,
   options?: {
-    /**
-     * Whether the query should explicitly return records. Defaults to `true`.
-     */
+    /** Whether the query should explicitly return records. Defaults to `true`. */
     returning?: boolean;
     /**
      * If the query is contained within another query, this option should be set to the
@@ -43,6 +41,8 @@ export const compileQueryInput = (
      * the parent model in the nested query (the current query).
      */
     parentModel?: Model;
+    /** Alias column names that are duplicated when joining multiple tables. */
+    expandColumns?: boolean;
   },
 ): { dependencies: Array<Statement>; main: Statement } => {
   // A list of write statements that are required to be executed before the main read
@@ -85,10 +85,15 @@ export const compileQueryInput = (
   }
 
   // A list of columns that should be selected when querying records.
-  const { columns, isJoining } = handleSelecting(model, statementParams, {
-    selecting: instructions?.selecting,
-    including: instructions?.including,
-  });
+  const { columns, isJoining } = handleSelecting(
+    model,
+    statementParams,
+    {
+      selecting: instructions?.selecting,
+      including: instructions?.including,
+    },
+    options,
+  );
 
   let statement = '';
 
