@@ -1,4 +1,4 @@
-import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
+import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import type {
   MultipleRecordResult,
@@ -97,12 +97,12 @@ class Transaction {
     return [...dependencyStatements, ...mainStatements];
   };
 
-  private formatRow(model: PrivateModel, row: RawRow): NativeRecord {
+  private formatRow(fields: Array<ModelField>, row: RawRow): NativeRecord {
     const record: Partial<NativeRecord> = {};
 
     for (let index = 0; index < row.length; index++) {
       const value = row[index];
-      const field = model.fields[index];
+      const field = fields[index];
 
       if (field.type === 'json') {
         record[field.slug] = JSON.parse(value as string);
@@ -133,6 +133,11 @@ class Transaction {
       const query = this.queries.at(-index) as Query;
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
+      const selectedFields = queryInstructions?.selecting
+        ? model.fields.filter((field) => {
+            return queryInstructions.selecting?.includes(field.slug);
+          })
+        : model.fields;
 
       // The query is expected to count records.
       if (queryType === 'count') {
@@ -144,14 +149,14 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: this.formatRow(model, rows[0]) };
+        return { record: this.formatRow(selectedFields, rows[0]) };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: rows.map((row) => this.formatRow(model, row)),
+        records: rows.map((row) => this.formatRow(selectedFields, row)),
       };
 
       // If the amount of records was limited to a specific amount, that means pagination
