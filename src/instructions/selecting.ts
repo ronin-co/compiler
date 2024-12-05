@@ -57,6 +57,9 @@ export const handleSelecting = (
         if (symbol?.type === 'query') {
           isJoining = true;
 
+          // If the column names should be expanded, that means we need to alias all
+          // columns of the joined table if those column names are duplicated in the
+          // current table.
           if (!options?.expandColumns) return null;
 
           const { queryModel: queryModelSlug } = splitQuery(symbol.value);
@@ -96,12 +99,12 @@ export const handleSelecting = (
           const symbol = getSymbol(value);
 
           if (symbol?.type === 'expression') {
-            value = parseFieldExpression(model, 'including', symbol.value);
+            value = `(${parseFieldExpression(model, 'including', symbol.value)})`;
+          } else {
+            value = prepareStatementValue(statementParams, value);
           }
 
-          if (typeof value === 'string' && value.startsWith('"'))
-            return `(${value}) as "${key}"`;
-          return `${prepareStatementValue(statementParams, value)} as "${key}"`;
+          return `${value} as "${key}"`;
         })
         .join(', ');
     }
