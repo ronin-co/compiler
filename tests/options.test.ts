@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
-import { type Model, type Query, RONIN_MODEL_SYMBOLS, Transaction } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
+import { RONIN_MODEL_SYMBOLS } from '@/src/utils/helpers';
 
 test('inline statement parameters', async () => {
   const queries: Array<Query> = [
@@ -56,15 +57,15 @@ test('expand column names', () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        member: {
           including: {
-            team: {
+            account: {
               [RONIN_MODEL_SYMBOLS.QUERY]: {
                 get: {
-                  team: {
+                  account: {
                     with: {
-                      handle: {
-                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}label`,
+                      id: {
+                        [RONIN_MODEL_SYMBOLS.EXPRESSION]: `${RONIN_MODEL_SYMBOLS.FIELD_PARENT}account`,
                       },
                     },
                   },
@@ -79,19 +80,13 @@ test('expand column names', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-      ],
+      slug: 'account',
     },
     {
-      slug: 'view',
+      slug: 'member',
       fields: [
         {
-          slug: 'label',
+          slug: 'account',
           type: 'string',
         },
       ],
@@ -100,12 +95,12 @@ test('expand column names', () => {
 
   const transaction = new Transaction(queries, {
     models,
-    expandColumns: true
+    expandColumns: true,
   });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1`,
+      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
