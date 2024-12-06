@@ -1,6 +1,6 @@
 # RONIN Compiler
 
-This package compiles [RONIN queries](https://ronin.co/docs/queries) to SQL statements.
+This package compiles [RONIN queries](https://ronin.co/docs/queries) to SQLite statements.
 
 ## Setup
 
