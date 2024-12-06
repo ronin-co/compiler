@@ -107,11 +107,8 @@ class Transaction {
       const value = row[index];
       const field = fields[index];
 
+      let newSlug = field.slug;
       let newValue = value;
-
-      if (field.type === 'json') {
-        newValue = JSON.parse(value as string);
-      }
 
       const parentFieldSlug = (field as ModelField & { parentField?: string })
         .parentField;
@@ -120,14 +117,14 @@ class Transaction {
       // parent field if it doesn't exist yet, and then assign the value of the nested
       // field to that newly created object.
       if (parentFieldSlug) {
-        const parentValue = record[parentFieldSlug];
-        if (!parentValue || typeof parentValue === 'string') record[parentFieldSlug] = {};
-        (record[parentFieldSlug] as Record<string, unknown>)[field.slug] = newValue;
+        newSlug = `${parentFieldSlug}.${field.slug}`;
       }
-      // Otherwise we can just assign the value directly to the record.
-      else {
-        record[field.slug] = newValue;
+
+      if (field.type === 'json') {
+        newValue = JSON.parse(value as string);
       }
+
+      record[newSlug] = newValue;
     }
 
     return expand(record) as NativeRecord;

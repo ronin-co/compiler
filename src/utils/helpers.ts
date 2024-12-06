@@ -334,14 +334,19 @@ export const omit = <T extends Record<string, unknown>, K extends keyof T>(
  *
  * @returns The expanded object.
  */
-export const expand = (obj: NestedObject) => {
+export const expand = (obj: NestedObject): NestedObject => {
   return Object.entries(obj).reduce((res, [key, val]) => {
     key
       .split('.')
       .reduce((acc: NestedObject, part: string, i: number, arr: Array<string>) => {
-        acc[part] = i === arr.length - 1 ? val : acc[part] || {};
+        if (i === arr.length - 1) {
+          acc[part] = val;
+        } else {
+          acc[part] =
+            typeof acc[part] === 'object' && acc[part] !== null ? acc[part] : {};
+        }
         return acc[part] as NestedObject;
-      }, res);
+      }, res as NestedObject);
     return res;
   }, {});
 };
