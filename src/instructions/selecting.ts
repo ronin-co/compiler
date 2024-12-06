@@ -70,6 +70,9 @@ export const handleSelecting = (
         const tableAlias = composeIncludedTableAlias(key);
         const single = queryModel !== subQueryModel.pluralSlug;
 
+        // If multiple records are being joined and the root query only targets a single
+        // record, we need to alias the root table, because it will receive a dedicated
+        // SELECT statement in the `handleIncluding` function.
         if (!single) {
           model.tableAlias = `sub_${model.table}`;
         }

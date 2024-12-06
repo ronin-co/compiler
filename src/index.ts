@@ -137,20 +137,26 @@ class Transaction {
         const parentFieldSlug = (field as ModelField & { parentField?: string })
           .parentField;
 
-        // If the field is nested into a parent field, prefix it with the slug of the parent
-        // field, which causes it to get nested into a parent object in the final record.
+        let usableRowIndex = rowIndex;
+
         if (parentFieldSlug) {
+          // If the field is nested into a parent field and only one row is available,
+          // prefix the current field with the slug of the parent field, which causes it
+          // to get nested into a parent object in the final record.
           if (rows.length === 1) {
             newSlug = `${parentFieldSlug}.${field.slug}`;
-          } else {
-            const fieldPath = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
-            records[0] = setProperty(records[0], fieldPath, newValue);
-
-            continue;
+          }
+          // Alternatively, if the field is nested into a parent field and more than one
+          // row is available, that means multiple rows are being joined from a different
+          // table, so we need to create an array as the value of the parent field, and
+          // will it with the respective joined records.
+          else {
+            newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
+            usableRowIndex = 0;
           }
         }
 
-        records[rowIndex] = setProperty(records[rowIndex], newSlug, newValue);
+        records[usableRowIndex] = setProperty(records[usableRowIndex], newSlug, newValue);
       }
     }
 
