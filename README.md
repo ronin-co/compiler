@@ -67,7 +67,7 @@ executed and their results can be formatted by the compiler as well:
 ```typescript
 // `rows` are provided by the database engine
 
-const results: Array<Result> = transaction.prepareResults(rows);
+const results: Array<Result> = transaction.formatResults(rawResults, false);
 ```
 
 #### Root Model

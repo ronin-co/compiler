@@ -48,8 +48,8 @@ test('inline statement parameters', async () => {
   );
   expect(transaction.statements[0].params).toEqual([]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
     handle: 'elaine',
@@ -110,8 +110,8 @@ test('expand column names', async () => {
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
     id: expect.stringMatching(RECORD_ID_REGEX),

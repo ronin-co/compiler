@@ -30,8 +30,8 @@ test('get multiple records limited to amount', async () => {
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
 
   expect(result.records).toHaveLength(2);
   expect(result.moreBefore).toBeUndefined();
@@ -79,8 +79,8 @@ test('get multiple records limited to amount ordered by link field', async () =>
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
 
   expect(result.records).toHaveLength(2);
   expect(result.moreBefore).toBeUndefined();

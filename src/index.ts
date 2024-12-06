@@ -130,8 +130,8 @@ class Transaction {
     return expand(record) as NativeRecord;
   }
 
-  prepareResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
-  prepareResults(results: Array<Array<ObjectRow>>, raw?: false): Array<Result>;
+  formatResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
+  formatResults(results: Array<Array<ObjectRow>>, raw?: false): Array<Result>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -145,9 +145,9 @@ class Transaction {
    * @returns A list of formatted RONIN results, where each result is either a single
    * RONIN record, an array of RONIN records, or a count result.
    */
-  prepareResults(
+  formatResults(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
-    raw = false,
+    raw = true,
   ): Array<Result> {
     // Filter out results whose statements are not expected to return any data.
     const relevantResults = results.filter((_, index) => {
