@@ -372,6 +372,47 @@ export const getProperty = (obj: NestedObject, path: string) => {
   return path.split('.').reduce((acc, key) => acc?.[key] as NestedObject, obj);
 };
 
+export const toInt = <T extends number | null = number>(
+  value: string,
+  defaultValue?: T,
+): number | T => {
+  const def = defaultValue === undefined ? 0 : defaultValue;
+  if (value === null || value === undefined) return def;
+
+  const result = Number.parseInt(value);
+  return Number.isNaN(result) ? def : result;
+};
+
+export const setProperty = <T extends NestedObject, K>(
+  initial: T,
+  path: string,
+  value: K,
+): T => {
+  if (!initial) return setProperty({} as T, path, value);
+  if (!path || value === undefined) return initial;
+
+  const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
+
+  const _set = (node: NestedObject) => {
+    if (segments.length > 1) {
+      const key = segments.shift() as string;
+      const nextIsNum = toInt(segments[0], null) !== null;
+
+      // If the current property is not an object or array, overwrite it
+      if (typeof node[key] !== 'object' || node[key] === null) {
+        node[key] = nextIsNum ? [] : {};
+      }
+      _set(node[key] as NestedObject);
+    } else {
+      node[segments[0]] = value;
+    }
+  };
+
+  const cloned = structuredClone(initial);
+  _set(cloned);
+  return cloned;
+};
+
 /**
  * Splits a query into its type, model, and instructions.
  *

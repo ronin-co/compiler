@@ -296,9 +296,30 @@ test('get single record including unrelated records with filter', async () => {
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       updatedBy: null,
     },
-    account: {
-      firstName: expect.any(String),
-    },
+    members: [
+      {
+        account: expect.stringMatching(RECORD_ID_REGEX),
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        account: expect.stringMatching(RECORD_ID_REGEX),
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+    ],
   });
 });
 

@@ -8,7 +8,7 @@ import type {
   Result,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { expand, omit, splitQuery } from '@/src/utils/helpers';
+import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
 import {
   ROOT_MODEL,
   addDefaultModelFields,
@@ -118,24 +118,15 @@ class Transaction {
   ): NativeRecord | Array<NativeRecord> {
     const records: Array<NativeRecord> = [];
 
-    for (const row of rows) {
-      const record: Partial<NativeRecord> = {};
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const row = rows[rowIndex];
 
-      for (let index = 0; index < row.length; index++) {
-        const value = row[index];
-        const field = fields[index];
+      for (let valueIndex = 0; valueIndex < row.length; valueIndex++) {
+        const value = row[valueIndex];
+        const field = fields[valueIndex];
 
         let newSlug = field.slug;
         let newValue = value;
-
-        const parentFieldSlug = (field as ModelField & { parentField?: string })
-          .parentField;
-
-        // If the field is nested into a parent field, prefix it with the slug of the parent
-        // field, which causes it to get nested into a parent object in the final record.
-        if (parentFieldSlug) {
-          newSlug = `${parentFieldSlug}.${field.slug}`;
-        }
 
         if (field.type === 'json') {
           newValue = JSON.parse(value as string);
@@ -143,10 +134,29 @@ class Transaction {
           newValue = Boolean(value);
         }
 
-        record[newSlug] = newValue;
-      }
+        const parentFieldSlug = (field as ModelField & { parentField?: string })
+          .parentField;
 
-      records.push(expand(record) as NativeRecord);
+        // If the field is nested into a parent field, prefix it with the slug of the parent
+        // field, which causes it to get nested into a parent object in the final record.
+        if (parentFieldSlug) {
+          if (rows.length === 1) {
+            newSlug = `${parentFieldSlug}.${field.slug}`;
+          } else {
+            if (!Array.isArray(records[0][parentFieldSlug]))
+              records[0][parentFieldSlug] = [];
+
+            if (!records[0][parentFieldSlug][rowIndex]) {
+              records[0][parentFieldSlug][rowIndex] = {};
+            }
+            records[0][parentFieldSlug][rowIndex][field.slug] = newValue;
+
+            continue;
+          }
+        }
+
+        records[rowIndex] = setProperty(records[rowIndex], newSlug, newValue);
+      }
     }
 
     return single ? records[0] : records;
