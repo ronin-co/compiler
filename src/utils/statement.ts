@@ -273,10 +273,10 @@ export const composeConditions = (
 
         let recordTarget: WithValue | Record<typeof QUERY_SYMBOLS.QUERY, Query>;
 
-        // If only a single key is present, and it's "id", then we can simplify the query a
-        // bit in favor of performance, because the stored value of a link field in SQLite
-        // is always the ID of the linked record. That means we don't need to join the
-        // destination table, and we can just perform a string assertion.
+        // If only a single key is present, and it's "id", then we can simplify the query
+        // a bit in favor of performance, because the stored value of a link field in
+        // SQLite is always the ID of the linked record. That means we don't need to join
+        // the destination table, and we can just perform a string assertion.
         if (keys.length === 1 && keys[0] === 'id') {
           // This can be either a string or an object with conditions such as `being`.
           recordTarget = values[0];
