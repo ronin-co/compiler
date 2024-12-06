@@ -1,4 +1,4 @@
-import type { Model } from '@/src/types/model';
+import type { Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { QUERY_SYMBOLS, flatten, getSymbol, splitQuery } from '@/src/utils/helpers';
 import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
@@ -29,7 +29,9 @@ export const handleSelecting = (
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
   },
-): { columns: string; isJoining: boolean } => {
+): { columns: string; isJoining: boolean; loadedFields: Array<ModelField> } => {
+  let loadedFields: Array<ModelField> = [];
+
   let statement = '*';
   let isJoining = false;
 
@@ -70,6 +72,8 @@ export const handleSelecting = (
             : subQueryModel.fields;
 
           for (const field of queryModelFields) {
+            loadedFields.push({ ...field, parentField: key } as unknown as ModelField);
+
             const newValue = parseFieldExpression(
               { ...subQueryModel, tableAlias: tableName },
               'including',
@@ -110,11 +114,24 @@ export const handleSelecting = (
       ? { ...model, tableAlias: model.tableAlias || model.table }
       : model;
 
+    // Reset the list of loaded fields.
+    const selectedFields: Array<ModelField> = [];
+
     statement = instructions.selecting
       .map((slug) => {
-        return getFieldFromModel(usableModel, slug, 'selecting').fieldSelector;
+        const { field, fieldSelector } = getFieldFromModel(
+          usableModel,
+          slug,
+          'selecting',
+        );
+        selectedFields.push(field);
+        return fieldSelector;
       })
       .join(', ');
+
+    loadedFields = [...selectedFields, ...loadedFields];
+  } else {
+    loadedFields = [...model.fields, ...loadedFields];
   }
 
   if (instructions.including && Object.keys(instructions.including).length > 0) {
@@ -126,5 +143,5 @@ export const handleSelecting = (
       .join(', ');
   }
 
-  return { columns: statement, isJoining };
+  return { columns: statement, isJoining, loadedFields };
 };

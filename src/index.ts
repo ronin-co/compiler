@@ -35,6 +35,7 @@ class Transaction {
   models: Array<PrivateModel> = [];
 
   private queries: Array<Query>;
+  private fields: Array<Array<ModelField>> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
@@ -85,6 +86,8 @@ class Transaction {
       // cannot return output themselves).
       dependencyStatements.push(...result.dependencies);
       mainStatements.push(result.main);
+
+      this.fields.push(result.loadedFields);
     }
 
     this.models = modelListWithPresets;
@@ -103,6 +106,18 @@ class Transaction {
     for (let index = 0; index < row.length; index++) {
       const value = row[index];
       const field = fields[index];
+      const parentFieldSlug = (field as ModelField & { parentField?: string })
+        .parentField;
+
+      // If the field is nested into a parent field, we need to create an object for the
+      // parent field if it doesn't exist yet, and then assign the value of the nested
+      // field to that newly created object.
+      if (parentFieldSlug) {
+        const parentValue = record[parentFieldSlug];
+        if (!parentValue || typeof parentValue === 'string') record[parentFieldSlug] = {};
+        (record[parentFieldSlug] as Record<string, unknown>)[field.slug] = value;
+        continue;
+      }
 
       if (field.type === 'json') {
         record[field.slug] = JSON.parse(value as string);
@@ -151,14 +166,9 @@ class Transaction {
 
     return normalizedResults.map((rows, index): Result => {
       const query = this.queries.at(-index) as Query;
+      const fields = this.fields.at(-index) as Array<ModelField>;
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
-
-      const selectedFields = queryInstructions?.selecting
-        ? model.fields.filter((field) => {
-            return queryInstructions.selecting?.includes(field.slug);
-          })
-        : model.fields;
 
       // The query is expected to count records.
       if (queryType === 'count') {
@@ -170,14 +180,14 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: this.formatRow(selectedFields, rows[0]) };
+        return { record: this.formatRow(fields, rows[0]) };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: rows.map((row) => this.formatRow(selectedFields, row)),
+        records: rows.map((row) => this.formatRow(fields, row)),
       };
 
       // If the amount of records was limited to a specific amount, that means pagination

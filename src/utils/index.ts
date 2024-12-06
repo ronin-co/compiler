@@ -6,7 +6,7 @@ import { handleOrderedBy } from '@/src/instructions/ordered-by';
 import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
-import type { Model } from '@/src/types/model';
+import type { Model, ModelField } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import { getModelBySlug, transformMetaQuery } from '@/src/utils/model';
@@ -44,7 +44,11 @@ export const compileQueryInput = (
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
   },
-): { dependencies: Array<Statement>; main: Statement } => {
+): {
+  dependencies: Array<Statement>;
+  main: Statement;
+  loadedFields: Array<ModelField>;
+} => {
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
   // used to update the database in a way that is required for the main read statement
@@ -61,7 +65,8 @@ export const compileQueryInput = (
   );
 
   // If no further query processing should happen, we need to return early.
-  if (query === null) return { dependencies: [], main: dependencyStatements[0] };
+  if (query === null)
+    return { dependencies: [], main: dependencyStatements[0], loadedFields: [] };
 
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
@@ -85,7 +90,7 @@ export const compileQueryInput = (
   }
 
   // A list of columns that should be selected when querying records.
-  const { columns, isJoining } = handleSelecting(
+  const { columns, isJoining, loadedFields } = handleSelecting(
     models,
     model,
     statementParams,
@@ -285,5 +290,6 @@ export const compileQueryInput = (
   return {
     dependencies: dependencyStatements,
     main: mainStatement,
+    loadedFields,
   };
 };

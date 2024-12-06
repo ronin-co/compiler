@@ -1,7 +1,11 @@
 import { expect, test } from 'bun:test';
-import { queryEphemeralDatabase } from '@/fixtures/utils';
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
-import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
+import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('inline statement parameters', async () => {
@@ -107,9 +111,26 @@ test('expand column names', async () => {
   ]);
 
   const rows = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
 
-  console.log(rows);
-  const result = transaction.prepareResults(rows)[0] as MultipleRecordResult;
-
-  console.log(result);
+  expect(result.record).toMatchObject({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: null,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: null,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    },
+  });
 });
