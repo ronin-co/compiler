@@ -65,9 +65,11 @@ Once the RONIN queries have been compiled down to SQL statements, the statements
 executed and their results can be formatted by the compiler as well:
 
 ```typescript
-// `rows` are provided by the database engine
+// Passing `rawResults` (rows being of arrays of values) provided by the database
+const results: Array<Result> = transaction.formatResults(rawResults);
 
-const results: Array<Result> = transaction.formatResults(rawResults, false);
+// Passing `objectResults` (rows being of objects) provided by a driver
+const results: Array<Result> = transaction.formatResults(objectResults, false);
 ```
 
 #### Root Model
