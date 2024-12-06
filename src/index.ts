@@ -149,14 +149,13 @@ class Transaction {
           // Alternatively, if the field is nested into a parent field and more than one
           // row is available, that means multiple rows are being joined from a different
           // table, so we need to create an array as the value of the parent field, and
-          // will it with the respective joined records.
+          // fill it with the respective joined records.
           else {
             newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
             usableRowIndex = 0;
           }
         }
 
-        // setProperty(records, `[${[usableRowIndex]}].${newSlug}`, newValue);
         records[usableRowIndex] = setProperty(records[usableRowIndex], newSlug, newValue);
       }
     }
