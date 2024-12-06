@@ -187,7 +187,7 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: this.formatRow(fields, rows[0]) };
+        return { record: rows[0] ? this.formatRow(fields, rows[0]) : null };
       }
 
       const pageSize = queryInstructions?.limitedTo;

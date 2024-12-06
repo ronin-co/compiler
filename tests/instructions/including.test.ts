@@ -1,13 +1,19 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
+import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
-test('get single record including unrelated record without filter', () => {
+test('get single record including unrelated record without filter', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           including: {
             team: {
               [QUERY_SYMBOLS.QUERY]: {
@@ -27,19 +33,46 @@ test('get single record including unrelated record without filter', () => {
       slug: 'team',
     },
     {
-      slug: 'view',
+      slug: 'product',
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1`,
+      statement: `SELECT "products"."id", "products"."ronin.locked", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "including_team"."id" as "including_team.id", "including_team"."ronin.locked" as "including_team.ronin.locked", "including_team"."ronin.createdAt" as "including_team.ronin.createdAt", "including_team"."ronin.createdBy" as "including_team.ronin.createdBy", "including_team"."ronin.updatedAt" as "including_team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "including_team.ronin.updatedBy" FROM "products" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: null,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    team: {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: null,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    },
+  });
 });
 
 test('get single record including unrelated record with filter', () => {
