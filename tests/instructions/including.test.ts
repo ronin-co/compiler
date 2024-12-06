@@ -99,16 +99,23 @@ test('get single record including unrelated record with filter', () => {
   ]);
 });
 
-test('get single record including unrelated records without filter', () => {
+test('get single record including unrelated record with filter and specific fields', () => {
   const queries: Array<Query> = [
     {
       get: {
         view: {
           including: {
-            teams: {
+            team: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  teams: null,
+                  team: {
+                    with: {
+                      handle: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}label`,
+                      },
+                    },
+                    selecting: ['id'],
+                  },
                 },
               },
             },
@@ -121,9 +128,21 @@ test('get single record including unrelated records without filter', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'view',
+      fields: [
+        {
+          slug: 'label',
+          type: 'string',
+        },
+      ],
     },
   ];
 
@@ -131,7 +150,7 @@ test('get single record including unrelated records without filter', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1`,
+      statement: `SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -189,6 +208,45 @@ test('get single record including unrelated records with filter', () => {
   expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+});
+
+test('get single record including unrelated records without filter', () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        view: {
+          including: {
+            teams: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  teams: null,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+    },
+    {
+      slug: 'view',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1`,
       params: [],
       returning: true,
     },

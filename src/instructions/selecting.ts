@@ -64,22 +64,22 @@ export const handleSelecting = (
       if (symbol?.type === 'query') {
         isJoining = true;
 
-        // If the column names should be expanded, that means we need to alias all
-        // columns of the joined table to avoid conflicts with the root table.
-        if (options?.expandColumns) {
-          const { queryModel, queryInstructions } = splitQuery(symbol.value);
-          const subQueryModel = getModelBySlug(models, queryModel);
-          const tableName = composeIncludedTableAlias(key);
+        const { queryModel, queryInstructions } = splitQuery(symbol.value);
+        const subQueryModel = getModelBySlug(models, queryModel);
+        const tableName = composeIncludedTableAlias(key);
 
-          const queryModelFields = queryInstructions?.selecting
-            ? subQueryModel.fields.filter((field) => {
-                return queryInstructions.selecting?.includes(field.slug);
-              })
-            : subQueryModel.fields;
+        const queryModelFields = queryInstructions?.selecting
+          ? subQueryModel.fields.filter((field) => {
+              return queryInstructions.selecting?.includes(field.slug);
+            })
+          : subQueryModel.fields;
 
-          for (const field of queryModelFields) {
-            loadedFields.push({ ...field, parentField: key } as unknown as ModelField);
+        for (const field of queryModelFields) {
+          loadedFields.push({ ...field, parentField: key } as unknown as ModelField);
 
+          // If the column names should be expanded, that means we need to alias all
+          // columns of the joined table to avoid conflicts with the root table.
+          if (options?.expandColumns) {
             const newValue = parseFieldExpression(
               { ...subQueryModel, tableAlias: tableName },
               'including',
