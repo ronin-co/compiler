@@ -1,7 +1,7 @@
 import type { WithFilters } from '@/src/instructions/with';
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { getSymbol, splitQuery } from '@/src/utils/helpers';
+import { composeIncludedTableAlias, getSymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { getModelBySlug } from '@/src/utils/model';
 import { composeConditions } from '@/src/utils/statement';
@@ -50,7 +50,7 @@ export const handleIncluding = (
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
     let relatedTableSelector = `"${relatedModel.table}"`;
 
-    const tableAlias = `including_${ephemeralFieldSlug}`;
+    const tableAlias = composeIncludedTableAlias(ephemeralFieldSlug);
     const single = queryModel !== relatedModel.pluralSlug;
 
     // If no `with` query instruction is provided, we want to perform a CROSS

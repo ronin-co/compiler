@@ -1,6 +1,12 @@
 import type { Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { QUERY_SYMBOLS, flatten, getSymbol, splitQuery } from '@/src/utils/helpers';
+import {
+  QUERY_SYMBOLS,
+  composeIncludedTableAlias,
+  flatten,
+  getSymbol,
+  splitQuery,
+} from '@/src/utils/helpers';
 import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
 
@@ -63,7 +69,7 @@ export const handleSelecting = (
         if (options?.expandColumns) {
           const { queryModel, queryInstructions } = splitQuery(symbol.value);
           const subQueryModel = getModelBySlug(models, queryModel);
-          const tableName = `including_${key}`;
+          const tableName = composeIncludedTableAlias(key);
 
           const queryModelFields = queryInstructions?.selecting
             ? subQueryModel.fields.filter((field) => {

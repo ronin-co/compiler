@@ -42,6 +42,16 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
   'g',
 );
 
+/**
+ * Composes an alias for a table that should be joined into the root table.
+ *
+ * @param fieldSlug - The field on the root record(s) onto which the joined records
+ * should eventually be mounted.
+ *
+ * @returns An alias for the joined table.
+ */
+export const composeIncludedTableAlias = (fieldSlug: string) => `including_${fieldSlug}`;
+
 type RoninErrorCode =
   | 'MODEL_NOT_FOUND'
   | 'FIELD_NOT_FOUND'
