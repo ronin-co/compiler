@@ -365,11 +365,51 @@ export const expand = (obj: NestedObject): NestedObject => {
  * Picks a property from an object and returns the value of the property.
  *
  * @param obj - The object from which the property should be read.
+ * @param path - The path at which the property should be read.
  *
  * @returns The value of the property.
  */
 export const getProperty = (obj: NestedObject, path: string) => {
   return path.split('.').reduce((acc, key) => acc?.[key] as NestedObject, obj);
+};
+
+/**
+ * Sets a property on an object and returns the object with the property set.
+ *
+ * @param obj - The object on which the property should be set.
+ * @param path - The path at which the property should be set.
+ * @param value - The value of the property.
+ *
+ * @returns The object with the property set.
+ */
+export const setProperty = <T extends NestedObject>(
+  obj: T,
+  path: string,
+  value: unknown,
+): T => {
+  if (!obj) return setProperty({} as T, path, value);
+
+  const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
+
+  const _set = (node: NestedObject) => {
+    if (segments.length > 1) {
+      const key = segments.shift() as string;
+      const nextIsNum = !Number.isNaN(Number.parseInt(segments[0]));
+
+      // If the current property is not an object or array, overwrite it.
+      if (typeof node[key] !== 'object' || node[key] === null) {
+        node[key] = nextIsNum ? [] : {};
+      }
+
+      _set(node[key] as NestedObject);
+    } else {
+      node[segments[0]] = value;
+    }
+  };
+
+  const cloned = structuredClone(obj);
+  _set(cloned);
+  return cloned;
 };
 
 /**

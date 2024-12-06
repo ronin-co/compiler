@@ -6,8 +6,11 @@ export type Row = RawRow | ObjectRow;
 export type NativeRecord = Record<string, unknown> & {
   id: string;
   ronin: {
+    locked: boolean;
     createdAt: Date;
+    createdBy: string | null;
     updatedAt: Date;
+    updatedBy: string | null;
   };
 };
 

@@ -8,7 +8,7 @@ import type {
   Result,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { expand, omit, splitQuery } from '@/src/utils/helpers';
+import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
 import {
   ROOT_MODEL,
   addDefaultModelFields,
@@ -100,33 +100,67 @@ class Transaction {
     return [...dependencyStatements, ...mainStatements];
   };
 
-  private formatRow(fields: Array<ModelField>, row: RawRow): NativeRecord {
-    const record: Partial<NativeRecord> = {};
+  private formatRows(
+    fields: Array<ModelField>,
+    rows: Array<RawRow>,
+    single: true,
+  ): NativeRecord;
+  private formatRows(
+    fields: Array<ModelField>,
+    rows: Array<RawRow>,
+    single: false,
+  ): Array<NativeRecord>;
 
-    for (let index = 0; index < row.length; index++) {
-      const value = row[index];
-      const field = fields[index];
+  private formatRows(
+    fields: Array<ModelField>,
+    rows: Array<RawRow>,
+    single: boolean,
+  ): NativeRecord | Array<NativeRecord> {
+    const records: Array<NativeRecord> = [];
 
-      let newSlug = field.slug;
-      let newValue = value;
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const row = rows[rowIndex];
 
-      const parentFieldSlug = (field as ModelField & { parentField?: string })
-        .parentField;
+      for (let valueIndex = 0; valueIndex < row.length; valueIndex++) {
+        const value = row[valueIndex];
+        const field = fields[valueIndex];
 
-      // If the field is nested into a parent field, prefix it with the slug of the parent
-      // field, which causes it to get nested into a parent object in the final record.
-      if (parentFieldSlug) {
-        newSlug = `${parentFieldSlug}.${field.slug}`;
+        let newSlug = field.slug;
+        let newValue = value;
+
+        if (field.type === 'json') {
+          newValue = JSON.parse(value as string);
+        } else if (field.type === 'boolean') {
+          newValue = Boolean(value);
+        }
+
+        const parentFieldSlug = (field as ModelField & { parentField?: string })
+          .parentField;
+
+        let usableRowIndex = rowIndex;
+
+        if (parentFieldSlug) {
+          // If the field is nested into a parent field and only one row is available,
+          // prefix the current field with the slug of the parent field, which causes it
+          // to get nested into a parent object in the final record.
+          if (rows.length === 1) {
+            newSlug = `${parentFieldSlug}.${field.slug}`;
+          }
+          // Alternatively, if the field is nested into a parent field and more than one
+          // row is available, that means multiple rows are being joined from a different
+          // table, so we need to create an array as the value of the parent field, and
+          // fill it with the respective joined records.
+          else {
+            newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
+            usableRowIndex = 0;
+          }
+        }
+
+        records[usableRowIndex] = setProperty(records[usableRowIndex], newSlug, newValue);
       }
-
-      if (field.type === 'json') {
-        newValue = JSON.parse(value as string);
-      }
-
-      record[newSlug] = newValue;
     }
 
-    return expand(record) as NativeRecord;
+    return single ? records[0] : records;
   }
 
   formatResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
@@ -187,14 +221,14 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: this.formatRow(fields, rows[0]) };
+        return { record: rows[0] ? this.formatRows(fields, rows, single) : null };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: rows.map((row) => this.formatRow(fields, row)),
+        records: this.formatRows(fields, rows, single),
       };
 
       // If the amount of records was limited to a specific amount, that means pagination
