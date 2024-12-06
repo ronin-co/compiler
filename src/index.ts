@@ -156,6 +156,7 @@ class Transaction {
           }
         }
 
+        // setProperty(records, `[${[usableRowIndex]}].${newSlug}`, newValue);
         records[usableRowIndex] = setProperty(records[usableRowIndex], newSlug, newValue);
       }
     }

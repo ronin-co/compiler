@@ -388,7 +388,6 @@ export const setProperty = <T extends NestedObject>(
   value: unknown,
 ): T => {
   if (!obj) return setProperty({} as T, path, value);
-  if (!path || value === undefined) return obj;
 
   const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
 
