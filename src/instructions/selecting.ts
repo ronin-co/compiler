@@ -49,8 +49,8 @@ export const handleSelecting = (
     const flatObject = flatten(instructions.including);
 
     // Clear the object so we can set fresh keys further below. Clearing the object and
-    // setting keys is faster than constructing an entirely new object from the entries
-    // of the old object.
+    // setting keys is faster than constructing an entirely new object from arrays of
+    // values that were previously mapped over.
     instructions.including = {};
 
     // Filter out any fields whose value is a sub query, as those fields are instead
@@ -120,7 +120,7 @@ export const handleSelecting = (
       ? { ...model, tableAlias: model.tableAlias || model.table }
       : model;
 
-    // Reset the list of loaded fields.
+    // The model fields that were selected by the root query.
     const selectedFields: Array<ModelField> = [];
 
     statement = instructions.selecting

@@ -113,9 +113,8 @@ class Transaction {
       const parentFieldSlug = (field as ModelField & { parentField?: string })
         .parentField;
 
-      // If the field is nested into a parent field, we need to create an object for the
-      // parent field if it doesn't exist yet, and then assign the value of the nested
-      // field to that newly created object.
+      // If the field is nested into a parent field, prefix it with the slug of the parent
+      // field, which causes it to get nested into a parent object in the final record.
       if (parentFieldSlug) {
         newSlug = `${parentFieldSlug}.${field.slug}`;
       }
@@ -143,7 +142,7 @@ class Transaction {
    * instead, this option should be set to `false`.
    *
    * @returns A list of formatted RONIN results, where each result is either a single
-   * RONIN record, an array of RONIN records, or a count result.
+   * RONIN record, an array of RONIN records, or a RONIN count result.
    */
   formatResults(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
@@ -154,6 +153,14 @@ class Transaction {
       return this.statements[index].returning;
     });
 
+    // If the provided results are raw (rows being arrays of values, which is the most
+    // ideal format in terrms of performance, since the driver doesn't need to format
+    // the rows in that case), we can already continue processing them further.
+    //
+    // If the provided results were already formatted by the driver (rows being objects),
+    // we need to normalize them into the raw format first, before they can be processed,
+    // since the object format provided by the driver does not match the RONIN record
+    // format expected by developers.
     const normalizedResults: Array<Array<RawRow>> = raw
       ? (relevantResults as Array<Array<RawRow>>)
       : relevantResults.map((rows) => {
