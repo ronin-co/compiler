@@ -53,7 +53,7 @@ test('get single record including unrelated record without filter', async () => 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
-  expect(result.record).toMatchObject({
+  expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
       locked: null,
@@ -131,7 +131,7 @@ test('get single record including unrelated record with filter', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
-  expect(result.record).toMatchObject({
+  expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
       locked: null,
@@ -153,22 +153,22 @@ test('get single record including unrelated record with filter', async () => {
   });
 });
 
-test('get single record including unrelated record with filter and specific fields', () => {
+test('get single record including unrelated record with filter and specific fields', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        member: {
           including: {
-            team: {
+            account: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  team: {
+                  account: {
                     with: {
-                      handle: {
-                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}label`,
+                      id: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}account`,
                       },
                     },
-                    selecting: ['id'],
+                    selecting: ['firstName'],
                   },
                 },
               },
@@ -181,34 +181,54 @@ test('get single record including unrelated record with filter and specific fiel
 
   const models: Array<Model> = [
     {
-      slug: 'team',
+      slug: 'account',
       fields: [
         {
-          slug: 'handle',
+          slug: 'firstName',
           type: 'string',
         },
       ],
     },
     {
-      slug: 'view',
+      slug: 'member',
       fields: [
         {
-          slug: 'label',
+          slug: 'account',
           type: 'string',
         },
       ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" LEFT JOIN "teams" as including_team ON ("including_team"."handle" = "views"."label") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "including_account.firstName" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: null,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: {
+      firstName: expect.any(String),
+    },
+  });
 });
 
 test('get single record including unrelated records with filter', () => {
