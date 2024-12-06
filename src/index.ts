@@ -121,6 +121,8 @@ class Transaction {
 
       if (field.type === 'json') {
         newValue = JSON.parse(value as string);
+      } else if (field.type === 'boolean') {
+        newValue = Boolean(value);
       }
 
       record[newSlug] = newValue;

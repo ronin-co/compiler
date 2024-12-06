@@ -56,7 +56,7 @@ test('get single record including unrelated record without filter', async () => 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: null,
+      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -65,7 +65,7 @@ test('get single record including unrelated record without filter', async () => 
     team: {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: null,
+        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -134,7 +134,7 @@ test('get single record including unrelated record with filter', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: null,
+      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -143,7 +143,7 @@ test('get single record including unrelated record with filter', async () => {
     account: {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: null,
+        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -219,7 +219,7 @@ test('get single record including unrelated record with filter and specific fiel
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: null,
+      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),

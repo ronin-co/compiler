@@ -116,7 +116,7 @@ test('expand column names', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: null,
+      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -125,7 +125,7 @@ test('expand column names', async () => {
     account: {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: null,
+        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
