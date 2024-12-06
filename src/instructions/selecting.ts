@@ -30,17 +30,8 @@ export const handleSelecting = (
     expandColumns?: boolean;
   },
 ): { columns: string; isJoining: boolean } => {
+  let statement = '*';
   let isJoining = false;
-
-  // If specific fields were provided in the `selecting` instruction, select only the
-  // columns of those fields. Otherwise, select all columns using `*`.
-  let statement = instructions.selecting
-    ? instructions.selecting
-        .map((slug) => {
-          return getFieldFromModel(model, slug, 'selecting').fieldSelector;
-        })
-        .join(', ')
-    : '*';
 
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
@@ -49,67 +40,90 @@ export const handleSelecting = (
     // of developers providing objects as values in the `including` instruction.
     const flatObject = flatten(instructions.including);
 
+    // Clear the object so we can set fresh keys further below. Clearing the object and
+    // setting keys is faster than constructing an entirely new object from the entries
+    // of the old object.
+    instructions.including = {};
+
     // Filter out any fields whose value is a sub query, as those fields are instead
     // converted into SQL JOINs in the `handleIncluding` function, which, in the case of
     // sub queries resulting in a single record, is more performance-efficient, and in
     // the case of sub queries resulting in multiple records, it's the only way to
     // include multiple rows of another table.
-    const filteredObject: Array<[string, unknown]> = Object.entries(flatObject)
-      .flatMap(([key, value]) => {
-        const symbol = getSymbol(value);
+    for (const [key, value] of Object.entries(flatObject)) {
+      const symbol = getSymbol(value);
 
-        if (symbol?.type === 'query') {
-          isJoining = true;
+      if (symbol?.type === 'query') {
+        isJoining = true;
 
-          // If the column names should be expanded, that means we need to alias all
-          // columns of the joined table if those column names are duplicated in the
-          // current table.
-          if (!options?.expandColumns) return null;
-
-          const { queryModel: queryModelSlug } = splitQuery(symbol.value);
-          const queryModel = getModelBySlug(models, queryModelSlug);
+        // If the column names should be expanded, that means we need to alias all
+        // columns of the joined table to avoid conflicts with the root table.
+        if (options?.expandColumns) {
+          const { queryModel, queryInstructions } = splitQuery(symbol.value);
+          const subQueryModel = getModelBySlug(models, queryModel);
           const tableName = `including_${key}`;
 
-          const duplicatedFields = queryModel.fields
-            .filter((field) => {
-              return model.fields.some((modelField) => modelField.slug === field.slug);
-            })
-            .filter((item) => item !== null);
+          const queryModelFields = queryInstructions?.selecting
+            ? subQueryModel.fields.filter((field) => {
+                return queryInstructions.selecting?.includes(field.slug);
+              })
+            : subQueryModel.fields;
 
-          return duplicatedFields.map((field) => {
-            const value = parseFieldExpression(
-              { ...queryModel, tableAlias: tableName },
+          for (const field of queryModelFields) {
+            const newValue = parseFieldExpression(
+              { ...subQueryModel, tableAlias: tableName },
               'including',
               `${QUERY_SYMBOLS.FIELD}${field.slug}`,
             );
 
-            return {
-              key: `${tableName}.${field.slug}`,
-              value,
-            };
-          });
+            instructions.including![`${tableName}.${field.slug}`] = newValue;
+          }
         }
 
-        if (symbol?.type === 'expression') {
-          value = `(${parseFieldExpression(model, 'including', symbol.value)})`;
-        } else {
-          value = prepareStatementValue(statementParams, value);
-        }
+        continue;
+      }
 
-        return { key, value };
-      })
-      .filter((entry) => entry !== null)
-      .map((entry) => [entry.key, entry.value]);
+      let newValue = value;
 
-    if (filteredObject.length > 0) {
-      statement += ', ';
+      if (symbol?.type === 'expression') {
+        newValue = `(${parseFieldExpression(model, 'including', symbol.value)})`;
+      } else {
+        newValue = prepareStatementValue(statementParams, value);
+      }
 
-      // Format the fields into a comma-separated list of SQL columns.
-      statement += filteredObject
-
-        .map(([key, value]) => `${value} as "${key}"`)
-        .join(', ');
+      instructions.including![key] = newValue;
     }
+  }
+
+  const expandColumns = isJoining && options?.expandColumns;
+
+  // If the column names should be expanded, that means we need to alias all columns of
+  // the root table to avoid conflicts with columns of joined tables.
+  if (expandColumns) {
+    instructions.selecting = model.fields.map((field) => field.slug);
+  }
+
+  // If specific fields were provided in the `selecting` instruction, select only the
+  // columns of those fields. Otherwise, select all columns using `*`.
+  if (instructions.selecting) {
+    const usableModel = expandColumns
+      ? { ...model, tableAlias: model.tableAlias || model.table }
+      : model;
+
+    statement = instructions.selecting
+      .map((slug) => {
+        return getFieldFromModel(usableModel, slug, 'selecting').fieldSelector;
+      })
+      .join(', ');
+  }
+
+  if (instructions.including && Object.keys(instructions.including).length > 0) {
+    statement += ', ';
+
+    // Format the fields into a comma-separated list of SQL columns.
+    statement += Object.entries(instructions.including)
+      .map(([key, value]) => `${value} as "${key}"`)
+      .join(', ');
   }
 
   return { columns: statement, isJoining };
