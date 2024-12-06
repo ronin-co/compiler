@@ -66,7 +66,13 @@ export const handleSelecting = (
 
         const { queryModel, queryInstructions } = splitQuery(symbol.value);
         const subQueryModel = getModelBySlug(models, queryModel);
-        const tableName = composeIncludedTableAlias(key);
+
+        const tableAlias = composeIncludedTableAlias(key);
+        const single = queryModel !== subQueryModel.pluralSlug;
+
+        if (!single) {
+          model.tableAlias = `sub_${model.table}`;
+        }
 
         const queryModelFields = queryInstructions?.selecting
           ? subQueryModel.fields.filter((field) => {
@@ -81,12 +87,12 @@ export const handleSelecting = (
           // columns of the joined table to avoid conflicts with the root table.
           if (options?.expandColumns) {
             const newValue = parseFieldExpression(
-              { ...subQueryModel, tableAlias: tableName },
+              { ...subQueryModel, tableAlias },
               'including',
               `${QUERY_SYMBOLS.FIELD}${field.slug}`,
             );
 
-            instructions.including![`${tableName}.${field.slug}`] = newValue;
+            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
           }
         }
 

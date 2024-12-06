@@ -231,19 +231,19 @@ test('get single record including unrelated record with filter and specific fiel
   });
 });
 
-test('get single record including unrelated records with filter', () => {
+test('get single record including unrelated records with filter', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        account: {
           including: {
-            teams: {
+            members: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  teams: {
+                  members: {
                     with: {
-                      handle: {
-                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}label`,
+                      account: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
                       },
                     },
                   },
@@ -258,34 +258,48 @@ test('get single record including unrelated records with filter', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
-      fields: [
-        {
-          slug: 'handle',
-          type: 'string',
-        },
-      ],
+      slug: 'account',
     },
     {
-      slug: 'view',
+      slug: 'member',
       fields: [
         {
-          slug: 'label',
+          slug: 'account',
           type: 'string',
         },
       ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views LEFT JOIN "teams" as including_teams ON ("including_teams"."handle" = "sub_views"."label")`,
+      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "including_members"."id" as "including_members.id", "including_members"."ronin.locked" as "including_members.ronin.locked", "including_members"."ronin.createdAt" as "including_members.ronin.createdAt", "including_members"."ronin.createdBy" as "including_members.ronin.createdBy", "including_members"."ronin.updatedAt" as "including_members.ronin.updatedAt", "including_members"."ronin.updatedBy" as "including_members.ronin.updatedBy", "including_members"."account" as "including_members.account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: {
+      firstName: expect.any(String),
+    },
+  });
 });
 
 test('get single record including unrelated records without filter', () => {

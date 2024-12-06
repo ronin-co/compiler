@@ -102,12 +102,11 @@ export const handleIncluding = (
     // Show the table name for every column in the final SQL statement. By default, it
     // doesn't show, but since we are joining multiple tables together, we need to show
     // the table name for every column, in order to avoid conflicts.
-    model.tableAlias = model.table;
+    model.tableAlias = model.tableAlias || model.table;
 
     if (joinType === 'LEFT') {
       if (!single) {
         tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
-        model.tableAlias = `sub_${model.table}`;
       }
 
       const subStatement = composeConditions(

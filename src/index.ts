@@ -100,35 +100,56 @@ class Transaction {
     return [...dependencyStatements, ...mainStatements];
   };
 
-  private formatRow(fields: Array<ModelField>, row: RawRow): NativeRecord {
-    const record: Partial<NativeRecord> = {};
+  private formatRows(
+    fields: Array<ModelField>,
+    rows: Array<RawRow>,
+    single: true,
+  ): NativeRecord;
+  private formatRows(
+    fields: Array<ModelField>,
+    rows: Array<RawRow>,
+    single: false,
+  ): Array<NativeRecord>;
 
-    for (let index = 0; index < row.length; index++) {
-      const value = row[index];
-      const field = fields[index];
+  private formatRows(
+    fields: Array<ModelField>,
+    rows: Array<RawRow>,
+    single: boolean,
+  ): NativeRecord | Array<NativeRecord> {
+    const records: Array<NativeRecord> = [];
 
-      let newSlug = field.slug;
-      let newValue = value;
+    for (const row of rows) {
+      const record: Partial<NativeRecord> = {};
 
-      const parentFieldSlug = (field as ModelField & { parentField?: string })
-        .parentField;
+      for (let index = 0; index < row.length; index++) {
+        const value = row[index];
+        const field = fields[index];
 
-      // If the field is nested into a parent field, prefix it with the slug of the parent
-      // field, which causes it to get nested into a parent object in the final record.
-      if (parentFieldSlug) {
-        newSlug = `${parentFieldSlug}.${field.slug}`;
+        let newSlug = field.slug;
+        let newValue = value;
+
+        const parentFieldSlug = (field as ModelField & { parentField?: string })
+          .parentField;
+
+        // If the field is nested into a parent field, prefix it with the slug of the parent
+        // field, which causes it to get nested into a parent object in the final record.
+        if (parentFieldSlug) {
+          newSlug = `${parentFieldSlug}.${field.slug}`;
+        }
+
+        if (field.type === 'json') {
+          newValue = JSON.parse(value as string);
+        } else if (field.type === 'boolean') {
+          newValue = Boolean(value);
+        }
+
+        record[newSlug] = newValue;
       }
 
-      if (field.type === 'json') {
-        newValue = JSON.parse(value as string);
-      } else if (field.type === 'boolean') {
-        newValue = Boolean(value);
-      }
-
-      record[newSlug] = newValue;
+      records.push(expand(record) as NativeRecord);
     }
 
-    return expand(record) as NativeRecord;
+    return single ? records[0] : records;
   }
 
   formatResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
@@ -189,14 +210,14 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: rows[0] ? this.formatRow(fields, rows[0]) : null };
+        return { record: rows[0] ? this.formatRows(fields, rows, single) : null };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: rows.map((row) => this.formatRow(fields, row)),
+        records: this.formatRows(fields, rows, single),
       };
 
       // If the amount of records was limited to a specific amount, that means pagination
