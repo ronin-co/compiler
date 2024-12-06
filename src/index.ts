@@ -106,6 +106,13 @@ class Transaction {
     for (let index = 0; index < row.length; index++) {
       const value = row[index];
       const field = fields[index];
+
+      let newValue = value;
+
+      if (field.type === 'json') {
+        newValue = JSON.parse(value as string);
+      }
+
       const parentFieldSlug = (field as ModelField & { parentField?: string })
         .parentField;
 
@@ -115,16 +122,12 @@ class Transaction {
       if (parentFieldSlug) {
         const parentValue = record[parentFieldSlug];
         if (!parentValue || typeof parentValue === 'string') record[parentFieldSlug] = {};
-        (record[parentFieldSlug] as Record<string, unknown>)[field.slug] = value;
-        continue;
+        (record[parentFieldSlug] as Record<string, unknown>)[field.slug] = newValue;
       }
-
-      if (field.type === 'json') {
-        record[field.slug] = JSON.parse(value as string);
-        continue;
+      // Otherwise we can just assign the value directly to the record.
+      else {
+        record[field.slug] = newValue;
       }
-
-      record[field.slug] = value;
     }
 
     return expand(record) as NativeRecord;
