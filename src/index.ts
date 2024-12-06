@@ -143,13 +143,8 @@ class Transaction {
           if (rows.length === 1) {
             newSlug = `${parentFieldSlug}.${field.slug}`;
           } else {
-            if (!Array.isArray(records[0][parentFieldSlug]))
-              records[0][parentFieldSlug] = [];
-
-            if (!records[0][parentFieldSlug][rowIndex]) {
-              records[0][parentFieldSlug][rowIndex] = {};
-            }
-            records[0][parentFieldSlug][rowIndex][field.slug] = newValue;
+            const fieldPath = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
+            records[0] = setProperty(records[0], fieldPath, newValue);
 
             continue;
           }
