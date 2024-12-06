@@ -154,7 +154,7 @@ class Transaction {
     });
 
     // If the provided results are raw (rows being arrays of values, which is the most
-    // ideal format in terrms of performance, since the driver doesn't need to format
+    // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
     //
     // If the provided results were already formatted by the driver (rows being objects),
