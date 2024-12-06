@@ -28,8 +28,8 @@ test('get single record', async () => {
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
   expect(result.record?.id).toMatch(RECORD_ID_REGEX);
 });
@@ -69,8 +69,8 @@ test('remove single record', async () => {
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as SingleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
   expect(result.record?.id).toMatch(RECORD_ID_REGEX);
 });
@@ -100,8 +100,8 @@ test('count multiple records', async () => {
     },
   ]);
 
-  const rows = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.prepareResults(rows)[0] as AmountResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as AmountResult;
 
   expect(result.amount).toBeNumber();
 });

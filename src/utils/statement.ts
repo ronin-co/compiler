@@ -234,64 +234,78 @@ export const composeConditions = (
   // potential object value in a special way, instead of just iterating over the nested
   // fields and trying to assert the column for each one.
   if (options.fieldSlug) {
-    const fieldDetails = getFieldFromModel(model, options.fieldSlug, instructionName);
+    const childField = model.fields.some(({ slug }) => {
+      return slug.includes('.') && slug.split('.')[0] === options.fieldSlug;
+    });
 
-    const { field: modelField } = fieldDetails;
+    // If a nested field exists within the model that is nested under the field slug that
+    // was provided, we know that the current field is a parent field, which means it
+    // exists on records as a key, but not as a real field inside the model. That means
+    // we can just continue parsing its contents.
+    if (!childField) {
+      const fieldDetails = getFieldFromModel(model, options.fieldSlug, instructionName);
 
-    // If the `to` instruction is used, JSON should be written as-is.
-    const consumeJSON = modelField.type === 'json' && instructionName === 'to';
+      const { field: modelField } = fieldDetails || {};
 
-    if (!(isObject(value) || Array.isArray(value)) || getSymbol(value) || consumeJSON) {
-      return composeFieldValues(
-        models,
-        model,
-        statementParams,
-        instructionName,
-        value as WithValue,
-        { ...options, fieldSlug: options.fieldSlug as string },
-      );
-    }
+      // If the `to` instruction is used, JSON should be written as-is.
+      const consumeJSON = modelField?.type === 'json' && instructionName === 'to';
 
-    if (modelField.type === 'link' && isNested) {
-      // `value` is asserted to be an object using `isObject` above, so we can safely
-      // cast it here. The type is not being inferred automatically.
-      const keys = Object.keys(value as object);
-      const values = Object.values(value as object);
-
-      let recordTarget: WithValue | Record<typeof QUERY_SYMBOLS.QUERY, Query>;
-
-      // If only a single key is present, and it's "id", then we can simplify the query a
-      // bit in favor of performance, because the stored value of a link field in SQLite
-      // is always the ID of the linked record. That means we don't need to join the
-      // destination table, and we can just perform a string assertion.
-      if (keys.length === 1 && keys[0] === 'id') {
-        // This can be either a string or an object with conditions such as `being`.
-        recordTarget = values[0];
-      } else {
-        const relatedModel = getModelBySlug(models, modelField.target);
-
-        const subQuery: Query = {
-          get: {
-            [relatedModel.slug]: {
-              with: value as WithInstruction,
-              selecting: ['id'],
-            },
-          },
-        };
-
-        recordTarget = {
-          [QUERY_SYMBOLS.QUERY]: subQuery,
-        };
+      if (
+        (modelField && !(isObject(value) || Array.isArray(value))) ||
+        getSymbol(value) ||
+        consumeJSON
+      ) {
+        return composeFieldValues(
+          models,
+          model,
+          statementParams,
+          instructionName,
+          value as WithValue,
+          { ...options, fieldSlug: options.fieldSlug as string },
+        );
       }
 
-      return composeConditions(
-        models,
-        model,
-        statementParams,
-        instructionName,
-        recordTarget,
-        options,
-      );
+      if (modelField?.type === 'link' && isNested) {
+        // `value` is asserted to be an object using `isObject` above, so we can safely
+        // cast it here. The type is not being inferred automatically.
+        const keys = Object.keys(value as object);
+        const values = Object.values(value as object);
+
+        let recordTarget: WithValue | Record<typeof QUERY_SYMBOLS.QUERY, Query>;
+
+        // If only a single key is present, and it's "id", then we can simplify the query
+        // a bit in favor of performance, because the stored value of a link field in
+        // SQLite is always the ID of the linked record. That means we don't need to join
+        // the destination table, and we can just perform a string assertion.
+        if (keys.length === 1 && keys[0] === 'id') {
+          // This can be either a string or an object with conditions such as `being`.
+          recordTarget = values[0];
+        } else {
+          const relatedModel = getModelBySlug(models, modelField.target);
+
+          const subQuery: Query = {
+            get: {
+              [relatedModel.slug]: {
+                with: value as WithInstruction,
+                selecting: ['id'],
+              },
+            },
+          };
+
+          recordTarget = {
+            [QUERY_SYMBOLS.QUERY]: subQuery,
+          };
+        }
+
+        return composeConditions(
+          models,
+          model,
+          statementParams,
+          instructionName,
+          recordTarget,
+          options,
+        );
+      }
     }
   }
 

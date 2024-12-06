@@ -1,6 +1,6 @@
 # RONIN Compiler
 
-This package compiles [RONIN queries](https://ronin.co/docs/queries) to SQL statements.
+This package compiles [RONIN queries](https://ronin.co/docs/queries) to [SQLite](https://www.sqlite.org) statements.
 
 ## Setup
 
@@ -65,9 +65,11 @@ Once the RONIN queries have been compiled down to SQL statements, the statements
 executed and their results can be formatted by the compiler as well:
 
 ```typescript
-// `rows` are provided by the database engine
+// Passing `rawResults` (rows being of arrays of values) provided by the database (ideal)
+const results: Array<Result> = transaction.formatResults(rawResults);
 
-const results: Array<Result> = transaction.prepareResults(rows);
+// Passing `objectResults` (rows being of objects) provided by a driver
+const results: Array<Result> = transaction.formatResults(objectResults, false);
 ```
 
 #### Root Model
@@ -133,12 +135,13 @@ new Transaction(queries, {
   //
   // If the driver being used instead returns an object for every row, the driver must
   // ensure the uniqueness of every key in that object, which means prefixing duplicated
-  // column names with the name of the respective table, if multiple tables are joined.
+  // column names with the name of the respective table, if multiple tables are joined
+  // (example for an object key: "table_name.column_name").
   //
   // Drivers that return objects for rows offer this behavior as an option that is
   // usually called "expand columns". If the driver being used does not offer such an
   // option, you can instead activate the option in the compiler, which results in longer
-  // SQL statements because any duplicated column name is aliased.
+  // SQL statements because all column names are aliased.
   expandColumns: true
 });
 ```

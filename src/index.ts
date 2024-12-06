@@ -1,13 +1,18 @@
-import type { Model as PrivateModel, PublicModel } from '@/src/types/model';
+import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
-import type { MultipleRecordResult, NativeRecord, Result, Row } from '@/src/types/result';
+import type {
+  MultipleRecordResult,
+  NativeRecord,
+  ObjectRow,
+  RawRow,
+  Result,
+} from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { expand, omit, splitQuery } from '@/src/utils/helpers';
 import {
   ROOT_MODEL,
   addDefaultModelFields,
   addDefaultModelPresets,
-  getFieldFromModel,
   getModelBySlug,
   getSystemModels,
 } from '@/src/utils/model';
@@ -30,6 +35,7 @@ class Transaction {
   models: Array<PrivateModel> = [];
 
   private queries: Array<Query>;
+  private fields: Array<Array<ModelField>> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
@@ -80,6 +86,8 @@ class Transaction {
       // cannot return output themselves).
       dependencyStatements.push(...result.dependencies);
       mainStatements.push(result.main);
+
+      this.fields.push(result.loadedFields);
     }
 
     this.models = modelListWithPresets;
@@ -92,37 +100,86 @@ class Transaction {
     return [...dependencyStatements, ...mainStatements];
   };
 
-  private formatRecord(model: PrivateModel, record: NativeRecord): NativeRecord {
-    const formattedRecord = { ...record };
+  private formatRow(fields: Array<ModelField>, row: RawRow): NativeRecord {
+    const record: Partial<NativeRecord> = {};
 
-    for (const key in record) {
-      const { field } = getFieldFromModel(model, key, 'to');
+    for (let index = 0; index < row.length; index++) {
+      const value = row[index];
+      const field = fields[index];
 
-      if (field.type === 'json') {
-        formattedRecord[key] = JSON.parse(record[key] as string);
-        continue;
+      let newSlug = field.slug;
+      let newValue = value;
+
+      const parentFieldSlug = (field as ModelField & { parentField?: string })
+        .parentField;
+
+      // If the field is nested into a parent field, prefix it with the slug of the parent
+      // field, which causes it to get nested into a parent object in the final record.
+      if (parentFieldSlug) {
+        newSlug = `${parentFieldSlug}.${field.slug}`;
       }
 
-      formattedRecord[key] = record[key];
+      if (field.type === 'json') {
+        newValue = JSON.parse(value as string);
+      }
+
+      record[newSlug] = newValue;
     }
 
-    return expand(formattedRecord) as NativeRecord;
+    return expand(record) as NativeRecord;
   }
 
-  prepareResults(results: Array<Array<Row>>): Array<Result> {
+  formatResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
+  formatResults(results: Array<Array<ObjectRow>>, raw?: false): Array<Result>;
+
+  /**
+   * Format the results returned from the database into RONIN records.
+   *
+   * @param results - A list of results from the database, where each result is an array
+   * of rows.
+   * @param raw - By default, rows are expected to be arrays of values, which is how SQL
+   * databases return rows by default. If the driver being used returns rows as objects
+   * instead, this option should be set to `false`.
+   *
+   * @returns A list of formatted RONIN results, where each result is either a single
+   * RONIN record, an array of RONIN records, or a RONIN count result.
+   */
+  formatResults(
+    results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
+    raw = true,
+  ): Array<Result> {
     // Filter out results whose statements are not expected to return any data.
     const relevantResults = results.filter((_, index) => {
       return this.statements[index].returning;
     });
 
-    return relevantResults.map((result, index): Result => {
+    // If the provided results are raw (rows being arrays of values, which is the most
+    // ideal format in terms of performance, since the driver doesn't need to format
+    // the rows in that case), we can already continue processing them further.
+    //
+    // If the provided results were already formatted by the driver (rows being objects),
+    // we need to normalize them into the raw format first, before they can be processed,
+    // since the object format provided by the driver does not match the RONIN record
+    // format expected by developers.
+    const normalizedResults: Array<Array<RawRow>> = raw
+      ? (relevantResults as Array<Array<RawRow>>)
+      : relevantResults.map((rows) => {
+          return rows.map((row) => {
+            if (Array.isArray(row)) return row;
+            if (row['COUNT(*)']) return [row['COUNT(*)']];
+            return Object.values(row);
+          });
+        });
+
+    return normalizedResults.map((rows, index): Result => {
       const query = this.queries.at(-index) as Query;
+      const fields = this.fields.at(-index) as Array<ModelField>;
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
 
       // The query is expected to count records.
       if (queryType === 'count') {
-        return { amount: result[0]['COUNT(*)'] as number };
+        return { amount: rows[0][0] as number };
       }
 
       // Whether the query will interact with a single record, or multiple at the same time.
@@ -130,16 +187,14 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: this.formatRecord(model, result[0] as NativeRecord) };
+        return { record: this.formatRow(fields, rows[0]) };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: result.map((resultItem) => {
-          return this.formatRecord(model, resultItem as NativeRecord);
-        }),
+        records: rows.map((row) => this.formatRow(fields, row)),
       };
 
       // If the amount of records was limited to a specific amount, that means pagination
