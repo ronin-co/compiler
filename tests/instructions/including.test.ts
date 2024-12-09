@@ -595,13 +595,13 @@ test('get single record including unrelated ordered records', async () => {
   });
 });
 
-test('get single record including ephemeral field', () => {
+test('get single record including ephemeral field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        space: {
+        team: {
           including: {
-            name: 'Example Space',
+            companyName: 'Example Company',
           },
         },
       },
@@ -610,7 +610,7 @@ test('get single record including ephemeral field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'team',
     },
   ];
 
@@ -618,11 +618,26 @@ test('get single record including ephemeral field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ?1 as "name" FROM "spaces" LIMIT 1`,
-      params: ['Example Space'],
+      statement: `SELECT *, ?1 as "companyName" FROM "teams" LIMIT 1`,
+      params: ['Example Company'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    companyName: 'Example Company',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
 });
 
 test('get single record including ephemeral field containing expression', () => {
