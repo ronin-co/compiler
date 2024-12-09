@@ -640,13 +640,14 @@ test('get single record including ephemeral field', async () => {
   });
 });
 
-test('get single record including ephemeral field containing expression', () => {
+test('get single record including ephemeral field containing expression', async () => {
   const queries: Array<Query> = [
     {
       get: {
         account: {
+          with: { handle: 'elaine' },
           including: {
-            name: {
+            fullName: {
               [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD}firstName || ' ' || ${QUERY_SYMBOLS.FIELD}lastName`,
             },
           },
@@ -667,6 +668,10 @@ test('get single record including ephemeral field containing expression', () => 
           slug: 'lastName',
           type: 'string',
         },
+        {
+          slug: 'handle',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -675,11 +680,29 @@ test('get single record including ephemeral field containing expression', () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ("firstName" || ' ' || "lastName") as "name" FROM "accounts" LIMIT 1`,
-      params: [],
+      statement: `SELECT *, ("firstName" || ' ' || "lastName") as "fullName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1`,
+      params: ['elaine'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    fullName: 'Elaine Jones',
+    handle: 'elaine',
+    firstName: 'Elaine',
+    lastName: 'Jones',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
 });
 
 test('get single record including deeply nested ephemeral field', () => {
