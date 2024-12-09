@@ -705,14 +705,14 @@ test('get single record including ephemeral field containing expression', async 
   });
 });
 
-test('get single record including deeply nested ephemeral field', () => {
+test('get single record including deeply nested ephemeral field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        space: {
+        beach: {
           including: {
-            invoice: {
-              recipient: 'receipts@site.co',
+            sand: {
+              quality: 'extraordinary',
             },
           },
         },
@@ -722,7 +722,7 @@ test('get single record including deeply nested ephemeral field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'beach',
     },
   ];
 
@@ -730,9 +730,26 @@ test('get single record including deeply nested ephemeral field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ?1 as "invoice.recipient" FROM "spaces" LIMIT 1`,
-      params: ['receipts@site.co'],
+      statement: `SELECT *, ?1 as "sand.quality" FROM "beaches" LIMIT 1`,
+      params: ['extraordinary'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    sand: {
+      quality: 'extraordinary',
+    },
+  });
 });
