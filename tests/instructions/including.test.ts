@@ -323,16 +323,16 @@ test('get single record including unrelated records with filter', async () => {
   });
 });
 
-test('get single record including unrelated records without filter', () => {
+test('get single record including unrelated records without filter', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           including: {
-            teams: {
+            beaches: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  teams: null,
+                  beaches: null,
                 },
               },
             },
@@ -344,22 +344,63 @@ test('get single record including unrelated records without filter', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
     {
-      slug: 'view',
+      slug: 'product',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1`,
+      statement: `SELECT "sub_products"."id", "sub_products"."ronin.locked", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches"."id" as "including_beaches.id", "including_beaches"."ronin.locked" as "including_beaches.ronin.locked", "including_beaches"."ronin.createdAt" as "including_beaches.ronin.createdAt", "including_beaches"."ronin.createdBy" as "including_beaches.ronin.createdBy", "including_beaches"."ronin.updatedAt" as "including_beaches.ronin.updatedAt", "including_beaches"."ronin.updatedBy" as "including_beaches.ronin.updatedBy", "including_beaches"."name" as "including_beaches.name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as including_beaches`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    beaches: new Array(3).fill({
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      name: expect.any(String),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    }),
+  });
 });
 
 test('get single record including unrelated ordered record', () => {
@@ -441,7 +482,7 @@ test('get single record including unrelated ordered records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams LIMIT 1`,
+      statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams`,
       params: [],
       returning: true,
     },
