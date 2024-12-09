@@ -487,18 +487,18 @@ test('get single record including unrelated ordered record', async () => {
   });
 });
 
-test('get single record including unrelated ordered records', () => {
+test('get single record including unrelated ordered records', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           including: {
-            teams: {
+            beaches: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  teams: {
+                  beaches: {
                     orderedBy: {
-                      descending: ['ronin.updatedAt'],
+                      descending: ['name'],
                     },
                   },
                 },
@@ -512,22 +512,87 @@ test('get single record including unrelated ordered records', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
     {
-      slug: 'view',
+      slug: 'product',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "views" LIMIT 1) as sub_views CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams`,
+      statement: `SELECT "sub_products"."id", "sub_products"."ronin.locked", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches"."id" as "including_beaches.id", "including_beaches"."ronin.locked" as "including_beaches.ronin.locked", "including_beaches"."ronin.createdAt" as "including_beaches.ronin.createdAt", "including_beaches"."ronin.createdBy" as "including_beaches.ronin.createdBy", "including_beaches"."ronin.updatedAt" as "including_beaches.ronin.updatedAt", "including_beaches"."ronin.updatedBy" as "including_beaches.ronin.updatedBy", "including_beaches"."name" as "including_beaches.name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC) as including_beaches`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    beaches: [
+      {
+        id: 'bea_39h8fhe98hefah8j',
+        name: 'Bondi',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: 'bea_39h8fhe98hefah9j',
+        name: 'Manly',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: 'bea_39h8fhe98hefah0j',
+        name: 'Coogee',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+    ],
+  });
 });
 
 test('get single record including ephemeral field', () => {
