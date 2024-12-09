@@ -1,23 +1,26 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
+import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
-test('get single record for preset', () => {
+test('get single record for preset', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
-          for: ['specificSpace'],
+        member: {
+          for: ['specificAccount'],
         },
       },
     },
   ];
 
   const models: Array<Model> = [
-    {
-      slug: 'space',
-    },
     {
       slug: 'account',
     },
@@ -29,36 +32,17 @@ test('get single record for preset', () => {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'space',
-          type: 'link',
-          target: 'space',
-        },
-        {
-          slug: 'activeAt',
-          type: 'date',
-        },
-      ],
-    },
-    {
-      slug: 'view',
-      fields: [
-        {
-          slug: 'space',
-          type: 'link',
-          target: 'space',
-        },
       ],
       presets: [
         {
           instructions: {
             with: {
-              space: {
-                being: 'spa_m9h8oha94helaji',
+              account: {
+                being: 'acc_39h8fhe98hefah9j',
               },
             },
           },
-          slug: 'specificSpace',
+          slug: 'specificAccount',
         },
       ],
     },
@@ -68,11 +52,26 @@ test('get single record for preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "views" WHERE ("space" = ?1) LIMIT 1',
-      params: ['spa_m9h8oha94helaji'],
+      statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
+      params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: 'acc_39h8fhe98hefah9j',
+  });
 });
 
 test('get single record for preset containing field with condition', () => {
