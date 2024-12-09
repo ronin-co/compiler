@@ -105,10 +105,6 @@ export const handleIncluding = (
     model.tableAlias = model.tableAlias || model.table;
 
     if (joinType === 'LEFT') {
-      if (!single) {
-        tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
-      }
-
       const subStatement = composeConditions(
         models,
         { ...relatedModel, tableAlias },
@@ -122,6 +118,11 @@ export const handleIncluding = (
 
       statement += ` ON (${subStatement})`;
     }
+
+    // If multiple records are being joined, we need to prepare a sub query that can be
+    // used as a replacement for the root table, since we want to guarantee that the root
+    // statement only returns one row, and multiple rows are being joined to it.
+    if (!single) tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
   }
 
   return { statement, tableSubQuery };

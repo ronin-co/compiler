@@ -323,16 +323,16 @@ test('get single record including unrelated records with filter', async () => {
   });
 });
 
-test('get single record including unrelated records without filter', () => {
+test('get single record including unrelated records without filter', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           including: {
-            teams: {
+            beaches: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  teams: null,
+                  beaches: null,
                 },
               },
             },
@@ -344,36 +344,77 @@ test('get single record including unrelated records without filter', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
     {
-      slug: 'view',
+      slug: 'product',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN "teams" as including_teams LIMIT 1`,
+      statement: `SELECT "sub_products"."id", "sub_products"."ronin.locked", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches"."id" as "including_beaches.id", "including_beaches"."ronin.locked" as "including_beaches.ronin.locked", "including_beaches"."ronin.createdAt" as "including_beaches.ronin.createdAt", "including_beaches"."ronin.createdBy" as "including_beaches.ronin.createdBy", "including_beaches"."ronin.updatedAt" as "including_beaches.ronin.updatedAt", "including_beaches"."ronin.updatedBy" as "including_beaches.ronin.updatedBy", "including_beaches"."name" as "including_beaches.name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as including_beaches`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    beaches: new Array(3).fill({
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      name: expect.any(String),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    }),
+  });
 });
 
-test('get single record including unrelated ordered record', () => {
+test('get single record including unrelated ordered record', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           including: {
-            team: {
+            beach: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  team: {
+                  beach: {
                     orderedBy: {
-                      descending: ['ronin.updatedAt'],
+                      descending: ['name'],
                     },
                   },
                 },
@@ -387,36 +428,77 @@ test('get single record including unrelated ordered record', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
     {
-      slug: 'view',
+      slug: 'product',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC LIMIT 1) as including_team LIMIT 1`,
+      statement: `SELECT "products"."id", "products"."ronin.locked", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "products"."name", "including_beach"."id" as "including_beach.id", "including_beach"."ronin.locked" as "including_beach.ronin.locked", "including_beach"."ronin.createdAt" as "including_beach.ronin.createdAt", "including_beach"."ronin.createdBy" as "including_beach.ronin.createdBy", "including_beach"."ronin.updatedAt" as "including_beach.ronin.updatedAt", "including_beach"."ronin.updatedBy" as "including_beach.ronin.updatedBy", "including_beach"."name" as "including_beach.name" FROM "products" CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC LIMIT 1) as including_beach LIMIT 1`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    beach: {
+      id: 'bea_39h8fhe98hefah9j',
+      name: 'Manly',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    },
+  });
 });
 
-test('get single record including unrelated ordered records', () => {
+test('get single record including unrelated ordered records', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           including: {
-            teams: {
+            beaches: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  teams: {
+                  beaches: {
                     orderedBy: {
-                      descending: ['ronin.updatedAt'],
+                      descending: ['name'],
                     },
                   },
                 },
@@ -430,31 +512,96 @@ test('get single record including unrelated ordered records', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'team',
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
     {
-      slug: 'view',
+      slug: 'product',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "views" CROSS JOIN (SELECT * FROM "teams" ORDER BY "ronin.updatedAt" DESC) as including_teams LIMIT 1`,
+      statement: `SELECT "sub_products"."id", "sub_products"."ronin.locked", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches"."id" as "including_beaches.id", "including_beaches"."ronin.locked" as "including_beaches.ronin.locked", "including_beaches"."ronin.createdAt" as "including_beaches.ronin.createdAt", "including_beaches"."ronin.createdBy" as "including_beaches.ronin.createdBy", "including_beaches"."ronin.updatedAt" as "including_beaches.ronin.updatedAt", "including_beaches"."ronin.updatedBy" as "including_beaches.ronin.updatedBy", "including_beaches"."name" as "including_beaches.name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC) as including_beaches`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    beaches: [
+      {
+        id: 'bea_39h8fhe98hefah8j',
+        name: 'Bondi',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: 'bea_39h8fhe98hefah9j',
+        name: 'Manly',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: 'bea_39h8fhe98hefah0j',
+        name: 'Coogee',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+    ],
+  });
 });
 
-test('get single record including ephemeral field', () => {
+test('get single record including ephemeral field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        space: {
+        team: {
           including: {
-            name: 'Example Space',
+            companyName: 'Example Company',
           },
         },
       },
@@ -463,7 +610,7 @@ test('get single record including ephemeral field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'team',
     },
   ];
 
@@ -471,20 +618,36 @@ test('get single record including ephemeral field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ?1 as "name" FROM "spaces" LIMIT 1`,
-      params: ['Example Space'],
+      statement: `SELECT *, ?1 as "companyName" FROM "teams" LIMIT 1`,
+      params: ['Example Company'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    companyName: 'Example Company',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
 });
 
-test('get single record including ephemeral field containing expression', () => {
+test('get single record including ephemeral field containing expression', async () => {
   const queries: Array<Query> = [
     {
       get: {
         account: {
+          with: { handle: 'elaine' },
           including: {
-            name: {
+            fullName: {
               [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD}firstName || ' ' || ${QUERY_SYMBOLS.FIELD}lastName`,
             },
           },
@@ -505,6 +668,10 @@ test('get single record including ephemeral field containing expression', () => 
           slug: 'lastName',
           type: 'string',
         },
+        {
+          slug: 'handle',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -513,21 +680,39 @@ test('get single record including ephemeral field containing expression', () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ("firstName" || ' ' || "lastName") as "name" FROM "accounts" LIMIT 1`,
-      params: [],
+      statement: `SELECT *, ("firstName" || ' ' || "lastName") as "fullName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1`,
+      params: ['elaine'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    fullName: 'Elaine Jones',
+    handle: 'elaine',
+    firstName: 'Elaine',
+    lastName: 'Jones',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
 });
 
-test('get single record including deeply nested ephemeral field', () => {
+test('get single record including deeply nested ephemeral field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        space: {
+        beach: {
           including: {
-            invoice: {
-              recipient: 'receipts@site.co',
+            sand: {
+              quality: 'extraordinary',
             },
           },
         },
@@ -537,7 +722,7 @@ test('get single record including deeply nested ephemeral field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'beach',
     },
   ];
 
@@ -545,9 +730,26 @@ test('get single record including deeply nested ephemeral field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT *, ?1 as "invoice.recipient" FROM "spaces" LIMIT 1`,
-      params: ['receipts@site.co'],
+      statement: `SELECT *, ?1 as "sand.quality" FROM "beaches" LIMIT 1`,
+      params: ['extraordinary'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    sand: {
+      quality: 'extraordinary',
+    },
+  });
 });

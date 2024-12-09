@@ -2,6 +2,8 @@ import type { Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
   QUERY_SYMBOLS,
+  RAW_FIELD_TYPES,
+  type RawFieldType,
   composeIncludedTableAlias,
   flatten,
   getSymbol,
@@ -111,6 +113,13 @@ export const handleSelecting = (
       }
 
       instructions.including![key] = newValue;
+
+      loadedFields.push({
+        slug: key,
+        type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
+          ? (typeof value as RawFieldType)
+          : 'string',
+      });
     }
   }
 

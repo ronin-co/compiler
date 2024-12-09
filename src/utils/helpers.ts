@@ -42,6 +42,10 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
   'g',
 );
 
+// JavaScript types that can directly be used as field types in RONIN.
+export const RAW_FIELD_TYPES = ['string', 'number', 'boolean'] as const;
+export type RawFieldType = (typeof RAW_FIELD_TYPES)[number];
+
 /**
  * Composes an alias for a table that should be joined into the root table.
  *
