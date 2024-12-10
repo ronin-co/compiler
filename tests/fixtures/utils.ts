@@ -1,5 +1,5 @@
 import fixtureData from '@/fixtures/data.json';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type Model, type Query, ROOT_MODEL, Transaction } from '@/src/index';
 import { Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
@@ -31,6 +31,50 @@ const engine = new Engine({
  * @returns A promise that resolves when the database has been pre-filled.
  */
 const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
+  const rootModelQuery: Query = { create: { model: ROOT_MODEL } };
+  const rootModelTransaction = new Transaction([rootModelQuery]);
+
+  const modelStatements = models.flatMap((model) => {
+    const query: Query = { create: { model } };
+    const transaction = new Transaction([query], { models });
+
+    const statements = [...transaction.statements];
+
+    for (const implicitModel of transaction.models) {
+      const data = fixtureData[implicitModel.slug as keyof typeof fixtureData] || [];
+
+      const formattedData = data.map((row) => {
+        const newRow: Record<string, unknown> = {};
+
+        for (const field of implicitModel.fields || []) {
+          const match = (row as Record<string, unknown>)[field.slug];
+          if (typeof match === 'undefined') continue;
+          newRow[field.slug] = match;
+        }
+
+        return newRow;
+      });
+
+      const dataStatements = formattedData.map((row) => {
+        const query: Query = { add: { [implicitModel.slug]: { to: row } } };
+        const { statements } = new Transaction([query], { models });
+
+        return statements[0];
+      });
+
+      statements.push(...dataStatements);
+    }
+
+    return statements;
+  });
+
+  const statements = [...rootModelTransaction.statements, ...modelStatements];
+
+  console.log('STATEMENTS', statements);
+
+  await engine.queryDatabase(databaseName, statements);
+
+  /*
   for (const model of models) {
     const query: Query = { create: { model } };
     const modelTransaction = new Transaction([query], { models });
@@ -64,7 +108,7 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
       ...modelTransaction.statements.filter((item) => !item.returning),
       ...dataStatements,
     ]);
-  }
+  }*/
 };
 
 /**

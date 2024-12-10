@@ -423,12 +423,12 @@ test('get single record including parent record (many-to-one)', async () => {
   });
 });
 
-test('get single record including child records (one-to-many, defined manually)', () => {
+test('get single record including child records (one-to-many, defined manually)', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        post: {
-          for: ['comments'],
+        beach: {
+          for: ['visitors'],
         },
       },
     },
@@ -436,30 +436,59 @@ test('get single record including child records (one-to-many, defined manually)'
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
+    },
+    {
+      slug: 'beach',
       fields: [
         {
-          slug: 'comments',
+          slug: 'visitors',
           type: 'link',
-          target: 'comment',
+          target: 'account',
           kind: 'many',
         },
       ],
     },
-    {
-      slug: 'comment',
-    },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_link_post_comments" as including_comments ON ("including_comments"."source" = "sub_posts"."id")`,
+      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_visitors"."id" as "including_visitors.id", "including_visitors"."ronin.locked" as "including_visitors.ronin.locked", "including_visitors"."ronin.createdAt" as "including_visitors.ronin.createdAt", "including_visitors"."ronin.createdBy" as "including_visitors.ronin.createdBy", "including_visitors"."ronin.updatedAt" as "including_visitors.ronin.updatedAt", "including_visitors"."ronin.updatedBy" as "including_visitors.ronin.updatedBy", "including_visitors"."source" as "including_visitors.source", "including_visitors"."target" as "including_visitors.target" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id")`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  console.log(rawResults);
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    account: {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    },
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
 });
 
 test('get single record including child records (one-to-many, defined automatically)', () => {
