@@ -36,9 +36,10 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
 
   const modelStatements = models.flatMap((model) => {
     const query: Query = { create: { model } };
-    const transaction = new Transaction([query], { models });
-
-    const statements = [...transaction.statements];
+    const transaction = new Transaction([query], {
+      models: models.filter((item) => item.slug !== model.slug),
+    });
+    const statements = [...transaction.statements.filter((item) => !item.returning)];
 
     for (const implicitModel of transaction.models) {
       const data = fixtureData[implicitModel.slug as keyof typeof fixtureData] || [];
