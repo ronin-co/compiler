@@ -597,7 +597,7 @@ const getFieldStatement = (
   if (field.unique === true) statement += ' UNIQUE';
   if (field.required === true) statement += ' NOT NULL';
   if (typeof field.defaultValue !== 'undefined')
-    statement += ` DEFAULT ${field.defaultValue}`;
+    statement += ` DEFAULT ${typeof field.defaultValue === 'string' ? `'${field.defaultValue}'` : field.defaultValue}`;
   if (field.collation) statement += ` COLLATE ${field.collation}`;
   if (field.increment === true) statement += ' AUTOINCREMENT';
 
