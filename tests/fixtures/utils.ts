@@ -31,65 +31,21 @@ const engine = new Engine({
  * @returns A promise that resolves when the database has been pre-filled.
  */
 const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
-  const rootModelQuery: Query = { create: { model: ROOT_MODEL } };
-  const rootModelTransaction = new Transaction([rootModelQuery]);
+  const rootModelTransaction = new Transaction([{ create: { model: ROOT_MODEL } }]);
 
-  const modelStatements = models.flatMap((model) => {
-    const query: Query = { create: { model } };
-    const transaction = new Transaction([query], {
-      models: models.filter((item) => item.slug !== model.slug),
-    });
-    const statements = [...transaction.statements.filter((item) => !item.returning)];
+  const modelTransaction = new Transaction(
+    models.map((model) => ({ create: { model } })),
+  );
 
-    for (const implicitModel of transaction.models) {
-      const data = fixtureData[implicitModel.slug as keyof typeof fixtureData] || [];
+  const statements = [...rootModelTransaction.statements, ...modelTransaction.statements];
 
-      const formattedData = data.map((row) => {
-        const newRow: Record<string, unknown> = {};
-
-        for (const field of implicitModel.fields || []) {
-          const match = (row as Record<string, unknown>)[field.slug];
-          if (typeof match === 'undefined') continue;
-          newRow[field.slug] = match;
-        }
-
-        return newRow;
-      });
-
-      const dataStatements = formattedData.map((row) => {
-        const query: Query = { add: { [implicitModel.slug]: { to: row } } };
-        const { statements } = new Transaction([query], { models });
-
-        return statements[0];
-      });
-
-      statements.push(...dataStatements);
-    }
-
-    return statements;
-  });
-
-  const statements = [...rootModelTransaction.statements, ...modelStatements];
-
-  console.log('STATEMENTS', statements);
-
-  await engine.queryDatabase(databaseName, statements);
-
-  /*
-  for (const model of models) {
-    const query: Query = { create: { model } };
-    const modelTransaction = new Transaction([query], { models });
-
-    const updatedModel = modelTransaction.models.find((item) => {
-      return item.slug === model.slug;
-    }) as Model;
-
-    const data = fixtureData[updatedModel.slug as keyof typeof fixtureData] || [];
+  for (const implicitModel of modelTransaction.models) {
+    const data = fixtureData[implicitModel.slug as keyof typeof fixtureData] || [];
 
     const formattedData = data.map((row) => {
       const newRow: Record<string, unknown> = {};
 
-      for (const field of updatedModel.fields || []) {
+      for (const field of implicitModel.fields || []) {
         const match = (row as Record<string, unknown>)[field.slug];
         if (typeof match === 'undefined') continue;
         newRow[field.slug] = match;
@@ -99,17 +55,16 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
     });
 
     const dataStatements = formattedData.map((row) => {
-      const query: Query = { add: { [updatedModel.slug]: { to: row } } };
+      const query: Query = { add: { [implicitModel.slug]: { to: row } } };
       const { statements } = new Transaction([query], { models });
 
       return statements[0];
     });
 
-    await engine.queryDatabase(databaseName, [
-      ...modelTransaction.statements.filter((item) => !item.returning),
-      ...dataStatements,
-    ]);
-  }*/
+    statements.push(...dataStatements);
+  }
+
+  await engine.queryDatabase(databaseName, statements);
 };
 
 /**
