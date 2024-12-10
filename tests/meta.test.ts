@@ -1705,8 +1705,7 @@ test('create the root model', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
+      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
       params: [],
     },
   ]);
