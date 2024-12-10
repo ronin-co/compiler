@@ -1,5 +1,6 @@
 import fixtureData from '@/fixtures/data.json';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type Model, type Query, ROOT_MODEL, Transaction } from '@/src/index';
+import { convertToSnakeCase } from '@/src/utils/helpers';
 import { Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
@@ -31,40 +32,48 @@ const engine = new Engine({
  * @returns A promise that resolves when the database has been pre-filled.
  */
 const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
-  for (const model of models) {
-    const query: Query = { create: { model } };
-    const modelTransaction = new Transaction([query], { models });
+  const rootModelTransaction = new Transaction([{ create: { model: ROOT_MODEL } }]);
 
-    const updatedModel = modelTransaction.models.find((item) => {
-      return item.slug === model.slug;
-    }) as Model;
+  const modelTransaction = new Transaction(
+    models.map((model) => ({ create: { model } })),
+  );
 
-    const data = fixtureData[updatedModel.slug as keyof typeof fixtureData] || [];
+  const createdModels = modelTransaction.models;
 
-    const formattedData = data.map((row) => {
-      const newRow: Record<string, unknown> = {};
+  const dataQueries: Array<Query> = createdModels.flatMap(
+    (createdModel): Array<Query> => {
+      const fixtureSlug = convertToSnakeCase(
+        createdModel.slug.replace('roninLink', ''),
+      ) as keyof typeof fixtureData;
+      const data = fixtureData[fixtureSlug] || [];
 
-      for (const field of updatedModel.fields || []) {
-        const match = (row as Record<string, unknown>)[field.slug];
-        if (typeof match === 'undefined') continue;
-        newRow[field.slug] = match;
-      }
+      const formattedData = data.map((row) => {
+        const newRow: Record<string, unknown> = {};
 
-      return newRow;
-    });
+        for (const field of createdModel.fields || []) {
+          const match = (row as Record<string, unknown>)[field.slug];
+          if (typeof match === 'undefined') continue;
+          newRow[field.slug] = match;
+        }
 
-    const dataStatements = formattedData.map((row) => {
-      const query: Query = { add: { [updatedModel.slug]: { to: row } } };
-      const { statements } = new Transaction([query], { models });
+        return newRow;
+      });
 
-      return statements[0];
-    });
+      return formattedData.map((row): Query => {
+        return { add: { [createdModel.slug]: { to: row } } };
+      });
+    },
+  );
 
-    await engine.queryDatabase(databaseName, [
-      ...modelTransaction.statements.filter((item) => !item.returning),
-      ...dataStatements,
-    ]);
-  }
+  const dataTransaction = new Transaction(dataQueries, { models: createdModels });
+
+  const statements = [
+    ...rootModelTransaction.statements,
+    ...modelTransaction.statements,
+    ...dataTransaction.statements,
+  ];
+
+  await engine.queryDatabase(databaseName, statements);
 };
 
 /**

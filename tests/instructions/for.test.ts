@@ -1,23 +1,26 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
+import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
-test('get single record for preset', () => {
+test('get single record for preset', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
-          for: ['specificSpace'],
+        member: {
+          for: ['specificAccount'],
         },
       },
     },
   ];
 
   const models: Array<Model> = [
-    {
-      slug: 'space',
-    },
     {
       slug: 'account',
     },
@@ -29,36 +32,17 @@ test('get single record for preset', () => {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'space',
-          type: 'link',
-          target: 'space',
-        },
-        {
-          slug: 'activeAt',
-          type: 'date',
-        },
-      ],
-    },
-    {
-      slug: 'view',
-      fields: [
-        {
-          slug: 'space',
-          type: 'link',
-          target: 'space',
-        },
       ],
       presets: [
         {
           instructions: {
             with: {
-              space: {
-                being: 'spa_m9h8oha94helaji',
+              account: {
+                being: 'acc_39h8fhe98hefah9j',
               },
             },
           },
-          slug: 'specificSpace',
+          slug: 'specificAccount',
         },
       ],
     },
@@ -68,11 +52,26 @@ test('get single record for preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "views" WHERE ("space" = ?1) LIMIT 1',
-      params: ['spa_m9h8oha94helaji'],
+      statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
+      params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: 'acc_39h8fhe98hefah9j',
+  });
 });
 
 test('get single record for preset containing field with condition', () => {
@@ -358,7 +357,7 @@ test('get single record for preset on existing array instruction', () => {
   ]);
 });
 
-test('get single record including parent record (many-to-one)', () => {
+test('get single record including parent record (many-to-one)', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -386,23 +385,50 @@ test('get single record including parent record (many-to-one)', () => {
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "including_account.id", "including_account"."ronin.locked" as "including_account.ronin.locked", "including_account"."ronin.createdAt" as "including_account.ronin.createdAt", "including_account"."ronin.createdBy" as "including_account.ronin.createdBy", "including_account"."ronin.updatedAt" as "including_account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "including_account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    account: {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    },
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
 });
 
-test('get single record including child records (one-to-many, defined manually)', () => {
+test('get single record including child records (one-to-many, defined manually)', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        post: {
-          for: ['comments'],
+        beach: {
+          for: ['visitors'],
         },
       },
     },
@@ -410,37 +436,81 @@ test('get single record including child records (one-to-many, defined manually)'
 
   const models: Array<Model> = [
     {
-      slug: 'post',
+      slug: 'account',
+    },
+    {
+      slug: 'beach',
       fields: [
         {
-          slug: 'comments',
+          slug: 'visitors',
           type: 'link',
-          target: 'comment',
+          target: 'account',
           kind: 'many',
         },
       ],
     },
-    {
-      slug: 'comment',
-    },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "posts" LIMIT 1) as sub_posts LEFT JOIN "ronin_link_post_comments" as including_comments ON ("including_comments"."source" = "sub_posts"."id")`,
+      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_visitors"."id" as "including_visitors.id", "including_visitors"."ronin.locked" as "including_visitors.ronin.locked", "including_visitors"."ronin.createdAt" as "including_visitors.ronin.createdAt", "including_visitors"."ronin.createdBy" as "including_visitors.ronin.createdBy", "including_visitors"."ronin.updatedAt" as "including_visitors.ronin.updatedAt", "including_visitors"."ronin.updatedBy" as "including_visitors.ronin.updatedBy", "including_visitors"."source" as "including_visitors.source", "including_visitors"."target" as "including_visitors.target" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id")`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    visitors: [
+      {
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        source: 'bea_39h8fhe98hefah8j',
+        target: 'acc_39h8fhe98hefah8j',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        source: 'bea_39h8fhe98hefah8j',
+        target: 'acc_39h8fhe98hefah9j',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+    ],
+  });
 });
 
-test('get single record including child records (one-to-many, defined automatically)', () => {
+test('get single record including child records (one-to-many, defined automatically)', async () => {
   const queries: Array<Query> = [
     {
       get: {
         account: {
+          with: { handle: 'elaine' },
           for: ['members'],
         },
       },
@@ -450,6 +520,12 @@ test('get single record including child records (one-to-many, defined automatica
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'member',
@@ -463,15 +539,57 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const transaction = new Transaction(queries, { models });
+  const transaction = new Transaction(queries, {
+    models,
+    expandColumns: true,
+  });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
-      params: [],
+      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "sub_accounts"."handle", "including_members"."id" as "including_members.id", "including_members"."ronin.locked" as "including_members.ronin.locked", "including_members"."ronin.createdAt" as "including_members.ronin.createdAt", "including_members"."ronin.createdBy" as "including_members.ronin.createdBy", "including_members"."ronin.updatedAt" as "including_members.ronin.updatedAt", "including_members"."ronin.updatedBy" as "including_members.ronin.updatedBy", "including_members"."account" as "including_members.account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id") WHERE ("sub_accounts"."handle" = ?1)`,
+      params: ['elaine'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: 'acc_39h8fhe98hefah8j',
+    handle: 'elaine',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    members: [
+      {
+        id: 'mem_39h8fhe98hefah8j',
+        account: 'acc_39h8fhe98hefah8j',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: 'mem_39h8fhe98hefah0j',
+        account: 'acc_39h8fhe98hefah8j',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+    ],
+  });
 });
 
 test('try get single record with non-existing preset', () => {

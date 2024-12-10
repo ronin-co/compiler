@@ -128,7 +128,10 @@ export const handleSelecting = (
   // If the column names should be expanded, that means we need to alias all columns of
   // the root table to avoid conflicts with columns of joined tables.
   if (expandColumns) {
-    instructions.selecting = model.fields.map((field) => field.slug);
+    instructions.selecting = model.fields
+      // Exclude link fields with cardinality "many", since those don't exist as columns.
+      .filter((field) => !(field.type === 'link' && field.kind === 'many'))
+      .map((field) => field.slug);
   }
 
   // If specific fields were provided in the `selecting` instruction, select only the
