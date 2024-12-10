@@ -37,32 +37,37 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
     models.map((model) => ({ create: { model } })),
   );
 
-  const statements = [...rootModelTransaction.statements, ...modelTransaction.statements];
+  const createdModels = modelTransaction.models;
 
-  for (const implicitModel of modelTransaction.models) {
-    const data = fixtureData[implicitModel.slug as keyof typeof fixtureData] || [];
+  const dataQueries: Array<Query> = createdModels.flatMap(
+    (createdModel): Array<Query> => {
+      const data = fixtureData[createdModel.slug as keyof typeof fixtureData] || [];
 
-    const formattedData = data.map((row) => {
-      const newRow: Record<string, unknown> = {};
+      const formattedData = data.map((row) => {
+        const newRow: Record<string, unknown> = {};
 
-      for (const field of implicitModel.fields || []) {
-        const match = (row as Record<string, unknown>)[field.slug];
-        if (typeof match === 'undefined') continue;
-        newRow[field.slug] = match;
-      }
+        for (const field of createdModel.fields || []) {
+          const match = (row as Record<string, unknown>)[field.slug];
+          if (typeof match === 'undefined') continue;
+          newRow[field.slug] = match;
+        }
 
-      return newRow;
-    });
+        return newRow;
+      });
 
-    const dataStatements = formattedData.map((row) => {
-      const query: Query = { add: { [implicitModel.slug]: { to: row } } };
-      const { statements } = new Transaction([query], { models });
+      return formattedData.map((row): Query => {
+        return { add: { [createdModel.slug]: { to: row } } };
+      });
+    },
+  );
 
-      return statements[0];
-    });
+  const dataTransaction = new Transaction(dataQueries, { models: createdModels });
 
-    statements.push(...dataStatements);
-  }
+  const statements = [
+    ...rootModelTransaction.statements,
+    ...modelTransaction.statements,
+    ...dataTransaction.statements,
+  ];
 
   await engine.queryDatabase(databaseName, statements);
 };
