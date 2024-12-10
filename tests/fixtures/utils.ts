@@ -1,5 +1,6 @@
 import fixtureData from '@/fixtures/data.json';
 import { type Model, type Query, ROOT_MODEL, Transaction } from '@/src/index';
+import { convertToSnakeCase } from '@/src/utils/helpers';
 import { Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
@@ -41,7 +42,10 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
 
   const dataQueries: Array<Query> = createdModels.flatMap(
     (createdModel): Array<Query> => {
-      const data = fixtureData[createdModel.slug as keyof typeof fixtureData] || [];
+      const fixtureSlug = convertToSnakeCase(
+        createdModel.slug.replace('roninLink', ''),
+      ) as keyof typeof fixtureData;
+      const data = fixtureData[fixtureSlug] || [];
 
       const formattedData = data.map((row) => {
         const newRow: Record<string, unknown> = {};

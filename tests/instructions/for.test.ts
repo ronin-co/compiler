@@ -467,20 +467,8 @@ test('get single record including child records (one-to-many, defined manually)'
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
-  console.log(rawResults);
-
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
-    account: {
-      id: expect.stringMatching(RECORD_ID_REGEX),
-      ronin: {
-        locked: false,
-        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        createdBy: null,
-        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        updatedBy: null,
-      },
-    },
     ronin: {
       locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -488,6 +476,32 @@ test('get single record including child records (one-to-many, defined manually)'
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       updatedBy: null,
     },
+    visitors: [
+      {
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        source: 'bea_39h8fhe98hefah8j',
+        target: 'acc_39h8fhe98hefah8j',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        source: 'bea_39h8fhe98hefah8j',
+        target: 'acc_39h8fhe98hefah9j',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+    ],
   });
 });
 
