@@ -305,16 +305,16 @@ test('get multiple records before cursor ordered by number field', async () => {
   expect(result.moreAfter).toBe(`${lastRecordPosition},${lastRecordTime.getTime()}`);
 });
 
-test('get multiple records before cursor ordered by empty string field', () => {
+test('get multiple records before cursor ordered by empty string field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        accounts: {
-          before: `${CURSOR_NULL_PLACEHOLDER},1667575193779`,
+        beaches: {
+          before: `${CURSOR_NULL_PLACEHOLDER},1733654878079`,
           orderedBy: {
-            descending: ['handle'],
+            descending: ['sandColor'],
           },
-          limitedTo: 100,
+          limitedTo: 2,
         },
       },
     },
@@ -322,10 +322,14 @@ test('get multiple records before cursor ordered by empty string field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'account',
+      slug: 'beach',
       fields: [
         {
-          slug: 'handle',
+          slug: 'sandColor',
+          type: 'string',
+        },
+        {
+          slug: 'name',
           type: 'string',
         },
       ],
@@ -336,11 +340,49 @@ test('get multiple records before cursor ordered by empty string field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE (("handle" IS NOT NULL) OR ("handle" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "handle" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "beaches" WHERE (("sandColor" IS NOT NULL) OR ("sandColor" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "sandColor" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'bea_39h8fhe98hefah9j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Manly',
+      sandColor: null,
+    },
+    {
+      id: 'bea_39h8fhe98hefah0j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Coogee',
+      sandColor: null,
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(
+    `${CURSOR_NULL_PLACEHOLDER},${firstRecordTime.getTime()}`,
+  );
+  expect(result.moreAfter).toBe(`${CURSOR_NULL_PLACEHOLDER},${lastRecordTime.getTime()}`);
 });
 
 test('get multiple records before cursor ordered by empty boolean field', () => {
