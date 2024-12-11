@@ -392,6 +392,87 @@ test('get multiple records before cursor ordered by empty boolean field', async 
         beaches: {
           before: `${CURSOR_NULL_PLACEHOLDER},1733654878079`,
           orderedBy: {
+            descending: ['swimmingAllowed'],
+          },
+          limitedTo: 2,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+        {
+          slug: 'swimmingAllowed',
+          type: 'boolean',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "beaches" WHERE (("swimmingAllowed" IS NOT NULL) OR ("swimmingAllowed" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "swimmingAllowed" DESC, "ronin.createdAt" DESC LIMIT 3`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordSwimming = false;
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+
+  const lastRecordSwimming = false;
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'bea_39h8fhe98hefah9j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Manly',
+      swimmingAllowed: firstRecordSwimming,
+    },
+    {
+      id: 'bea_39h8fhe98hefah0j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Coogee',
+      swimmingAllowed: lastRecordSwimming,
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(`${firstRecordSwimming},${firstRecordTime.getTime()}`);
+  expect(result.moreAfter).toBe(`${lastRecordSwimming},${lastRecordTime.getTime()}`);
+});
+
+test('get multiple records before cursor ordered by empty number field', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          before: `${CURSOR_NULL_PLACEHOLDER},1733654878079`,
+          orderedBy: {
             descending: ['rating'],
           },
           limitedTo: 2,
@@ -463,44 +544,6 @@ test('get multiple records before cursor ordered by empty boolean field', async 
     `${CURSOR_NULL_PLACEHOLDER},${firstRecordTime.getTime()}`,
   );
   expect(result.moreAfter).toBe(`${CURSOR_NULL_PLACEHOLDER},${lastRecordTime.getTime()}`);
-});
-
-test('get multiple records before cursor ordered by empty number field', () => {
-  const queries: Array<Query> = [
-    {
-      get: {
-        accounts: {
-          before: `${CURSOR_NULL_PLACEHOLDER},1667575193779`,
-          orderedBy: {
-            descending: ['position'],
-          },
-          limitedTo: 100,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'account',
-      fields: [
-        {
-          slug: 'position',
-          type: 'number',
-        },
-      ],
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `SELECT * FROM "accounts" WHERE (("position" IS NOT NULL) OR ("position" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "position" DESC, "ronin.createdAt" DESC LIMIT 101`,
-      params: [],
-      returning: true,
-    },
-  ]);
 });
 
 test('get multiple records before cursor while filtering', () => {
