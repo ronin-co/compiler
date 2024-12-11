@@ -546,16 +546,18 @@ test('get multiple records before cursor ordered by empty number field', async (
   expect(result.moreAfter).toBe(`${CURSOR_NULL_PLACEHOLDER},${lastRecordTime.getTime()}`);
 });
 
-test('get multiple records before cursor while filtering', () => {
+test('get multiple records before cursor while filtering', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        accounts: {
+        products: {
+          before: '1733654878079',
           with: {
-            email: null,
+            name: {
+              notBeing: null,
+            },
           },
-          before: '1667575193779',
-          limitedTo: 100,
+          limitedTo: 2,
         },
       },
     },
@@ -563,10 +565,10 @@ test('get multiple records before cursor while filtering', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'account',
+      slug: 'product',
       fields: [
         {
-          slug: 'email',
+          slug: 'name',
           type: 'string',
         },
       ],
@@ -577,11 +579,45 @@ test('get multiple records before cursor while filtering', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE (("email" IS NULL) AND (("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "products" WHERE (("name" IS NOT NULL) AND (("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'pro_39h8fhe98hefah9j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Banana',
+    },
+    {
+      id: 'pro_39h8fhe98hefah0j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Cherry',
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(firstRecordTime.getTime().toString());
+  expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
 });
 
 test('try to paginate without providing page size', () => {
