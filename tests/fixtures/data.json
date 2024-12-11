@@ -59,32 +59,48 @@
       "locations": {
         "europe": "berlin"
       },
-      "billing.currency": "EUR"
+      "billing": {
+        "currency": "EUR"
+      }
     },
     {
       "id": "tea_39h8fhe98hefah9j",
       "locations": {
         "europe": "london"
       },
-      "billing.currency": "GBP"
+      "billing": {
+        "currency": "GBP"
+      }
     }
   ],
   "beach": [
     {
       "id": "bea_39h8fhe98hefah8j",
-      "name": "Bondi"
+      "name": "Bondi",
+      "ronin": {
+        "createdAt": "2024-12-11T10:47:58.079Z"
+      }
     },
     {
       "id": "bea_39h8fhe98hefah9j",
-      "name": "Manly"
+      "name": "Manly",
+      "ronin": {
+        "createdAt": "2024-12-10T10:47:58.079Z"
+      }
     },
     {
       "id": "bea_39h8fhe98hefah0j",
-      "name": "Coogee"
+      "name": "Coogee",
+      "ronin": {
+        "createdAt": "2024-12-09T10:47:58.079Z"
+      }
     },
     {
       "id": "bea_39h8fhe98hefah1j",
-      "name": "Cronulla"
+      "name": "Cronulla",
+      "ronin": {
+        "createdAt": "2024-12-08T10:47:58.079Z"
+      }
     }
   ],
   "category": [

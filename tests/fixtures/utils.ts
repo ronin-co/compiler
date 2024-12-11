@@ -1,6 +1,6 @@
 import fixtureData from '@/fixtures/data.json';
 import { type Model, type Query, ROOT_MODEL, Transaction } from '@/src/index';
-import { convertToSnakeCase } from '@/src/utils/helpers';
+import { convertToSnakeCase, getProperty, setProperty } from '@/src/utils/helpers';
 import { Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
@@ -48,12 +48,12 @@ const prefillDatabase = async (databaseName: string, models: Array<Model>) => {
       const data = fixtureData[fixtureSlug] || [];
 
       const formattedData = data.map((row) => {
-        const newRow: Record<string, unknown> = {};
+        let newRow: Record<string, unknown> = {};
 
         for (const field of createdModel.fields || []) {
-          const match = (row as Record<string, unknown>)[field.slug];
+          const match = getProperty(row, field.slug);
           if (typeof match === 'undefined') continue;
-          newRow[field.slug] = match;
+          newRow = setProperty(newRow, field.slug, match);
         }
 
         return newRow;
