@@ -74,16 +74,16 @@ test('get multiple records before cursor', async () => {
   expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
 });
 
-test('get multiple records before cursor ordered by string field', () => {
+test('get multiple records before cursor ordered by string field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        accounts: {
-          before: 'elaine,1667575193779',
+        beaches: {
+          before: 'Manly,1733827678079',
           orderedBy: {
-            ascending: ['handle'],
+            ascending: ['name'],
           },
-          limitedTo: 100,
+          limitedTo: 2,
         },
       },
     },
@@ -91,10 +91,10 @@ test('get multiple records before cursor ordered by string field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'account',
+      slug: 'beach',
       fields: [
         {
-          slug: 'handle',
+          slug: 'name',
           type: 'string',
         },
       ],
@@ -105,11 +105,48 @@ test('get multiple records before cursor ordered by string field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE ((IFNULL("handle", -1e999) < ?1 COLLATE NOCASE) OR ("handle" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "handle" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 101`,
-      params: ['elaine'],
+      statement: `SELECT * FROM "beaches" WHERE ((IFNULL("name", -1e999) < ?1 COLLATE NOCASE) OR ("name" = ?1 AND ("ronin.createdAt" > '2024-12-10T10:47:58.079Z'))) ORDER BY "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 3`,
+      params: ['Manly'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordName = 'Coogee';
+  const firstRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  const lastRecordName = 'Cronulla';
+  const lastRecordTime = new Date('2024-12-08T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'bea_39h8fhe98hefah0j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Coogee',
+    },
+    {
+      id: 'bea_39h8fhe98hefah1j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: lastRecordName,
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(`${firstRecordName},${firstRecordTime.getTime()}`);
+  expect(result.moreAfter).toBe(`${lastRecordName},${lastRecordTime.getTime()}`);
 });
 
 test('get multiple records before cursor ordered by boolean field', () => {
