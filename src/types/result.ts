@@ -7,9 +7,9 @@ export type NativeRecord = Record<string, unknown> & {
   id: string;
   ronin: {
     locked: boolean;
-    createdAt: Date;
+    createdAt: string;
     createdBy: string | null;
-    updatedAt: Date;
+    updatedAt: string;
     updatedBy: string | null;
   };
 };

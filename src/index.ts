@@ -234,28 +234,40 @@ class Transaction {
       // If the amount of records was limited to a specific amount, that means pagination
       // should be activated. This is only possible if the query matched any records.
       if (pageSize && output.records.length > 0) {
-        // Pagination cursor for the previous page. Only available if an existing
-        // cursor was provided in the query instructions.
-        if (queryInstructions?.before || queryInstructions?.after) {
-          const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
-          const firstRecord = output.records[0] as NativeRecord;
-
-          output[direction] = generatePaginationCursor(
-            model,
-            queryInstructions.orderedBy,
-            firstRecord,
-          );
-        }
-
         // Pagination cursor for the next page.
         if (output.records.length > pageSize) {
+          // Remove one record from the list, because we always load one too much, in
+          // order to see if there are more records available.
+          if (queryInstructions?.before) {
+            output.records.shift();
+          } else {
+            output.records.pop();
+          }
+
           const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
-          const lastRecord = output.records.pop() as NativeRecord;
+          const lastRecord = output.records.at(
+            direction === 'moreAfter' ? -1 : 0,
+          ) as NativeRecord;
 
           output[direction] = generatePaginationCursor(
             model,
             queryInstructions.orderedBy,
             lastRecord,
+          );
+        }
+
+        // Pagination cursor for the previous page. Only available if an existing
+        // cursor was provided in the query instructions.
+        if (queryInstructions?.before || queryInstructions?.after) {
+          const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
+          const firstRecord = output.records.at(
+            direction === 'moreAfter' ? -1 : 0,
+          ) as NativeRecord;
+
+          output[direction] = generatePaginationCursor(
+            model,
+            queryInstructions.orderedBy,
+            firstRecord,
           );
         }
       }
