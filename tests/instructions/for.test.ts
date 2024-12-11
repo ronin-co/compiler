@@ -357,13 +357,13 @@ test('get single record for preset on existing object instruction', async () => 
   });
 });
 
-test('get single record for preset on existing array instruction', () => {
+test('get single record for preset on existing array instruction', async () => {
   const queries: Array<Query> = [
     {
       get: {
         member: {
           selecting: ['account'],
-          for: ['selectedSpace'],
+          for: ['selectedTeam'],
         },
       },
     },
@@ -371,7 +371,7 @@ test('get single record for preset on existing array instruction', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'team',
     },
     {
       slug: 'account',
@@ -385,17 +385,17 @@ test('get single record for preset on existing array instruction', () => {
           target: 'account',
         },
         {
-          slug: 'space',
+          slug: 'team',
           type: 'link',
-          target: 'space',
+          target: 'team',
         },
       ],
       presets: [
         {
           instructions: {
-            selecting: ['space'],
+            selecting: ['team'],
           },
-          slug: 'selectedSpace',
+          slug: 'selectedTeam',
         },
       ],
     },
@@ -405,11 +405,22 @@ test('get single record for preset on existing array instruction', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT "space", "account" FROM "members" LIMIT 1',
+      statement: 'SELECT "team", "account" FROM "members" LIMIT 1',
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(
+    rawResults,
+    false,
+  )[0] as unknown as SingleRecordResult<{ account: string; team: string }>;
+
+  expect(result.record).toEqual({
+    account: 'acc_39h8fhe98hefah8j',
+    team: 'tea_39h8fhe98hefah8j',
+  });
 });
 
 test('get single record including parent record (many-to-one)', async () => {

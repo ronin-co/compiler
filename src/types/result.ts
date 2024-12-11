@@ -14,8 +14,8 @@ export type NativeRecord = Record<string, unknown> & {
   };
 };
 
-export type SingleRecordResult = {
-  record: NativeRecord | null;
+export type SingleRecordResult<T = NativeRecord> = {
+  record: T | null;
 };
 
 export type MultipleRecordResult = {
