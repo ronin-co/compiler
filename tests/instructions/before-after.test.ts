@@ -325,11 +325,11 @@ test('get multiple records before cursor ordered by empty string field', async (
       slug: 'beach',
       fields: [
         {
-          slug: 'sandColor',
+          slug: 'name',
           type: 'string',
         },
         {
-          slug: 'name',
+          slug: 'sandColor',
           type: 'string',
         },
       ],
@@ -385,16 +385,16 @@ test('get multiple records before cursor ordered by empty string field', async (
   expect(result.moreAfter).toBe(`${CURSOR_NULL_PLACEHOLDER},${lastRecordTime.getTime()}`);
 });
 
-test('get multiple records before cursor ordered by empty boolean field', () => {
+test('get multiple records before cursor ordered by empty boolean field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        accounts: {
-          before: `${CURSOR_NULL_PLACEHOLDER},1667575193779`,
+        beaches: {
+          before: `${CURSOR_NULL_PLACEHOLDER},1733654878079`,
           orderedBy: {
-            descending: ['active'],
+            descending: ['rating'],
           },
-          limitedTo: 100,
+          limitedTo: 2,
         },
       },
     },
@@ -402,11 +402,15 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
 
   const models: Array<Model> = [
     {
-      slug: 'account',
+      slug: 'beach',
       fields: [
         {
-          slug: 'active',
-          type: 'boolean',
+          slug: 'name',
+          type: 'string',
+        },
+        {
+          slug: 'rating',
+          type: 'number',
         },
       ],
     },
@@ -416,11 +420,49 @@ test('get multiple records before cursor ordered by empty boolean field', () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE (("active" IS NOT NULL) OR ("active" IS NULL AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "active" DESC, "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "beaches" WHERE (("rating" IS NOT NULL) OR ("rating" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "rating" DESC, "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'bea_39h8fhe98hefah9j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Manly',
+      rating: null,
+    },
+    {
+      id: 'bea_39h8fhe98hefah0j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Coogee',
+      rating: null,
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(
+    `${CURSOR_NULL_PLACEHOLDER},${firstRecordTime.getTime()}`,
+  );
+  expect(result.moreAfter).toBe(`${CURSOR_NULL_PLACEHOLDER},${lastRecordTime.getTime()}`);
 });
 
 test('get multiple records before cursor ordered by empty number field', () => {
