@@ -74,11 +74,11 @@ test('get single record for preset', async () => {
   });
 });
 
-test('get single record for preset containing field with condition', () => {
+test('get single record for preset containing field with condition', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           for: {
             activeMember: 'acc_39h8fhe98hefah8j',
           },
@@ -89,7 +89,7 @@ test('get single record for preset containing field with condition', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'team',
     },
     {
       slug: 'account',
@@ -103,9 +103,9 @@ test('get single record for preset containing field with condition', () => {
           target: 'account',
         },
         {
-          slug: 'space',
+          slug: 'team',
           type: 'link',
-          target: 'space',
+          target: 'team',
         },
         {
           slug: 'activeAt',
@@ -114,26 +114,30 @@ test('get single record for preset containing field with condition', () => {
       ],
     },
     {
-      slug: 'view',
+      slug: 'product',
       fields: [
         {
-          slug: 'space',
+          slug: 'name',
+          type: 'string',
+        },
+        {
+          slug: 'team',
           type: 'link',
-          target: 'space',
+          target: 'team',
         },
       ],
       presets: [
         {
           instructions: {
             with: {
-              space: {
-                notBeing: {
+              team: {
+                being: {
                   [QUERY_SYMBOLS.QUERY]: {
                     get: {
                       member: {
                         with: { account: QUERY_SYMBOLS.VALUE },
                         orderedBy: { descending: ['activeAt'] },
-                        selecting: ['space'],
+                        selecting: ['team'],
                       },
                     },
                   },
@@ -152,18 +156,34 @@ test('get single record for preset containing field with condition', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT * FROM "views" WHERE ("space" != (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
+        'SELECT * FROM "products" WHERE ("team" = (SELECT "team" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: 'pro_39h8fhe98hefah8j',
+    name: 'Apple',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    team: 'tea_39h8fhe98hefah8j',
+  });
 });
 
-test('get single record for preset containing field without condition', () => {
+test('get single record for preset containing field without condition', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        view: {
+        product: {
           for: {
             activeMember: 'acc_39h8fhe98hefah8j',
           },
@@ -174,7 +194,7 @@ test('get single record for preset containing field without condition', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'team',
     },
     {
       slug: 'account',
@@ -188,9 +208,9 @@ test('get single record for preset containing field without condition', () => {
           target: 'account',
         },
         {
-          slug: 'space',
+          slug: 'team',
           type: 'link',
-          target: 'space',
+          target: 'team',
         },
         {
           slug: 'activeAt',
@@ -199,25 +219,29 @@ test('get single record for preset containing field without condition', () => {
       ],
     },
     {
-      slug: 'view',
+      slug: 'product',
       fields: [
         {
-          slug: 'space',
+          slug: 'name',
+          type: 'string',
+        },
+        {
+          slug: 'team',
           type: 'link',
-          target: 'space',
+          target: 'team',
         },
       ],
       presets: [
         {
           instructions: {
             with: {
-              space: {
+              team: {
                 [QUERY_SYMBOLS.QUERY]: {
                   get: {
                     member: {
                       with: { account: QUERY_SYMBOLS.VALUE },
                       orderedBy: { descending: ['activeAt'] },
-                      selecting: ['space'],
+                      selecting: ['team'],
                     },
                   },
                 },
@@ -235,11 +259,27 @@ test('get single record for preset containing field without condition', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT * FROM "views" WHERE ("space" = (SELECT "space" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
+        'SELECT * FROM "products" WHERE ("team" = (SELECT "team" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: 'pro_39h8fhe98hefah8j',
+    name: 'Apple',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    team: 'tea_39h8fhe98hefah8j',
+  });
 });
 
 test('get single record for preset on existing object instruction', () => {
