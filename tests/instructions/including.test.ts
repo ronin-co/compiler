@@ -389,7 +389,7 @@ test('get single record including unrelated records without filter', async () =>
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       updatedBy: null,
     },
-    beaches: new Array(3).fill({
+    beaches: new Array(4).fill({
       id: expect.stringMatching(RECORD_ID_REGEX),
       name: expect.any(String),
       ronin: {
@@ -583,6 +583,17 @@ test('get single record including unrelated ordered records', async () => {
       {
         id: 'bea_39h8fhe98hefah0j',
         name: 'Coogee',
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      },
+      {
+        id: 'bea_39h8fhe98hefah1j',
+        name: 'Cronulla',
         ronin: {
           locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
