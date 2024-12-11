@@ -149,16 +149,16 @@ test('get multiple records before cursor ordered by string field', async () => {
   expect(result.moreAfter).toBe(`${lastRecordName},${lastRecordTime.getTime()}`);
 });
 
-test('get multiple records before cursor ordered by boolean field', () => {
+test('get multiple records before cursor ordered by boolean field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        accounts: {
-          before: 'true,1667575193779',
+        members: {
+          before: 'true,1728470878079',
           orderedBy: {
-            ascending: ['active'],
+            ascending: ['pending'],
           },
-          limitedTo: 100,
+          limitedTo: 2,
         },
       },
     },
@@ -166,10 +166,10 @@ test('get multiple records before cursor ordered by boolean field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'account',
+      slug: 'member',
       fields: [
         {
-          slug: 'active',
+          slug: 'pending',
           type: 'boolean',
         },
       ],
@@ -180,11 +180,48 @@ test('get multiple records before cursor ordered by boolean field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE ((IFNULL("active", -1e999) < ?1) OR ("active" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "active" ASC, "ronin.createdAt" DESC LIMIT 101`,
+      statement: `SELECT * FROM "members" WHERE ((IFNULL("pending", -1e999) < ?1) OR ("pending" = ?1 AND ("ronin.createdAt" > '2024-10-09T10:47:58.079Z'))) ORDER BY "pending" ASC, "ronin.createdAt" DESC LIMIT 3`,
       params: [1],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordPending = false;
+  const firstRecordTime = new Date('2024-11-10T10:47:58.079Z');
+
+  const lastRecordPending = true;
+  const lastRecordTime = new Date('2024-12-11T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'mem_39h8fhe98hefah9j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      pending: firstRecordPending,
+    },
+    {
+      id: 'mem_39h8fhe98hefah8j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      pending: lastRecordPending,
+    },
+  ]);
+
+  expect(result.moreBefore).toBeUndefined();
+  expect(result.moreAfter).toBe(`${lastRecordPending},${lastRecordTime.getTime()}`);
 });
 
 test('get multiple records before cursor ordered by number field', () => {
