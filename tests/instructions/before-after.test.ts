@@ -224,16 +224,16 @@ test('get multiple records before cursor ordered by boolean field', async () => 
   expect(result.moreAfter).toBe(`${lastRecordPending},${lastRecordTime.getTime()}`);
 });
 
-test('get multiple records before cursor ordered by number field', () => {
+test('get multiple records before cursor ordered by number field', async () => {
   const queries: Array<Query> = [
     {
       get: {
-        accounts: {
-          before: '2,1667575193779',
+        products: {
+          before: '1,1733914078079',
           orderedBy: {
-            ascending: ['position'],
+            descending: ['position'],
           },
-          limitedTo: 100,
+          limitedTo: 2,
         },
       },
     },
@@ -241,11 +241,15 @@ test('get multiple records before cursor ordered by number field', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'account',
+      slug: 'product',
       fields: [
         {
           slug: 'position',
           type: 'number',
+        },
+        {
+          slug: 'name',
+          type: 'string',
         },
       ],
     },
@@ -255,11 +259,50 @@ test('get multiple records before cursor ordered by number field', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE ((IFNULL("position", -1e999) < ?1) OR ("position" = ?1 AND ("ronin.createdAt" > '2022-11-04T15:19:53.779Z'))) ORDER BY "position" ASC, "ronin.createdAt" DESC LIMIT 101`,
-      params: [2],
+      statement: `SELECT * FROM "products" WHERE (("position" > ?1) OR ("position" = ?1 AND ("ronin.createdAt" > '2024-12-11T10:47:58.079Z'))) ORDER BY "position" DESC, "ronin.createdAt" DESC LIMIT 3`,
+      params: [1],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+
+  const firstRecordPosition = 3;
+  const firstRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  const lastRecordPosition = 2;
+  const lastRecordTime = new Date('2024-12-10T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      id: 'pro_39h8fhe98hefah0j',
+      ronin: {
+        locked: false,
+        createdAt: firstRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Cherry',
+      position: firstRecordPosition,
+    },
+    {
+      id: 'pro_39h8fhe98hefah9j',
+      ronin: {
+        locked: false,
+        createdAt: lastRecordTime.toISOString(),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Banana',
+      position: lastRecordPosition,
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(`${firstRecordPosition},${firstRecordTime.getTime()}`);
+  expect(result.moreAfter).toBe(`${lastRecordPosition},${lastRecordTime.getTime()}`);
 });
 
 test('get multiple records before cursor ordered by empty string field', () => {
