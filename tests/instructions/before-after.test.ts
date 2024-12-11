@@ -42,12 +42,15 @@ test('get multiple records before cursor', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
 
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
   expect(result.records).toEqual([
     {
       id: 'bea_39h8fhe98hefah9j',
       ronin: {
         locked: false,
-        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         updatedBy: null,
@@ -58,7 +61,7 @@ test('get multiple records before cursor', async () => {
       id: 'bea_39h8fhe98hefah0j',
       ronin: {
         locked: false,
-        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         updatedBy: null,
@@ -67,8 +70,8 @@ test('get multiple records before cursor', async () => {
     },
   ]);
 
-  expect(result.moreBefore).toBe('1733827678079');
-  expect(result.moreAfter).toBe('1733741278079');
+  expect(result.moreBefore).toBe(firstRecordTime.getTime().toString());
+  expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
 });
 
 test('get multiple records before cursor ordered by string field', () => {
