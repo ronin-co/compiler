@@ -282,7 +282,7 @@ test('get single record for preset containing field without condition', async ()
   });
 });
 
-test('get single record for preset on existing object instruction', () => {
+test('get single record for preset on existing object instruction', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -290,7 +290,7 @@ test('get single record for preset on existing object instruction', () => {
           with: {
             account: 'acc_39h8fhe98hefah8j',
           },
-          for: ['specificSpace'],
+          for: ['specificTeam'],
         },
       },
     },
@@ -298,7 +298,7 @@ test('get single record for preset on existing object instruction', () => {
 
   const models: Array<Model> = [
     {
-      slug: 'space',
+      slug: 'team',
     },
     {
       slug: 'account',
@@ -312,19 +312,19 @@ test('get single record for preset on existing object instruction', () => {
           target: 'account',
         },
         {
-          slug: 'space',
+          slug: 'team',
           type: 'link',
-          target: 'space',
+          target: 'team',
         },
       ],
       presets: [
         {
           instructions: {
             with: {
-              space: 'spa_m9h8oha94helaji',
+              team: 'tea_39h8fhe98hefah9j',
             },
           },
-          slug: 'specificSpace',
+          slug: 'specificTeam',
         },
       ],
     },
@@ -334,12 +334,27 @@ test('get single record for preset on existing object instruction', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'SELECT * FROM "members" WHERE ("space" = ?1 AND "account" = ?2) LIMIT 1',
-      params: ['spa_m9h8oha94helaji', 'acc_39h8fhe98hefah8j'],
+      statement: 'SELECT * FROM "members" WHERE ("team" = ?1 AND "account" = ?2) LIMIT 1',
+      params: ['tea_39h8fhe98hefah9j', 'acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: 'mem_39h8fhe98hefah0j',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: 'acc_39h8fhe98hefah8j',
+    team: 'tea_39h8fhe98hefah9j',
+  });
 });
 
 test('get single record for preset on existing array instruction', () => {
