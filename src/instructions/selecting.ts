@@ -97,7 +97,10 @@ export const handleSelecting = (
           ? subQueryModel.fields.filter((field) => {
               return queryInstructions.selecting?.includes(field.slug);
             })
-          : subQueryModel.fields;
+          : // Exclude link fields with cardinality "many", since those don't exist as columns.
+            subQueryModel.fields.filter((field) => {
+              return !(field.type === 'link' && field.kind === 'many');
+            });
 
         for (const field of queryModelFields) {
           loadedFields.push({ ...field, parentField: key } as unknown as ModelField);
@@ -170,7 +173,12 @@ export const handleSelecting = (
 
     loadedFields = [...selectedFields, ...loadedFields];
   } else {
-    loadedFields = [...model.fields, ...loadedFields];
+    loadedFields = [
+      ...model.fields.filter(
+        (field) => !(field.type === 'link' && field.kind === 'many'),
+      ),
+      ...loadedFields,
+    ];
   }
 
   if (instructions.including && Object.keys(instructions.including).length > 0) {
