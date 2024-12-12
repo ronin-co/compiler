@@ -621,7 +621,8 @@ const getFieldStatement = (
 
     // Passing the current model here is imporant, because it allows for creating a model
     // that references itself.
-    const targetTable = getModelBySlug([...models, model], field.target).table;
+    const modelList = models.some(item => item.slug === model.slug) ? models : [...models, model];
+    const targetTable = getModelBySlug(modelList, field.target).table;
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
