@@ -4,13 +4,21 @@
       "id": "acc_39h8fhe98hefah8j",
       "handle": "elaine",
       "firstName": "Elaine",
-      "lastName": "Jones"
+      "lastName": "Jones",
+      "ronin": {
+        "createdAt": "2024-12-11T10:47:58.079Z",
+        "updatedAt": "2024-12-11T10:47:58.079Z"
+      }
     },
     {
       "id": "acc_39h8fhe98hefah9j",
       "handle": "david",
       "firstName": "David",
-      "lastName": "Brown"
+      "lastName": "Brown",
+      "ronin": {
+        "createdAt": "2024-12-10T10:47:58.079Z",
+        "updatedAt": "2024-12-10T10:47:58.079Z"
+      }
     }
   ],
   "product": [
