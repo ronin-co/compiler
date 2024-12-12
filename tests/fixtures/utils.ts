@@ -69,6 +69,16 @@ const prefillDatabase = async (database: Database, models: Array<Model>) => {
   await database.query(statements);
 };
 
+const RAW_ENGINE = new Engine({
+  resolvers: [(engine) => new MemoryResolver(engine)],
+  driver: new WasmDriver(),
+});
+
+const NON_RAW_ENGINE = new Engine({
+  resolvers: [(engine) => new MemoryResolver(engine)],
+  driver: new BunDriver(),
+});
+
 /**
  * Queries an ephemeral test database with the provided SQL statements.
  *
@@ -86,12 +96,7 @@ export const queryEphemeralDatabase = async (
   statements: Array<Statement>,
   raw = true,
 ): Promise<Array<Array<Row>>> => {
-  const engine = new Engine({
-    resolvers: [(engine) => new MemoryResolver(engine)],
-    // The latter is inferred automatically, since we're usign Bun to run the tests, but
-    // we are passing it anyways, to clarify which driver we are using.
-    driver: raw ? new WasmDriver() : new BunDriver(),
-  });
+  const engine = raw ? RAW_ENGINE : NON_RAW_ENGINE;
 
   const databaseId = Math.random().toString(36).substring(7);
   const database = await engine.createDatabase({ id: databaseId });
