@@ -59,7 +59,7 @@ test('get single record for preset', async () => {
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
@@ -163,7 +163,7 @@ test('get single record for preset containing field with condition', async () =>
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: 'pro_39h8fhe98hefah8j',
@@ -266,7 +266,7 @@ test('get single record for preset containing field without condition', async ()
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: 'pro_39h8fhe98hefah8j',
@@ -341,7 +341,7 @@ test('get single record for preset on existing object instruction', async () => 
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: 'mem_39h8fhe98hefah0j',
@@ -451,21 +451,18 @@ test('get single record including parent record (many-to-one)', async () => {
     },
   ];
 
-  const transaction = new Transaction(queries, {
-    models,
-    expandColumns: true,
-  });
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "including_account.id", "including_account"."ronin.locked" as "including_account.ronin.locked", "including_account"."ronin.createdAt" as "including_account.ronin.createdAt", "including_account"."ronin.createdBy" as "including_account.ronin.createdBy", "including_account"."ronin.updatedAt" as "including_account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "including_account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
@@ -517,21 +514,18 @@ test('get single record including child records (one-to-many, defined manually)'
     },
   ];
 
-  const transaction = new Transaction(queries, {
-    models,
-    expandColumns: true,
-  });
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_visitors"."id" as "including_visitors.id", "including_visitors"."ronin.locked" as "including_visitors.ronin.locked", "including_visitors"."ronin.createdAt" as "including_visitors.ronin.createdAt", "including_visitors"."ronin.createdBy" as "including_visitors.ronin.createdBy", "including_visitors"."ronin.updatedAt" as "including_visitors.ronin.updatedAt", "including_visitors"."ronin.updatedBy" as "including_visitors.ronin.updatedBy", "including_visitors"."source" as "including_visitors.source", "including_visitors"."target" as "including_visitors.target" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id")`,
+      statement: `SELECT * FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id")`,
       params: [],
       returning: true,
     },
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
@@ -605,21 +599,18 @@ test('get single record including child records (one-to-many, defined automatica
     },
   ];
 
-  const transaction = new Transaction(queries, {
-    models,
-    expandColumns: true,
-  });
+  const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "sub_accounts"."handle", "including_members"."id" as "including_members.id", "including_members"."ronin.locked" as "including_members.ronin.locked", "including_members"."ronin.createdAt" as "including_members.ronin.createdAt", "including_members"."ronin.createdBy" as "including_members.ronin.createdBy", "including_members"."ronin.updatedAt" as "including_members.ronin.updatedAt", "including_members"."ronin.updatedBy" as "including_members.ronin.updatedBy", "including_members"."account" as "including_members.account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id") WHERE ("sub_accounts"."handle" = ?1)`,
+      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id") WHERE ("sub_accounts"."handle" = ?1)`,
       params: ['elaine'],
       returning: true,
     },
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: 'acc_39h8fhe98hefah8j',

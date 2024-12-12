@@ -84,7 +84,7 @@ const prefillDatabase = async (database: Database, models: Array<Model>) => {
 export const queryEphemeralDatabase = async (
   models: Array<Model>,
   statements: Array<Statement>,
-  raw = false,
+  raw = true,
 ): Promise<Array<Array<Row>>> => {
   const engine = new Engine({
     resolvers: [(engine) => new MemoryResolver(engine)],
@@ -98,7 +98,7 @@ export const queryEphemeralDatabase = async (
 
   await prefillDatabase(database, models);
 
-  const results = await database.query(statements);
+  const results = await database.query(statements, raw ? { shape: 'values-only' } : {});
   const formattedResults = results.map((result) => result.rows);
 
   await engine.deleteDatabase({ id: databaseId });
