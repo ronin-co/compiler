@@ -49,7 +49,7 @@ test('inline statement parameters', async () => {
   expect(transaction.statements[0].params).toEqual([]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
     handle: 'elaine',
