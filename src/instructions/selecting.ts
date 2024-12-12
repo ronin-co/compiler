@@ -39,6 +39,7 @@ export const handleSelecting = (
   },
 ): { columns: string; isJoining: boolean; loadedFields: Array<ModelField> } => {
   let loadedFields: Array<ModelField> = [];
+  let expandColumns = false;
 
   let statement = '*';
   let isJoining = false;
@@ -64,10 +65,23 @@ export const handleSelecting = (
       const symbol = getSymbol(value);
 
       if (symbol?.type === 'query') {
-        isJoining = true;
-
         const { queryModel, queryInstructions } = splitQuery(symbol.value);
         const subQueryModel = getModelBySlug(models, queryModel);
+
+        // If a sub query was found in the `including` instruction, that means different
+        // tables will be joined later on during the compilation of the query.
+        isJoining = true;
+
+        // If a sub query was found in the `including` instruction, that also means we
+        // should alias the columns of all tables if the compiler was instructed to do so
+        // using the respective config option.
+        //
+        // Additionally, if the sub query selects specific fields, we also need to alias
+        // the columns of all tables, because we must ensure that only the selected
+        // columns of the joined table end up in the final result, which means we cannot
+        // use `SELECT *` in the SQL statement, as that would automatically catch all
+        // columns of the joined table.
+        expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
 
         const tableAlias = composeIncludedTableAlias(key);
         const single = queryModel !== subQueryModel.pluralSlug;
@@ -90,7 +104,7 @@ export const handleSelecting = (
 
           // If the column names should be expanded, that means we need to alias all
           // columns of the joined table to avoid conflicts with the root table.
-          if (options?.expandColumns) {
+          if (expandColumns) {
             const newValue = parseFieldExpression(
               { ...subQueryModel, tableAlias },
               'including',
@@ -122,8 +136,6 @@ export const handleSelecting = (
       });
     }
   }
-
-  const expandColumns = isJoining && options?.expandColumns;
 
   // If the column names should be expanded, that means we need to alias all columns of
   // the root table to avoid conflicts with columns of joined tables.
