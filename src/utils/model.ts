@@ -618,7 +618,13 @@ const getFieldStatement = (
     if (field.kind === 'many') return null;
 
     const actions = field.actions || {};
-    const targetTable = getModelBySlug(models, field.target).table;
+
+    // Passing the current model here is imporant, because it allows for creating a model
+    // that references itself.
+    const modelList = models.some((item) => item.slug === model.slug)
+      ? models
+      : [...models, model];
+    const targetTable = getModelBySlug(modelList, field.target).table;
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
