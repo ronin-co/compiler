@@ -111,7 +111,7 @@ test('expand column names', async () => {
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults, false)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
