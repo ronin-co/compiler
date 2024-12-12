@@ -335,17 +335,26 @@ test('query a model that was just created', () => {
         account: null,
       },
     },
+    {
+      drop: {
+        model: 'account',
+      },
+    },
   ];
 
   const models: Array<Model> = [];
 
   const transaction = new Transaction(queries, { models });
 
-  expect(transaction.statements[2]).toEqual({
-    statement: 'SELECT * FROM "accounts" LIMIT 1',
-    params: [],
-    returning: true,
-  });
+  // Assert whether the statements are generated in the correct order, meaning in the
+  // order in which the queries are provided.
+  expect(transaction.statements.map(({ statement }) => statement)).toEqual([
+    'CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT)',
+    'INSERT INTO "ronin_schema" ("slug", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12) RETURNING *',
+    'SELECT * FROM "accounts" LIMIT 1',
+    'DROP TABLE "accounts"',
+    'DELETE FROM "ronin_schema" WHERE ("slug" = ?1) RETURNING *',
+  ]);
 });
 
 test('query a model that was just updated', () => {
@@ -373,11 +382,13 @@ test('query a model that was just updated', () => {
 
   const transaction = new Transaction(queries, { models });
 
-  expect(transaction.statements[2]).toEqual({
-    statement: 'SELECT * FROM "users" LIMIT 1',
-    params: [],
-    returning: true,
-  });
+  // Assert whether the statements are generated in the correct order, meaning in the
+  // order in which the queries are provided.
+  expect(transaction.statements.map(({ statement }) => statement)).toEqual([
+    'ALTER TABLE "accounts" RENAME TO "users"',
+    'UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = ?7 WHERE ("slug" = ?8) RETURNING *',
+    'SELECT * FROM "users" LIMIT 1',
+  ]);
 });
 
 test('query a model that was just dropped', () => {
