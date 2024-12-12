@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.2",
-    "@ronin/engine": "0.0.2",
+    "@ronin/engine": "0.0.19",
     "@types/bun": "1.1.10",
     "@types/title": "3.4.3",
     "tsup": "8.3.0",

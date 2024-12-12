@@ -40,7 +40,7 @@ test('get multiple records ordered by field', async () => {
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
   expect(result.records).toMatchObject([
     {
@@ -96,7 +96,7 @@ test('get multiple records ordered by expression', async () => {
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
   expect(result.records).toMatchObject([
     {
@@ -150,7 +150,7 @@ test('get multiple records ordered by multiple fields', async () => {
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
   expect(result.records).toMatchObject([
     {
