@@ -70,8 +70,7 @@ class Transaction {
       return addDefaultModelPresets(modelList, model);
     });
 
-    const dependencyStatements: Array<Statement> = [];
-    const mainStatements: Array<Statement> = [];
+    const statements: Array<Statement> = [];
 
     for (const query of queries) {
       const result = compileQueryInput(
@@ -84,20 +83,22 @@ class Transaction {
       // Every query can only produce one main statement (which can return output), but
       // multiple dependency statements (which must be executed before the main one, but
       // cannot return output themselves).
-      dependencyStatements.push(...result.dependencies);
-      mainStatements.push(result.main);
+      //
+      // The order is essential, since the dependency statements are expected to not
+      // produce any output, so they should be executed first. The main statements, on the
+      // other hand, are expected to produce output, and that output should be a 1:1 match
+      // between RONIN queries and SQL statements, meaning one RONIN query should produce
+      // one main SQL statement.
+      statements.push(...result.dependencies, result.main);
 
+      // Collect the fields that were selected by the query, so that they can be used
+      // during the formatting of the database output.
       this.fields.push(result.loadedFields);
     }
 
     this.models = modelListWithPresets;
 
-    // First return all dependency statements, and then all main statements. This is
-    // essential since the dependency statements are expected to not produce any output, so
-    // they should be executed first. The main statements, on the other hand, are expected
-    // to produce output, and that output should be a 1:1 match between RONIN queries and
-    // SQL statements, meaning one RONIN query should produce one main SQL statement.
-    return [...dependencyStatements, ...mainStatements];
+    return statements;
   };
 
   private formatRows(
