@@ -976,7 +976,6 @@ test('add multiple records with nested sub query and specific meta fields', asyn
   );
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-
   const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
   expect(
