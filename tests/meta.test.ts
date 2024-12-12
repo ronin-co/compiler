@@ -154,6 +154,34 @@ test('create new model that has system models associated with it', () => {
   });
 });
 
+test('create new model that references itself', () => {
+  const fields = [
+    {
+      slug: 'parentTeam',
+      type: 'link',
+      target: 'team',
+    },
+  ];
+
+  const queries: Array<Query> = [
+    {
+      create: {
+        model: { slug: 'team', fields },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[0]).toEqual({
+    statement:
+      'CREATE TABLE "teams" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "parentTeam" TEXT REFERENCES teams("id"))',
+    params: [],
+  });
+});
+
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`
 // statement is generated for it.
 test('alter existing model (slug)', () => {

@@ -87,7 +87,7 @@ const NON_RAW_ENGINE = new Engine({
  * @param raw - By default, the results are returned in a raw format, meaning in the same
  * format in which SQLite returns them (rows being arrays of values). If `raw` is set to
  * `false`, the rows are returned as objects, which simulates the behavior of drivers that
- * are incompatible of returning raw results.
+ * are incapable of returning raw results.
  *
  * @returns A list of rows resulting from the executed statements.
  */
