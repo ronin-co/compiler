@@ -1,6 +1,6 @@
 {
   "name": "@ronin/compiler",
-  "version": "0.11.7",
+  "version": "0.12.0",
   "type": "module",
   "description": "Compiles RONIN queries to SQL statements.",
   "publishConfig": {
