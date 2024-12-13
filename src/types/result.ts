@@ -22,8 +22,8 @@ export type SingleRecordResult<T = NativeRecord> = {
   modelFields: Record<ModelField['slug'], ModelField['type']>;
 };
 
-export type MultipleRecordResult = {
-  records: Array<NativeRecord>;
+export type MultipleRecordResult<T = NativeRecord> = {
+  records: Array<T>;
   moreAfter?: string;
   moreBefore?: string;
 
@@ -34,4 +34,7 @@ export type AmountResult = {
   amount: number;
 };
 
-export type Result = SingleRecordResult | MultipleRecordResult | AmountResult;
+export type Result<T = NativeRecord> =
+  | SingleRecordResult<T>
+  | MultipleRecordResult<T>
+  | AmountResult;
