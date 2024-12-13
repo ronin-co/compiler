@@ -75,7 +75,9 @@ export type QueryInstructionType = z.infer<typeof InstructionSchema>;
 export type CombinedInstructions = z.infer<typeof InstructionsSchema>;
 
 export type Query = z.infer<typeof QuerySchema>;
-export type QueryType = z.infer<typeof QueryTypeEnum> | z.infer<typeof ModelQueryTypeEnum>;
+export type QueryType =
+  | z.infer<typeof QueryTypeEnum>
+  | z.infer<typeof ModelQueryTypeEnum>;
 export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema>;
 
 export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
