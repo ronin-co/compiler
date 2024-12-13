@@ -1,5 +1,5 @@
 import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
-import type { Query, Statement } from '@/src/types/query';
+import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
   MultipleRecordResult,
   NativeRecord,
@@ -31,17 +31,15 @@ interface TransactionOptions {
 }
 
 class Transaction {
-  statements: Array<Statement>;
+  statements: Array<Statement> = [];
   models: Array<PrivateModel> = [];
 
-  private queries: Array<Query>;
-  private fields: Array<Array<ModelField>> = [];
+  private internalStatements: Array<InternalStatement> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
 
-    this.statements = this.compileQueries(queries, models, options);
-    this.queries = queries;
+    this.compileQueries(queries, models, options);
   }
 
   /**
@@ -89,11 +87,19 @@ class Transaction {
       // other hand, are expected to produce output, and that output should be a 1:1 match
       // between RONIN queries and SQL statements, meaning one RONIN query should produce
       // one main SQL statement.
-      statements.push(...result.dependencies, result.main);
+      const subStatements = [...result.dependencies, result.main];
 
-      // Collect the fields that were selected by the query, so that they can be used
-      // during the formatting of the database output.
-      this.fields.push(result.loadedFields);
+      // These statements will be made publicly available (outside the compiler).
+      this.statements.push(...subStatements);
+
+      // These statements will be used internally to format the results.
+      this.internalStatements.push(
+        ...subStatements.map((statement) => ({
+          ...statement,
+          query,
+          fields: result.loadedFields,
+        })),
+      );
     }
 
     this.models = modelListWithPresets;
@@ -183,11 +189,6 @@ class Transaction {
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = true,
   ): Array<Result> {
-    // Filter out results whose statements are not expected to return any data.
-    const relevantResults = results.filter((_, index) => {
-      return this.statements[index].returning;
-    });
-
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
@@ -197,8 +198,8 @@ class Transaction {
     // since the object format provided by the driver does not match the RONIN record
     // format expected by developers.
     const normalizedResults: Array<Array<RawRow>> = raw
-      ? (relevantResults as Array<Array<RawRow>>)
-      : relevantResults.map((rows) => {
+      ? (results as Array<Array<RawRow>>)
+      : results.map((rows) => {
           return rows.map((row) => {
             if (Array.isArray(row)) return row;
             if (row['COUNT(*)']) return [row['COUNT(*)']];
@@ -206,9 +207,12 @@ class Transaction {
           });
         });
 
-    return normalizedResults.map((rows, index): Result => {
-      const query = this.queries.at(-index) as Query;
-      const rawModelFields = this.fields.at(-index) as Array<ModelField>;
+    const formattedResults = normalizedResults.map((rows, index): Result | null => {
+      const { returning, query, fields: rawModelFields } = this.internalStatements[index];
+
+      // If the statement is not expected to return any data, there is no need to format
+      // any results, so we can return early.
+      if (!returning) return null;
 
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
@@ -286,6 +290,9 @@ class Transaction {
 
       return output;
     });
+
+    // Filter out results whose statements are not expected to return any data.
+    return formattedResults.filter((result) => result !== null);
   }
 }
 

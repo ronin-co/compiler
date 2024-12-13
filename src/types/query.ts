@@ -1,3 +1,4 @@
+import type { ModelField } from '@/src/types/model';
 import type {
   AddInstructionsSchema,
   AddQuerySchema,
@@ -86,4 +87,9 @@ export interface Statement {
   statement: string;
   params: Array<unknown>;
   returning?: boolean;
+}
+
+export interface InternalStatement extends Statement {
+  query: Query;
+  fields: Array<ModelField>;
 }
