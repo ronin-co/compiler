@@ -306,7 +306,34 @@ export type {
 } from '@/src/types/model';
 
 // Expose query types
-export type { Query, Statement } from '@/src/types/query';
+export type {
+  // Queries
+  Query,
+  QueryType,
+  QueryInstructionType as QueryInstruction,
+  QuerySchemaType,
+  // Query Types
+  GetQuery,
+  GetInstructions,
+  GetInstructions as GetQueryInstructions,
+  SetQuery,
+  SetInstructions,
+  SetInstructions as SetQueryInstructions,
+  AddQuery,
+  AddInstructions,
+  AddInstructions as AddQueryInstructions,
+  RemoveQuery,
+  RemoveInstructions,
+  RemoveInstructions as RemoveQueryInstructions,
+  CountQuery,
+  CountInstructions,
+  CountInstructions as CountQueryInstructions,
+  // Query Instructions
+  WithInstruction,
+  CombinedInstructions,
+  // Compiled Queries
+  Statement,
+} from '@/src/types/query';
 
 // Expose result types
 export type { Result } from '@/src/types/result';
