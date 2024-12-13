@@ -208,9 +208,16 @@ class Transaction {
 
     return normalizedResults.map((rows, index): Result => {
       const query = this.queries.at(-index) as Query;
-      const fields = this.fields.at(-index) as Array<ModelField>;
+      const rawModelFields = this.fields.at(-index) as Array<ModelField>;
+
       const { queryType, queryModel, queryInstructions } = splitQuery(query);
       const model = getModelBySlug(this.models, queryModel);
+
+      // Allows the client to format fields whose type cannot be serialized in JSON,
+      // which is the format in which the compiler output is sent to the client.
+      const modelFields = Object.fromEntries(
+        model.fields.map((field) => [field.slug, field.type]),
+      );
 
       // The query is expected to count records.
       if (queryType === 'count') {
@@ -222,14 +229,18 @@ class Transaction {
 
       // The query is targeting a single record.
       if (single) {
-        return { record: rows[0] ? this.formatRows(fields, rows, single) : null };
+        return {
+          record: rows[0] ? this.formatRows(rawModelFields, rows, single) : null,
+          modelFields,
+        };
       }
 
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
       const output: MultipleRecordResult = {
-        records: this.formatRows(fields, rows, single),
+        records: this.formatRows(rawModelFields, rows, single),
+        modelFields,
       };
 
       // If the amount of records was limited to a specific amount, that means pagination

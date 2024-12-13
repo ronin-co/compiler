@@ -1,3 +1,5 @@
+import type { ModelField } from '@/src/types/model';
+
 export type RawRow = Array<unknown>;
 export type ObjectRow = Record<string, unknown>;
 
@@ -16,12 +18,16 @@ export type NativeRecord = Record<string, unknown> & {
 
 export type SingleRecordResult<T = NativeRecord> = {
   record: T | null;
+
+  modelFields: Record<ModelField['slug'], ModelField['type']>;
 };
 
 export type MultipleRecordResult = {
   records: Array<NativeRecord>;
   moreAfter?: string;
   moreBefore?: string;
+
+  modelFields: Record<ModelField['slug'], ModelField['type']>;
 };
 
 export type AmountResult = {
