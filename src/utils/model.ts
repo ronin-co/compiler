@@ -264,7 +264,7 @@ type ComposableSettings =
  * is the setting that should be used as a base, and the third item is the function that
  * should be used to generate the new setting.
  */
-const modelSettings: Array<
+const modelAttributes: Array<
   [ComposableSettings, ComposableSettings, (arg: string) => string]
 > = [
   ['pluralSlug', 'slug', pluralize],
@@ -285,7 +285,7 @@ const modelSettings: Array<
 export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
 
-  for (const [setting, base, generator] of modelSettings) {
+  for (const [setting, base, generator] of modelAttributes) {
     // If a custom value was provided for the setting, or the setting from which the current
     // one can be generated is not available, skip the generation.
     if (copiedModel[setting] || !copiedModel[base]) continue;
@@ -941,6 +941,9 @@ export const transformMetaQuery = (
       // Default field type.
       field.type = field.type || 'string';
 
+      // Default field name.
+      field.name = slugToName(field.slug);
+
       const fieldStatement = getFieldStatement(models, existingModel, field);
 
       if (fieldStatement) {
@@ -950,15 +953,21 @@ export const transformMetaQuery = (
         });
       }
     } else if (action === 'alter') {
-      const newSlug = jsonValue?.slug;
+      const field = jsonValue as ModelField;
+      const newSlug = field.slug;
 
-      // Only push the statement if the column name is changing, otherwise we don't
-      // need it.
-      if (newSlug && !existingLinkField) {
-        dependencyStatements.push({
-          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
-          params: [],
-        });
+      if (newSlug) {
+        // Default field name.
+        field.name = slugToName(field.slug);
+
+        // Only push the statement if the column name is changing, otherwise we don't
+        // need it.
+        if (!existingLinkField) {
+          dependencyStatements.push({
+            statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
+            params: [],
+          });
+        }
       }
     } else if (action === 'drop' && !existingLinkField) {
       dependencyStatements.push({

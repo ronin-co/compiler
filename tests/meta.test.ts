@@ -460,7 +460,7 @@ test('create new field', () => {
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.email', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify(field),
+        JSON.stringify({ ...field, name: 'Email' }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
@@ -510,7 +510,7 @@ test('create new field with options', () => {
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify(field),
+        JSON.stringify({ ...field, name: 'Account' }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'member',
       ],
@@ -554,7 +554,7 @@ test('create new field with many-cardinality relationship', () => {
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.followers', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
       params: [
-        JSON.stringify(field),
+        JSON.stringify({ ...field, name: 'Followers' }),
         expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         'account',
       ],
