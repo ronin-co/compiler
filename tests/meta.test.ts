@@ -12,7 +12,7 @@ import {
 
 import { RECORD_ID_REGEX, RECORD_TIMESTAMP_REGEX } from '@/fixtures/utils';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
-import { SYSTEM_FIELDS } from '@/src/utils/model';
+import { SYSTEM_FIELDS, slugToName } from '@/src/utils/model';
 
 test('create new model', () => {
   const fields = [
@@ -72,7 +72,10 @@ test('create new model', () => {
         'account',
         JSON.stringify(
           Object.fromEntries(
-            [...SYSTEM_FIELDS, ...fields].map(({ slug, ...rest }) => [slug, rest]),
+            [...SYSTEM_FIELDS, ...fields].map(({ slug, ...rest }) => [
+              slug,
+              { ...rest, name: 'name' in rest ? rest.name : slugToName(slug) },
+            ]),
           ),
         ),
         'accounts',
