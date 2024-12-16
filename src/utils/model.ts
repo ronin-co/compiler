@@ -195,7 +195,7 @@ export function getFieldFromModel(
  *
  * @returns The formatted name in title case.
  */
-const slugToName = (slug: string) => {
+export const slugToName = (slug: string) => {
   // Split the slug by uppercase letters and join with a space
   const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
 
@@ -264,7 +264,7 @@ type ComposableSettings =
  * is the setting that should be used as a base, and the third item is the function that
  * should be used to generate the new setting.
  */
-const modelSettings: Array<
+const modelAttributes: Array<
   [ComposableSettings, ComposableSettings, (arg: string) => string]
 > = [
   ['pluralSlug', 'slug', pluralize],
@@ -285,7 +285,7 @@ const modelSettings: Array<
 export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
 
-  for (const [setting, base, generator] of modelSettings) {
+  for (const [setting, base, generator] of modelAttributes) {
     // If a custom value was provided for the setting, or the setting from which the current
     // one can be generated is not available, skip the generation.
     if (copiedModel[setting] || !copiedModel[base]) continue;
@@ -796,6 +796,21 @@ export const transformMetaQuery = (
         modelWithFields,
       );
 
+      // Replace the entire array to avoid modifying the objects inside the arrays, which
+      // would cause the model object passed to the compiler to also be modified, since
+      // objects are passed around by reference in JS.
+      modelWithPresets.fields = modelWithPresets.fields.map((field) => ({
+        ...field,
+        // Default field type.
+        type: field.type || 'string',
+        // Default field name.
+        name: field.name || slugToName(field.slug),
+      })) as Array<ModelField>;
+
+      const columns = modelWithPresets.fields
+        .map((field) => getFieldStatement(models, modelWithPresets, field))
+        .filter(Boolean);
+
       // A list of all model entities, in the form of an object.
       const entities = Object.fromEntries(
         Object.entries(PLURAL_MODEL_ENTITIES).map(([type, pluralType]) => {
@@ -806,10 +821,6 @@ export const transformMetaQuery = (
         }),
       );
 
-      const columns = modelWithPresets.fields
-        .map((field) => getFieldStatement(models, modelWithPresets, field))
-        .filter(Boolean);
-
       dependencyStatements.push({
         statement: `CREATE TABLE "${modelWithPresets.table}" (${columns.join(', ')})`,
         params: [],
@@ -818,13 +829,13 @@ export const transformMetaQuery = (
       // Add the newly created model to the list of models.
       models.push(modelWithPresets);
 
-      const finalModel = Object.assign({}, modelWithPresets);
+      const modelWithObjects = Object.assign({}, modelWithPresets);
 
       for (const entity in entities) {
-        if (entities[entity]) finalModel[entity as keyof Model] = entities[entity];
+        if (entities[entity]) modelWithObjects[entity as keyof Model] = entities[entity];
       }
 
-      queryTypeDetails = { to: finalModel };
+      queryTypeDetails = { to: modelWithObjects };
 
       // Add any system models that might be needed by the model.
       getSystemModels(models, modelWithPresets).map((systemModel) => {
@@ -941,6 +952,9 @@ export const transformMetaQuery = (
       // Default field type.
       field.type = field.type || 'string';
 
+      // Default field name.
+      field.name = field.name || slugToName(field.slug);
+
       const fieldStatement = getFieldStatement(models, existingModel, field);
 
       if (fieldStatement) {
@@ -950,15 +964,21 @@ export const transformMetaQuery = (
         });
       }
     } else if (action === 'alter') {
-      const newSlug = jsonValue?.slug;
+      const field = jsonValue as ModelField;
+      const newSlug = field.slug;
 
-      // Only push the statement if the column name is changing, otherwise we don't
-      // need it.
-      if (newSlug && !existingLinkField) {
-        dependencyStatements.push({
-          statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
-          params: [],
-        });
+      if (newSlug) {
+        // Default field name.
+        field.name = field.name || slugToName(field.slug);
+
+        // Only push the statement if the column name is changing, otherwise we don't
+        // need it.
+        if (!existingLinkField) {
+          dependencyStatements.push({
+            statement: `${statement} RENAME COLUMN "${slug}" TO "${newSlug}"`,
+            params: [],
+          });
+        }
       }
     } else if (action === 'drop' && !existingLinkField) {
       dependencyStatements.push({
