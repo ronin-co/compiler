@@ -386,12 +386,12 @@ export const getProperty = (obj: NestedObject, path: string) => {
  *
  * @returns The object with the property set.
  */
-export const setProperty = <T = NestedObject>(
-  obj: T,
+export const setProperty = <Object = NestedObject>(
+  obj: Object,
   path: string,
   value: unknown,
-): T => {
-  if (!obj) return setProperty({} as T, path, value);
+): Object => {
+  if (!obj) return setProperty({} as Object, path, value);
 
   const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
 

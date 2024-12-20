@@ -107,23 +107,23 @@ class Transaction {
     return statements;
   };
 
-  private formatRows<T = NativeRecord>(
+  private formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: true,
-  ): T;
-  private formatRows<T = NativeRecord>(
+  ): Record;
+  private formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: false,
-  ): Array<T>;
+  ): Array<Record>;
 
-  private formatRows<T = NativeRecord>(
+  private formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: boolean,
-  ): T | Array<T> {
-    const records: Array<T> = [];
+  ): Record | Array<Record> {
+    const records: Array<Record> = [];
 
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex];
@@ -163,7 +163,7 @@ class Transaction {
           }
         }
 
-        records[usableRowIndex] = setProperty<T>(
+        records[usableRowIndex] = setProperty<Record>(
           records[usableRowIndex],
           newSlug,
           newValue,
@@ -174,8 +174,11 @@ class Transaction {
     return single ? records[0] : records;
   }
 
-  formatResults<T>(results: Array<Array<RawRow>>, raw?: true): Array<Result<T>>;
-  formatResults<T>(results: Array<Array<ObjectRow>>, raw?: false): Array<Result<T>>;
+  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
+  formatResults<Record>(
+    results: Array<Array<ObjectRow>>,
+    raw?: false,
+  ): Array<Result<Record>>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -189,10 +192,10 @@ class Transaction {
    * @returns A list of formatted RONIN results, where each result is either a single
    * RONIN record, an array of RONIN records, or a RONIN count result.
    */
-  formatResults<T>(
+  formatResults<Record>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = true,
-  ): Array<Result<T>> {
+  ): Array<Result<Record>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
@@ -211,89 +214,97 @@ class Transaction {
           });
         });
 
-    const formattedResults = normalizedResults.map((rows, index): Result<T> | null => {
-      const { returning, query, fields: rawModelFields } = this.internalStatements[index];
+    const formattedResults = normalizedResults.map(
+      (rows, index): Result<Record> | null => {
+        const {
+          returning,
+          query,
+          fields: rawModelFields,
+        } = this.internalStatements[index];
 
-      // If the statement is not expected to return any data, there is no need to format
-      // any results, so we can return early.
-      if (!returning) return null;
+        // If the statement is not expected to return any data, there is no need to format
+        // any results, so we can return early.
+        if (!returning) return null;
 
-      const { queryType, queryModel, queryInstructions } = splitQuery(query);
-      const model = getModelBySlug(this.models, queryModel);
+        const { queryType, queryModel, queryInstructions } = splitQuery(query);
+        const model = getModelBySlug(this.models, queryModel);
 
-      // Allows the client to format fields whose type cannot be serialized in JSON,
-      // which is the format in which the compiler output is sent to the client.
-      const modelFields = Object.fromEntries(
-        model.fields.map((field) => [field.slug, field.type]),
-      );
+        // Allows the client to format fields whose type cannot be serialized in JSON,
+        // which is the format in which the compiler output is sent to the client.
+        const modelFields = Object.fromEntries(
+          model.fields.map((field) => [field.slug, field.type]),
+        );
 
-      // The query is expected to count records.
-      if (queryType === 'count') {
-        return { amount: rows[0][0] as number };
-      }
+        // The query is expected to count records.
+        if (queryType === 'count') {
+          return { amount: rows[0][0] as number };
+        }
 
-      // Whether the query will interact with a single record, or multiple at the same time.
-      const single = queryModel !== model.pluralSlug;
+        // Whether the query will interact with a single record, or multiple at the same time.
+        const single = queryModel !== model.pluralSlug;
 
-      // The query is targeting a single record.
-      if (single) {
-        return {
-          record: rows[0] ? this.formatRows<T>(rawModelFields, rows, single) : null,
+        // The query is targeting a single record.
+        if (single) {
+          return {
+            record: rows[0]
+              ? this.formatRows<Record>(rawModelFields, rows, single)
+              : null,
+            modelFields,
+          };
+        }
+
+        const pageSize = queryInstructions?.limitedTo;
+
+        // The query is targeting multiple records.
+        const output: MultipleRecordResult<Record> = {
+          records: this.formatRows<Record>(rawModelFields, rows, single),
           modelFields,
         };
-      }
 
-      const pageSize = queryInstructions?.limitedTo;
+        // If the amount of records was limited to a specific amount, that means pagination
+        // should be activated. This is only possible if the query matched any records.
+        if (pageSize && output.records.length > 0) {
+          // Pagination cursor for the next page.
+          if (output.records.length > pageSize) {
+            // Remove one record from the list, because we always load one too much, in
+            // order to see if there are more records available.
+            if (queryInstructions?.before) {
+              output.records.shift();
+            } else {
+              output.records.pop();
+            }
 
-      // The query is targeting multiple records.
-      const output: MultipleRecordResult<T> = {
-        records: this.formatRows<T>(rawModelFields, rows, single),
-        modelFields,
-      };
+            const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
+            const lastRecord = output.records.at(
+              direction === 'moreAfter' ? -1 : 0,
+            ) as NativeRecord;
 
-      // If the amount of records was limited to a specific amount, that means pagination
-      // should be activated. This is only possible if the query matched any records.
-      if (pageSize && output.records.length > 0) {
-        // Pagination cursor for the next page.
-        if (output.records.length > pageSize) {
-          // Remove one record from the list, because we always load one too much, in
-          // order to see if there are more records available.
-          if (queryInstructions?.before) {
-            output.records.shift();
-          } else {
-            output.records.pop();
+            output[direction] = generatePaginationCursor(
+              model,
+              queryInstructions.orderedBy,
+              lastRecord,
+            );
           }
 
-          const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
-          const lastRecord = output.records.at(
-            direction === 'moreAfter' ? -1 : 0,
-          ) as NativeRecord;
+          // Pagination cursor for the previous page. Only available if an existing
+          // cursor was provided in the query instructions.
+          if (queryInstructions?.before || queryInstructions?.after) {
+            const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
+            const firstRecord = output.records.at(
+              direction === 'moreAfter' ? -1 : 0,
+            ) as NativeRecord;
 
-          output[direction] = generatePaginationCursor(
-            model,
-            queryInstructions.orderedBy,
-            lastRecord,
-          );
+            output[direction] = generatePaginationCursor(
+              model,
+              queryInstructions.orderedBy,
+              firstRecord,
+            );
+          }
         }
 
-        // Pagination cursor for the previous page. Only available if an existing
-        // cursor was provided in the query instructions.
-        if (queryInstructions?.before || queryInstructions?.after) {
-          const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
-          const firstRecord = output.records.at(
-            direction === 'moreAfter' ? -1 : 0,
-          ) as NativeRecord;
-
-          output[direction] = generatePaginationCursor(
-            model,
-            queryInstructions.orderedBy,
-            firstRecord,
-          );
-        }
-      }
-
-      return output;
-    });
+        return output;
+      },
+    );
 
     // Filter out results whose statements are not expected to return any data.
     return formattedResults.filter((result) => result !== null);
