@@ -176,9 +176,11 @@ class Transaction {
           isMeta &&
           (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(newSlug)
         ) {
-          newValue = Object.entries(newValue as object).map(([slug, attributes]) => {
-            return { slug, ...attributes };
-          });
+          newValue = newValue
+            ? Object.entries(newValue as object).map(([slug, attributes]) => {
+                return { slug, ...attributes };
+              })
+            : [];
         }
 
         records[usableRowIndex] = setProperty<Record>(
