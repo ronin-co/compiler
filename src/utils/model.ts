@@ -649,6 +649,8 @@ const PLURAL_MODEL_ENTITIES = {
   preset: 'presets',
 } as const;
 
+export const PLURAL_MODEL_ENTITIES_VALUES = Object.values(PLURAL_MODEL_ENTITIES);
+
 /**
  * Converts an array of model entites (such as fields) to an object where the keys are
  * the slugs of the entities and the values are their attributes.
