@@ -10,7 +10,12 @@ import {
   Transaction,
 } from '@/src/index';
 
-import { RECORD_ID_REGEX, RECORD_TIMESTAMP_REGEX } from '@/fixtures/utils';
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
+import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS, slugToName } from '@/src/utils/model';
 
@@ -183,6 +188,77 @@ test('create new model that references itself', () => {
       'CREATE TABLE "teams" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME, "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME, "ronin.updatedBy" TEXT, "parentTeam" TEXT REFERENCES teams("id"))',
     params: [],
   });
+});
+
+test('get existing models', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        models: null,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries);
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'SELECT * FROM "ronin_schema"',
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  // Assert that the `fields`, `indexes`, `triggers`, and `presets` properties are
+  // formatted correctly, in order to match the `Model` type.
+  expect(result.records).toEqual([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: 'Account',
+      pluralName: 'Accounts',
+      slug: 'account',
+      pluralSlug: 'accounts',
+      idPrefix: 'acc',
+      identifiers: {
+        name: 'id',
+        slug: 'id',
+      },
+      table: 'accounts',
+      fields: [
+        ...SYSTEM_FIELDS,
+        {
+          name: 'Handle',
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+      indexes: [],
+      triggers: [],
+      presets: [],
+    },
+  ]);
 });
 
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`

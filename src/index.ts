@@ -10,6 +10,7 @@ import type {
 import { compileQueryInput } from '@/src/utils';
 import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
 import {
+  PLURAL_MODEL_ENTITIES_VALUES,
   ROOT_MODEL,
   addDefaultModelFields,
   addDefaultModelPresets,
@@ -111,17 +112,20 @@ class Transaction {
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: true,
+    isMeta: boolean,
   ): Record;
   private formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: false,
+    isMeta: boolean,
   ): Array<Record>;
 
   private formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: boolean,
+    isMeta: boolean,
   ): Record | Array<Record> {
     const records: Array<Record> = [];
 
@@ -161,6 +165,20 @@ class Transaction {
             newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
             usableRowIndex = 0;
           }
+        }
+
+        // If the query is used to alter the database schema, the result of the query
+        // will always be a model, because the only available queries for altering the
+        // database schema are `create.model`, `alter.model`, and `drop.model`. That means
+        // we need to ensure that the resulting record always matches the `Model` type,
+        // by formatting its fields accordingly.
+        if (
+          isMeta &&
+          (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(newSlug)
+        ) {
+          newValue = Object.entries(newValue as object).map(([slug, attributes]) => {
+            return { slug, ...attributes };
+          });
         }
 
         records[usableRowIndex] = setProperty<Record>(
@@ -229,6 +247,9 @@ class Transaction {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
         const model = getModelBySlug(this.models, queryModel);
 
+        // Whether the query interacts with the database schema.
+        const isMeta = queryModel === 'model' || queryModel === 'models';
+
         // Allows the client to format fields whose type cannot be serialized in JSON,
         // which is the format in which the compiler output is sent to the client.
         const modelFields = Object.fromEntries(
@@ -247,7 +268,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.formatRows<Record>(rawModelFields, rows, single)
+              ? this.formatRows<Record>(rawModelFields, rows, single, isMeta)
               : null,
             modelFields,
           };
@@ -257,7 +278,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.formatRows<Record>(rawModelFields, rows, single),
+          records: this.formatRows<Record>(rawModelFields, rows, single, isMeta),
           modelFields,
         };
 
