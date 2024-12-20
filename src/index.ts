@@ -107,23 +107,23 @@ class Transaction {
     return statements;
   };
 
-  private formatRows(
+  private formatRows<T = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: true,
-  ): NativeRecord;
-  private formatRows(
+  ): T;
+  private formatRows<T = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: false,
-  ): Array<NativeRecord>;
+  ): Array<T>;
 
-  private formatRows(
+  private formatRows<T = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: boolean,
-  ): NativeRecord | Array<NativeRecord> {
-    const records: Array<NativeRecord> = [];
+  ): T | Array<T> {
+    const records: Array<T> = [];
 
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex];
@@ -163,15 +163,19 @@ class Transaction {
           }
         }
 
-        records[usableRowIndex] = setProperty(records[usableRowIndex], newSlug, newValue);
+        records[usableRowIndex] = setProperty<T>(
+          records[usableRowIndex],
+          newSlug,
+          newValue,
+        );
       }
     }
 
     return single ? records[0] : records;
   }
 
-  formatResults(results: Array<Array<RawRow>>, raw?: true): Array<Result>;
-  formatResults(results: Array<Array<ObjectRow>>, raw?: false): Array<Result>;
+  formatResults<T>(results: Array<Array<RawRow>>, raw?: true): Array<Result<T>>;
+  formatResults<T>(results: Array<Array<ObjectRow>>, raw?: false): Array<Result<T>>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -185,10 +189,10 @@ class Transaction {
    * @returns A list of formatted RONIN results, where each result is either a single
    * RONIN record, an array of RONIN records, or a RONIN count result.
    */
-  formatResults(
+  formatResults<T>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = true,
-  ): Array<Result> {
+  ): Array<Result<T>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
@@ -207,7 +211,7 @@ class Transaction {
           });
         });
 
-    const formattedResults = normalizedResults.map((rows, index): Result | null => {
+    const formattedResults = normalizedResults.map((rows, index): Result<T> | null => {
       const { returning, query, fields: rawModelFields } = this.internalStatements[index];
 
       // If the statement is not expected to return any data, there is no need to format
@@ -234,7 +238,7 @@ class Transaction {
       // The query is targeting a single record.
       if (single) {
         return {
-          record: rows[0] ? this.formatRows(rawModelFields, rows, single) : null,
+          record: rows[0] ? this.formatRows<T>(rawModelFields, rows, single) : null,
           modelFields,
         };
       }
@@ -242,8 +246,8 @@ class Transaction {
       const pageSize = queryInstructions?.limitedTo;
 
       // The query is targeting multiple records.
-      const output: MultipleRecordResult = {
-        records: this.formatRows(rawModelFields, rows, single),
+      const output: MultipleRecordResult<T> = {
+        records: this.formatRows<T>(rawModelFields, rows, single),
         modelFields,
       };
 

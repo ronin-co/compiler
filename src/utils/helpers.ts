@@ -386,7 +386,7 @@ export const getProperty = (obj: NestedObject, path: string) => {
  *
  * @returns The object with the property set.
  */
-export const setProperty = <T extends NestedObject>(
+export const setProperty = <T = NestedObject>(
   obj: T,
   path: string,
   value: unknown,
