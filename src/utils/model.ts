@@ -1103,7 +1103,7 @@ export const transformMetaQuery = (
       });
 
       statementParts.push('BEGIN');
-      statementParts.push(effectStatements.join('; '));
+      statementParts.push(`${effectStatements.join('; ')};`);
       statementParts.push('END');
 
       statement += ` ${statementParts.join(' ')}`;
