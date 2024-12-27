@@ -1231,7 +1231,7 @@ test('create new trigger for creating records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); END',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -1300,7 +1300,7 @@ test('create new trigger for creating records with targeted fields', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4)',
+        'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); END',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -1376,7 +1376,7 @@ test('create new trigger for creating records with multiple effects', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8) END',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8); END',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
@@ -1457,7 +1457,7 @@ test('create new per-record trigger for creating records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5); END',
       params: [
         'owner',
         0,
@@ -1533,7 +1533,7 @@ test('create new per-record trigger for removing records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER DELETE ON "teams" FOR EACH ROW DELETE FROM "members" WHERE ("account" = OLD."createdBy")',
+        'CREATE TRIGGER "trigger_slug" AFTER DELETE ON "teams" FOR EACH ROW BEGIN DELETE FROM "members" WHERE ("account" = OLD."createdBy"); END',
       params: [],
     },
     {
@@ -1608,7 +1608,7 @@ test('create new per-record trigger with filters for creating records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE ?1)) INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6)',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE ?1)) BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?2, ?3, ?4, ?5, ?6); END',
       params: [
         '%_hidden',
         'owner',
