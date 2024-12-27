@@ -1102,9 +1102,9 @@ export const transformMetaQuery = (
         }).main.statement;
       });
 
-      if (effectStatements.length > 1) statementParts.push('BEGIN');
+      statementParts.push('BEGIN');
       statementParts.push(effectStatements.join('; '));
-      if (effectStatements.length > 1) statementParts.push('END');
+      statementParts.push('END');
 
       statement += ` ${statementParts.join(' ')}`;
     }
