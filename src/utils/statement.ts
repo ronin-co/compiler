@@ -47,8 +47,11 @@ export const prepareStatementValue = (
   // values must be plainly visible for manual human inspection.
   if (!statementParams) {
     const valueString =
-      typeof value === 'object' ? JSON.stringify(value) : value!.toString();
-    return `'${valueString}'`;
+      typeof value === 'object'
+        ? `json('${JSON.stringify(value)}')`
+        : `'${value!.toString()}'`;
+
+    return valueString;
   }
 
   let formattedValue = value;

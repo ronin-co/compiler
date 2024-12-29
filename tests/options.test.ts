@@ -44,7 +44,7 @@ test('inline statement parameters', async () => {
   });
 
   expect(transaction.statements[0].statement).toStartWith(
-    `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ('elaine', '["test@site.co","elaine@site.com"]'`,
+    `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES ('elaine', json('["test@site.co","elaine@site.com"]')`,
   );
   expect(transaction.statements[0].params).toEqual([]);
 
