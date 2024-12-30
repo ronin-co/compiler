@@ -1,4 +1,10 @@
-import type { ModelField, PublicModel } from '@/src/types/model';
+import type {
+  ModelField,
+  ModelIndex,
+  ModelPreset,
+  ModelTrigger,
+  PublicModel,
+} from '@/src/types/model';
 
 // Query Types
 export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';
@@ -116,8 +122,12 @@ type CreateQuery = {
 type AlterQuery = {
   model: string;
   to?: Partial<PublicModel>;
-  create?: Partial<Record<ModelEntityEnum, string | Record<string, any>>>;
-  alter?: Partial<Record<ModelEntityEnum, string>> & { to: Record<string, any> };
+  create?: Partial<
+    Record<ModelEntityEnum, ModelField | ModelIndex | ModelTrigger | ModelPreset>
+  >;
+  alter?: Partial<Record<ModelEntityEnum, string>> & {
+    to: Partial<ModelField | ModelIndex | ModelTrigger | ModelPreset>;
+  };
   drop?: Partial<Record<ModelEntityEnum, string>>;
 };
 

@@ -1933,7 +1933,6 @@ test('try to create new trigger with targeted fields and wrong action', () => {
         model: 'account',
         create: {
           trigger: {
-            model: { slug: 'account' },
             when: 'AFTER',
             action: 'INSERT',
             fields: [{ slug: 'email' }],
