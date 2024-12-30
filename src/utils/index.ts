@@ -154,7 +154,7 @@ export const compileQueryInput = (
   if (queryType === 'add' || queryType === 'set') {
     // This validation must be performed before any default fields (such as `ronin`) are
     // added to the record. Otherwise there are always fields present.
-    if (!isObject(instructions.to) || Object.keys(instructions.to).length === 0) {
+    if (!isObject(instructions!.to) || Object.keys(instructions!.to).length === 0) {
       throw new RoninError({
         message: `When using a \`${queryType}\` query, the \`to\` instruction must be a non-empty object.`,
         code: 'INVALID_TO_VALUE',
@@ -168,7 +168,7 @@ export const compileQueryInput = (
       statementParams,
       queryType,
       dependencyStatements,
-      { with: instructions.with, to: instructions.to },
+      { with: instructions!.with, to: instructions!.to },
       options?.parentModel,
     );
 
@@ -184,7 +184,7 @@ export const compileQueryInput = (
       models,
       model,
       statementParams,
-      instructions?.with,
+      instructions!.with,
       options?.parentModel,
     );
 

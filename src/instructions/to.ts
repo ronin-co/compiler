@@ -1,5 +1,5 @@
 import type { Model } from '@/src/types/model';
-import type { SetInstructions, Statement } from '@/src/types/query';
+import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
   expand,
   flatten,
@@ -61,7 +61,7 @@ export const handleTo = (
     // If records are being created or updated, set their update time.
     updatedAt: currentTime,
     // Allow for overwriting the default values provided above.
-    ...toInstruction.ronin,
+    ...(toInstruction.ronin as object),
   };
 
   // Check whether a query resides at the root of the `to` instruction.
@@ -131,7 +131,7 @@ export const handleTo = (
       subQueryInstructions.including = {
         ...defaultFieldsObject,
         ...(subQueryInstructions.including as object),
-      } as unknown as Array<string>;
+      };
     }
 
     let statement = '';
@@ -202,11 +202,16 @@ export const handleTo = (
           dependencyStatements.push(composeStatement('add', record));
         }
       } else if (isObject(fieldValue)) {
-        for (const recordToAdd of fieldValue.containing || []) {
+        const value = fieldValue as {
+          containing?: Array<FieldValue>;
+          notContaining?: Array<FieldValue>;
+        };
+
+        for (const recordToAdd of value.containing || []) {
           dependencyStatements.push(composeStatement('add', recordToAdd));
         }
 
-        for (const recordToRemove of fieldValue.notContaining || []) {
+        for (const recordToRemove of value.notContaining || []) {
           dependencyStatements.push(composeStatement('remove', recordToRemove));
         }
       }

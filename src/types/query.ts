@@ -1,89 +1,194 @@
-import type { ModelField } from '@/src/types/model';
 import type {
-  AddInstructionsSchema,
-  AddQuerySchema,
-  CombinedInstructionsSchema,
-  CountInstructionsSchema,
-  CountQuerySchema,
-  ExpressionSchema,
-  GetInstructionsSchema,
-  GetQuerySchema,
-  IncludingInstructionSchema,
-  InstructionSchema,
-  InstructionsSchema,
-  ModelEntityEnum,
-  ModelQueryTypeEnum,
-  OrderedByInstructionSchema,
-  QueryPaginationOptionsSchema,
-  QuerySchema,
-  QuerySchemaSchema,
-  QueryTypeEnum,
-  RemoveInstructionsSchema,
-  RemoveQuerySchema,
-  SetInstructionsSchema,
-  SetQuerySchema,
-  WithInstructionSchema,
-} from '@/src/validators/query';
-import type { z } from 'zod';
+  ModelField,
+  ModelIndex,
+  ModelPreset,
+  ModelTrigger,
+  PublicModel,
+} from '@/src/types/model';
+import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
-// Get Queries.
-export type GetQuery = z.infer<typeof GetQuerySchema>;
-export type GetInstructions = z.infer<typeof GetInstructionsSchema>;
+// Query Types
+export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';
+export type ModelQueryTypeEnum = 'create' | 'alter' | 'drop';
+export type ModelEntityEnum = 'field' | 'index' | 'trigger' | 'preset';
 
-// Set Queries.
-export type SetQuery = z.infer<typeof SetQuerySchema>;
-export type SetInstructions = z.infer<typeof SetInstructionsSchema>;
+// Field and Expressions
+export type FieldValue = string | number | boolean | null | unknown;
+export type FieldSelector = Record<string, FieldValue>;
 
-// Add Queries.
-export type AddQuery = z.infer<typeof AddQuerySchema>;
-export type AddInstructions = z.infer<typeof AddInstructionsSchema>;
+export type Expression = {
+  [QUERY_SYMBOLS.EXPRESSION]: string;
+};
 
-// Remove Queries.
-export type RemoveQuery = z.infer<typeof RemoveQuerySchema>;
-export type RemoveInstructions = z.infer<typeof RemoveInstructionsSchema>;
+// With Instructions
+export type WithInstructionRefinement =
+  | FieldValue
+  | {
+      being?: FieldValue | Array<FieldValue>;
+      notBeing?: FieldValue | Array<FieldValue>;
 
-// Count Queries.
-export type CountQuery = z.infer<typeof CountQuerySchema>;
-export type CountInstructions = z.infer<typeof CountInstructionsSchema>;
+      startingWith?: FieldValue | Array<FieldValue>;
+      notStartingWith?: FieldValue | Array<FieldValue>;
 
-// With Instructions.
-export type WithInstruction = z.infer<typeof WithInstructionSchema>;
+      endingWith?: FieldValue | Array<FieldValue>;
+      notEndingWith?: FieldValue | Array<FieldValue>;
 
-// Including Instructions.
-export type IncludingInstruction = z.infer<typeof IncludingInstructionSchema>;
+      containing?: FieldValue | Array<FieldValue>;
+      notContaining?: FieldValue | Array<FieldValue>;
 
-// Ordering Instructions.
-export type OrderedByInstrucion = z.infer<typeof OrderedByInstructionSchema>;
+      greaterThan?: FieldValue | Array<FieldValue>;
+      greaterOrEqual?: FieldValue | Array<FieldValue>;
 
-// Expressions.
-export type Expression = z.infer<typeof ExpressionSchema>;
+      lessThan?: FieldValue | Array<FieldValue>;
+      lessOrEqual?: FieldValue | Array<FieldValue>;
+    };
 
-/**
- * Union of the instructions for all query types. It requires or disallows fields
- * depending on the type of the query.
- *
- * For example: If `query.type` is `set`, `to` is required. The other way around,
- * if the query type is not `set`, `to` is not allowed.
- */
-export type Instructions = z.infer<typeof CombinedInstructionsSchema>;
-export type QueryInstructionType = z.infer<typeof InstructionSchema>;
+export type WithInstruction =
+  | Record<string, WithInstructionRefinement>
+  | Record<string, Record<string, WithInstructionRefinement>>
+  | Record<string, Array<WithInstructionRefinement>>
+  | Record<string, Record<string, Array<WithInstructionRefinement>>>;
 
-/**
- * Type containing all possible query instructions, regardless of the type of
- * the query.
- */
-export type CombinedInstructions = z.infer<typeof InstructionsSchema>;
+// Including Instructions
+export type IncludingInstruction = Record<string, unknown | GetQuery>;
 
-export type Query = z.infer<typeof QuerySchema>;
-export type QueryType =
-  | z.infer<typeof QueryTypeEnum>
-  | z.infer<typeof ModelQueryTypeEnum>;
-export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema>;
+// Ordering Instructions
+export type OrderedByInstruction = {
+  ascending?: Array<string | Expression>;
+  descending?: Array<string | Expression>;
+};
 
-export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
+// For Instructions
+export type ForInstruction = Array<string> | Record<string, string>;
 
-export type ModelQueryType = z.infer<typeof ModelQueryTypeEnum>;
-export type ModelEntityType = z.infer<typeof ModelEntityEnum>;
+// Query Instructions
+export type CombinedInstructions = {
+  with?: WithInstruction | Array<WithInstruction>;
+  to?: FieldSelector;
+  including?: IncludingInstruction;
+  selecting?: Array<string>;
+  orderedBy?: OrderedByInstruction;
+  before?: string | null;
+  after?: string | null;
+  limitedTo?: number;
+  for?: ForInstruction;
+};
+
+export type InstructionSchema =
+  | 'with'
+  | 'to'
+  | 'including'
+  | 'selecting'
+  | 'orderedBy'
+  | 'orderedBy.ascending'
+  | 'orderedBy.descending'
+  | 'before'
+  | 'after'
+  | 'limitedTo'
+  | 'for';
+
+// Query Types
+export type GetQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
+export type SetQuery = Record<
+  string,
+  Omit<CombinedInstructions, 'to'> & { to: FieldSelector }
+>;
+export type AddQuery = Record<
+  string,
+  Omit<CombinedInstructions, 'with' | 'for'> & { to: FieldSelector }
+>;
+export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
+export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
+
+// Individual Instructions
+export type GetInstructions = Omit<CombinedInstructions, 'to'>;
+export type SetInstructions = Omit<CombinedInstructions, 'to'> & { to: FieldSelector };
+export type AddInstructions = Omit<CombinedInstructions, 'with' | 'for'> & {
+  to: FieldSelector;
+};
+export type RemoveInstructions = Omit<CombinedInstructions, 'to'>;
+export type CountInstructions = Omit<CombinedInstructions, 'to'>;
+export type Instructions =
+  | GetInstructions
+  | SetInstructions
+  | AddInstructions
+  | RemoveInstructions
+  | CountInstructions;
+
+type CreateQuery = {
+  model: string | PublicModel;
+  to?: PublicModel;
+};
+
+type AlterQuery = {
+  model: string;
+  to?: Partial<PublicModel>;
+  create?: {
+    field?: ModelField;
+    index?: ModelIndex;
+    trigger?: ModelTrigger;
+    preset?: ModelPreset;
+  };
+  alter?:
+    | {
+        field?: string;
+        to?: Partial<ModelField>;
+      }
+    | {
+        index?: string;
+        to?: Partial<ModelIndex>;
+      }
+    | {
+        trigger?: string;
+        to?: Partial<ModelTrigger>;
+      }
+    | {
+        preset?: string;
+        to?: Partial<ModelPreset>;
+      };
+  drop?: Partial<Record<ModelEntityEnum, string>>;
+};
+
+type DropQuery = {
+  model: string;
+};
+
+// Model Queries
+export type ModelQuery =
+  | {
+      create: CreateQuery;
+    }
+  | {
+      alter: AlterQuery;
+    }
+  | {
+      drop: DropQuery;
+    };
+
+// Pagination Options
+export type QueryPaginationOptions = {
+  moreBefore?: string | null;
+  moreAfter?: string | null;
+};
+
+export type Query = {
+  get?: GetQuery;
+  set?: SetQuery;
+  add?: AddQuery;
+  remove?: RemoveQuery;
+  count?: CountQuery;
+
+  create?: CreateQuery;
+  alter?: AlterQuery;
+  drop?: DropQuery;
+};
+
+// Utility Types
+export type QueryType = QueryTypeEnum | ModelQueryTypeEnum;
+export type QueryInstructionType = InstructionSchema;
+export type QuerySchemaType = Partial<Record<string, Partial<CombinedInstructions>>>;
+export type ModelQueryType = ModelQueryTypeEnum;
+export type ModelEntityType = ModelEntityEnum;
 
 export interface Statement {
   statement: string;

@@ -591,7 +591,7 @@ const getFieldStatement = (
   model: Model,
   field: ModelField,
 ): string | null => {
-  let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
+  let statement = `"${field.slug}" ${typesInSQLite[field.type || 'string']}`;
 
   if (field.slug === 'id') statement += ' PRIMARY KEY';
   if (field.unique === true) statement += ' UNIQUE';
@@ -695,9 +695,9 @@ const handleSystemModel = (
     [action]: { model: action === 'create' ? systemModelClean : systemModelClean.slug },
   };
 
-  if (action === 'alter' && newModel) {
+  if (action === 'alter' && newModel && 'alter' in query && query.alter) {
     const { system: _, ...newModelClean } = newModel;
-    (query.alter as Query & { to: PartialModel }).to = newModelClean;
+    query.alter.to = newModelClean;
   }
 
   const statement = compileQueryInput(query, models, []);
@@ -725,7 +725,7 @@ export const transformMetaQuery = (
   query: Query,
 ): Query | null => {
   const { queryType } = splitQuery(query);
-  const subAltering = query.alter && !('to' in query.alter);
+  const subAltering = 'alter' in query && query.alter && !('to' in query.alter);
 
   const action =
     subAltering && query.alter
@@ -749,7 +749,7 @@ export const transformMetaQuery = (
 
   let jsonValue: Record<string, unknown> | undefined;
 
-  if (query.create) {
+  if ('create' in query && query.create) {
     const init = query.create.model;
     jsonValue =
       'to' in query.create
@@ -759,7 +759,7 @@ export const transformMetaQuery = (
     slug = modelSlug = jsonValue.slug as string;
   }
 
-  if (query.alter) {
+  if ('alter' in query && query.alter) {
     if ('to' in query.alter) {
       jsonValue = query.alter.to;
     } else {
@@ -776,7 +776,7 @@ export const transformMetaQuery = (
         jsonValue = { slug, ...item };
       }
 
-      if ('alter' in query.alter) jsonValue = query.alter.alter.to;
+      if ('alter' in query.alter && query.alter.alter) jsonValue = query.alter.alter.to;
     }
   }
 
