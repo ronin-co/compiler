@@ -12,7 +12,7 @@ export type ModelQueryTypeEnum = 'create' | 'alter' | 'drop';
 export type ModelEntityEnum = 'field' | 'index' | 'trigger' | 'preset';
 
 // Field and Expressions
-export type FieldValue = string | number | boolean | null | any;
+export type FieldValue = string | number | boolean | null | unknown;
 export type FieldSelector = Record<string, FieldValue>;
 
 export type Expression = {
