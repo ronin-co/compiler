@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type GetQuery, type Model, type Query, Transaction } from '@/src/index';
 
 import {
   RECORD_ID_REGEX,
@@ -240,7 +240,7 @@ test('get single record including unrelated records with filter', async () => {
                   },
                 },
               },
-            },
+            } as GetQuery,
           },
         },
       },

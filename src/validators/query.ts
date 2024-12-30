@@ -1,404 +1,152 @@
-import { z } from 'zod';
+// Query Types
+export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';
+export type ModelQueryTypeEnum = 'create' | 'alter' | 'drop';
+export type ModelEntityEnum = 'field' | 'index' | 'trigger' | 'preset';
 
-// Query Types.
-const QueryTypeEnum = z.enum(['get', 'set', 'add', 'remove', 'count']);
+// Field and Expressions
+export type FieldValue = string | number | boolean | null | any;
+export type FieldSelector = Record<string, FieldValue>;
 
-// Model Query Types.
-const ModelQueryTypeEnum = z.enum(['create', 'alter', 'drop']);
-const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
+export type Expression = {
+  __RONIN_EXPRESSION: string;
+};
 
-// Record.
-const FieldValue = z.union([z.string(), z.number(), z.boolean(), z.null(), z.any()], {
-  invalid_type_error:
-    'The value of a field must either be a string, number, boolean or null.',
-});
-const FieldSelector = z.record(FieldValue);
+// With Instructions
+export type WithInstructionRefinement =
+  | FieldValue
+  | {
+      being?: FieldValue | Array<FieldValue>;
+      notBeing?: FieldValue | Array<FieldValue>;
 
-// Expression
-const ExpressionSchema = z.object({
-  __RONIN_EXPRESSION: z.string(),
-});
+      startingWith?: FieldValue | Array<FieldValue>;
+      notStartingWith?: FieldValue | Array<FieldValue>;
 
-// With Instructions.
-const WithInstructionRefinementTypes = z.enum([
-  'being',
-  'notBeing',
-  'startingWith',
-  'endingWith',
-  'containing',
-  'greaterThan',
-  'lessThan',
-]);
+      endingWith?: FieldValue | Array<FieldValue>;
+      notEndingWith?: FieldValue | Array<FieldValue>;
 
-const WithInstructionRefinementSchema = z.union([
-  FieldValue,
-  z
-    .object({
-      being: z.union([FieldValue, z.array(FieldValue)]),
-      notBeing: z.union([FieldValue, z.array(FieldValue)]),
+      containing?: FieldValue | Array<FieldValue>;
+      notContaining?: FieldValue | Array<FieldValue>;
 
-      startingWith: z.union([FieldValue, z.array(FieldValue)]),
-      notStartingWith: z.union([FieldValue, z.array(FieldValue)]),
+      greaterThan?: FieldValue | Array<FieldValue>;
+      greaterOrEqual?: FieldValue | Array<FieldValue>;
 
-      endingWith: z.union([FieldValue, z.array(FieldValue)]),
-      notEndingWith: z.union([FieldValue, z.array(FieldValue)]),
+      lessThan?: FieldValue | Array<FieldValue>;
+      lessOrEqual?: FieldValue | Array<FieldValue>;
+    };
 
-      containing: z.union([FieldValue, z.array(FieldValue)]),
-      notContaining: z.union([FieldValue, z.array(FieldValue)]),
+export type WithInstruction =
+  | Record<string, WithInstructionRefinement>
+  | Record<string, Record<string, WithInstructionRefinement>>
+  | Record<string, Array<WithInstructionRefinement>>
+  | Record<string, Record<string, Array<WithInstructionRefinement>>>;
 
-      greaterThan: z.union([FieldValue, z.array(FieldValue)]),
-      greaterOrEqual: z.union([FieldValue, z.array(FieldValue)]),
+// Including Instructions
+export type IncludingInstruction = Record<string, unknown | GetQuery>;
 
-      lessThan: z.union([FieldValue, z.array(FieldValue)]),
-      lessOrEqual: z.union([FieldValue, z.array(FieldValue)]),
-    })
-    .partial()
-    .strict(
-      `A \`with\` instruction can only contain the following refinements: ${WithInstructionRefinementTypes.options
-        .map((refinementType) => `\`${refinementType}\``)
-        .join(', ')}.`,
-    )
-    .refine((value) => Object.keys(value).length > 0, {
-      message: 'A `with` instruction can not be empty.',
-    }),
-]);
+// Ordering Instructions
+export type OrderedByInstruction = {
+  ascending?: Array<string | Expression>;
+  descending?: Array<string | Expression>;
+};
 
-const WithInstructionSchema = z.record(
-  z.union([
-    // `with: { field: 'value' }
-    // `with: { field: { containing: 'value' } }
-    // `with: { field: { containing: ['value'] } }
-    WithInstructionRefinementSchema,
+// For Instructions
+export type ForInstruction = Array<string> | Record<string, string>;
 
-    // `with: { relatedRecord: { field: 'value' } }
-    // `with: { relatedRecord: { field: { containing: 'value' } } }
-    // `with: { relatedRecord: { field: { containing: ['value'] } } }
-    z.record(WithInstructionRefinementSchema),
+// Query Instructions
+export type CombinedInstructions = {
+  with?: WithInstruction | Array<WithInstruction>;
+  to?: FieldSelector;
+  including?: IncludingInstruction;
+  selecting?: Array<string>;
+  orderedBy?: OrderedByInstruction;
+  before?: string | null;
+  after?: string | null;
+  limitedTo?: number;
+  for?: ForInstruction;
+};
 
-    z
-      .array(
-        z.union([
-          // `with: { field: ['value'] }
-          // `with: { field: [{ containing: 'value' }] }
-          // `with: { field: [{ containing: ['value'] }] }
-          WithInstructionRefinementSchema,
+export type InstructionSchema =
+  | 'with'
+  | 'to'
+  | 'including'
+  | 'selecting'
+  | 'orderedBy'
+  | 'orderedBy.ascending'
+  | 'orderedBy.descending'
+  | 'before'
+  | 'after'
+  | 'limitedTo'
+  | 'for';
 
-          // `with: { relatedRecord: [{ field: 'value' }] }
-          // `with: { relatedRecord: [{ field: { containing: 'value' } }] }
-          // `with: { relatedRecord: [{ field: { containing: ['value'] } }] }
-          // `with: { relatedRecord: [{ containing: 'value', { field: { containing: 'value' } } }] }
-          // `with: { relatedRecord: [{ containing: ['value'], { field: { containing: ['value'] } } }] }
-          z.record(WithInstructionRefinementSchema),
-        ]),
-      )
-      .min(1, 'If an array of refinements is passed, it must not be empty.'),
+// Query Types
+export type GetQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
+export type SetQuery = Record<
+  string,
+  Omit<CombinedInstructions, 'to'> & { to: FieldSelector }
+>;
+export type AddQuery = Record<
+  string,
+  Omit<CombinedInstructions, 'with' | 'for'> & { to: FieldSelector }
+>;
+export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
+export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
 
-    // `with: { relatedRecord: { field: ['value'] } }`
-    // `with: { relatedRecord: { field: [{ containing: 'value' }] } }`
-    // `with: { relatedRecord: { field: [{ containing: ['value'] }] } }`
-    z
-      .record(
-        z.array(
-          z.union([
-            WithInstructionRefinementSchema,
-            z.record(WithInstructionRefinementSchema),
-          ]),
-        ),
-      )
-      .refine((value) => Object.keys(value).length > 0, {
-        message: 'A `with` instruction for a related record cannot be empty.',
-      }),
-  ]),
-);
+// Individual Instruction Exports
+export type GetInstructions = Omit<CombinedInstructions, 'to'>;
+export type SetInstructions = Omit<CombinedInstructions, 'to'> & { to: FieldSelector };
+export type AddInstructions = Omit<CombinedInstructions, 'with' | 'for'> & {
+  to: FieldSelector;
+};
+export type RemoveInstructions = Omit<CombinedInstructions, 'to'>;
+export type CountInstructions = Omit<CombinedInstructions, 'to'>;
+export type Instructions =
+  | GetInstructions
+  | SetInstructions
+  | AddInstructions
+  | RemoveInstructions
+  | CountInstructions;
 
-// Including Instructions.
-const IncludingInstructionSchema = z.record(
-  z.union([z.string(), z.lazy((): z.ZodTypeAny => GetQuerySchema)]),
-);
+// Model Queries
+export type ModelQuery =
+  | {
+      create: {
+        model: string | Record<string, any>;
+        to?: Record<string, any>;
+      };
+    }
+  | {
+      alter: {
+        model: string;
+        to?: Record<string, any>;
+        create?: Partial<Record<ModelEntityEnum, string | Record<string, any>>>;
+        alter?: Partial<Record<ModelEntityEnum, string>> & { to: Record<string, any> };
+        drop?: Partial<Record<ModelEntityEnum, string>>;
+      };
+    }
+  | {
+      drop: {
+        model: string;
+      };
+    };
 
-// Ordering Instructions.
-const OrderedByInstructionSchema = z
-  .object({
-    ascending: z
-      .array(
-        z.union([
-          z.string({
-            invalid_type_error:
-              'The `orderedBy.ascending` instruction must be an array of field slugs or expressions.',
-          }),
-          ExpressionSchema,
-        ]),
-        {
-          invalid_type_error:
-            'The `orderedBy.ascending` instruction must be an array of field slugs or expressions.',
-        },
-      )
-      .optional(),
-    descending: z
-      .array(
-        z.union([
-          z.string({
-            invalid_type_error:
-              'The `orderedBy.descending` instruction must be an array of field slugs or expressions.',
-          }),
-          ExpressionSchema,
-        ]),
-        {
-          invalid_type_error:
-            'The `orderedBy.descending` instruction must be an array of field slugs or expressions.',
-        },
-      )
-      .optional(),
-  })
-  .optional();
+// Pagination Options
+export type QueryPaginationOptions = {
+  moreBefore?: string | null;
+  moreAfter?: string | null;
+};
 
-// For Instructions.
-const ForInstructionSchema = z.union([z.array(z.string()), z.record(z.string())]);
+// Combined Query
+export type Query = {
+  get?: GetQuery;
+  set?: SetQuery;
+  add?: AddQuery;
+  remove?: RemoveQuery;
+  count?: CountQuery;
+} & Partial<ModelQuery>;
 
-// Query Instructions.
-const InstructionsSchema = z.object({
-  with: z.union(
-    [
-      WithInstructionSchema.refine((value) => Object.keys(value).length > 0, {
-        message: 'A `with` instruction must reference at least one field.',
-      }),
-      z
-        .array(
-          WithInstructionSchema.refine((value) => Object.keys(value).length > 0, {
-            message: 'A `with` instruction must reference at least one field.',
-          }),
-        )
-        .min(1, 'If an array is passed as `with`, it must not be empty.'),
-    ],
-    {
-      errorMap: () => ({
-        message: 'A `with` instruction must either be an object or an array of objects.',
-      }),
-    },
-  ),
-
-  to: FieldSelector.refine(
-    (value) => Object.keys(value).length > 0,
-    'The `to` instruction must not be empty.',
-  ),
-
-  including: IncludingInstructionSchema,
-
-  selecting: z.array(
-    z.string({
-      invalid_type_error: 'The `selecting` instruction must be an array of strings.',
-    }),
-  ),
-
-  orderedBy: OrderedByInstructionSchema,
-
-  before: z.union([z.string(), z.null()], {
-    errorMap: () => ({ message: 'The `before` instruction must be a string.' }),
-  }),
-
-  after: z.union([z.string(), z.null()], {
-    errorMap: () => ({ message: 'The `after` instruction must be a string.' }),
-  }),
-
-  limitedTo: z
-    .number({
-      invalid_type_error: 'The `limitedTo` instruction must be a number.',
-    })
-    .min(1, 'The `limitedTo` instruction must be greater than or equal to 1.')
-    .max(1000, 'The `limitedTo` instruction must be less than or equal to 1000.'),
-
-  for: ForInstructionSchema,
-});
-
-// Get Queries.
-const GetInstructionsSchema = InstructionsSchema.partial().omit({
-  to: true,
-});
-const GetQuerySchema = z.object({
-  get: z.record(z.string(), GetInstructionsSchema.nullable()),
-});
-
-// Set Queries.
-const SetInstructionsSchema = InstructionsSchema.partial().extend({
-  to: FieldSelector.refine(
-    (value) => Object.keys(value).length > 0,
-    'The `to` instruction must not be empty.',
-  ),
-});
-const SetQuerySchema = z.object({
-  set: z.record(z.string(), SetInstructionsSchema),
-});
-
-// Add Queries.
-const AddInstructionsSchema = InstructionsSchema.partial()
-  .omit({ with: true, for: true })
-  .extend({
-    to: FieldSelector.refine(
-      (value) => Object.keys(value).length > 0,
-      'The `to` instruction must not be empty.',
-    ),
-  });
-const AddQuerySchema = z.object({
-  add: z.record(z.string(), AddInstructionsSchema),
-});
-
-// Drop Queries.
-const RemoveInstructionsSchema = InstructionsSchema.partial().omit({
-  to: true,
-});
-const RemoveQuerySchema = z.object({
-  remove: z.record(z.string(), RemoveInstructionsSchema),
-});
-
-// Count Queries.
-const CountInstructionsSchema = InstructionsSchema.partial().omit({
-  to: true,
-});
-const CountQuerySchema = z.object({
-  count: z.record(z.string(), CountInstructionsSchema.nullable()),
-});
-
-// Query Instructions.
-const CombinedInstructionsSchema = z.union([
-  SetInstructionsSchema,
-  CountInstructionsSchema,
-  AddInstructionsSchema,
-  RemoveInstructionsSchema,
-  GetInstructionsSchema,
-]);
-const InstructionSchema = z.enum([
-  'with',
-  'to',
-  'including',
-  'selecting',
-  'orderedBy',
-  'orderedBy.ascending',
-  'orderedBy.descending',
-  'before',
-  'after',
-  'limitedTo',
-  'for',
-]);
-
-const QuerySchemaSchema = z.record(InstructionsSchema.partial());
-
-const QuerySchema = z
-  .object({
-    [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
-    [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
-    [QueryTypeEnum.Enum.add]: z.record(z.string(), AddInstructionsSchema),
-    [QueryTypeEnum.Enum.remove]: z.record(z.string(), RemoveInstructionsSchema),
-    [QueryTypeEnum.Enum.count]: z.record(z.string(), CountInstructionsSchema.nullable()),
-
-    [ModelQueryTypeEnum.Enum.create]: z.union([
-      z.object({
-        model: z.string(),
-        to: z.record(z.string(), z.any()),
-      }),
-      z.object({
-        model: z.record(z.string(), z.any()),
-      }),
-    ]),
-
-    [ModelQueryTypeEnum.Enum.alter]: z
-      .object({
-        model: z.string(),
-      })
-      .and(
-        z.union([
-          z.object({
-            to: z.record(z.string(), z.any()),
-          }),
-          z.object({
-            [ModelQueryTypeEnum.Enum.create]: z.union([
-              z.record(ModelEntityEnum, z.string()).and(
-                z.object({
-                  to: z.record(z.string(), z.any()),
-                }),
-              ),
-              z.record(ModelEntityEnum, z.record(z.string(), z.any())),
-            ]),
-          }),
-          z.object({
-            [ModelQueryTypeEnum.Enum.alter]: z.record(ModelEntityEnum, z.string()).and(
-              z.object({
-                to: z.record(z.string(), z.any()),
-              }),
-            ),
-          }),
-          z.object({
-            [ModelQueryTypeEnum.Enum.drop]: z.record(ModelEntityEnum, z.string()),
-          }),
-        ]),
-      ),
-
-    [ModelQueryTypeEnum.Enum.drop]: z.object({
-      model: z.string(),
-    }),
-  })
-  .partial();
-
-// Pagination Options.
-const QueryPaginationOptionsSchema = z.object({
-  moreBefore: z.string().nullish(),
-  moreAfter: z.string().nullish(),
-});
-
-// Get Queries.
-export type GetQuery = z.infer<typeof GetQuerySchema>;
-export type GetInstructions = z.infer<typeof GetInstructionsSchema>;
-
-// Set Queries.
-export type SetQuery = z.infer<typeof SetQuerySchema>;
-export type SetInstructions = z.infer<typeof SetInstructionsSchema>;
-
-// Add Queries.
-export type AddQuery = z.infer<typeof AddQuerySchema>;
-export type AddInstructions = z.infer<typeof AddInstructionsSchema>;
-
-// Remove Queries.
-export type RemoveQuery = z.infer<typeof RemoveQuerySchema>;
-export type RemoveInstructions = z.infer<typeof RemoveInstructionsSchema>;
-
-// Count Queries.
-export type CountQuery = z.infer<typeof CountQuerySchema>;
-export type CountInstructions = z.infer<typeof CountInstructionsSchema>;
-
-// With Instructions.
-export type WithInstruction = z.infer<typeof WithInstructionSchema>;
-
-// Including Instructions.
-export type IncludingInstruction = z.infer<typeof IncludingInstructionSchema>;
-
-// Ordering Instructions.
-export type OrderedByInstrucion = z.infer<typeof OrderedByInstructionSchema>;
-
-// Expressions.
-export type Expression = z.infer<typeof ExpressionSchema>;
-
-/**
- * Union of the instructions for all query types. It requires or disallows fields
- * depending on the type of the query.
- *
- * For example: If `query.type` is `set`, `to` is required. The other way around,
- * if the query type is not `set`, `to` is not allowed.
- */
-export type Instructions = z.infer<typeof CombinedInstructionsSchema>;
-export type QueryInstructionType = z.infer<typeof InstructionSchema>;
-
-/**
- * Type containing all possible query instructions, regardless of the type of
- * the query.
- */
-export type CombinedInstructions = z.infer<typeof InstructionsSchema>;
-
-export type Query = z.infer<typeof QuerySchema>;
-export type QueryType =
-  | z.infer<typeof QueryTypeEnum>
-  | z.infer<typeof ModelQueryTypeEnum>;
-export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema>;
-
-export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
-
-export type ModelQueryType = z.infer<typeof ModelQueryTypeEnum>;
-export type ModelEntityType = z.infer<typeof ModelEntityEnum>;
+// Utility Types
+export type QueryType = QueryTypeEnum | ModelQueryTypeEnum;
+export type QueryInstructionType = InstructionSchema;
+export type QuerySchemaType = Partial<Record<string, Partial<CombinedInstructions>>>;
+export type ModelQueryType = ModelQueryTypeEnum;
+export type ModelEntityType = ModelEntityEnum;

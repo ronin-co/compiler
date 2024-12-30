@@ -131,7 +131,7 @@ export const handleTo = (
       subQueryInstructions.including = {
         ...defaultFieldsObject,
         ...(subQueryInstructions.including as object),
-      } as unknown as Array<string>;
+      };
     }
 
     let statement = '';
