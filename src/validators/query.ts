@@ -1,29 +1,26 @@
 import { z } from 'zod';
 
 // Query Types.
-export const QueryTypeEnum = z.enum(['get', 'set', 'add', 'remove', 'count']);
+const QueryTypeEnum = z.enum(['get', 'set', 'add', 'remove', 'count']);
 
 // Model Query Types.
-export const ModelQueryTypeEnum = z.enum(['create', 'alter', 'drop']);
-export const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
+const ModelQueryTypeEnum = z.enum(['create', 'alter', 'drop']);
+const ModelEntityEnum = z.enum(['field', 'index', 'trigger', 'preset']);
 
 // Record.
-export const FieldValue = z.union(
-  [z.string(), z.number(), z.boolean(), z.null(), z.any()],
-  {
-    invalid_type_error:
-      'The value of a field must either be a string, number, boolean or null.',
-  },
-);
-export const FieldSelector = z.record(FieldValue);
+const FieldValue = z.union([z.string(), z.number(), z.boolean(), z.null(), z.any()], {
+  invalid_type_error:
+    'The value of a field must either be a string, number, boolean or null.',
+});
+const FieldSelector = z.record(FieldValue);
 
 // Expression
-export const ExpressionSchema = z.object({
+const ExpressionSchema = z.object({
   __RONIN_EXPRESSION: z.string(),
 });
 
 // With Instructions.
-export const WithInstructionRefinementTypes = z.enum([
+const WithInstructionRefinementTypes = z.enum([
   'being',
   'notBeing',
   'startingWith',
@@ -33,7 +30,7 @@ export const WithInstructionRefinementTypes = z.enum([
   'lessThan',
 ]);
 
-export const WithInstructionRefinementSchema = z.union([
+const WithInstructionRefinementSchema = z.union([
   FieldValue,
   z
     .object({
@@ -66,7 +63,7 @@ export const WithInstructionRefinementSchema = z.union([
     }),
 ]);
 
-export const WithInstructionSchema = z.record(
+const WithInstructionSchema = z.record(
   z.union([
     // `with: { field: 'value' }
     // `with: { field: { containing: 'value' } }
@@ -115,12 +112,12 @@ export const WithInstructionSchema = z.record(
 );
 
 // Including Instructions.
-export const IncludingInstructionSchema = z.record(
+const IncludingInstructionSchema = z.record(
   z.union([z.string(), z.lazy((): z.ZodTypeAny => GetQuerySchema)]),
 );
 
 // Ordering Instructions.
-export const OrderedByInstructionSchema = z
+const OrderedByInstructionSchema = z
   .object({
     ascending: z
       .array(
@@ -156,10 +153,10 @@ export const OrderedByInstructionSchema = z
   .optional();
 
 // For Instructions.
-export const ForInstructionSchema = z.union([z.array(z.string()), z.record(z.string())]);
+const ForInstructionSchema = z.union([z.array(z.string()), z.record(z.string())]);
 
 // Query Instructions.
-export const InstructionsSchema = z.object({
+const InstructionsSchema = z.object({
   with: z.union(
     [
       WithInstructionSchema.refine((value) => Object.keys(value).length > 0, {
@@ -214,26 +211,26 @@ export const InstructionsSchema = z.object({
 });
 
 // Get Queries.
-export const GetInstructionsSchema = InstructionsSchema.partial().omit({
+const GetInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
-export const GetQuerySchema = z.object({
+const GetQuerySchema = z.object({
   get: z.record(z.string(), GetInstructionsSchema.nullable()),
 });
 
 // Set Queries.
-export const SetInstructionsSchema = InstructionsSchema.partial().extend({
+const SetInstructionsSchema = InstructionsSchema.partial().extend({
   to: FieldSelector.refine(
     (value) => Object.keys(value).length > 0,
     'The `to` instruction must not be empty.',
   ),
 });
-export const SetQuerySchema = z.object({
+const SetQuerySchema = z.object({
   set: z.record(z.string(), SetInstructionsSchema),
 });
 
 // Add Queries.
-export const AddInstructionsSchema = InstructionsSchema.partial()
+const AddInstructionsSchema = InstructionsSchema.partial()
   .omit({ with: true, for: true })
   .extend({
     to: FieldSelector.refine(
@@ -241,35 +238,35 @@ export const AddInstructionsSchema = InstructionsSchema.partial()
       'The `to` instruction must not be empty.',
     ),
   });
-export const AddQuerySchema = z.object({
+const AddQuerySchema = z.object({
   add: z.record(z.string(), AddInstructionsSchema),
 });
 
 // Drop Queries.
-export const RemoveInstructionsSchema = InstructionsSchema.partial().omit({
+const RemoveInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
-export const RemoveQuerySchema = z.object({
+const RemoveQuerySchema = z.object({
   remove: z.record(z.string(), RemoveInstructionsSchema),
 });
 
 // Count Queries.
-export const CountInstructionsSchema = InstructionsSchema.partial().omit({
+const CountInstructionsSchema = InstructionsSchema.partial().omit({
   to: true,
 });
-export const CountQuerySchema = z.object({
+const CountQuerySchema = z.object({
   count: z.record(z.string(), CountInstructionsSchema.nullable()),
 });
 
 // Query Instructions.
-export const CombinedInstructionsSchema = z.union([
+const CombinedInstructionsSchema = z.union([
   SetInstructionsSchema,
   CountInstructionsSchema,
   AddInstructionsSchema,
   RemoveInstructionsSchema,
   GetInstructionsSchema,
 ]);
-export const InstructionSchema = z.enum([
+const InstructionSchema = z.enum([
   'with',
   'to',
   'including',
@@ -283,9 +280,9 @@ export const InstructionSchema = z.enum([
   'for',
 ]);
 
-export const QuerySchemaSchema = z.record(InstructionsSchema.partial());
+const QuerySchemaSchema = z.record(InstructionsSchema.partial());
 
-export const QuerySchema = z
+const QuerySchema = z
   .object({
     [QueryTypeEnum.Enum.get]: z.record(z.string(), GetInstructionsSchema.nullable()),
     [QueryTypeEnum.Enum.set]: z.record(z.string(), SetInstructionsSchema),
@@ -342,7 +339,66 @@ export const QuerySchema = z
   .partial();
 
 // Pagination Options.
-export const QueryPaginationOptionsSchema = z.object({
+const QueryPaginationOptionsSchema = z.object({
   moreBefore: z.string().nullish(),
   moreAfter: z.string().nullish(),
 });
+
+// Get Queries.
+export type GetQuery = z.infer<typeof GetQuerySchema>;
+export type GetInstructions = z.infer<typeof GetInstructionsSchema>;
+
+// Set Queries.
+export type SetQuery = z.infer<typeof SetQuerySchema>;
+export type SetInstructions = z.infer<typeof SetInstructionsSchema>;
+
+// Add Queries.
+export type AddQuery = z.infer<typeof AddQuerySchema>;
+export type AddInstructions = z.infer<typeof AddInstructionsSchema>;
+
+// Remove Queries.
+export type RemoveQuery = z.infer<typeof RemoveQuerySchema>;
+export type RemoveInstructions = z.infer<typeof RemoveInstructionsSchema>;
+
+// Count Queries.
+export type CountQuery = z.infer<typeof CountQuerySchema>;
+export type CountInstructions = z.infer<typeof CountInstructionsSchema>;
+
+// With Instructions.
+export type WithInstruction = z.infer<typeof WithInstructionSchema>;
+
+// Including Instructions.
+export type IncludingInstruction = z.infer<typeof IncludingInstructionSchema>;
+
+// Ordering Instructions.
+export type OrderedByInstrucion = z.infer<typeof OrderedByInstructionSchema>;
+
+// Expressions.
+export type Expression = z.infer<typeof ExpressionSchema>;
+
+/**
+ * Union of the instructions for all query types. It requires or disallows fields
+ * depending on the type of the query.
+ *
+ * For example: If `query.type` is `set`, `to` is required. The other way around,
+ * if the query type is not `set`, `to` is not allowed.
+ */
+export type Instructions = z.infer<typeof CombinedInstructionsSchema>;
+export type QueryInstructionType = z.infer<typeof InstructionSchema>;
+
+/**
+ * Type containing all possible query instructions, regardless of the type of
+ * the query.
+ */
+export type CombinedInstructions = z.infer<typeof InstructionsSchema>;
+
+export type Query = z.infer<typeof QuerySchema>;
+export type QueryType =
+  | z.infer<typeof QueryTypeEnum>
+  | z.infer<typeof ModelQueryTypeEnum>;
+export type QueryPaginationOptions = z.infer<typeof QueryPaginationOptionsSchema>;
+
+export type QuerySchemaType = z.infer<typeof QuerySchemaSchema>;
+
+export type ModelQueryType = z.infer<typeof ModelQueryTypeEnum>;
+export type ModelEntityType = z.infer<typeof ModelEntityEnum>;
