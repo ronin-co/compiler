@@ -1,4 +1,3 @@
-import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 import { z } from 'zod';
 
 // Query Types.
@@ -20,7 +19,7 @@ export const FieldSelector = z.record(FieldValue);
 
 // Expression
 export const ExpressionSchema = z.object({
-  [QUERY_SYMBOLS.EXPRESSION]: z.string(),
+  __RONIN_EXPRESSION: z.string(),
 });
 
 // With Instructions.
