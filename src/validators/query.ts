@@ -106,27 +106,33 @@ export type Instructions =
   | RemoveInstructions
   | CountInstructions;
 
+type CreateQuery = {
+  model: string | Record<string, any>;
+  to?: Record<string, any>;
+};
+
+type AlterQuery = {
+  model: string;
+  to?: Record<string, any>;
+  create?: Partial<Record<ModelEntityEnum, string | Record<string, any>>>;
+  alter?: Partial<Record<ModelEntityEnum, string>> & { to: Record<string, any> };
+  drop?: Partial<Record<ModelEntityEnum, string>>;
+};
+
+type DropQuery = {
+  model: string;
+};
+
 // Model Queries
 export type ModelQuery =
   | {
-      create: {
-        model: string | Record<string, any>;
-        to?: Record<string, any>;
-      };
+      create: CreateQuery;
     }
   | {
-      alter: {
-        model: string;
-        to?: Record<string, any>;
-        create?: Partial<Record<ModelEntityEnum, string | Record<string, any>>>;
-        alter?: Partial<Record<ModelEntityEnum, string>> & { to: Record<string, any> };
-        drop?: Partial<Record<ModelEntityEnum, string>>;
-      };
+      alter: AlterQuery;
     }
   | {
-      drop: {
-        model: string;
-      };
+      drop: DropQuery;
     };
 
 // Pagination Options
@@ -142,7 +148,11 @@ export type Query = {
   add?: AddQuery;
   remove?: RemoveQuery;
   count?: CountQuery;
-} & Partial<ModelQuery>;
+
+  create?: CreateQuery;
+  alter?: AlterQuery;
+  drop?: DropQuery;
+};
 
 // Utility Types
 export type QueryType = QueryTypeEnum | ModelQueryTypeEnum;

@@ -386,8 +386,8 @@ export const composeConditions = (
  */
 export const formatIdentifiers = (
   { identifiers }: Model,
-  queryInstructions: Instructions,
-): Instructions & SetInstructions => {
+  queryInstructions: Instructions | undefined,
+): (Instructions & SetInstructions) | undefined => {
   // Queries might not have instructions (such as `get.accounts`).
   if (!queryInstructions) return queryInstructions;
 
