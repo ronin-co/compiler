@@ -123,12 +123,29 @@ type CreateQuery = {
 type AlterQuery = {
   model: string;
   to?: Partial<PublicModel>;
-  create?: Partial<
-    Record<ModelEntityEnum, ModelField | ModelIndex | ModelTrigger | ModelPreset>
-  >;
-  alter?: Partial<Record<ModelEntityEnum, string>> & {
-    to: Partial<ModelField | ModelIndex | ModelTrigger | ModelPreset>;
+  create?: {
+    field?: ModelField;
+    index?: ModelIndex;
+    trigger?: ModelTrigger;
+    preset?: ModelPreset;
   };
+  alter?:
+    | {
+        field?: string;
+        to?: Partial<ModelField>;
+      }
+    | {
+        index?: string;
+        to?: Partial<ModelIndex>;
+      }
+    | {
+        trigger?: string;
+        to?: Partial<ModelTrigger>;
+      }
+    | {
+        preset?: string;
+        to?: Partial<ModelPreset>;
+      };
   drop?: Partial<Record<ModelEntityEnum, string>>;
 };
 
