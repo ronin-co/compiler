@@ -110,7 +110,7 @@ export type Instructions =
 
 type CreateQuery = {
   model: string | PublicModel;
-  to?: Record<string, any>;
+  to?: PublicModel;
 };
 
 type AlterQuery = {
