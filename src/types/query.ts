@@ -5,6 +5,7 @@ import type {
   ModelTrigger,
   PublicModel,
 } from '@/src/types/model';
+import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 // Query Types
 export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';
@@ -16,7 +17,7 @@ export type FieldValue = string | number | boolean | null | unknown;
 export type FieldSelector = Record<string, FieldValue>;
 
 export type Expression = {
-  __RONIN_EXPRESSION: string;
+  [QUERY_SYMBOLS.EXPRESSION]: string;
 };
 
 // With Instructions
@@ -99,7 +100,7 @@ export type AddQuery = Record<
 export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
 export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
 
-// Individual Instruction Exports
+// Individual Instructions
 export type GetInstructions = Omit<CombinedInstructions, 'to'>;
 export type SetInstructions = Omit<CombinedInstructions, 'to'> & { to: FieldSelector };
 export type AddInstructions = Omit<CombinedInstructions, 'with' | 'for'> & {
@@ -153,7 +154,6 @@ export type QueryPaginationOptions = {
   moreAfter?: string | null;
 };
 
-// Combined Query
 export type Query = {
   get?: GetQuery;
   set?: SetQuery;

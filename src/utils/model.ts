@@ -695,12 +695,7 @@ const handleSystemModel = (
     [action]: { model: action === 'create' ? systemModelClean : systemModelClean.slug },
   };
 
-  if (
-    action === 'alter' &&
-    newModel &&
-    'alter' in query &&
-    typeof query.alter !== 'undefined'
-  ) {
+  if (action === 'alter' && newModel && 'alter' in query && query.alter) {
     const { system: _, ...newModelClean } = newModel;
     query.alter.to = newModelClean;
   }
@@ -754,7 +749,7 @@ export const transformMetaQuery = (
 
   let jsonValue: Record<string, unknown> | undefined;
 
-  if ('create' in query && typeof query.create !== 'undefined') {
+  if ('create' in query && query.create) {
     const init = query.create.model;
     jsonValue =
       'to' in query.create
@@ -764,7 +759,7 @@ export const transformMetaQuery = (
     slug = modelSlug = jsonValue.slug as string;
   }
 
-  if ('alter' in query && typeof query.alter !== 'undefined') {
+  if ('alter' in query && query.alter) {
     if ('to' in query.alter) {
       jsonValue = query.alter.to;
     } else {
@@ -781,9 +776,7 @@ export const transformMetaQuery = (
         jsonValue = { slug, ...item };
       }
 
-      if ('alter' in query.alter && typeof query.alter.alter !== 'undefined') {
-        jsonValue = query.alter.alter.to;
-      }
+      if ('alter' in query.alter && query.alter.alter) jsonValue = query.alter.alter.to;
     }
   }
 

@@ -168,7 +168,7 @@ export const compileQueryInput = (
       statementParams,
       queryType,
       dependencyStatements,
-      { with: instructions?.with, to: instructions!.to },
+      { with: instructions!.with, to: instructions!.to },
       options?.parentModel,
     );
 
@@ -184,7 +184,7 @@ export const compileQueryInput = (
       models,
       model,
       statementParams,
-      instructions?.with,
+      instructions!.with,
       options?.parentModel,
     );
 
