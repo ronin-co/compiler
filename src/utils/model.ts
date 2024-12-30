@@ -730,7 +730,7 @@ export const transformMetaQuery = (
   query: Query,
 ): Query | null => {
   const { queryType } = splitQuery(query);
-  const subAltering = query.alter && !('to' in query.alter);
+  const subAltering = 'alter' in query && query.alter && !('to' in query.alter);
 
   const action =
     subAltering && query.alter
