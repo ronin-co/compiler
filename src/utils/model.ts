@@ -591,7 +591,7 @@ const getFieldStatement = (
   model: Model,
   field: ModelField,
 ): string | null => {
-  let statement = `"${field.slug}" ${typesInSQLite[field.type]}`;
+  let statement = `"${field.slug}" ${typesInSQLite[field.type || 'string']}`;
 
   if (field.slug === 'id') statement += ' PRIMARY KEY';
   if (field.unique === true) statement += ' UNIQUE';
