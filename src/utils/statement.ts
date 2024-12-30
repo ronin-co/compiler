@@ -1,4 +1,5 @@
 import type {
+  FieldSelector,
   GetInstructions,
   Instructions,
   Query,
@@ -200,7 +201,11 @@ export const composeConditions = (
   model: Model,
   statementParams: Array<unknown> | null,
   instructionName: QueryInstructionType,
-  value: WithFilters | WithValueOptions | Record<typeof QUERY_SYMBOLS.QUERY, Query>,
+  value:
+    | WithFilters
+    | WithValueOptions
+    | Record<typeof QUERY_SYMBOLS.QUERY, Query>
+    | FieldSelector,
   options: Omit<Parameters<typeof composeFieldValues>[5], 'fieldSlug'> & {
     fieldSlug?: string;
   },

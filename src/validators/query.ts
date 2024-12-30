@@ -1,3 +1,5 @@
+import type { PublicModel } from '@/src/types/model';
+
 // Query Types
 export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';
 export type ModelQueryTypeEnum = 'create' | 'alter' | 'drop';
@@ -107,7 +109,7 @@ export type Instructions =
   | CountInstructions;
 
 type CreateQuery = {
-  model: string | Record<string, any>;
+  model: string | PublicModel;
   to?: Record<string, any>;
 };
 

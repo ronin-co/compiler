@@ -20,7 +20,7 @@ import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 import { SYSTEM_FIELDS, slugToName } from '@/src/utils/model';
 
 test('create new model', () => {
-  const fields = [
+  const fields: Model['fields'] = [
     {
       slug: 'handle',
       type: 'string',
@@ -102,7 +102,7 @@ test('create new model', () => {
 // Ensure that a reasonable display name and URL slug are automatically selected for the
 // model, based on which fields are available.
 test('create new model with suitable default identifiers', () => {
-  const fields = [
+  const fields: Model['fields'] = [
     {
       slug: 'name',
       type: 'string',
@@ -134,7 +134,7 @@ test('create new model with suitable default identifiers', () => {
 
 // Assert whether the system models associated with the model are correctly created.
 test('create new model that has system models associated with it', () => {
-  const fields = [
+  const fields: Model['fields'] = [
     {
       slug: 'followers',
       type: 'link',
@@ -163,7 +163,7 @@ test('create new model that has system models associated with it', () => {
 });
 
 test('create new model that references itself', () => {
-  const fields = [
+  const fields: Model['fields'] = [
     {
       slug: 'parentTeam',
       type: 'link',
