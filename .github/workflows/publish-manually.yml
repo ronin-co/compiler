@@ -16,10 +16,9 @@ on:
 
 jobs:
   publish:
-    uses: ronin-co/github-actions/.github/workflows/publish-manually.yml@main
+    uses: ronin-co/actions/.github/workflows/publish-manually.yml@main
     with:
       version_type: ${{ inputs.version_type }}
-      package_dir: './'  # Adjust if your package is in a subdirectory
     secrets:
       NPM_TOKEN_READ_AND_WRITE: ${{ secrets.NPM_TOKEN_READ_AND_WRITE }}
       ORG_GH_APP_ID: ${{ secrets.ORG_GH_RONIN_APP_ID }}
