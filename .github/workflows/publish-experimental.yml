@@ -11,8 +11,6 @@ permissions:
 
 jobs:
   publish-experimental:
-    uses: ronin-co/github-actions/.github/workflows/publish-experimental.yml@main
-    with:
-      package_dir: './'  # Adjust if your package is in a subdirectory
+    uses: ronin-co/actions/.github/workflows/publish-experimental.yml@main
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN_READ_AND_WRITE }}
