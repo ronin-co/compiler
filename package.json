@@ -28,12 +28,12 @@
   "author": "ronin",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@biomejs/biome": "1.9.2",
+    "@biomejs/biome": "1.9.4",
     "@paralleldrive/cuid2": "2.2.2",
-    "@ronin/engine": "0.0.19",
-    "@types/bun": "1.1.10",
+    "@ronin/engine": "0.0.27",
+    "@types/bun": "1.1.14",
     "title": "4.0.1",
-    "tsup": "8.3.0",
-    "typescript": "5.6.2"
+    "tsup": "8.3.5",
+    "typescript": "5.7.2"
   }
 }
