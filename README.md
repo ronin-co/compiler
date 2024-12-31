@@ -1,8 +1,8 @@
 # RONIN Compiler
 
-[![code coverage](https://img.shields.io/codecov/c/github/ronin-co/compiler.svg)](https://codecov.io/github/ronin-co/compiler)
+[![code coverage](https://img.shields.io/codecov/c/github/ronin-co/compiler)](https://codecov.io/github/ronin-co/compiler)
 [![install size](https://packagephobia.com/badge?p=@ronin/compiler)](https://packagephobia.com/result?p=@ronin/compiler)
-[![tests](https://img.shields.io/github/actions/workflow/status/ronin-co/compiler/validate.yml)](https://github.com/ronin-co/compiler/actions/workflows/validate.yml)
+[![tests](https://img.shields.io/github/actions/workflow/status/ronin-co/compiler/validate.yml?label=tests)](https://github.com/ronin-co/compiler/actions/workflows/validate.yml)
 
 This package compiles [RONIN queries](https://ronin.co/docs/queries) to [SQLite](https://www.sqlite.org) statements.
 
