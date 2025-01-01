@@ -1,6 +1,7 @@
 import type { Model } from '@/src/types/model';
 import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
+  QUERY_SYMBOLS,
   expand,
   flatten,
   generateRecordId,
@@ -44,7 +45,12 @@ export const handleTo = (
   },
   parentModel?: Model,
 ): string => {
-  const currentTime = new Date().toISOString();
+  const currentTime = {
+    // Produces an ISO 8601 timestamp in the format "YYYY-MM-DDTHH:MM:SS.SSSZ", which
+    // matches the output of `new Date().toISOString()` in JavaScript.
+    [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
+  };
+
   const { with: withInstruction, to: toInstruction } = instructions;
 
   const defaultFields: Record<string, unknown> = {};
