@@ -105,23 +105,13 @@ export const handleTo = (
       getFieldFromModel(model, field, 'to');
     }
 
-    const defaultFieldsToAdd = subQuerySelectedFields
-      ? Object.entries(flatten(defaultFields)).filter(([key]) => {
-          return !subQuerySelectedFields.includes(key);
-        })
-      : [];
-
     let statement = '';
 
     // If specific fields were selected by the sub query, we need to list their respective
     // column names in the SQL statement, so that SQLite can reliably associate the values
     // retrieved by the sub query with the correct columns in the root query.
     if (subQuerySelectedFields) {
-      const selectedFields = [
-        ...subQueryFields,
-        ...defaultFieldsToAdd.map(([key]) => key),
-      ];
-      const columns = selectedFields.map((field) => {
+      const columns = subQueryFields.map((field) => {
         return getFieldFromModel(model, field, 'to').fieldSelector;
       });
 
