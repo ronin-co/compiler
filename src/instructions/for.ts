@@ -23,6 +23,8 @@ export const handleFor = (
     : instructions.for;
 
   for (const presetSlug in normalizedFor) {
+    if (!Object.hasOwn(normalizedFor, presetSlug)) continue;
+
     const arg = normalizedFor[presetSlug];
     const preset = model.presets?.find((preset) => preset.slug === presetSlug);
 
@@ -44,6 +46,8 @@ export const handleFor = (
     }
 
     for (const subInstruction in replacedForFilter) {
+      if (!Object.hasOwn(replacedForFilter, subInstruction)) continue;
+
       const instructionName = subInstruction as keyof Instructions;
       const currentValue = instructions[instructionName];
 

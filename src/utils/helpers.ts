@@ -1,5 +1,10 @@
 import type { Model } from '@/src/types/model';
-import type { Query, QuerySchemaType, QueryType } from '@/src/types/query';
+import type {
+  CombinedInstructions,
+  Query,
+  QuerySchemaType,
+  QueryType,
+} from '@/src/types/query';
 
 import { init as cuid } from '@paralleldrive/cuid2';
 
@@ -54,7 +59,9 @@ export type RawFieldType = (typeof RAW_FIELD_TYPES)[number];
  *
  * @returns An alias for the joined table.
  */
-export const composeIncludedTableAlias = (fieldSlug: string) => `including_${fieldSlug}`;
+export const composeIncludedTableAlias = (fieldSlug: string): string => {
+  return `including_${fieldSlug}`;
+};
 
 type RoninErrorCode =
   | 'MODEL_NOT_FOUND'
@@ -125,7 +132,7 @@ const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
  *
  * @returns The generated ID.
  */
-export const generateRecordId = (prefix: Model['idPrefix']) =>
+export const generateRecordId = (prefix: Model['idPrefix']): string =>
   `${prefix}_${cuid({ length: 16 })()}`;
 
 /**
@@ -155,7 +162,7 @@ export const capitalize = (str: string): string => {
  *
  * @returns The sanitized string.
  */
-const sanitize = (str: string) => {
+const sanitize = (str: string): string => {
   if (!str || str.length === 0) return '';
 
   return (
@@ -274,6 +281,8 @@ export const findInObject = (
   let found = false;
 
   for (const key in obj) {
+    if (!Object.hasOwn(obj, key)) continue;
+
     const value = obj[key];
 
     if (isObject(value)) {
@@ -310,8 +319,14 @@ type NestedObject = {
  *
  * @returns A flattened object.
  */
-export const flatten = (obj: NestedObject, prefix = '', res: NestedObject = {}) => {
+export const flatten = (
+  obj: NestedObject,
+  prefix = '',
+  res: NestedObject = {},
+): NestedObject => {
   for (const key in obj) {
+    if (!Object.hasOwn(obj, key)) continue;
+
     const path = prefix ? `${prefix}.${key}` : key;
     const value = obj[key];
 
@@ -332,12 +347,9 @@ export const flatten = (obj: NestedObject, prefix = '', res: NestedObject = {}) 
  *
  * @returns The object without the omitted properties.
  */
-export const omit = <T extends Record<string, unknown>, K extends keyof T>(
-  obj: T,
-  properties: Array<K>,
-): Omit<T, K> =>
+export const omit = <T, K extends keyof T>(obj: T, properties: Array<K>): Omit<T, K> =>
   Object.fromEntries(
-    Object.entries(obj).filter(([key]) => !properties.includes(key as K)),
+    Object.entries(obj as object).filter(([key]) => !properties.includes(key as K)),
   ) as Omit<T, K>;
 
 /**
@@ -373,7 +385,7 @@ export const expand = (obj: NestedObject): NestedObject => {
  *
  * @returns The value of the property.
  */
-export const getProperty = (obj: NestedObject, path: string) => {
+export const getProperty = (obj: NestedObject, path: string): unknown => {
   return path.split('.').reduce((acc, key) => acc?.[key] as NestedObject, obj);
 };
 
@@ -395,7 +407,7 @@ export const setProperty = <Object = NestedObject>(
 
   const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
 
-  const _set = (node: NestedObject) => {
+  const _set = (node: NestedObject): void => {
     if (segments.length > 1) {
       const key = segments.shift() as string;
       const nextIsNum = !Number.isNaN(Number.parseInt(segments[0]));
@@ -423,7 +435,13 @@ export const setProperty = <Object = NestedObject>(
  *
  * @returns The type, model, and instructions of the provided query.
  */
-export const splitQuery = (query: Query) => {
+export const splitQuery = (
+  query: Query,
+): {
+  queryType: QueryType;
+  queryModel: string;
+  queryInstructions: CombinedInstructions;
+} => {
   // The type of query that is being executed (`add`, `get`, etc).
   const queryType = Object.keys(query)[0] as QueryType;
 
@@ -431,7 +449,9 @@ export const splitQuery = (query: Query) => {
   const queryModel = Object.keys(query[queryType] as QuerySchemaType)[0];
 
   // The instructions of the query (`with`, `including`, etc).
-  const queryInstructions = (query[queryType] as QuerySchemaType)[queryModel];
+  const queryInstructions = (query[queryType] as QuerySchemaType)[
+    queryModel
+  ] as CombinedInstructions;
 
   return { queryType, queryModel, queryInstructions };
 };

@@ -163,6 +163,8 @@ export const handleTo = (
   // establish the relationship between two other models, as those two do not share a
   // direct link.
   for (const fieldSlug in toInstruction) {
+    if (!Object.hasOwn(toInstruction, fieldSlug)) continue;
+
     const fieldValue = toInstruction[fieldSlug];
     const fieldDetails = getFieldFromModel(model, fieldSlug, 'to', false);
 

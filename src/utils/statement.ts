@@ -83,7 +83,7 @@ export const parseFieldExpression = (
   instructionName: QueryInstructionType,
   expression: string,
   parentModel?: Model,
-) => {
+): string => {
   return expression.replace(RONIN_MODEL_FIELD_REGEX, (match) => {
     let toReplace: string = QUERY_SYMBOLS.FIELD;
     let rootModel: Model = model;

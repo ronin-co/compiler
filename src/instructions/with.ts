@@ -21,26 +21,27 @@ const getMatcher = (value: unknown, negative: boolean): string => {
 };
 
 export const WITH_CONDITIONS = {
-  being: (value) => [getMatcher(value, false), value],
-  notBeing: (value) => [getMatcher(value, true), value],
+  being: (value): WithPair => [getMatcher(value, false), value],
+  notBeing: (value): WithPair => [getMatcher(value, true), value],
 
-  startingWith: (value) => ['LIKE', `${value}%`],
-  notStartingWith: (value) => ['NOT LIKE', `${value}%`],
+  startingWith: (value): WithPair => ['LIKE', `${value}%`],
+  notStartingWith: (value): WithPair => ['NOT LIKE', `${value}%`],
 
-  endingWith: (value) => ['LIKE', `%${value}`],
-  notEndingWith: (value) => ['NOT LIKE', `%${value}`],
+  endingWith: (value): WithPair => ['LIKE', `%${value}`],
+  notEndingWith: (value): WithPair => ['NOT LIKE', `%${value}`],
 
-  containing: (value) => ['LIKE', `%${value}%`],
-  notContaining: (value) => ['NOT LIKE', `%${value}%`],
+  containing: (value): WithPair => ['LIKE', `%${value}%`],
+  notContaining: (value): WithPair => ['NOT LIKE', `%${value}%`],
 
-  greaterThan: (value) => ['>', value],
-  greaterOrEqual: (value) => ['>=', value],
+  greaterThan: (value): WithPair => ['>', value],
+  greaterOrEqual: (value): WithPair => ['>=', value],
 
-  lessThan: (value) => ['<', value],
-  lessOrEqual: (value) => ['<=', value],
+  lessThan: (value): WithPair => ['<', value],
+  lessOrEqual: (value): WithPair => ['<=', value],
 } satisfies Record<string, WithMatcher>;
 
-type WithMatcher = (value: unknown) => [string, unknown];
+type WithPair = [string, unknown];
+type WithMatcher = (value: unknown) => WithPair;
 type WithCondition = keyof typeof WITH_CONDITIONS;
 
 type WithValue = string | number | null;
