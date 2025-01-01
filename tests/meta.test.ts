@@ -1171,7 +1171,7 @@ test('create new trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER \"trigger_slug\" AFTER INSERT ON \"accounts\" BEGIN INSERT INTO \"signups\" (\"year\", \"id\") VALUES ('2000', 'sig_vo0fxfmuyq227hgb'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES ('2000', 'sig_vo0fxfmuyq227hgb'); END`,
       params: [],
     },
     {
