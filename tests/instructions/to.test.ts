@@ -708,12 +708,8 @@ test('set single record to result of nested query', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'david',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah9j',
-      ],
+      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['david', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
@@ -918,11 +914,8 @@ test('add multiple records with nested sub query and specific fields', async () 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("handle", "id", "ronin.createdAt", "ronin.updatedAt") SELECT "handle", "id", ?1 as "ronin.createdAt", ?2 as "ronin.updatedAt" FROM "accounts" RETURNING *',
-      params: [
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'INSERT INTO "users" ("handle", "id") SELECT "handle", "id" FROM "accounts" RETURNING *',
+      params: [],
       returning: true,
     },
   ]);
@@ -979,8 +972,8 @@ test('add multiple records with nested sub query and specific meta fields', asyn
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("ronin.updatedAt", "id", "ronin.createdAt") SELECT "ronin.updatedAt", "id", ?1 as "ronin.createdAt" FROM "accounts" RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX)],
+        'INSERT INTO "users" ("ronin.updatedAt", "id") SELECT "ronin.updatedAt", "id" FROM "accounts" RETURNING *',
+      params: [],
       returning: true,
     },
   ]);

@@ -1,7 +1,7 @@
 import type { Model } from '@/src/types/model';
 import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
-  QUERY_SYMBOLS,
+  CURRENT_TIME_EXPRESSION,
   expand,
   flatten,
   generateRecordId,
@@ -45,12 +45,6 @@ export const handleTo = (
   },
   parentModel?: Model,
 ): string => {
-  const currentTime = {
-    // Produces an ISO 8601 timestamp in the format "YYYY-MM-DDTHH:MM:SS.SSSZ", which
-    // matches the output of `new Date().toISOString()` in JavaScript.
-    [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
-  };
-
   const { with: withInstruction, to: toInstruction } = instructions;
 
   const defaultFields: Record<string, unknown> = {};
@@ -61,14 +55,14 @@ export const handleTo = (
     defaultFields.id = toInstruction.id || generateRecordId(model.idPrefix);
   }
 
-  defaultFields.ronin = {
-    // If records are being created, set their creation time.
-    ...(queryType === 'add' ? { createdAt: currentTime } : {}),
-    // If records are being created or updated, set their update time.
-    updatedAt: currentTime,
-    // Allow for overwriting the default values provided above.
-    ...(toInstruction.ronin as object),
-  };
+  if (queryType === 'set' || toInstruction.ronin) {
+    defaultFields.ronin = {
+      // If records are being updated, bump their update time.
+      ...(queryType === 'set' ? { updatedAt: CURRENT_TIME_EXPRESSION } : {}),
+      // Allow for overwriting the default values provided above.
+      ...(toInstruction.ronin as object),
+    };
+  }
 
   // Check whether a query resides at the root of the `to` instruction.
   const symbol = getSymbol(toInstruction);

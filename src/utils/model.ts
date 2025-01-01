@@ -18,6 +18,7 @@ import type {
   Statement,
 } from '@/src/types/query';
 import {
+  CURRENT_TIME_EXPRESSION,
   MODEL_ENTITY_ERROR_CODES,
   QUERY_SYMBOLS,
   RoninError,
@@ -354,6 +355,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
     name: 'RONIN - Created At',
     type: 'date',
     slug: 'ronin.createdAt',
+    defaultValue: CURRENT_TIME_EXPRESSION,
   },
   {
     name: 'RONIN - Created By',
@@ -364,6 +366,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
     name: 'RONIN - Updated At',
     type: 'date',
     slug: 'ronin.updatedAt',
+    defaultValue: CURRENT_TIME_EXPRESSION,
   },
   {
     name: 'RONIN - Updated By',
@@ -598,8 +601,19 @@ const getFieldStatement = (
   if (field.slug === 'id') statement += ' PRIMARY KEY';
   if (field.unique === true) statement += ' UNIQUE';
   if (field.required === true) statement += ' NOT NULL';
-  if (typeof field.defaultValue !== 'undefined')
-    statement += ` DEFAULT ${typeof field.defaultValue === 'string' ? `'${field.defaultValue}'` : field.defaultValue}`;
+
+  if (typeof field.defaultValue !== 'undefined') {
+    const symbol = getSymbol(field.defaultValue);
+
+    let value =
+      typeof field.defaultValue === 'string'
+        ? `'${field.defaultValue}'`
+        : field.defaultValue;
+    if (symbol) value = `(${parseFieldExpression(model, 'to', symbol.value as string)})`;
+
+    statement += ` DEFAULT ${value}`;
+  }
+
   if (field.collation) statement += ` COLLATE ${field.collation}`;
   if (field.increment === true) statement += ' AUTOINCREMENT';
 

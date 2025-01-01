@@ -51,6 +51,12 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
 export const RAW_FIELD_TYPES = ['string', 'number', 'boolean'] as const;
 export type RawFieldType = (typeof RAW_FIELD_TYPES)[number];
 
+// An expression that produces a timestamp in the format "YYYY-MM-DDTHH:MM:SS.SSSZ",
+// which matches the output of `new Date().toISOString()` in JavaScript (ISO 8601).
+export const CURRENT_TIME_EXPRESSION = {
+  [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
+};
+
 /**
  * Composes an alias for a table that should be joined into the root table.
  *
