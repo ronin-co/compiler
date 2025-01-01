@@ -935,12 +935,8 @@ test('create new index', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'indexSlug', ...index }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
       returning: true,
     },
   ]);
@@ -1042,12 +1038,8 @@ test('create new index with field expressions', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'indexSlug', ...index }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
       returning: true,
     },
   ]);
@@ -1090,12 +1082,8 @@ test('create new index with ordered and collated fields', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'indexSlug', ...index }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
       returning: true,
     },
   ]);
@@ -1181,8 +1169,8 @@ test('drop existing index', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_remove("indexes", '$.indexSlug'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_remove("indexes", '$.indexSlug'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?1) RETURNING *`,
+      params: ['account'],
       returning: true,
     },
   ]);
@@ -1231,21 +1219,12 @@ test('create new trigger for creating records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); END',
-      params: [
-        2000,
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES (?1, ?2); END',
+      params: [2000, expect.stringMatching(RECORD_ID_REGEX)],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'account'],
       returning: true,
     },
   ]);
@@ -1300,21 +1279,12 @@ test('create new trigger for creating records with targeted fields', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); END',
-      params: [
-        2000,
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES (?1, ?2); END',
+      params: [2000, expect.stringMatching(RECORD_ID_REGEX)],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'account'],
       returning: true,
     },
   ]);
@@ -1376,25 +1346,17 @@ test('create new trigger for creating records with multiple effects', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4); INSERT INTO "candidates" ("year", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?5, ?6, ?7, ?8); END',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES (?1, ?2); INSERT INTO "candidates" ("year", "id") VALUES (?3, ?4); END',
       params: [
         2000,
         expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         2020,
         expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       ],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'account'],
       returning: true,
     },
   ]);
@@ -1457,22 +1419,12 @@ test('create new per-record trigger for creating records', () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (NEW."createdBy", ?1, ?2, ?3, ?4, ?5); END',
-      params: [
-        'owner',
-        0,
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", ?1, ?2, ?3); END',
+      params: ['owner', 0, expect.stringMatching(RECORD_ID_REGEX)],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify({ slug: 'triggerSlug', ...trigger }),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'team',
-      ],
+      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'team'],
       returning: true,
     },
   ]);
@@ -1668,8 +1620,8 @@ test('drop existing trigger', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_remove("triggers", '$.triggerSlug'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'team'],
+      statement: `UPDATE "ronin_schema" SET "triggers" = json_remove("triggers", '$.triggerSlug'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?1) RETURNING *`,
+      params: ['team'],
       returning: true,
     },
   ]);
@@ -1709,12 +1661,8 @@ test('create new preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', ?1), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify(preset),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify(preset), 'account'],
       returning: true,
     },
   ]);
