@@ -4,3 +4,4 @@ coverage:
       default:
         target: 100
         removed_code_behavior: off
+    patch: off
