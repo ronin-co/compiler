@@ -2,7 +2,6 @@ import type { Model } from '@/src/types/model';
 import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
-  expand,
   flatten,
   generateRecordId,
   getSymbol,
@@ -71,7 +70,7 @@ export const handleTo = (
   // of fields and/or values for the SQL query, since the fields and values are all
   // derived from the sub query. This allows us to keep the SQL statement lean.
   if (symbol?.type === 'query') {
-    let { queryModel: subQueryModelSlug, queryInstructions: subQueryInstructions } =
+    const { queryModel: subQueryModelSlug, queryInstructions: subQueryInstructions } =
       splitQuery(symbol.value);
     const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
@@ -111,28 +110,6 @@ export const handleTo = (
           return !subQuerySelectedFields.includes(key);
         })
       : [];
-
-    // If the sub query selects only a subset of fields from its model using
-    // `selecting`, there is a chance that the fields returned by the sub query will not
-    // include the metadata fields of the retrieved records.
-    //
-    // In that case, we need to instruct the sub query to explicitly return the default
-    // fields for the records in the root query, otherwise the records in the root query
-    // will be missing the metadata fields, since they won't come from the sub query.
-    //
-    // In other words, by default, the metadata fields of the root query will be provided
-    // by the sub query. If the sub query doesn't provide them, we need to "fill in" the
-    // missing metadata fields.
-    if (defaultFieldsToAdd.length > 0) {
-      const defaultFieldsObject = expand(Object.fromEntries(defaultFieldsToAdd));
-
-      if (!subQueryInstructions) subQueryInstructions = {};
-
-      subQueryInstructions.including = {
-        ...defaultFieldsObject,
-        ...(subQueryInstructions.including as object),
-      };
-    }
 
     let statement = '';
 
