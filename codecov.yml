@@ -1,9 +1,0 @@
-coverage:
-  precision: 5
-  round: down
-  status:
-    project:
-      default:
-        target: 100
-        removed_code_behavior: off
-    patch: off
