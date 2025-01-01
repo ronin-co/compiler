@@ -1138,6 +1138,7 @@ test('create new trigger for creating records', () => {
           signup: {
             to: {
               year: 2000,
+              id: 'sig_vo0fxfmuyq227hgb',
             },
           },
         },
@@ -1170,9 +1171,8 @@ test('create new trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES (?1, ?2); END',
-      params: [2000, expect.stringMatching(RECORD_ID_REGEX)],
+      statement: `CREATE TRIGGER \"trigger_slug\" AFTER INSERT ON \"accounts\" BEGIN INSERT INTO \"signups\" (\"year\", \"id\") VALUES ('2000', 'sig_vo0fxfmuyq227hgb'); END`,
+      params: [],
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
@@ -1192,6 +1192,7 @@ test('create new trigger for creating records with targeted fields', () => {
           signup: {
             to: {
               year: 2000,
+              id: 'sig_iiqimjelgft0tx1r',
             },
           },
         },
@@ -1230,9 +1231,8 @@ test('create new trigger for creating records with targeted fields', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES (?1, ?2); END',
-      params: [2000, expect.stringMatching(RECORD_ID_REGEX)],
+      statement: `CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES ('2000', 'sig_iiqimjelgft0tx1r'); END`,
+      params: [],
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
@@ -1252,6 +1252,7 @@ test('create new trigger for creating records with multiple effects', () => {
           signup: {
             to: {
               year: 2000,
+              id: 'sig_rq4i2ww9trefxeva',
             },
           },
         },
@@ -1261,6 +1262,7 @@ test('create new trigger for creating records with multiple effects', () => {
           candidate: {
             to: {
               year: 2020,
+              id: 'can_hga5r5kkkb3fsojl',
             },
           },
         },
@@ -1297,14 +1299,8 @@ test('create new trigger for creating records with multiple effects', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES (?1, ?2); INSERT INTO "candidates" ("year", "id") VALUES (?3, ?4); END',
-      params: [
-        2000,
-        expect.stringMatching(RECORD_ID_REGEX),
-        2020,
-        expect.stringMatching(RECORD_ID_REGEX),
-      ],
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES ('2000', 'sig_rq4i2ww9trefxeva'); INSERT INTO "candidates" ("year", "id") VALUES ('2020', 'can_hga5r5kkkb3fsojl'); END`,
+      params: [],
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
@@ -1328,6 +1324,7 @@ test('create new per-record trigger for creating records', () => {
               },
               role: 'owner',
               pending: false,
+              id: 'mem_ukbxnq8b5u17k5fy',
             },
           },
         },
@@ -1370,9 +1367,8 @@ test('create new per-record trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", ?1, ?2, ?3); END',
-      params: ['owner', 0, expect.stringMatching(RECORD_ID_REGEX)],
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", 'owner', 'false', 'mem_ukbxnq8b5u17k5fy'); END`,
+      params: [],
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
@@ -1462,6 +1458,7 @@ test('create new per-record trigger with filters for creating records', () => {
               },
               role: 'owner',
               pending: false,
+              id: 'mem_qvorn0jko4oj4uv3',
             },
           },
         },
@@ -1507,9 +1504,8 @@ test('create new per-record trigger with filters for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE ?1)) BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", ?2, ?3, ?4); END',
-      params: ['%_hidden', 'owner', 0, expect.stringMatching(RECORD_ID_REGEX)],
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE '%_hidden')) BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", 'owner', 'false', 'mem_qvorn0jko4oj4uv3'); END`,
+      params: [],
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,

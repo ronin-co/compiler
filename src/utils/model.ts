@@ -1109,7 +1109,7 @@ export const transformMetaQuery = (
         const withStatement = handleWith(
           models,
           { ...existingModel, tableAlias: tableAlias },
-          params,
+          null,
           trigger.filter,
         );
 
@@ -1118,7 +1118,7 @@ export const transformMetaQuery = (
 
       // Compile the effect queries into SQL statements.
       const effectStatements = trigger.effects.map((effectQuery) => {
-        return compileQueryInput(effectQuery, models, params, {
+        return compileQueryInput(effectQuery, models, null, {
           returning: false,
           parentModel: existingModel,
         }).main.statement;
