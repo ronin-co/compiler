@@ -359,31 +359,6 @@ export const omit = <T, K extends keyof T>(obj: T, properties: Array<K>): Omit<T
   ) as Omit<T, K>;
 
 /**
- * Converts a flat object whose keys all sit on the same level (at the root) into an
- * object of nested objects.
- *
- * @param obj - The object that should be expanded.
- *
- * @returns The expanded object.
- */
-export const expand = (obj: NestedObject): NestedObject => {
-  return Object.entries(obj).reduce((res, [key, val]) => {
-    key
-      .split('.')
-      .reduce((acc: NestedObject, part: string, i: number, arr: Array<string>) => {
-        if (i === arr.length - 1) {
-          acc[part] = val;
-        } else {
-          acc[part] =
-            typeof acc[part] === 'object' && acc[part] !== null ? acc[part] : {};
-        }
-        return acc[part] as NestedObject;
-      }, res as NestedObject);
-    return res;
-  }, {});
-};
-
-/**
  * Picks a property from an object and returns the value of the property.
  *
  * @param obj - The object from which the property should be read.
