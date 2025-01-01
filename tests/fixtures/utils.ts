@@ -24,7 +24,10 @@ export const PAGINATION_CURSOR_REGEX = /^(?:[a-zA-Z0-9_]+,)*[a-zA-Z0-9_]*\d{13}$
  *
  * @returns A promise that resolves when the database has been pre-filled.
  */
-const prefillDatabase = async (database: Database, models: Array<Model>) => {
+const prefillDatabase = async (
+  database: Database,
+  models: Array<Model>,
+): Promise<void> => {
   const rootModelTransaction = new Transaction([{ create: { model: ROOT_MODEL } }]);
 
   const modelTransaction = new Transaction(

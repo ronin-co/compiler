@@ -1,7 +1,7 @@
 import type { Model } from '@/src/types/model';
 import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
-  expand,
+  CURRENT_TIME_EXPRESSION,
   flatten,
   generateRecordId,
   getSymbol,
@@ -44,7 +44,6 @@ export const handleTo = (
   },
   parentModel?: Model,
 ): string => {
-  const currentTime = new Date().toISOString();
   const { with: withInstruction, to: toInstruction } = instructions;
 
   const defaultFields: Record<string, unknown> = {};
@@ -55,14 +54,14 @@ export const handleTo = (
     defaultFields.id = toInstruction.id || generateRecordId(model.idPrefix);
   }
 
-  defaultFields.ronin = {
-    // If records are being created, set their creation time.
-    ...(queryType === 'add' ? { createdAt: currentTime } : {}),
-    // If records are being created or updated, set their update time.
-    updatedAt: currentTime,
-    // Allow for overwriting the default values provided above.
-    ...(toInstruction.ronin as object),
-  };
+  if (queryType === 'set' || toInstruction.ronin) {
+    defaultFields.ronin = {
+      // If records are being updated, bump their update time.
+      ...(queryType === 'set' ? { updatedAt: CURRENT_TIME_EXPRESSION } : {}),
+      // Allow for overwriting the default values provided above.
+      ...(toInstruction.ronin as object),
+    };
+  }
 
   // Check whether a query resides at the root of the `to` instruction.
   const symbol = getSymbol(toInstruction);
@@ -71,7 +70,7 @@ export const handleTo = (
   // of fields and/or values for the SQL query, since the fields and values are all
   // derived from the sub query. This allows us to keep the SQL statement lean.
   if (symbol?.type === 'query') {
-    let { queryModel: subQueryModelSlug, queryInstructions: subQueryInstructions } =
+    const { queryModel: subQueryModelSlug, queryInstructions: subQueryInstructions } =
       splitQuery(symbol.value);
     const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
@@ -106,45 +105,13 @@ export const handleTo = (
       getFieldFromModel(model, field, 'to');
     }
 
-    const defaultFieldsToAdd = subQuerySelectedFields
-      ? Object.entries(flatten(defaultFields)).filter(([key]) => {
-          return !subQuerySelectedFields.includes(key);
-        })
-      : [];
-
-    // If the sub query selects only a subset of fields from its model using
-    // `selecting`, there is a chance that the fields returned by the sub query will not
-    // include the metadata fields of the retrieved records.
-    //
-    // In that case, we need to instruct the sub query to explicitly return the default
-    // fields for the records in the root query, otherwise the records in the root query
-    // will be missing the metadata fields, since they won't come from the sub query.
-    //
-    // In other words, by default, the metadata fields of the root query will be provided
-    // by the sub query. If the sub query doesn't provide them, we need to "fill in" the
-    // missing metadata fields.
-    if (defaultFieldsToAdd.length > 0) {
-      const defaultFieldsObject = expand(Object.fromEntries(defaultFieldsToAdd));
-
-      if (!subQueryInstructions) subQueryInstructions = {};
-
-      subQueryInstructions.including = {
-        ...defaultFieldsObject,
-        ...(subQueryInstructions.including as object),
-      };
-    }
-
     let statement = '';
 
     // If specific fields were selected by the sub query, we need to list their respective
     // column names in the SQL statement, so that SQLite can reliably associate the values
     // retrieved by the sub query with the correct columns in the root query.
     if (subQuerySelectedFields) {
-      const selectedFields = [
-        ...subQueryFields,
-        ...defaultFieldsToAdd.map(([key]) => key),
-      ];
-      const columns = selectedFields.map((field) => {
+      const columns = subQueryFields.map((field) => {
         return getFieldFromModel(model, field, 'to').fieldSelector;
       });
 
@@ -163,6 +130,8 @@ export const handleTo = (
   // establish the relationship between two other models, as those two do not share a
   // direct link.
   for (const fieldSlug in toInstruction) {
+    if (!Object.hasOwn(toInstruction, fieldSlug)) continue;
+
     const fieldValue = toInstruction[fieldSlug];
     const fieldDetails = getFieldFromModel(model, fieldSlug, 'to', false);
 

@@ -32,6 +32,8 @@ export const handleIncluding = (
   let tableSubQuery: string | undefined;
 
   for (const ephemeralFieldSlug in instruction) {
+    if (!Object.hasOwn(instruction, ephemeralFieldSlug)) continue;
+
     const symbol = getSymbol(instruction[ephemeralFieldSlug]);
 
     // The `including` instruction might contain values that are not queries, which are

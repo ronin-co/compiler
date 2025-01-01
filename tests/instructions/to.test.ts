@@ -41,8 +41,8 @@ test('set single record to new string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: ['mia', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: ['mia', 'elaine'],
       returning: true,
     },
   ]);
@@ -95,8 +95,8 @@ test('set single record to new string field with expression referencing fields',
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = LOWER("firstName" || "lastName"), "ronin.updatedAt" = ?1 WHERE ("handle" = ?2) RETURNING *`,
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      statement: `UPDATE "accounts" SET "handle" = LOWER("firstName" || "lastName"), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
+      params: ['elaine'],
       returning: true,
     },
   ]);
@@ -151,12 +151,8 @@ test('set single record to new one-cardinality link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'elaine',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'mem_39h8fhe98hefah9j',
-      ],
+      statement: `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['elaine', 'mem_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
@@ -221,19 +217,12 @@ test('set single record to new many-cardinality link field', async () => {
     },
     {
       statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
-      params: [
-        'acc_39h8fhe98hefah8j',
-        'david',
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3)',
+      params: ['acc_39h8fhe98hefah8j', 'david', expect.stringMatching(RECORD_ID_REGEX)],
     },
     {
-      statement:
-        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8j'],
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
+      params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -286,19 +275,12 @@ test('set single record to new many-cardinality link field (add)', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3, ?4, ?5)',
-      params: [
-        'acc_39h8fhe98hefah8j',
-        'david',
-        expect.stringMatching(RECORD_ID_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3)',
+      params: ['acc_39h8fhe98hefah8j', 'david', expect.stringMatching(RECORD_ID_REGEX)],
     },
     {
-      statement:
-        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8j'],
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
+      params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -355,9 +337,8 @@ test('set single record to new many-cardinality link field (remove)', async () =
       params: ['acc_39h8fhe98hefah8j', 'david'],
     },
     {
-      statement:
-        'UPDATE "accounts" SET "ronin.updatedAt" = ?1 WHERE ("id" = ?2) RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'acc_39h8fhe98hefah8j'],
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
+      params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -405,12 +386,8 @@ test('set single record to new json field with array', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: [
-        '["elaine@site.co","elaine@company.co"]',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'elaine',
-      ],
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: ['["elaine@site.co","elaine@company.co"]', 'elaine'],
       returning: true,
     },
   ]);
@@ -460,12 +437,8 @@ test('set single record to new json field with object', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: [
-        '{"site":"elaine@site.co","hobby":"dancer@dancing.co"}',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'elaine',
-      ],
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: ['{"site":"elaine@site.co","hobby":"dancer@dancing.co"}', 'elaine'],
       returning: true,
     },
   ]);
@@ -513,12 +486,8 @@ test('set single record to new nested string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'USD',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah8j',
-      ],
+      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['USD', 'tea_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -575,12 +544,8 @@ test('set single record to new nested link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'elaine',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah8j',
-      ],
+      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['elaine', 'tea_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -636,12 +601,8 @@ test('set single record to new nested json field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        '["receipts@test.co"]',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah9j',
-      ],
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['["receipts@test.co"]', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
@@ -708,12 +669,8 @@ test('set single record to result of nested query', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'david',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah9j',
-      ],
+      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['david', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
@@ -918,11 +875,8 @@ test('add multiple records with nested sub query and specific fields', async () 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("handle", "id", "ronin.createdAt", "ronin.updatedAt") SELECT "handle", "id", ?1 as "ronin.createdAt", ?2 as "ronin.updatedAt" FROM "accounts" RETURNING *',
-      params: [
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      ],
+        'INSERT INTO "users" ("handle", "id") SELECT "handle", "id" FROM "accounts" RETURNING *',
+      params: [],
       returning: true,
     },
   ]);
@@ -979,8 +933,8 @@ test('add multiple records with nested sub query and specific meta fields', asyn
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("ronin.updatedAt", "id", "ronin.createdAt") SELECT "ronin.updatedAt", "id", ?1 as "ronin.createdAt" FROM "accounts" RETURNING *',
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX)],
+        'INSERT INTO "users" ("ronin.updatedAt", "id") SELECT "ronin.updatedAt", "id" FROM "accounts" RETURNING *',
+      params: [],
       returning: true,
     },
   ]);

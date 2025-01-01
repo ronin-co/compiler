@@ -18,6 +18,7 @@ import type {
   Statement,
 } from '@/src/types/query';
 import {
+  CURRENT_TIME_EXPRESSION,
   MODEL_ENTITY_ERROR_CODES,
   QUERY_SYMBOLS,
   RoninError,
@@ -66,8 +67,10 @@ export const getModelBySlug = <T extends Model | PublicModel>(
  *
  * @returns A slug for the associative model.
  */
-export const composeAssociationModelSlug = (model: PublicModel, field: ModelField) =>
-  convertToCamelCase(`ronin_link_${model.slug}_${field.slug}`);
+export const composeAssociationModelSlug = (
+  model: PublicModel,
+  field: ModelField,
+): string => convertToCamelCase(`ronin_link_${model.slug}_${field.slug}`);
 
 /**
  * Constructs the SQL selector for a given field in a model.
@@ -85,7 +88,7 @@ const getFieldSelector = (
   field: ModelField,
   fieldPath: string,
   instructionName: QueryInstructionType,
-) => {
+): string => {
   const symbol = model.tableAlias?.startsWith(QUERY_SYMBOLS.FIELD_PARENT)
     ? `${model.tableAlias.replace(QUERY_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
     : '';
@@ -195,7 +198,7 @@ export function getFieldFromModel(
  *
  * @returns The formatted name in title case.
  */
-export const slugToName = (slug: string) => {
+export const slugToName = (slug: string): string => {
   // Split the slug by uppercase letters and join with a space
   const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
 
@@ -226,7 +229,7 @@ const VOWELS = ['a', 'e', 'i', 'o', 'u'];
  *
  * @returns The plural form of the input word.
  */
-const pluralize = (word: string) => {
+const pluralize = (word: string): string => {
   const lastLetter = word.slice(-1).toLowerCase();
   const secondLastLetter = word.slice(-2, -1).toLowerCase();
 
@@ -352,6 +355,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
     name: 'RONIN - Created At',
     type: 'date',
     slug: 'ronin.createdAt',
+    defaultValue: CURRENT_TIME_EXPRESSION,
   },
   {
     name: 'RONIN - Created By',
@@ -362,6 +366,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
     name: 'RONIN - Updated At',
     type: 'date',
     slug: 'ronin.updatedAt',
+    defaultValue: CURRENT_TIME_EXPRESSION,
   },
   {
     name: 'RONIN - Updated By',
@@ -596,8 +601,19 @@ const getFieldStatement = (
   if (field.slug === 'id') statement += ' PRIMARY KEY';
   if (field.unique === true) statement += ' UNIQUE';
   if (field.required === true) statement += ' NOT NULL';
-  if (typeof field.defaultValue !== 'undefined')
-    statement += ` DEFAULT ${typeof field.defaultValue === 'string' ? `'${field.defaultValue}'` : field.defaultValue}`;
+
+  if (typeof field.defaultValue !== 'undefined') {
+    const symbol = getSymbol(field.defaultValue);
+
+    let value =
+      typeof field.defaultValue === 'string'
+        ? `'${field.defaultValue}'`
+        : field.defaultValue;
+    if (symbol) value = `(${parseFieldExpression(model, 'to', symbol.value as string)})`;
+
+    statement += ` DEFAULT ${value}`;
+  }
+
   if (field.collation) statement += ` COLLATE ${field.collation}`;
   if (field.increment === true) statement += ' AUTOINCREMENT';
 
@@ -629,6 +645,8 @@ const getFieldStatement = (
     statement += ` REFERENCES ${targetTable}("id")`;
 
     for (const trigger in actions) {
+      if (!Object.hasOwn(actions, trigger)) continue;
+
       const triggerName = trigger.toUpperCase().slice(2);
       const action = actions[
         trigger as keyof typeof actions
@@ -660,7 +678,10 @@ export const PLURAL_MODEL_ENTITIES_VALUES = Object.values(PLURAL_MODEL_ENTITIES)
  *
  * @returns An object composed of the provided model entities.
  */
-const formatModelEntity = (type: ModelEntityType, entities?: Array<ModelEntity>) => {
+const formatModelEntity = (
+  type: ModelEntityType,
+  entities?: Array<ModelEntity>,
+): Record<string, unknown> => {
   const entries = entities?.map((entity) => {
     const { slug, ...rest } =
       'slug' in entity ? entity : { slug: `${type}Slug`, ...entity };
@@ -687,7 +708,7 @@ const handleSystemModel = (
   action: 'create' | 'alter' | 'drop',
   systemModel: PartialModel,
   newModel?: PartialModel,
-) => {
+): void => {
   // Omit the `system` property.
   const { system: _, ...systemModelClean } = systemModel;
 
@@ -831,10 +852,11 @@ export const transformMetaQuery = (
       // Add the newly created model to the list of models.
       models.push(modelWithPresets);
 
-      const modelWithObjects = Object.assign({}, modelWithPresets);
+      const modelWithObjects: Model = Object.assign({}, modelWithPresets);
 
       for (const entity in entities) {
-        if (entities[entity]) modelWithObjects[entity as keyof Model] = entities[entity];
+        if (!Object.hasOwn(entities, entity)) continue;
+        Object.defineProperty(modelWithObjects, entity, { value: entities[entity] });
       }
 
       queryTypeDetails = { to: modelWithObjects };
@@ -1165,7 +1187,7 @@ export const transformMetaQuery = (
   const matchSystemModels = (
     oldSystemModel: PartialModel,
     newSystemModel: PartialModel,
-  ) => {
+  ): boolean => {
     const conditions: Array<boolean> = [
       oldSystemModel.system?.model === newSystemModel.system?.model,
     ];
