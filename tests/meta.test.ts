@@ -1760,12 +1760,8 @@ test('alter existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.companyEmployees', json_patch(json_extract("presets", '$.companyEmployees'), ?1)), "ronin.updatedAt" = ?2 WHERE ("slug" = ?3) RETURNING *`,
-      params: [
-        JSON.stringify(newPresetDetails),
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'account',
-      ],
+      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.companyEmployees', json_patch(json_extract("presets", '$.companyEmployees'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
+      params: [JSON.stringify(newPresetDetails), 'account'],
       returning: true,
     },
   ]);
@@ -1800,8 +1796,8 @@ test('drop existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = ?1 WHERE ("slug" = ?2) RETURNING *`,
-      params: [expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'account'],
+      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?1) RETURNING *`,
+      params: ['account'],
       returning: true,
     },
   ]);
