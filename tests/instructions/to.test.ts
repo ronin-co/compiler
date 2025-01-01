@@ -41,8 +41,8 @@ test('set single record to new string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: ['mia', expect.stringMatching(RECORD_TIMESTAMP_REGEX), 'elaine'],
+      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: ['mia', 'elaine'],
       returning: true,
     },
   ]);
@@ -405,12 +405,8 @@ test('set single record to new json field with array', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: [
-        '["elaine@site.co","elaine@company.co"]',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'elaine',
-      ],
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: ['["elaine@site.co","elaine@company.co"]', 'elaine'],
       returning: true,
     },
   ]);
@@ -460,12 +456,8 @@ test('set single record to new json field with object', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = ?2 WHERE ("handle" = ?3) RETURNING *`,
-      params: [
-        '{"site":"elaine@site.co","hobby":"dancer@dancing.co"}',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'elaine',
-      ],
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: ['{"site":"elaine@site.co","hobby":"dancer@dancing.co"}', 'elaine'],
       returning: true,
     },
   ]);
@@ -513,12 +505,8 @@ test('set single record to new nested string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'USD',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah8j',
-      ],
+      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['USD', 'tea_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -575,12 +563,8 @@ test('set single record to new nested link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        'elaine',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah8j',
-      ],
+      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['elaine', 'tea_39h8fhe98hefah8j'],
       returning: true,
     },
   ]);
@@ -636,12 +620,8 @@ test('set single record to new nested json field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = ?2 WHERE ("id" = ?3) RETURNING *`,
-      params: [
-        '["receipts@test.co"]',
-        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        'tea_39h8fhe98hefah9j',
-      ],
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      params: ['["receipts@test.co"]', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
   ]);
