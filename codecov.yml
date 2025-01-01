@@ -1,5 +1,6 @@
 coverage:
   precision: 5
+  round: down
   status:
     project:
       default:
