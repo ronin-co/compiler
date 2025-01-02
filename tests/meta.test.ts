@@ -938,9 +938,8 @@ test('create new index with filter', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'CREATE INDEX "index_slug" ON "accounts" ("email") WHERE (("email" LIKE ?1))',
-      params: ['%@site.co'],
+      statement: `CREATE INDEX "index_slug" ON "accounts" ("email") WHERE (("email" LIKE '%@site.co'))`,
+      params: [],
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
