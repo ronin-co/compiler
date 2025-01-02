@@ -26,6 +26,11 @@ import type { Model } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
 import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 
+const formatJSON = (key: string, value: string): unknown => {
+  if (key === QUERY_SYMBOLS.EXPRESSION) return value.replaceAll(`'`, `''`);
+  return value;
+};
+
 /**
  * Inserts a value into the list of statement values and returns a placeholder for it.
  *
@@ -49,7 +54,7 @@ export const prepareStatementValue = (
   if (!statementParams) {
     const valueString =
       typeof value === 'object'
-        ? `json('${JSON.stringify(value)}')`
+        ? `json('${JSON.stringify(value, formatJSON)}')`
         : `'${value!.toString()}'`;
 
     return valueString;
