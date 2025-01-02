@@ -1018,7 +1018,6 @@ export const transformMetaQuery = (
     const index = jsonValue as ModelIndex;
     const indexName = convertToSnakeCase(slug);
 
-    const params: Array<unknown> = [];
     let statement = `${statementAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
@@ -1049,18 +1048,17 @@ export const transformMetaQuery = (
       // If filtering instructions were defined, add them to the index. Those
       // instructions will determine which records are included as part of the index.
       if (index.filter) {
-        const withStatement = handleWith(models, existingModel, params, index.filter);
+        const withStatement = handleWith(models, existingModel, null, index.filter);
         statement += ` WHERE (${withStatement})`;
       }
     }
 
-    dependencyStatements.push({ statement, params });
+    dependencyStatements.push({ statement, params: [] });
   }
 
   if (entity === 'trigger') {
     const triggerName = convertToSnakeCase(slug);
 
-    const params: Array<unknown> = [];
     let statement = `${statementAction} TRIGGER "${triggerName}"`;
 
     if (action === 'create') {
@@ -1109,7 +1107,7 @@ export const transformMetaQuery = (
         const withStatement = handleWith(
           models,
           { ...existingModel, tableAlias: tableAlias },
-          params,
+          null,
           trigger.filter,
         );
 
@@ -1118,7 +1116,7 @@ export const transformMetaQuery = (
 
       // Compile the effect queries into SQL statements.
       const effectStatements = trigger.effects.map((effectQuery) => {
-        return compileQueryInput(effectQuery, models, params, {
+        return compileQueryInput(effectQuery, models, null, {
           returning: false,
           parentModel: existingModel,
         }).main.statement;
@@ -1131,7 +1129,7 @@ export const transformMetaQuery = (
       statement += ` ${statementParts.join(' ')}`;
     }
 
-    dependencyStatements.push({ statement, params });
+    dependencyStatements.push({ statement, params: [] });
   }
 
   const field = `${QUERY_SYMBOLS.FIELD}${pluralType}`;
