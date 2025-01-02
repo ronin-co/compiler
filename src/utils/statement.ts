@@ -26,7 +26,15 @@ import type { Model } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
 import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 
-const formatJSON = (key: string, value: string): unknown => {
+/**
+ * Serializes individual keys and values within a JSON object and escapes query symbols.
+ *
+ * @param key - The key of the JSON property.
+ * @param value - The value of the JSON property.
+ *
+ * @returns The serialized value of the JSON property.
+ */
+const replaceJSON = (key: string, value: string): unknown => {
   if (key === QUERY_SYMBOLS.EXPRESSION) return value.replaceAll(`'`, `''`);
   return value;
 };
@@ -54,7 +62,7 @@ export const prepareStatementValue = (
   if (!statementParams) {
     const valueString =
       typeof value === 'object'
-        ? `json('${JSON.stringify(value, formatJSON)}')`
+        ? `json('${JSON.stringify(value, replaceJSON)}')`
         : `'${value!.toString()}'`;
 
     return valueString;
