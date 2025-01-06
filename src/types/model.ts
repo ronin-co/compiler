@@ -50,56 +50,58 @@ type ModelFieldBasics = {
 };
 
 // We have to list the types separately, in order for `Extract` to work.
-export type ModelField =
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type?: never;
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'boolean';
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'date';
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'json';
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'blob';
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'string';
-      /** The collation sequence to use for the field value. */
-      collation?: ModelFieldCollation;
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'number';
-      /**
-       * Automatically increments the value of the field with every new inserted record.
-       */
-      increment?: boolean;
-    })
-  | (ModelFieldBasics & {
-      /** The kind of value that should be stored inside the field. */
-      type: 'link';
-      /** The target model of the relationship that is being established. */
-      target: string;
-      /** Whether the field should be related to one record, or many records. */
-      kind?: 'one' | 'many';
-      /**
-       * If the target record is updated or deleted, the defined actions maybe executed.
-       */
-      actions?: {
-        onDelete?: ModelFieldLinkAction;
-        onUpdate?: ModelFieldLinkAction;
-      };
-    });
+export type ModelField = ModelFieldBasics &
+  (
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type?: never;
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'boolean';
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'date';
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'json';
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'blob';
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'string';
+        /** The collation sequence to use for the field value. */
+        collation?: ModelFieldCollation;
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'number';
+        /**
+         * Automatically increments the value of the field with every new inserted record.
+         */
+        increment?: boolean;
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'link';
+        /** The target model of the relationship that is being established. */
+        target: string;
+        /** Whether the field should be related to one record, or many records. */
+        kind?: 'one' | 'many';
+        /**
+         * If the target record is updated or deleted, the defined actions maybe executed.
+         */
+        actions?: {
+          onDelete?: ModelFieldLinkAction;
+          onUpdate?: ModelFieldLinkAction;
+        };
+      }
+  );
 
 export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
   /** The collating sequence used for text placed inside the field. */
