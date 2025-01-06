@@ -56,7 +56,7 @@ export type ModelField =
     })
   | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
-      type: 'boolean' | 'date' | 'json';
+      type: 'boolean' | 'date' | 'json' | 'blob';
     })
   | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
