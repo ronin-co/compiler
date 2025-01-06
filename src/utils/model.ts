@@ -3,7 +3,7 @@ import type {
   Model,
   ModelEntity,
   ModelField,
-  ModelFieldReferenceAction,
+  ModelFieldLinkAction,
   ModelIndex,
   ModelPreset,
   ModelTrigger,
@@ -614,8 +614,13 @@ const getFieldStatement = (
     statement += ` DEFAULT ${value}`;
   }
 
-  if (field.collation) statement += ` COLLATE ${field.collation}`;
-  if (field.increment === true) statement += ' AUTOINCREMENT';
+  if (field.type === 'string' && field.collation) {
+    statement += ` COLLATE ${field.collation}`;
+  }
+
+  if (field.type === 'number' && field.increment === true) {
+    statement += ' AUTOINCREMENT';
+  }
 
   if (typeof field.check !== 'undefined') {
     const symbol = getSymbol(field.check);
@@ -648,9 +653,7 @@ const getFieldStatement = (
       if (!Object.hasOwn(actions, trigger)) continue;
 
       const triggerName = trigger.toUpperCase().slice(2);
-      const action = actions[
-        trigger as keyof typeof actions
-      ] as ModelFieldReferenceAction;
+      const action = actions[trigger as keyof typeof actions] as ModelFieldLinkAction;
 
       statement += ` ON ${triggerName} ${action}`;
     }

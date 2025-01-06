@@ -7,6 +7,13 @@ import type {
 
 type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
 
+export type ModelFieldLinkAction =
+  | 'CASCADE'
+  | 'RESTRICT'
+  | 'SET NULL'
+  | 'SET DEFAULT'
+  | 'NO ACTION';
+
 type ModelFieldBasics = {
   /** The label that should be used when displaying the field on the RONIN dashboard. */
   name?: string;
@@ -40,40 +47,42 @@ type ModelFieldBasics = {
   };
   /** An expression that gets evaluated every time a value is provided for the field. */
   check?: Expression;
-  /**
-   * If the field is of type `string`, setting this attribute defines the collation
-   * sequence to use for the field value.
-   */
-  collation?: ModelFieldCollation;
-  /**
-   * If the field is of type `number`, setting this attribute will automatically increment
-   * the value of the field with every new record that gets inserted.
-   */
-  increment?: boolean;
 };
 
-type ModelFieldNormal = ModelFieldBasics & {
-  type?: 'string' | 'number' | 'boolean' | 'date' | 'json';
-};
-
-export type ModelFieldReferenceAction =
-  | 'CASCADE'
-  | 'RESTRICT'
-  | 'SET NULL'
-  | 'SET DEFAULT'
-  | 'NO ACTION';
-
-export type ModelFieldReference = ModelFieldBasics & {
-  type: 'link';
-  target: string;
-  kind?: 'one' | 'many';
-  actions?: {
-    onDelete?: ModelFieldReferenceAction;
-    onUpdate?: ModelFieldReferenceAction;
-  };
-};
-
-export type ModelField = ModelFieldNormal | ModelFieldReference;
+export type ModelField =
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type?: 'boolean' | 'date' | 'json';
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type?: 'string';
+      /** The collation sequence to use for the field value. */
+      collation?: ModelFieldCollation;
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type?: 'number';
+      /**
+       * Automatically increments the value of the field with every new inserted record.
+       */
+      increment?: boolean;
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type?: 'link';
+      /** The target model of the relationship that is being established. */
+      target: string;
+      /** Whether the field should be related to one record, or many records. */
+      kind?: 'one' | 'many';
+      /**
+       * If the target record is updated or deleted, the defined actions maybe executed.
+       */
+      actions?: {
+        onDelete?: ModelFieldLinkAction;
+        onUpdate?: ModelFieldLinkAction;
+      };
+    });
 
 export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
   /** The collating sequence used for text placed inside the field. */
