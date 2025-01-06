@@ -491,9 +491,9 @@ test('query a model that was just dropped', () => {
 });
 
 test('create new field', () => {
+  // Fields don't need to have a type when being created. The default type is "string".
   const field: ModelField = {
     slug: 'email',
-    type: 'string',
   };
 
   const queries: Array<Query> = [
@@ -522,7 +522,7 @@ test('create new field', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.email', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?2) RETURNING *`,
-      params: [JSON.stringify({ ...field, name: 'Email' }), 'account'],
+      params: [JSON.stringify({ ...field, type: 'string', name: 'Email' }), 'account'],
       returning: true,
     },
   ]);
