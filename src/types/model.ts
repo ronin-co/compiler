@@ -49,6 +49,7 @@ type ModelFieldBasics = {
   check?: Expression;
 };
 
+// We have to list the types separately, in order for `Extract` to work.
 export type ModelField =
   | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
@@ -56,7 +57,19 @@ export type ModelField =
     })
   | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
-      type: 'boolean' | 'date' | 'json' | 'blob';
+      type: 'boolean';
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type: 'date';
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type: 'json';
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type: 'blob';
     })
   | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
