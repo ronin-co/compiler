@@ -15,8 +15,6 @@ export type ModelFieldLinkAction =
   | 'NO ACTION';
 
 type ModelFieldBasics = {
-  /** The kind of value that should be stored inside the field. */
-  type?: 'boolean' | 'date' | 'json';
   /** The label that should be used when displaying the field on the RONIN dashboard. */
   name?: string;
   /** Allows for addressing the field programmatically. */
@@ -52,24 +50,27 @@ type ModelFieldBasics = {
 };
 
 export type ModelField =
-  | ModelFieldBasics
-  | (Omit<ModelFieldBasics, 'type'> & {
+  | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
-      type: 'string';
+      type?: 'boolean' | 'date' | 'json';
+    })
+  | (ModelFieldBasics & {
+      /** The kind of value that should be stored inside the field. */
+      type?: 'string';
       /** The collation sequence to use for the field value. */
       collation?: ModelFieldCollation;
     })
-  | (Omit<ModelFieldBasics, 'type'> & {
+  | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
-      type: 'number';
+      type?: 'number';
       /**
        * Automatically increments the value of the field with every new inserted record.
        */
       increment?: boolean;
     })
-  | (Omit<ModelFieldBasics, 'type'> & {
+  | (ModelFieldBasics & {
       /** The kind of value that should be stored inside the field. */
-      type: 'link';
+      type?: 'link';
       /** The target model of the relationship that is being established. */
       target: string;
       /** Whether the field should be related to one record, or many records. */
