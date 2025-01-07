@@ -1,12 +1,9 @@
-import type { Model } from '@/src/types/model';
 import type {
   CombinedInstructions,
   Query,
   QuerySchemaType,
   QueryType,
 } from '@/src/types/query';
-
-import { init as cuid } from '@paralleldrive/cuid2';
 
 /**
  * A list of placeholders that can be located inside queries after those queries were
@@ -50,6 +47,12 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
 // JavaScript types that can directly be used as field types in RONIN.
 export const RAW_FIELD_TYPES = ['string', 'number', 'boolean'] as const;
 export type RawFieldType = (typeof RAW_FIELD_TYPES)[number];
+
+// An expression that produces a unique ID in the format "rec_a3782da949d1229f",
+// which mimics the CUID2 format.
+export const ID_EXPRESSION = {
+  [QUERY_SYMBOLS.EXPRESSION]: `'rec_' || lower(substr(hex(randomblob(12)), 1, 16))`,
+};
 
 // An expression that produces a timestamp in the format "YYYY-MM-DDTHH:MM:SS.SSSZ",
 // which matches the output of `new Date().toISOString()` in JavaScript (ISO 8601).
@@ -130,16 +133,6 @@ const DOUBLE_QUOTE_REGEX = /"/g;
 const AMPERSAND_REGEX = /\s*&+\s*/g;
 const SPECIAL_CHARACTERS_REGEX = /[^\w\s-]+/g;
 const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
-
-/**
- * Generate a unique record ID.
- *
- * @param prefix - The prefix that should be used for the ID. Defaults to `rec`.
- *
- * @returns The generated ID.
- */
-export const generateRecordId = (prefix: Model['idPrefix']): string =>
-  `${prefix}_${cuid({ length: 16 })()}`;
 
 /**
  * Utility function to capitalize the first letter of a string while converting all other

@@ -1,11 +1,7 @@
 import { expect, test } from 'bun:test';
 import { type Model, type Query, Transaction } from '@/src/index';
 
-import {
-  RECORD_ID_REGEX,
-  RECORD_TIMESTAMP_REGEX,
-  queryEphemeralDatabase,
-} from '@/fixtures/utils';
+import { RECORD_TIMESTAMP_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
@@ -217,8 +213,8 @@ test('set single record to new many-cardinality link field', async () => {
     },
     {
       statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3)',
-      params: ['acc_39h8fhe98hefah8j', 'david', expect.stringMatching(RECORD_ID_REGEX)],
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['acc_39h8fhe98hefah8j', 'david'],
     },
     {
       statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
@@ -275,8 +271,8 @@ test('set single record to new many-cardinality link field (add)', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target", "id") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1), ?3)',
-      params: ['acc_39h8fhe98hefah8j', 'david', expect.stringMatching(RECORD_ID_REGEX)],
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['acc_39h8fhe98hefah8j', 'david'],
     },
     {
       statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,

@@ -19,6 +19,7 @@ import type {
 } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
+  ID_EXPRESSION,
   MODEL_ENTITY_ERROR_CODES,
   QUERY_SYMBOLS,
   RoninError,
@@ -344,7 +345,7 @@ export const SYSTEM_FIELDS: Array<ModelField> = [
     name: 'ID',
     type: 'string',
     slug: 'id',
-    displayAs: 'single-line',
+    defaultValue: ID_EXPRESSION,
   },
   {
     name: 'RONIN - Locked',

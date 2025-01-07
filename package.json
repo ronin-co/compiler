@@ -27,9 +27,6 @@
   ],
   "author": "ronin",
   "license": "Apache-2.0",
-  "dependencies": {
-    "@paralleldrive/cuid2": "2.2.2"
-  },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@ronin/engine": "0.0.27",

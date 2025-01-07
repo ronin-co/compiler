@@ -66,12 +66,12 @@ test('create new model', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT, "name" TEXT GENERATED ALWAYS AS (UPPER(substr("handle", 1, 1)) || substr("handle", 2)) STORED)`,
+      statement: `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT, "name" TEXT GENERATED ALWAYS AS (UPPER(substr("handle", 1, 1)) || substr("handle", 2)) STORED)`,
       params: [],
     },
     {
       statement:
-        'INSERT INTO "ronin_schema" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "id") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
+        'INSERT INTO "ronin_schema" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
       params: [
         'account',
         JSON.stringify(
@@ -89,7 +89,6 @@ test('create new model', () => {
         'accounts',
         'id',
         'id',
-        expect.stringMatching(RECORD_ID_REGEX),
       ],
       returning: true,
     },
@@ -153,7 +152,7 @@ test('create new model that has system models associated with it', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[1]).toEqual({
-    statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+    statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
     params: [],
   });
 });
@@ -180,7 +179,7 @@ test('create new model that references itself', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[0]).toEqual({
-    statement: `CREATE TABLE "teams" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "parentTeam" TEXT REFERENCES teams("id"))`,
+    statement: `CREATE TABLE "teams" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "parentTeam" TEXT REFERENCES teams("id"))`,
     params: [],
   });
 });
@@ -412,8 +411,8 @@ test('query a model that was just created', () => {
   // Assert whether the statements are generated in the correct order, meaning in the
   // order in which the queries are provided.
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
-    `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
-    'INSERT INTO "ronin_schema" ("slug", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "id") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
+    `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
+    'INSERT INTO "ronin_schema" ("slug", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
     'SELECT * FROM "accounts" LIMIT 1',
     'DROP TABLE "accounts"',
     'DELETE FROM "ronin_schema" WHERE ("slug" = ?1) RETURNING *',
@@ -603,7 +602,7 @@ test('create new field with many-cardinality relationship', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
       params: [],
     },
     {
@@ -1699,7 +1698,7 @@ test('create the root model', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY, "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
+      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
       params: [],
     },
   ]);
