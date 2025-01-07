@@ -19,7 +19,6 @@ import type {
 } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
-  ID_EXPRESSION,
   MODEL_ENTITY_ERROR_CODES,
   QUERY_SYMBOLS,
   RoninError,
@@ -333,19 +332,26 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
       copiedModel.identifiers.slug = suitableField?.slug || 'id';
     }
 
-    copiedModel.fields = [...SYSTEM_FIELDS, ...newFields];
+    copiedModel.fields = [...getSystemFields(copiedModel.idPrefix), ...newFields];
   }
 
   return copiedModel as Model;
 };
 
 /** These fields are required by the system and automatically added to every model. */
-export const SYSTEM_FIELDS: Array<ModelField> = [
+export const getSystemFields = (
+  idPrefix: Model['idPrefix'] = 'rec',
+): Array<ModelField> => [
   {
     name: 'ID',
     type: 'string',
     slug: 'id',
-    defaultValue: ID_EXPRESSION,
+    defaultValue: {
+      // Since default values in SQLite cannot rely on other columns, we unfortunately
+      // cannot rely on the `idPrefix` column here. Instead, we need to inject it directly
+      // into the expression as a static string.
+      [QUERY_SYMBOLS.EXPRESSION]: `'${idPrefix}_' || lower(substr(hex(randomblob(12)), 1, 16))`,
+    },
   },
   {
     name: 'RONIN - Locked',

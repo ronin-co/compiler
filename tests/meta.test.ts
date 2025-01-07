@@ -17,7 +17,7 @@ import {
 } from '@/fixtures/utils';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
-import { SYSTEM_FIELDS, slugToName } from '@/src/utils/model';
+import { getSystemFields, slugToName } from '@/src/utils/model';
 
 test('create new model', () => {
   const fields: Model['fields'] = [
@@ -66,7 +66,7 @@ test('create new model', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT, "name" TEXT GENERATED ALWAYS AS (UPPER(substr("handle", 1, 1)) || substr("handle", 2)) STORED)`,
+      statement: `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT, "name" TEXT GENERATED ALWAYS AS (UPPER(substr("handle", 1, 1)) || substr("handle", 2)) STORED)`,
       params: [],
     },
     {
@@ -76,7 +76,7 @@ test('create new model', () => {
         'account',
         JSON.stringify(
           Object.fromEntries(
-            [...SYSTEM_FIELDS, ...fields].map(({ slug, ...rest }) => [
+            [...getSystemFields('acc'), ...fields].map(({ slug, ...rest }) => [
               slug,
               { ...rest, name: 'name' in rest ? rest.name : slugToName(slug) },
             ]),
@@ -152,7 +152,7 @@ test('create new model that has system models associated with it', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[1]).toEqual({
-    statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+    statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('ron_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
     params: [],
   });
 });
@@ -179,7 +179,7 @@ test('create new model that references itself', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[0]).toEqual({
-    statement: `CREATE TABLE "teams" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "parentTeam" TEXT REFERENCES teams("id"))`,
+    statement: `CREATE TABLE "teams" ("id" TEXT PRIMARY KEY DEFAULT ('tea_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "parentTeam" TEXT REFERENCES teams("id"))`,
     params: [],
   });
 });
@@ -241,7 +241,7 @@ test('get existing models', async () => {
       },
       table: 'accounts',
       fields: [
-        ...SYSTEM_FIELDS,
+        ...getSystemFields('acc'),
         {
           name: 'Handle',
           slug: 'handle',
@@ -411,7 +411,7 @@ test('query a model that was just created', () => {
   // Assert whether the statements are generated in the correct order, meaning in the
   // order in which the queries are provided.
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
-    `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
+    `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
     'INSERT INTO "ronin_schema" ("slug", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
     'SELECT * FROM "accounts" LIMIT 1',
     'DROP TABLE "accounts"',
@@ -602,7 +602,7 @@ test('create new field with many-cardinality relationship', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('ron_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
       params: [],
     },
     {
@@ -1692,7 +1692,7 @@ test('create the root model', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY DEFAULT ('rec_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
+      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY DEFAULT ('mod_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
       params: [],
     },
   ]);

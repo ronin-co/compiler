@@ -48,12 +48,6 @@ export const RONIN_MODEL_FIELD_REGEX = new RegExp(
 export const RAW_FIELD_TYPES = ['string', 'number', 'boolean'] as const;
 export type RawFieldType = (typeof RAW_FIELD_TYPES)[number];
 
-// An expression that produces a unique ID in the format "rec_a3782da949d1229f",
-// which mimics the CUID2 format.
-export const ID_EXPRESSION = {
-  [QUERY_SYMBOLS.EXPRESSION]: `'rec_' || lower(substr(hex(randomblob(12)), 1, 16))`,
-};
-
 // An expression that produces a timestamp in the format "YYYY-MM-DDTHH:MM:SS.SSSZ",
 // which matches the output of `new Date().toISOString()` in JavaScript (ISO 8601).
 export const CURRENT_TIME_EXPRESSION = {
