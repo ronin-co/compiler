@@ -1,12 +1,9 @@
-import type { Model } from '@/src/types/model';
 import type {
   CombinedInstructions,
   Query,
   QuerySchemaType,
   QueryType,
 } from '@/src/types/query';
-
-import { init as cuid } from '@paralleldrive/cuid2';
 
 /**
  * A list of placeholders that can be located inside queries after those queries were
@@ -130,16 +127,6 @@ const DOUBLE_QUOTE_REGEX = /"/g;
 const AMPERSAND_REGEX = /\s*&+\s*/g;
 const SPECIAL_CHARACTERS_REGEX = /[^\w\s-]+/g;
 const SPLIT_REGEX = /(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s.\-_]+/;
-
-/**
- * Generate a unique record ID.
- *
- * @param prefix - The prefix that should be used for the ID. Defaults to `rec`.
- *
- * @returns The generated ID.
- */
-export const generateRecordId = (prefix: Model['idPrefix']): string =>
-  `${prefix}_${cuid({ length: 16 })()}`;
 
 /**
  * Utility function to capitalize the first letter of a string while converting all other

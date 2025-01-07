@@ -3,7 +3,6 @@ import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
   flatten,
-  generateRecordId,
   getSymbol,
   isObject,
   splitQuery,
@@ -45,14 +44,7 @@ export const handleTo = (
   parentModel?: Model,
 ): string => {
   const { with: withInstruction, to: toInstruction } = instructions;
-
   const defaultFields: Record<string, unknown> = {};
-
-  // If records are being created, assign a default ID to them, unless a custom ID was
-  // already provided in the query.
-  if (queryType === 'add') {
-    defaultFields.id = toInstruction.id || generateRecordId(model.idPrefix);
-  }
 
   if (queryType === 'set' || toInstruction.ronin) {
     defaultFields.ronin = {
