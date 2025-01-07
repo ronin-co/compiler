@@ -1136,7 +1136,6 @@ test('create new trigger for creating records', () => {
           signup: {
             to: {
               year: 2000,
-              id: 'sig_vo0fxfmuyq227hgb',
             },
           },
         },
@@ -1169,7 +1168,7 @@ test('create new trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES ('2000', 'sig_vo0fxfmuyq227hgb'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES ('2000'); END`,
       params: [],
     },
     {
@@ -1190,7 +1189,6 @@ test('create new trigger for creating records with targeted fields', () => {
           signup: {
             to: {
               year: 2000,
-              id: 'sig_iiqimjelgft0tx1r',
             },
           },
         },
@@ -1229,7 +1227,7 @@ test('create new trigger for creating records with targeted fields', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES ('2000', 'sig_iiqimjelgft0tx1r'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES ('2000'); END`,
       params: [],
     },
     {
@@ -1250,7 +1248,6 @@ test('create new trigger for creating records with multiple effects', () => {
           signup: {
             to: {
               year: 2000,
-              id: 'sig_rq4i2ww9trefxeva',
             },
           },
         },
@@ -1260,7 +1257,6 @@ test('create new trigger for creating records with multiple effects', () => {
           candidate: {
             to: {
               year: 2020,
-              id: 'can_hga5r5kkkb3fsojl',
             },
           },
         },
@@ -1297,7 +1293,7 @@ test('create new trigger for creating records with multiple effects', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year", "id") VALUES ('2000', 'sig_rq4i2ww9trefxeva'); INSERT INTO "candidates" ("year", "id") VALUES ('2020', 'can_hga5r5kkkb3fsojl'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES ('2000'); INSERT INTO "candidates" ("year") VALUES ('2020'); END`,
       params: [],
     },
     {
@@ -1322,7 +1318,6 @@ test('create new per-record trigger for creating records', () => {
               },
               role: 'owner',
               pending: false,
-              id: 'mem_ukbxnq8b5u17k5fy',
             },
           },
         },
@@ -1365,7 +1360,7 @@ test('create new per-record trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", 'owner', 'false', 'mem_ukbxnq8b5u17k5fy'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 'false'); END`,
       params: [],
     },
     {
@@ -1456,7 +1451,6 @@ test('create new per-record trigger with filters for creating records', () => {
               },
               role: 'owner',
               pending: false,
-              id: 'mem_qvorn0jko4oj4uv3',
             },
           },
         },
@@ -1502,7 +1496,7 @@ test('create new per-record trigger with filters for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE '%_hidden')) BEGIN INSERT INTO "members" ("account", "role", "pending", "id") VALUES (NEW."createdBy", 'owner', 'false', 'mem_qvorn0jko4oj4uv3'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN ((NEW."handle" LIKE '%_hidden')) BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 'false'); END`,
       params: [],
     },
     {
