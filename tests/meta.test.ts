@@ -1912,7 +1912,7 @@ test('try to create new index with non-existent field', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'Field "handle" defined for `to` does not exist in model "Account".',
+    'Field "handle" defined for index "index_slug" does not exist in model "Account".',
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });

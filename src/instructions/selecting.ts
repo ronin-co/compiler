@@ -161,11 +161,9 @@ export const handleSelecting = (
 
     statement = instructions.selecting
       .map((slug) => {
-        const { field, fieldSelector } = getFieldFromModel(
-          usableModel,
-          slug,
-          'selecting',
-        );
+        const { field, fieldSelector } = getFieldFromModel(usableModel, slug, {
+          instructionName: 'selecting',
+        });
         selectedFields.push(field);
         return fieldSelector;
       })

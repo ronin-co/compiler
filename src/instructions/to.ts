@@ -94,7 +94,7 @@ export const handleTo = (
     // Ensure that every field returned by the sub query is present in the model
     // of the root query, otherwise the fields of the sub query can't be used.
     for (const field of subQueryFields || []) {
-      getFieldFromModel(model, field, 'to');
+      getFieldFromModel(model, field, { instructionName: 'to' });
     }
 
     let statement = '';
@@ -104,7 +104,7 @@ export const handleTo = (
     // retrieved by the sub query with the correct columns in the root query.
     if (subQuerySelectedFields) {
       const columns = subQueryFields.map((field) => {
-        return getFieldFromModel(model, field, 'to').fieldSelector;
+        return getFieldFromModel(model, field, { instructionName: 'to' }).fieldSelector;
       });
 
       statement = `(${columns.join(', ')}) `;
@@ -125,7 +125,12 @@ export const handleTo = (
     if (!Object.hasOwn(toInstruction, fieldSlug)) continue;
 
     const fieldValue = toInstruction[fieldSlug];
-    const fieldDetails = getFieldFromModel(model, fieldSlug, 'to', false);
+    const fieldDetails = getFieldFromModel(
+      model,
+      fieldSlug,
+      { instructionName: 'to' },
+      false,
+    );
 
     if (fieldDetails?.field.type === 'link' && fieldDetails.field.kind === 'many') {
       // Remove the field from the `to` instruction as it will be handled using
