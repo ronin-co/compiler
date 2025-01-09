@@ -1838,3 +1838,40 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
   expect(error).toHaveProperty('fields', ['action']);
 });
+
+test('try to create new index without fields', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          index: {
+            unique: true,
+            fields: [],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When creating indexes, at least one field must be provided.',
+  );
+  expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
+});

@@ -1031,6 +1031,14 @@ export const transformMetaQuery = (
     let statement = `${statementAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
+      if (!Array.isArray(index.fields) || index.fields.length === 0) {
+        throw new RoninError({
+          message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, at least one field must be provided.`,
+          code: 'INVALID_MODEL_VALUE',
+          fields: ['fields'],
+        });
+      }
+
       const columns = index.fields.map((field) => {
         let fieldSelector = '';
 
