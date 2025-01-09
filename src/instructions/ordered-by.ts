@@ -42,7 +42,7 @@ export const handleOrderedBy = (
     const { field: modelField, fieldSelector } = getFieldFromModel(
       model,
       item.value as string,
-      instructionName,
+      { instructionName },
     );
 
     const caseInsensitiveStatement =

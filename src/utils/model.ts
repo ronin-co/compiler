@@ -79,7 +79,7 @@ export const composeAssociationModelSlug = (
  * @param field - A field from the model.
  * @param fieldPath - The path of the field being addressed. Supports dot notation for
  * accessing nested fields.
- * @param instructionName - The name of the query instruction that is being used.
+ * @param writing - Whether values are being inserted.
  *
  * @returns The SQL column selector for the provided field.
  */
@@ -87,7 +87,7 @@ const getFieldSelector = (
   model: Model,
   field: ModelField,
   fieldPath: string,
-  instructionName: QueryInstructionType,
+  writing: boolean,
 ): string => {
   const symbol = model.tableAlias?.startsWith(QUERY_SYMBOLS.FIELD_PARENT)
     ? `${model.tableAlias.replace(QUERY_SYMBOLS.FIELD_PARENT, '').slice(0, -1)}.`
@@ -96,7 +96,7 @@ const getFieldSelector = (
 
   // If the field is of type JSON and the field is being selected in a read query, that
   // means we should extract the nested property from the JSON field.
-  if (field.type === 'json' && instructionName !== 'to') {
+  if (field.type === 'json' && !writing) {
     const dotParts = fieldPath.split('.');
     const columnName = tablePrefix + dotParts.shift();
     const jsonField = dotParts.join('.');
@@ -107,24 +107,37 @@ const getFieldSelector = (
   return `${tablePrefix}"${fieldPath}"`;
 };
 
+/**
+ * The details of a query instruction or model entity that is requesting a particular
+ * field to be loaded.
+ */
+type ModelFieldSource =
+  | {
+      instructionName: QueryInstructionType;
+    }
+  | {
+      modelEntityName: string;
+      modelEntityType: ModelEntityType;
+    };
+
 export function getFieldFromModel(
   model: Model,
   fieldPath: string,
-  instructionName: QueryInstructionType,
+  source: ModelFieldSource,
   shouldThrow?: true,
 ): { field: ModelField; fieldSelector: string };
 
 export function getFieldFromModel(
   model: Model,
   fieldPath: string,
-  instructionName: QueryInstructionType,
+  source: ModelFieldSource,
   shouldThrow?: false,
 ): { field: ModelField; fieldSelector: string } | null;
 
 export function getFieldFromModel(
   model: Model,
   fieldPath: string,
-  instructionName: QueryInstructionType,
+  source: ModelFieldSource,
   shouldThrow: boolean,
 ): { field: ModelField; fieldSelector: string } | null;
 
@@ -134,7 +147,7 @@ export function getFieldFromModel(
  * @param model - The model to retrieve the field from.
  * @param fieldPath - The path of the field to retrieve. Supports dot notation for
  * accessing nested fields.
- * @param instructionName - The name of the query instruction that is being used.
+ * @param source - The details of the instruction or entity that requests the field.
  * @param shouldThrow - Whether to throw an error if the field is not found.
  *
  * @returns The requested field of the model, and its SQL selector.
@@ -142,10 +155,17 @@ export function getFieldFromModel(
 export function getFieldFromModel(
   model: Model,
   fieldPath: string,
-  instructionName: QueryInstructionType,
+  source: ModelFieldSource,
   shouldThrow = true,
 ): { field: ModelField; fieldSelector: string } | null {
-  const errorPrefix = `Field "${fieldPath}" defined for \`${instructionName}\``;
+  const writingField =
+    'instructionName' in source ? source.instructionName === 'to' : true;
+  const errorTarget =
+    'instructionName' in source
+      ? `\`${source.instructionName}\``
+      : `${source.modelEntityType} "${source.modelEntityName}"`;
+
+  const errorPrefix = `Field "${fieldPath}" defined for ${errorTarget}`;
   const modelFields = model.fields || [];
 
   let modelField: ModelField | undefined;
@@ -156,12 +176,7 @@ export function getFieldFromModel(
     modelField = modelFields.find((field) => field.slug === fieldPath.split('.')[0]);
 
     if (modelField?.type === 'json') {
-      const fieldSelector = getFieldSelector(
-        model,
-        modelField,
-        fieldPath,
-        instructionName,
-      );
+      const fieldSelector = getFieldSelector(model, modelField, fieldPath, writingField);
       return { field: modelField, fieldSelector };
     }
   }
@@ -181,7 +196,7 @@ export function getFieldFromModel(
     return null;
   }
 
-  const fieldSelector = getFieldSelector(model, modelField, fieldPath, instructionName);
+  const fieldSelector = getFieldSelector(model, modelField, fieldPath, writingField);
   return { field: modelField, fieldSelector };
 }
 
@@ -970,6 +985,14 @@ export const transformMetaQuery = (
 
   const existingEntity = existingModel[pluralType]?.[targetEntityIndex as number];
 
+  if (action === 'create' && existingEntity) {
+    throw new RoninError({
+      message: `A ${entity} with the slug "${slug}" already exists.`,
+      code: 'EXISTING_MODEL_ENTITY',
+      fields: ['slug'],
+    });
+  }
+
   if (entity === 'field') {
     const statement = `ALTER TABLE "${existingModel.table}"`;
 
@@ -1015,6 +1038,16 @@ export const transformMetaQuery = (
         }
       }
     } else if (action === 'drop' && !existingLinkField) {
+      const systemFields = getSystemFields(existingModel.idPrefix);
+      const isSystemField = systemFields.some((field) => field.slug === slug);
+
+      if (isSystemField) {
+        throw new RoninError({
+          message: `The ${entity} "${slug}" is a system ${entity} and cannot be removed.`,
+          code: 'REQUIRED_MODEL_ENTITY',
+        });
+      }
+
       dependencyStatements.push({
         statement: `${statement} DROP COLUMN "${slug}"`,
         params: [],
@@ -1031,13 +1064,24 @@ export const transformMetaQuery = (
     let statement = `${statementAction}${index?.unique ? ' UNIQUE' : ''} INDEX "${indexName}"`;
 
     if (action === 'create') {
+      if (!Array.isArray(index.fields) || index.fields.length === 0) {
+        throw new RoninError({
+          message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, at least one field must be provided.`,
+          code: 'INVALID_MODEL_VALUE',
+          fields: ['fields'],
+        });
+      }
+
       const columns = index.fields.map((field) => {
         let fieldSelector = '';
 
         // If the slug of a field is provided, find the field in the model, obtain its
         // column selector, and place it in the SQL statement.
         if ('slug' in field) {
-          ({ fieldSelector } = getFieldFromModel(existingModel, field.slug, 'to'));
+          ({ fieldSelector } = getFieldFromModel(existingModel, field.slug, {
+            modelEntityType: 'index',
+            modelEntityName: indexName,
+          }));
         }
         // Alternatively, if an expression is provided instead of the slug of a field,
         // find all fields inside the expression, obtain their column selectors, and
@@ -1087,7 +1131,10 @@ export const transformMetaQuery = (
         }
 
         const fieldSelectors = trigger.fields.map((field) => {
-          return getFieldFromModel(existingModel, field.slug, 'to').fieldSelector;
+          return getFieldFromModel(existingModel, field.slug, {
+            modelEntityType: 'trigger',
+            modelEntityName: triggerName,
+          }).fieldSelector;
         });
 
         statementParts.push(`OF (${fieldSelectors.join(', ')})`);

@@ -1783,6 +1783,73 @@ test('try to alter existing model entity that does not exist', () => {
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
 
+test('try to create new entity with slug of existing entity', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field: {
+            slug: 'id',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty('message', 'A field with the slug "id" already exists.');
+  expect(error).toHaveProperty('code', 'EXISTING_MODEL_ENTITY');
+});
+
+test('try to drop a system field', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: 'id',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'The field "id" is a system field and cannot be removed.',
+  );
+  expect(error).toHaveProperty('code', 'REQUIRED_MODEL_ENTITY');
+});
+
 test('try to create new trigger with targeted fields and wrong action', () => {
   const effectQueries = [
     {
@@ -1837,4 +1904,82 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   );
   expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
   expect(error).toHaveProperty('fields', ['action']);
+});
+
+test('try to create new index without fields', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          index: {
+            unique: true,
+            fields: [],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'When creating indexes, at least one field must be provided.',
+  );
+  expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
+});
+
+test('try to create new index with non-existent field', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          index: {
+            unique: true,
+            fields: [
+              {
+                slug: 'handle',
+              },
+            ],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'Field "handle" defined for index "index_slug" does not exist in model "Account".',
+  );
+  expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });

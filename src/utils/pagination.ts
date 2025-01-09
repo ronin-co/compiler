@@ -33,7 +33,9 @@ export const generatePaginationCursor = (
     const property = getProperty(record, fieldSlug as string) as unknown;
     if (property === null || property === undefined) return CURSOR_NULL_PLACEHOLDER;
 
-    const { field } = getFieldFromModel(model, fieldSlug as string, 'orderedBy');
+    const { field } = getFieldFromModel(model, fieldSlug as string, {
+      instructionName: 'orderedBy',
+    });
 
     // If the field is of type "date", we convert its value to a timestamp.
     if (field.type === 'date') return new Date(property as string).getTime();

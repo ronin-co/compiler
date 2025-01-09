@@ -73,7 +73,9 @@ export const handleBeforeOrAfter = (
       return 'NULL';
     }
 
-    const { field } = getFieldFromModel(model, key as string, 'orderedBy');
+    const { field } = getFieldFromModel(model, key as string, {
+      instructionName: 'orderedBy',
+    });
 
     if (field.type === 'boolean') {
       return prepareStatementValue(statementParams, value === 'true');
@@ -118,7 +120,9 @@ export const handleBeforeOrAfter = (
       const key = keys[j];
       const value = values[j];
 
-      let { field, fieldSelector } = getFieldFromModel(model, key as string, 'orderedBy');
+      let { field, fieldSelector } = getFieldFromModel(model, key as string, {
+        instructionName: 'orderedBy',
+      });
 
       // If we're at the current field, add the comparison to the condition.
       if (j === i) {

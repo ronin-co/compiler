@@ -118,7 +118,7 @@ export const parseFieldExpression = (
     }
 
     const fieldSlug = match.replace(toReplace, '');
-    const field = getFieldFromModel(rootModel, fieldSlug, instructionName);
+    const field = getFieldFromModel(rootModel, fieldSlug, { instructionName });
 
     return field.fieldSelector;
   });
@@ -154,7 +154,7 @@ export const composeFieldValues = (
   const { fieldSelector: conditionSelector } = getFieldFromModel(
     model,
     options.fieldSlug,
-    instructionName,
+    { instructionName },
   );
 
   // If only the field selectors are being requested, do not register any values.
@@ -264,7 +264,9 @@ export const composeConditions = (
     // exists on records as a key, but not as a real field inside the model. That means
     // we can just continue parsing its contents.
     if (!childField) {
-      const fieldDetails = getFieldFromModel(model, options.fieldSlug, instructionName);
+      const fieldDetails = getFieldFromModel(model, options.fieldSlug, {
+        instructionName,
+      });
 
       const { field: modelField } = fieldDetails || {};
 
