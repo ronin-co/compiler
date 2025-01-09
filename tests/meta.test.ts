@@ -1916,3 +1916,70 @@ test('try to create new index with non-existent field', () => {
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
+
+test('try to drop a system entity', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        drop: {
+          field: 'id',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'The field "id" is a system field and cannot be removed.',
+  );
+  expect(error).toHaveProperty('code', 'REQUIRED_MODEL_ENTITY');
+});
+
+test('try to create new entity with slug of existing entity', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field: {
+            slug: 'id',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty('message', 'A field with the slug "id" already exists.');
+  expect(error).toHaveProperty('code', 'EXISTING_MODEL_ENTITY');
+});

@@ -985,6 +985,14 @@ export const transformMetaQuery = (
 
   const existingEntity = existingModel[pluralType]?.[targetEntityIndex as number];
 
+  if (action === 'create' && existingEntity) {
+    throw new RoninError({
+      message: `A ${entity} with the slug "${slug}" already exists.`,
+      code: 'EXISTING_MODEL_ENTITY',
+      fields: ['slug'],
+    });
+  }
+
   if (entity === 'field') {
     const statement = `ALTER TABLE "${existingModel.table}"`;
 
@@ -1030,6 +1038,16 @@ export const transformMetaQuery = (
         }
       }
     } else if (action === 'drop' && !existingLinkField) {
+      const systemFields = getSystemFields(existingModel.idPrefix);
+      const isSystemField = systemFields.some((field) => field.slug === slug);
+
+      if (isSystemField) {
+        throw new RoninError({
+          message: `The ${entity} "${slug}" is a system ${entity} and cannot be removed.`,
+          code: 'REQUIRED_MODEL_ENTITY',
+        });
+      }
+
       dependencyStatements.push({
         statement: `${statement} DROP COLUMN "${slug}"`,
         params: [],
