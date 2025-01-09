@@ -1875,3 +1875,44 @@ test('try to create new index without fields', () => {
   );
   expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
 });
+
+test('try to create new index with non-existent field', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          index: {
+            unique: true,
+            fields: [
+              {
+                slug: 'handle',
+              },
+            ],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'Field "handle" defined for `to` does not exist in model "Account".',
+  );
+  expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
+});
