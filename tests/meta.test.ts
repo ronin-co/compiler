@@ -1816,7 +1816,7 @@ test('try to create new entity with slug of existing entity', () => {
   expect(error).toHaveProperty('code', 'EXISTING_MODEL_ENTITY');
 });
 
-test('try to drop a system entity', () => {
+test('try to drop a system field', () => {
   const queries: Array<Query> = [
     {
       alter: {
