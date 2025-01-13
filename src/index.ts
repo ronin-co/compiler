@@ -38,12 +38,12 @@ class Transaction {
   statements: Array<Statement> = [];
   models: Array<PrivateModel> = [];
 
-  private internalStatements: Array<InternalStatement> = [];
+  #internalStatements: Array<InternalStatement> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
 
-    this.compileQueries(queries, models, options);
+    this.#compileQueries(queries, models, options);
   }
 
   /**
@@ -55,7 +55,7 @@ class Transaction {
    *
    * @returns The composed SQL statements.
    */
-  private compileQueries = (
+  #compileQueries = (
     queries: Array<Query>,
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
@@ -102,7 +102,7 @@ class Transaction {
       this.statements.push(...subStatements);
 
       // These statements will be used internally to format the results.
-      this.internalStatements.push(
+      this.#internalStatements.push(
         ...subStatements.map((statement) => ({
           ...statement,
           query,
@@ -116,20 +116,20 @@ class Transaction {
     return statements;
   };
 
-  private formatRows<Record = NativeRecord>(
+  #formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: true,
     isMeta: boolean,
   ): Record;
-  private formatRows<Record = NativeRecord>(
+  #formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: false,
     isMeta: boolean,
   ): Array<Record>;
 
-  private formatRows<Record = NativeRecord>(
+  #formatRows<Record = NativeRecord>(
     fields: Array<ModelField>,
     rows: Array<RawRow>,
     single: boolean,
@@ -248,7 +248,7 @@ class Transaction {
           returning,
           query,
           fields: rawModelFields,
-        } = this.internalStatements[index];
+        } = this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
         // any results, so we can return early.
@@ -278,7 +278,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.formatRows<Record>(rawModelFields, rows, single, isMeta)
+              ? this.#formatRows<Record>(rawModelFields, rows, single, isMeta)
               : null,
             modelFields,
           };
@@ -288,7 +288,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.formatRows<Record>(rawModelFields, rows, single, isMeta),
+          records: this.#formatRows<Record>(rawModelFields, rows, single, isMeta),
           modelFields,
         };
 
