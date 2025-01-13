@@ -4,7 +4,11 @@ import {
   getModelBySlug,
   getSystemModels,
 } from '@/src/model';
-import { addDefaultModelFields, addDefaultModelPresets } from '@/src/model/defaults';
+import {
+  addDefaultModelAttributes,
+  addDefaultModelFields,
+  addDefaultModelPresets,
+} from '@/src/model/defaults';
 import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
@@ -56,10 +60,15 @@ class Transaction {
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
+    const modelsWithAttributes = models.map((model) => {
+      return addDefaultModelAttributes(model, true);
+    });
     const modelList = [
-      ROOT_MODEL,
-      ...models.flatMap((model) => getSystemModels(models, model)),
-      ...models,
+      addDefaultModelAttributes(ROOT_MODEL, true),
+      ...modelsWithAttributes
+        .flatMap((model) => getSystemModels(modelsWithAttributes, model))
+        .map((model) => addDefaultModelAttributes(model, true)),
+      ...modelsWithAttributes,
     ].map((model) => {
       return addDefaultModelFields(model, true);
     });

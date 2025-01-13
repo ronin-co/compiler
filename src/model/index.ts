@@ -1,5 +1,6 @@
 import { handleWith } from '@/src/instructions/with';
 import {
+  addDefaultModelAttributes,
   addDefaultModelFields,
   addDefaultModelPresets,
   slugToName,
@@ -672,7 +673,8 @@ export const transformMetaQuery = (
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(newModel, true);
+      const modelWithAttributes = addDefaultModelAttributes(newModel, true);
+      const modelWithFields = addDefaultModelFields(modelWithAttributes, true);
       const modelWithPresets = addDefaultModelPresets(
         [...models, modelWithFields],
         modelWithFields,
@@ -733,7 +735,8 @@ export const transformMetaQuery = (
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(newModel, false);
+      const modelWithAttributes = addDefaultModelAttributes(newModel, false);
+      const modelWithFields = addDefaultModelFields(modelWithAttributes, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const newTableName = modelWithPresets.table;

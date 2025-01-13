@@ -109,14 +109,14 @@ const getModelIdentifier = (): string => {
 };
 
 /**
- * Add a default name, plural name, and plural slug to a provided model.
+ * Sets default values for the attributes of a model (such as `name`, `pluralName`, etc).
  *
  * @param model - The model that should receive defaults.
  * @param isNew - Whether the model is being newly created.
  *
  * @returns The updated model.
  */
-export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
+export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
 
   // Generate a unique identifier for the model. We are generating these identifiers
@@ -167,7 +167,26 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
 
       copiedModel.identifiers.slug = suitableField?.slug || 'id';
     }
+  }
 
+  return copiedModel as Model;
+};
+
+/**
+ * Provides default system fields for a given model.
+ *
+ * @param model - The model that should receive defaults.
+ * @param isNew - Whether the model is being newly created.
+ *
+ * @returns The updated model.
+ */
+export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
+  const copiedModel = { ...model };
+  const newFields = copiedModel.fields || [];
+
+  // If the model is being newly created or if new fields were provided for an existing
+  // model, we would like to attach the system fields to the model.
+  if (isNew || newFields.length > 0) {
     copiedModel.fields = [...getSystemFields(copiedModel.idPrefix), ...newFields];
   }
 
@@ -175,7 +194,7 @@ export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Mode
 };
 
 /**
- * Adds useful default presets to a model, which can be used to write simpler queries.
+ * Provides default system presets for a given model.
  *
  * @param list - The list of all models.
  * @param model - The model for which default presets should be added.
