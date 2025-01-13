@@ -1,3 +1,14 @@
+import {
+  PLURAL_MODEL_ENTITIES_VALUES,
+  ROOT_MODEL,
+  getModelBySlug,
+  getSystemModels,
+} from '@/src/model';
+import {
+  addDefaultModelAttributes,
+  addDefaultModelFields,
+  addDefaultModelPresets,
+} from '@/src/model/defaults';
 import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
@@ -9,14 +20,6 @@ import type {
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
-import {
-  PLURAL_MODEL_ENTITIES_VALUES,
-  ROOT_MODEL,
-  addDefaultModelFields,
-  addDefaultModelPresets,
-  getModelBySlug,
-  getSystemModels,
-} from '@/src/utils/model';
 import { generatePaginationCursor } from '@/src/utils/pagination';
 
 interface TransactionOptions {
@@ -57,16 +60,21 @@ class Transaction {
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
-    const modelList = [
-      ROOT_MODEL,
-      ...models.flatMap((model) => getSystemModels(models, model)),
-      ...models,
+    const modelsWithAttributes = [ROOT_MODEL, ...models].map((model) => {
+      return addDefaultModelAttributes(model, true);
+    });
+
+    const modelsWithFields = [
+      ...modelsWithAttributes.flatMap((model) => {
+        return getSystemModels(modelsWithAttributes, model);
+      }),
+      ...modelsWithAttributes,
     ].map((model) => {
       return addDefaultModelFields(model, true);
     });
 
-    const modelListWithPresets = modelList.map((model) => {
-      return addDefaultModelPresets(modelList, model);
+    const modelsWithPresets = modelsWithFields.map((model) => {
+      return addDefaultModelPresets(modelsWithFields, model);
     });
 
     const statements: Array<Statement> = [];
@@ -74,7 +82,7 @@ class Transaction {
     for (const query of queries) {
       const result = compileQueryInput(
         query,
-        modelListWithPresets,
+        modelsWithPresets,
         options?.inlineParams ? null : [],
         { expandColumns: options?.expandColumns },
       );
@@ -103,7 +111,7 @@ class Transaction {
       );
     }
 
-    this.models = modelListWithPresets;
+    this.models = modelsWithPresets;
 
     return statements;
   };

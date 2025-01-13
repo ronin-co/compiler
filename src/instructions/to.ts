@@ -1,3 +1,8 @@
+import {
+  composeAssociationModelSlug,
+  getFieldFromModel,
+  getModelBySlug,
+} from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
@@ -8,11 +13,6 @@ import {
   splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import {
-  composeAssociationModelSlug,
-  getFieldFromModel,
-  getModelBySlug,
-} from '@/src/utils/model';
 import { composeConditions } from '@/src/utils/statement';
 
 /**

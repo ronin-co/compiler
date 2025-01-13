@@ -6,10 +6,10 @@ import { handleOrderedBy } from '@/src/instructions/ordered-by';
 import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
+import { getModelBySlug, transformMetaQuery } from '@/src/model';
 import type { Model, ModelField } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
-import { getModelBySlug, transformMetaQuery } from '@/src/utils/model';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**

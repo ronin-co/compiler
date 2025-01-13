@@ -1,11 +1,16 @@
 import { handleWith } from '@/src/instructions/with';
+import {
+  addDefaultModelAttributes,
+  addDefaultModelFields,
+  addDefaultModelPresets,
+  slugToName,
+} from '@/src/model/defaults';
 import type {
   Model,
   ModelEntity,
   ModelField,
   ModelFieldLinkAction,
   ModelIndex,
-  ModelPreset,
   ModelTrigger,
   PartialModel,
   PublicModel,
@@ -30,7 +35,6 @@ import {
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
-import title from 'title';
 
 /**
  * Finds a model by its slug or plural slug.
@@ -200,159 +204,6 @@ export function getFieldFromModel(
   return { field: modelField, fieldSelector };
 }
 
-/**
- * Converts a slug to a readable name by splitting it on uppercase characters
- * and returning it formatted as title case.
- *
- * @example
- * ```ts
- * slugToName('activeAt'); // 'Active At'
- * ```
- *
- * @param slug - The slug string to convert.
- *
- * @returns The formatted name in title case.
- */
-export const slugToName = (slug: string): string => {
-  // Split the slug by uppercase letters and join with a space
-  const name = slug.replace(/([a-z])([A-Z])/g, '$1 $2');
-
-  // Convert the resulting string to title case using the 'title' library
-  return title(name);
-};
-
-const VOWELS = ['a', 'e', 'i', 'o', 'u'];
-
-/**
- * Pluralizes a singular English noun according to basic English pluralization rules.
- *
- * This function handles the following cases:
- * - **Words ending with a consonant followed by 'y'**: Replaces the 'y' with 'ies'.
- * - **Words ending with 's', 'ch', 'sh', or 'ex'**: Adds 'es' to the end of the word.
- * - **All other words**: Adds 's' to the end of the word.
- *
- * @example
- * ```ts
- * pluralize('baby');    // 'babies'
- * pluralize('key');     // 'keys'
- * pluralize('bus');     // 'buses'
- * pluralize('church');  // 'churches'
- * pluralize('cat');     // 'cats'
- * ```
- *
- * @param word - The singular noun to pluralize.
- *
- * @returns The plural form of the input word.
- */
-const pluralize = (word: string): string => {
-  const lastLetter = word.slice(-1).toLowerCase();
-  const secondLastLetter = word.slice(-2, -1).toLowerCase();
-
-  if (lastLetter === 'y' && !VOWELS.includes(secondLastLetter)) {
-    // If the word ends with 'y' preceded by a consonant, replace 'y' with 'ies'
-    return `${word.slice(0, -1)}ies`;
-  }
-
-  if (
-    lastLetter === 's' ||
-    word.slice(-2).toLowerCase() === 'ch' ||
-    word.slice(-2).toLowerCase() === 'sh' ||
-    word.slice(-2).toLowerCase() === 'ex'
-  ) {
-    // If the word ends with 's', 'ch', 'sh', or 'ex', add 'es'
-    return `${word}es`;
-  }
-
-  // In all other cases, simply add 's'
-  return `${word}s`;
-};
-
-type ComposableSettings =
-  | 'slug'
-  | 'pluralSlug'
-  | 'name'
-  | 'pluralName'
-  | 'idPrefix'
-  | 'table';
-
-/**
- * A list of settings that can be automatically generated based on other settings.
- *
- * The first item in each tuple is the setting that should be generated, the second item
- * is the setting that should be used as a base, and the third item is the function that
- * should be used to generate the new setting.
- */
-const modelAttributes: Array<
-  [ComposableSettings, ComposableSettings, (arg: string) => string]
-> = [
-  ['pluralSlug', 'slug', pluralize],
-  ['name', 'slug', slugToName],
-  ['pluralName', 'pluralSlug', slugToName],
-  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
-  ['table', 'pluralSlug', convertToSnakeCase],
-];
-
-/**
- * Add a default name, plural name, and plural slug to a provided model.
- *
- * @param model - The model that should receive defaults.
- * @param isNew - Whether the model is being newly created.
- *
- * @returns The updated model.
- */
-export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
-  const copiedModel = { ...model };
-
-  for (const [setting, base, generator] of modelAttributes) {
-    // If a custom value was provided for the setting, or the setting from which the current
-    // one can be generated is not available, skip the generation.
-    if (copiedModel[setting] || !copiedModel[base]) continue;
-
-    // Otherwise, if possible, generate the setting.
-    copiedModel[setting] = generator(copiedModel[base]);
-  }
-
-  const newFields = copiedModel.fields || [];
-
-  // If the model is being newly created or if new fields were provided for an existing
-  // model, we would like to re-generate the list of `identifiers` and attach the system
-  // fields to the model.
-  if (isNew || newFields.length > 0) {
-    if (!copiedModel.identifiers) copiedModel.identifiers = {};
-
-    // Intelligently select a reasonable default for which field should be used as the
-    // display name of the records in the model (e.g. used in lists on the dashboard).
-    if (!copiedModel.identifiers.name) {
-      const suitableField = newFields.find(
-        (field) =>
-          field.type === 'string' &&
-          field.required === true &&
-          ['name'].includes(field.slug),
-      );
-
-      copiedModel.identifiers.name = suitableField?.slug || 'id';
-    }
-
-    // Intelligently select a reasonable default for which field should be used as the
-    // slug of the records in the model (e.g. used in URLs on the dashboard).
-    if (!copiedModel.identifiers.slug) {
-      const suitableField = newFields.find(
-        (field) =>
-          field.type === 'string' &&
-          field.unique === true &&
-          field.required === true &&
-          ['slug', 'handle'].includes(field.slug),
-      );
-
-      copiedModel.identifiers.slug = suitableField?.slug || 'id';
-    }
-
-    copiedModel.fields = [...getSystemFields(copiedModel.idPrefix), ...newFields];
-  }
-
-  return copiedModel as Model;
-};
-
 /** These fields are required by the system and automatically added to every model. */
 export const getSystemFields = (
   idPrefix: Model['idPrefix'] = 'rec',
@@ -447,8 +298,8 @@ export const ROOT_MODEL: PartialModel = {
  * @returns The list of system models.
  */
 export const getSystemModels = (
-  models: Array<PublicModel>,
-  model: PublicModel,
+  models: Array<Model>,
+  model: Model,
 ): Array<PartialModel> => {
   const addedModels: Array<PartialModel> = [];
 
@@ -469,7 +320,7 @@ export const getSystemModels = (
           pluralSlug: fieldSlug,
           slug: fieldSlug,
           system: {
-            model: model.slug,
+            model: model.id,
             associationSlug: field.slug,
           },
           fields: [
@@ -489,108 +340,7 @@ export const getSystemModels = (
     }
   }
 
-  return addedModels;
-};
-
-/**
- * Adds useful default presets to a model, which can be used to write simpler queries.
- *
- * @param list - The list of all models.
- * @param model - The model for which default presets should be added.
- *
- * @returns The model with default presets added.
- */
-export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model => {
-  const defaultPresets: Array<ModelPreset> = [];
-
-  // Add default presets, which people can overwrite if they want to. Presets are
-  // used to provide concise ways of writing advanced queries, by allowing for defining
-  // complex queries inside the model definitions and re-using them across many
-  // different queries in the codebase of an application.
-  for (const field of model.fields || []) {
-    if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
-      const relatedModel = getModelBySlug(list, field.target);
-
-      // If a link field has the cardinality "many", we don't need to add a default
-      // preset for resolving its records, because we are already adding an associative
-      // schema in `getSystemModels`, which causes a default preset to get added in the
-      // original schema anyways.
-      if (field.kind === 'many') continue;
-
-      // For every link field, add a default preset for resolving the linked record in
-      // the model that contains the link field.
-      defaultPresets.push({
-        instructions: {
-          including: {
-            [field.slug]: {
-              [QUERY_SYMBOLS.QUERY]: {
-                get: {
-                  [relatedModel.slug]: {
-                    with: {
-                      // Compare the `id` field of the related model to the link field on
-                      // the root model (`field.slug`).
-                      id: {
-                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}${field.slug}`,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        slug: field.slug,
-      });
-    }
-  }
-
-  // Find potential child models that are referencing the current parent model. For
-  // each of them, we then add a default preset for resolving the child records from the
-  // parent model.
-  const childModels = list
-    .map((subModel) => {
-      const field = subModel.fields?.find((field) => {
-        return field.type === 'link' && field.target === model.slug;
-      });
-
-      if (!field) return null;
-      return { model: subModel, field };
-    })
-    .filter((match) => match !== null);
-
-  for (const childMatch of childModels) {
-    const { model: childModel, field: childField } = childMatch;
-    const pluralSlug = childModel.pluralSlug as string;
-
-    const presetSlug = childModel.system?.associationSlug || pluralSlug;
-
-    defaultPresets.push({
-      instructions: {
-        including: {
-          [presetSlug]: {
-            [QUERY_SYMBOLS.QUERY]: {
-              get: {
-                [pluralSlug]: {
-                  with: {
-                    [childField.slug]: {
-                      [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      slug: presetSlug,
-    });
-  }
-
-  if (Object.keys(defaultPresets).length > 0) {
-    model.presets = [...defaultPresets, ...(model.presets || [])];
-  }
-
-  return model;
+  return addedModels.map((model) => addDefaultModelAttributes(model, true));
 };
 
 /** A list of all RONIN data types and their respective column types in SQLite. */
@@ -752,6 +502,91 @@ const handleSystemModel = (
 };
 
 /**
+ * Compares the old and new attributes of a model to determine whether any system models
+ * should be created, removed, or updated.
+ *
+ * @param models - A list of models.
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
+ * SQL statement, in order to prepare for it.
+ * @param previousModel - The current model, before a change was applied.
+ * @param newModel - The current model, after a change was applied.
+ *
+ * @returns Nothing. The `models` and `dependencyStatements` arrays are modified in place.
+ */
+const handleSystemModels = (
+  models: Array<Model>,
+  dependencyStatements: Array<Statement>,
+  previousModel: Model,
+  newModel: Model,
+): void => {
+  const currentSystemModels = models.filter(({ system }) => {
+    return system?.model === newModel.id;
+  });
+
+  const newSystemModels = getSystemModels(models, newModel);
+
+  /**
+   * Determines whether a system model should continue to exist, or not.
+   *
+   * @param oldSystemModel - The old system model that currently already exists.
+   * @param newSystemModel - A new system model to compare it against.
+   *
+   * @returns Whether the system model should continue to exist.
+   */
+  const matchSystemModels = (
+    oldSystemModel: PartialModel,
+    newSystemModel: PartialModel,
+  ): boolean => {
+    const conditions: Array<boolean> = [
+      oldSystemModel.system?.model === newSystemModel.system?.model,
+    ];
+
+    // If an old system model is acting as an associative model between two
+    // manually-defined models, we need to check whether the new system model is used for
+    // the same model field.
+    if (oldSystemModel.system?.associationSlug) {
+      const oldFieldIndex = previousModel.fields.findIndex((item) => {
+        return item.slug === (newSystemModel.system?.associationSlug as string);
+      });
+
+      const newFieldIndex = newModel.fields.findIndex((item) => {
+        return item.slug === (oldSystemModel.system?.associationSlug as string);
+      });
+
+      conditions.push(oldFieldIndex === newFieldIndex);
+    }
+
+    return conditions.every((condition) => condition === true);
+  };
+
+  // Remove any system models that are no longer required.
+  for (const systemModel of currentSystemModels) {
+    // Check if there are any system models that should continue to exist.
+    const exists = newSystemModels.find(matchSystemModels.bind(null, systemModel));
+
+    if (exists) {
+      // Determine if the slug of the system model has changed. If so, alter the
+      // respective table.
+      if (exists.slug !== systemModel.slug) {
+        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
+      }
+      continue;
+    }
+
+    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
+  }
+
+  // Add any new system models that don't yet exist.
+  for (const systemModel of newSystemModels) {
+    // Check if there are any system models that already exist.
+    const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
+    if (exists) continue;
+
+    handleSystemModel(models, dependencyStatements, 'create', systemModel);
+  }
+};
+
+/**
  * Handles queries that modify the DB schema. Specifically, those are `create.model`,
  * `alter.model`, and `drop.model` queries.
  *
@@ -838,7 +673,8 @@ export const transformMetaQuery = (
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(newModel, true);
+      const modelWithAttributes = addDefaultModelAttributes(newModel, true);
+      const modelWithFields = addDefaultModelFields(modelWithAttributes, true);
       const modelWithPresets = addDefaultModelPresets(
         [...models, modelWithFields],
         modelWithFields,
@@ -895,10 +731,12 @@ export const transformMetaQuery = (
     }
 
     if (action === 'alter' && model) {
+      const modelBeforeUpdate = structuredClone(model);
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
-      const modelWithFields = addDefaultModelFields(newModel, false);
+      const modelWithAttributes = addDefaultModelAttributes(newModel, false);
+      const modelWithFields = addDefaultModelFields(modelWithAttributes, false);
       const modelWithPresets = addDefaultModelPresets(models, modelWithFields);
 
       const newTableName = modelWithPresets.table;
@@ -920,6 +758,8 @@ export const transformMetaQuery = (
         },
         to: modelWithPresets,
       };
+
+      handleSystemModels(models, dependencyStatements, modelBeforeUpdate, model);
     }
 
     if (action === 'drop' && model) {
@@ -932,7 +772,7 @@ export const transformMetaQuery = (
 
       // Remove all system models that are associated with the model.
       models
-        .filter(({ system }) => system?.model === model.slug)
+        .filter(({ system }) => system?.model === model.id)
         .map((systemModel) => {
           // Compose the SQL statement for removing the system model.
           // This modifies the original `models` array and removes the system model from it.
@@ -963,7 +803,7 @@ export const transformMetaQuery = (
 
   // Entities can only be created, altered, or dropped on existing models, so the model
   // is guaranteed to exist.
-  const modelBeforeUpdate = structuredClone(model);
+  const modelBeforeUpdate = structuredClone(model as Model);
   const existingModel = model as Model;
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
@@ -1225,71 +1065,7 @@ export const transformMetaQuery = (
     }
   }
 
-  const currentSystemModels = models.filter(({ system }) => {
-    return system?.model === existingModel.slug;
-  });
-
-  const newSystemModels = getSystemModels(models, existingModel);
-
-  /**
-   * Determines whether a system model should continue to exist, or not.
-   *
-   * @param oldSystemModel - The old system model that currently already exists.
-   * @param newSystemModel - A new system model to compare it against.
-   *
-   * @returns Whether the system model should continue to exist.
-   */
-  const matchSystemModels = (
-    oldSystemModel: PartialModel,
-    newSystemModel: PartialModel,
-  ): boolean => {
-    const conditions: Array<boolean> = [
-      oldSystemModel.system?.model === newSystemModel.system?.model,
-    ];
-
-    // If an old system model is acting as an associative model between two
-    // manually-defined models, we need to check whether the new system model is used for
-    // the same model field.
-    if (oldSystemModel.system?.associationSlug) {
-      const oldFieldIndex = modelBeforeUpdate?.fields.findIndex((item) => {
-        return item.slug === (newSystemModel.system?.associationSlug as string);
-      });
-
-      const newFieldIndex = existingModel.fields.findIndex((item) => {
-        return item.slug === (oldSystemModel.system?.associationSlug as string);
-      });
-
-      conditions.push(oldFieldIndex === newFieldIndex);
-    }
-
-    return conditions.every((condition) => condition === true);
-  };
-
-  // Remove any system models that are no longer required.
-  for (const systemModel of currentSystemModels) {
-    // Check if there are any system models that should continue to exist.
-    const exists = newSystemModels.find(matchSystemModels.bind(null, systemModel));
-
-    if (exists) {
-      // Determine if the slug of the system model has changed. If so, alter the
-      // respective table.
-      if (exists.slug !== systemModel.slug) {
-        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
-      }
-      continue;
-    }
-
-    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
-  }
-
-  // Add any new system models that don't yet exist.
-  for (const systemModel of newSystemModels) {
-    // Check if there are any system models that already exist.
-    const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
-    if (exists) continue;
-
-    handleSystemModel(models, dependencyStatements, 'create', systemModel);
-  }
+  handleSystemModels(models, dependencyStatements, modelBeforeUpdate, existingModel);
 
   return {
     set: {

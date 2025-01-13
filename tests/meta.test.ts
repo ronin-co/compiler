@@ -15,9 +15,10 @@ import {
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
+import { getSystemFields } from '@/src/model';
+import { slugToName } from '@/src/model/defaults';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
-import { getSystemFields, slugToName } from '@/src/utils/model';
 
 test('create new model', () => {
   const fields: Model['fields'] = [
@@ -71,7 +72,7 @@ test('create new model', () => {
     },
     {
       statement:
-        'INSERT INTO "ronin_schema" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
       params: [
         'account',
         JSON.stringify(
@@ -82,6 +83,7 @@ test('create new model', () => {
             ]),
           ),
         ),
+        expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
         'Account',
         'Accounts',
@@ -124,8 +126,8 @@ test('create new model with suitable default identifiers', () => {
 
   const transaction = new Transaction(queries, { models });
 
-  expect(transaction.statements[1].params[7]).toEqual('name');
-  expect(transaction.statements[1].params[8]).toEqual('handle');
+  expect(transaction.statements[1].params[8]).toEqual('name');
+  expect(transaction.statements[1].params[9]).toEqual('handle');
 });
 
 // Assert whether the system models associated with the model are correctly created.
@@ -290,6 +292,57 @@ test('alter existing model (slug)', () => {
   ]);
 });
 
+// Ensure that, if the `slug` of a model that has system models associatied with it
+// changes during an update, `ALTER TABLE` statements are generated for the system models.
+test('alter existing model (slug) that has system models associated with it', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'user',
+        to: {
+          slug: 'account',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'post',
+    },
+    {
+      slug: 'user',
+      fields: [
+        {
+          slug: 'likes',
+          type: 'link',
+          target: 'post',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'ALTER TABLE "users" RENAME TO "accounts"',
+      params: [],
+    },
+    {
+      statement:
+        'ALTER TABLE "ronin_link_user_likes" RENAME TO "ronin_link_account_likes"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
+      params: ['account', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'user'],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a model does not change during an update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('alter existing model (plural name)', () => {
@@ -412,7 +465,7 @@ test('query a model that was just created', () => {
   // order in which the queries are provided.
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
     `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
-    'INSERT INTO "ronin_schema" ("slug", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+    'INSERT INTO "ronin_schema" ("slug", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
     'SELECT * FROM "accounts" LIMIT 1',
     'DROP TABLE "accounts"',
     'DELETE FROM "ronin_schema" WHERE ("slug" = ?1) RETURNING *',

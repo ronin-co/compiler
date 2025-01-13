@@ -1,8 +1,8 @@
+import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
 import type { NativeRecord } from '@/src/types/result';
 import { getProperty } from '@/src/utils/helpers';
-import { getFieldFromModel } from '@/src/utils/model';
 
 // The separator and NULL placeholder have to be somewhat unique so that they don't
 // conflict with any other row values that might be used in the cursor.

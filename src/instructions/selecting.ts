@@ -1,3 +1,4 @@
+import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
@@ -9,7 +10,6 @@ import {
   getSymbol,
   splitQuery,
 } from '@/src/utils/helpers';
-import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
 
 /**

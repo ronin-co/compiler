@@ -1,9 +1,9 @@
 import type { WithFilters } from '@/src/instructions/with';
+import { getModelBySlug } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { composeIncludedTableAlias, getSymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { getModelBySlug } from '@/src/utils/model';
 import { composeConditions } from '@/src/utils/statement';
 
 /**
