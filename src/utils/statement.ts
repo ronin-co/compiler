@@ -22,9 +22,9 @@ import {
   type WithValue,
   type WithValueOptions,
 } from '@/src/instructions/with';
+import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
-import { getFieldFromModel, getModelBySlug } from '@/src/utils/model';
 
 /**
  * Serializes individual keys and values within a JSON object and escapes query symbols.

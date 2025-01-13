@@ -1,7 +1,7 @@
+import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
 import { RoninError } from '@/src/utils/helpers';
-import { getFieldFromModel } from '@/src/utils/model';
 import { CURSOR_NULL_PLACEHOLDER, CURSOR_SEPARATOR } from '@/src/utils/pagination';
 import { prepareStatementValue } from '@/src/utils/statement';
 

@@ -1,3 +1,9 @@
+import {
+  PLURAL_MODEL_ENTITIES_VALUES,
+  ROOT_MODEL,
+  getModelBySlug,
+  getSystemModels,
+} from '@/src/model';
 import { addDefaultModelFields, addDefaultModelPresets } from '@/src/model/defaults';
 import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
@@ -10,12 +16,6 @@ import type {
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
-import {
-  PLURAL_MODEL_ENTITIES_VALUES,
-  ROOT_MODEL,
-  getModelBySlug,
-  getSystemModels,
-} from '@/src/utils/model';
 import { generatePaginationCursor } from '@/src/utils/pagination';
 
 interface TransactionOptions {

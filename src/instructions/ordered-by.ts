@@ -1,7 +1,7 @@
+import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
 import { getSymbol } from '@/src/utils/helpers';
-import { getFieldFromModel } from '@/src/utils/model';
 import { parseFieldExpression } from '@/src/utils/statement';
 
 /**

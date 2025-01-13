@@ -5,9 +5,9 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import { type Model, type ModelField, type Query, Transaction } from '@/src/index';
+import { getSystemFields } from '@/src/model';
 import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
-import { getSystemFields } from '@/src/utils/model';
 
 test('inline statement parameters', async () => {
   const queries: Array<Query> = [
