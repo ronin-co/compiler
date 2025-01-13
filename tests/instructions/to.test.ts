@@ -688,6 +688,50 @@ test('set single record to result of nested query', async () => {
   expect(result.record?.name).toBe(targetRecord.lastName);
 });
 
+test('set single record to empty field', async () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            handle: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "handle" = NULL, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
+      params: ['elaine'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBe(null);
+});
+
 test('add multiple records with nested sub query', async () => {
   const queries: Array<Query> = [
     {
