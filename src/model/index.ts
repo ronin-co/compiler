@@ -705,13 +705,37 @@ export const transformMetaQuery = (
         }),
       );
 
+      // Add the newly created model to the list of models.
+      models.push(modelWithPresets);
+
+      // Compose the SQL statement for creating the table.
       dependencyStatements.push({
         statement: `CREATE TABLE "${modelWithPresets.table}" (${columns.join(', ')})`,
         params: [],
       });
 
-      // Add the newly created model to the list of models.
-      models.push(modelWithPresets);
+      // Compose the SQL statements for creating indexes and triggers.
+      for (const [modelEntity, pluralModelEntity] of [
+        ['index', 'indexes'],
+        ['trigger', 'triggers'],
+      ] as const) {
+        const entityValue = modelWithPresets[pluralModelEntity];
+        if (!entityValue) continue;
+
+        for (const item of entityValue) {
+          const query = {
+            alter: {
+              model: modelWithPresets.slug,
+              create: {
+                [modelEntity]: item,
+              },
+            },
+          };
+
+          // The `dependencyStatements` array is modified in place.
+          transformMetaQuery(models, dependencyStatements, null, query);
+        }
+      }
 
       const modelWithObjects: Model = Object.assign({}, modelWithPresets);
 

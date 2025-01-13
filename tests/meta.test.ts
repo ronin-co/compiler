@@ -108,6 +108,7 @@ test('create new model', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
+      fields: [{ slug: 'year', type: 'number' }],
     },
   ];
 
@@ -140,6 +141,15 @@ test('create new model', () => {
     {
       statement: `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "handle" TEXT, "email" TEXT UNIQUE NOT NULL COLLATE NOCASE CHECK (length("handle") >= 3), "position" INTEGER AUTOINCREMENT, "name" TEXT GENERATED ALWAYS AS (UPPER(substr("handle", 1, 1)) || substr("handle", 2)) STORED)`,
       params: [],
+    },
+    {
+      params: [],
+      statement: 'CREATE UNIQUE INDEX "index_slug" ON "accounts" ("handle")',
+    },
+    {
+      params: [],
+      statement:
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (\'2000\'); END',
     },
     {
       statement:
