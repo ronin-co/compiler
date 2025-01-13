@@ -276,9 +276,7 @@ type ComposableSettings =
   | 'table';
 
 /**
- * Generate a unique ID for a model. We are generating these IDs inside the compiler
- * instead of the database because the compiler needs it for internal comparisons, before
- * the resulting statements hit the database.
+ * Generates a unique identifier for a newly created model.
  *
  * @returns A string containing the ID.
  */
@@ -318,6 +316,9 @@ const modelAttributes: Array<
 export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
 
+  // Generate a unique identifier for the model. We are generating these identifiers
+  // within the compiler instead of the database because the compiler needs it for
+  // internal comparisons, before the resulting statements hit the database.
   if (isNew && !copiedModel.id) copiedModel.id = getModelIdentifier();
 
   for (const [setting, base, generator] of modelAttributes) {
