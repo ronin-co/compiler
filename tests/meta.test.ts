@@ -292,6 +292,8 @@ test('alter existing model (slug)', () => {
   ]);
 });
 
+// Ensure that, if the `slug` of a model that has system models associatied with it
+// changes during an update, `ALTER TABLE` statements are generated for the system models.
 test('alter existing model (slug) that has system models associated with it', () => {
   const queries: Array<Query> = [
     {
