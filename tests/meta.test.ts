@@ -290,6 +290,50 @@ test('alter existing model (slug)', () => {
   ]);
 });
 
+test('alter existing model (slug) that has system models associated with it', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'user',
+        to: {
+          slug: 'account',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'post',
+    },
+    {
+      slug: 'user',
+      fields: [
+        {
+          slug: 'likes',
+          type: 'link',
+          target: 'post',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'ALTER TABLE "users" RENAME TO "accounts"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
+      params: ['account', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'user'],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a model does not change during an update, no
 // unnecessary `ALTER TABLE` statement is generated for it.
 test('alter existing model (plural name)', () => {

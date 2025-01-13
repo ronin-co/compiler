@@ -752,6 +752,91 @@ const handleSystemModel = (
 };
 
 /**
+ * Compares the old and new attributes of a model to determine whether any system models
+ * should be created, removed, or updated.
+ *
+ * @param models - A list of models.
+ * @param dependencyStatements - A list of SQL statements to be executed before the main
+ * SQL statement, in order to prepare for it.
+ * @param previousModel - The current model, before a change was applied.
+ * @param newModel - The current model, after a change was applied.
+ *
+ * @returns Nothing. The `models` and `dependencyStatements` arrays are modified in place.
+ */
+const handleSystemModels = (
+  models: Array<Model>,
+  dependencyStatements: Array<Statement>,
+  previousModel: Model,
+  newModel: Model,
+): void => {
+  const currentSystemModels = models.filter(({ system }) => {
+    return system?.model === newModel.slug;
+  });
+
+  const newSystemModels = getSystemModels(models, newModel);
+
+  /**
+   * Determines whether a system model should continue to exist, or not.
+   *
+   * @param oldSystemModel - The old system model that currently already exists.
+   * @param newSystemModel - A new system model to compare it against.
+   *
+   * @returns Whether the system model should continue to exist.
+   */
+  const matchSystemModels = (
+    oldSystemModel: PartialModel,
+    newSystemModel: PartialModel,
+  ): boolean => {
+    const conditions: Array<boolean> = [
+      oldSystemModel.system?.model === newSystemModel.system?.model,
+    ];
+
+    // If an old system model is acting as an associative model between two
+    // manually-defined models, we need to check whether the new system model is used for
+    // the same model field.
+    if (oldSystemModel.system?.associationSlug) {
+      const oldFieldIndex = previousModel?.fields.findIndex((item) => {
+        return item.slug === (newSystemModel.system?.associationSlug as string);
+      });
+
+      const newFieldIndex = newModel.fields.findIndex((item) => {
+        return item.slug === (oldSystemModel.system?.associationSlug as string);
+      });
+
+      conditions.push(oldFieldIndex === newFieldIndex);
+    }
+
+    return conditions.every((condition) => condition === true);
+  };
+
+  // Remove any system models that are no longer required.
+  for (const systemModel of currentSystemModels) {
+    // Check if there are any system models that should continue to exist.
+    const exists = newSystemModels.find(matchSystemModels.bind(null, systemModel));
+
+    if (exists) {
+      // Determine if the slug of the system model has changed. If so, alter the
+      // respective table.
+      if (exists.slug !== systemModel.slug) {
+        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
+      }
+      continue;
+    }
+
+    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
+  }
+
+  // Add any new system models that don't yet exist.
+  for (const systemModel of newSystemModels) {
+    // Check if there are any system models that already exist.
+    const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
+    if (exists) continue;
+
+    handleSystemModel(models, dependencyStatements, 'create', systemModel);
+  }
+};
+
+/**
  * Handles queries that modify the DB schema. Specifically, those are `create.model`,
  * `alter.model`, and `drop.model` queries.
  *
@@ -963,7 +1048,7 @@ export const transformMetaQuery = (
 
   // Entities can only be created, altered, or dropped on existing models, so the model
   // is guaranteed to exist.
-  const modelBeforeUpdate = structuredClone(model);
+  const modelBeforeUpdate = structuredClone(model as Model);
   const existingModel = model as Model;
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
@@ -1225,71 +1310,7 @@ export const transformMetaQuery = (
     }
   }
 
-  const currentSystemModels = models.filter(({ system }) => {
-    return system?.model === existingModel.slug;
-  });
-
-  const newSystemModels = getSystemModels(models, existingModel);
-
-  /**
-   * Determines whether a system model should continue to exist, or not.
-   *
-   * @param oldSystemModel - The old system model that currently already exists.
-   * @param newSystemModel - A new system model to compare it against.
-   *
-   * @returns Whether the system model should continue to exist.
-   */
-  const matchSystemModels = (
-    oldSystemModel: PartialModel,
-    newSystemModel: PartialModel,
-  ): boolean => {
-    const conditions: Array<boolean> = [
-      oldSystemModel.system?.model === newSystemModel.system?.model,
-    ];
-
-    // If an old system model is acting as an associative model between two
-    // manually-defined models, we need to check whether the new system model is used for
-    // the same model field.
-    if (oldSystemModel.system?.associationSlug) {
-      const oldFieldIndex = modelBeforeUpdate?.fields.findIndex((item) => {
-        return item.slug === (newSystemModel.system?.associationSlug as string);
-      });
-
-      const newFieldIndex = existingModel.fields.findIndex((item) => {
-        return item.slug === (oldSystemModel.system?.associationSlug as string);
-      });
-
-      conditions.push(oldFieldIndex === newFieldIndex);
-    }
-
-    return conditions.every((condition) => condition === true);
-  };
-
-  // Remove any system models that are no longer required.
-  for (const systemModel of currentSystemModels) {
-    // Check if there are any system models that should continue to exist.
-    const exists = newSystemModels.find(matchSystemModels.bind(null, systemModel));
-
-    if (exists) {
-      // Determine if the slug of the system model has changed. If so, alter the
-      // respective table.
-      if (exists.slug !== systemModel.slug) {
-        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
-      }
-      continue;
-    }
-
-    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
-  }
-
-  // Add any new system models that don't yet exist.
-  for (const systemModel of newSystemModels) {
-    // Check if there are any system models that already exist.
-    const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
-    if (exists) continue;
-
-    handleSystemModel(models, dependencyStatements, 'create', systemModel);
-  }
+  handleSystemModels(models, dependencyStatements, modelBeforeUpdate, existingModel);
 
   return {
     set: {
