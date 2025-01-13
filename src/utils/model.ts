@@ -276,6 +276,21 @@ type ComposableSettings =
   | 'table';
 
 /**
+ * Generate a unique ID for a model. We are generating these IDs inside the compiler
+ * instead of the database because the compiler needs it for internal comparisons, before
+ * the resulting statements hit the database.
+ *
+ * @returns A string containing the ID.
+ */
+const getModelIdentifier = (): string => {
+  return `mod_${Array.from(crypto.getRandomValues(new Uint8Array(12)))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 16)
+    .toLowerCase()}`;
+};
+
+/**
  * A list of settings that can be automatically generated based on other settings.
  *
  * The first item in each tuple is the setting that should be generated, the second item
@@ -302,6 +317,8 @@ const modelAttributes: Array<
  */
 export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
   const copiedModel = { ...model };
+
+  if (isNew && !copiedModel.id) copiedModel.id = getModelIdentifier();
 
   for (const [setting, base, generator] of modelAttributes) {
     // If a custom value was provided for the setting, or the setting from which the current
@@ -980,7 +997,7 @@ export const transformMetaQuery = (
     }
 
     if (action === 'alter' && model) {
-      // const modelBeforeUpdate = structuredClone(model);
+      const modelBeforeUpdate = structuredClone(model);
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
@@ -1007,7 +1024,7 @@ export const transformMetaQuery = (
         to: modelWithPresets,
       };
 
-      // handleSystemModels(models, dependencyStatements, modelBeforeUpdate, model)
+      handleSystemModels(models, dependencyStatements, modelBeforeUpdate, model);
     }
 
     if (action === 'drop' && model) {

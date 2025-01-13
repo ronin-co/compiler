@@ -71,7 +71,7 @@ test('create new model', () => {
     },
     {
       statement:
-        'INSERT INTO "ronin_schema" ("slug", "fields", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+        'INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
       params: [
         'account',
         JSON.stringify(
@@ -82,6 +82,7 @@ test('create new model', () => {
             ]),
           ),
         ),
+        expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
         'Account',
         'Accounts',
@@ -124,8 +125,8 @@ test('create new model with suitable default identifiers', () => {
 
   const transaction = new Transaction(queries, { models });
 
-  expect(transaction.statements[1].params[7]).toEqual('name');
-  expect(transaction.statements[1].params[8]).toEqual('handle');
+  expect(transaction.statements[1].params[8]).toEqual('name');
+  expect(transaction.statements[1].params[9]).toEqual('handle');
 });
 
 // Assert whether the system models associated with the model are correctly created.
@@ -456,7 +457,7 @@ test('query a model that was just created', () => {
   // order in which the queries are provided.
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
     `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
-    'INSERT INTO "ronin_schema" ("slug", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING *',
+    'INSERT INTO "ronin_schema" ("slug", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
     'SELECT * FROM "accounts" LIMIT 1',
     'DROP TABLE "accounts"',
     'DELETE FROM "ronin_schema" WHERE ("slug" = ?1) RETURNING *',

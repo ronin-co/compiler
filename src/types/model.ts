@@ -177,6 +177,8 @@ export type ModelPreset = {
 export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
 
 export interface Model<T extends Array<ModelField> = Array<ModelField>> {
+  id: string;
+
   name: string;
   pluralName: string;
   slug: string;
