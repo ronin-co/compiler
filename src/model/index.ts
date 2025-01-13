@@ -340,7 +340,7 @@ export const getSystemModels = (
     }
   }
 
-  return addedModels;
+  return addedModels.map((model) => addDefaultModelAttributes(model, true));
 };
 
 /** A list of all RONIN data types and their respective column types in SQLite. */

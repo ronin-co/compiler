@@ -60,14 +60,13 @@ class Transaction {
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
-    const modelsWithAttributes = models.map((model) => {
+    const modelsWithAttributes = [ROOT_MODEL, ...models].map((model) => {
       return addDefaultModelAttributes(model, true);
     });
     const modelList = [
-      addDefaultModelAttributes(ROOT_MODEL, true),
-      ...modelsWithAttributes
-        .flatMap((model) => getSystemModels(modelsWithAttributes, model))
-        .map((model) => addDefaultModelAttributes(model, true)),
+      ...modelsWithAttributes.flatMap((model) =>
+        getSystemModels(modelsWithAttributes, model),
+      ),
       ...modelsWithAttributes,
     ].map((model) => {
       return addDefaultModelFields(model, true);
