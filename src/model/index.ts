@@ -298,8 +298,8 @@ export const ROOT_MODEL: PartialModel = {
  * @returns The list of system models.
  */
 export const getSystemModels = (
-  models: Array<PublicModel>,
-  model: PublicModel,
+  models: Array<Model>,
+  model: Model,
 ): Array<PartialModel> => {
   const addedModels: Array<PartialModel> = [];
 
