@@ -63,17 +63,18 @@ class Transaction {
     const modelsWithAttributes = [ROOT_MODEL, ...models].map((model) => {
       return addDefaultModelAttributes(model, true);
     });
-    const modelList = [
-      ...modelsWithAttributes.flatMap((model) =>
-        getSystemModels(modelsWithAttributes, model),
-      ),
+
+    const modelsWithFields = [
+      ...modelsWithAttributes.flatMap((model) => {
+        return getSystemModels(modelsWithAttributes, model);
+      }),
       ...modelsWithAttributes,
     ].map((model) => {
       return addDefaultModelFields(model, true);
     });
 
-    const modelListWithPresets = modelList.map((model) => {
-      return addDefaultModelPresets(modelList, model);
+    const modelsWithPresets = modelsWithFields.map((model) => {
+      return addDefaultModelPresets(modelsWithFields, model);
     });
 
     const statements: Array<Statement> = [];
@@ -81,7 +82,7 @@ class Transaction {
     for (const query of queries) {
       const result = compileQueryInput(
         query,
-        modelListWithPresets,
+        modelsWithPresets,
         options?.inlineParams ? null : [],
         { expandColumns: options?.expandColumns },
       );
@@ -110,7 +111,7 @@ class Transaction {
       );
     }
 
-    this.models = modelListWithPresets;
+    this.models = modelsWithPresets;
 
     return statements;
   };
