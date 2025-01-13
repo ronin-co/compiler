@@ -795,7 +795,7 @@ const handleSystemModels = (
     // manually-defined models, we need to check whether the new system model is used for
     // the same model field.
     if (oldSystemModel.system?.associationSlug) {
-      const oldFieldIndex = previousModel?.fields.findIndex((item) => {
+      const oldFieldIndex = previousModel.fields.findIndex((item) => {
         return item.slug === (newSystemModel.system?.associationSlug as string);
       });
 
