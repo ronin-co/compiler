@@ -329,6 +329,11 @@ test('alter existing model (slug) that has system models associated with it', ()
       params: [],
     },
     {
+      statement:
+        'ALTER TABLE "ronin_link_user_likes" RENAME TO "ronin_link_account_likes"',
+      params: [],
+    },
+    {
       statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
       params: ['account', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'user'],
       returning: true,

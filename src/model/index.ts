@@ -320,7 +320,7 @@ export const getSystemModels = (
           pluralSlug: fieldSlug,
           slug: fieldSlug,
           system: {
-            model: model.slug,
+            model: model.id,
             associationSlug: field.slug,
           },
           fields: [
@@ -520,7 +520,7 @@ const handleSystemModels = (
   newModel: Model,
 ): void => {
   const currentSystemModels = models.filter(({ system }) => {
-    return system?.model === newModel.slug;
+    return system?.model === newModel.id;
   });
 
   const newSystemModels = getSystemModels(models, newModel);
@@ -772,7 +772,7 @@ export const transformMetaQuery = (
 
       // Remove all system models that are associated with the model.
       models
-        .filter(({ system }) => system?.model === model.slug)
+        .filter(({ system }) => system?.model === model.id)
         .map((systemModel) => {
           // Compose the SQL statement for removing the system model.
           // This modifies the original `models` array and removes the system model from it.
