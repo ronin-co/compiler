@@ -17,6 +17,8 @@ import {
 } from '@/fixtures/utils';
 import { getSystemFields } from '@/src/model';
 import { slugToName } from '@/src/model/defaults';
+import type { ModelEntity } from '@/src/types/model';
+import type { ModelEntityType } from '@/src/types/query';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
@@ -53,15 +55,85 @@ test('create new model', () => {
     },
   ];
 
-  const queries: Array<Query> = [
+  const triggers: Model['triggers'] = [
     {
-      create: {
-        model: { slug: 'account', fields },
+      when: 'AFTER',
+      action: 'INSERT',
+      effects: [
+        {
+          add: {
+            signup: {
+              to: {
+                year: 2000,
+              },
+            },
+          },
+        },
+      ],
+    },
+  ];
+
+  const indexes: Model['indexes'] = [
+    {
+      fields: [
+        {
+          slug: 'handle',
+        },
+      ],
+      unique: true,
+    },
+  ];
+
+  const presets: Model['presets'] = [
+    {
+      slug: 'companyEmployees',
+      instructions: {
+        with: {
+          email: {
+            endingWith: '@company.co',
+          },
+        },
       },
     },
   ];
 
-  const models: Array<Model> = [];
+  const queries: Array<Query> = [
+    {
+      create: {
+        model: { slug: 'account', fields, indexes, triggers, presets },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'signup',
+      fields: [{ slug: 'year', type: 'number' }],
+    },
+  ];
+
+  const mapItems = (type: ModelEntityType, items: Array<ModelEntity>): string => {
+    return JSON.stringify(
+      Object.fromEntries(
+        items.map(({ slug: defaultSlug, ...rest }) => {
+          const slug = defaultSlug || `${type}Slug`;
+
+          return [
+            slug,
+            {
+              ...rest,
+              name:
+                type === 'field'
+                  ? 'name' in rest
+                    ? rest.name
+                    : slugToName(slug)
+                  : undefined,
+            },
+          ];
+        }),
+      ),
+    );
+  };
 
   const transaction = new Transaction(queries, { models });
 
@@ -71,18 +143,23 @@ test('create new model', () => {
       params: [],
     },
     {
+      params: [],
+      statement: 'CREATE UNIQUE INDEX "index_slug" ON "accounts" ("handle")',
+    },
+    {
+      params: [],
       statement:
-        'INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (\'2000\'); END',
+    },
+    {
+      statement:
+        'INSERT INTO "ronin_schema" ("slug", "fields", "indexes", "triggers", "presets", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13) RETURNING *',
       params: [
         'account',
-        JSON.stringify(
-          Object.fromEntries(
-            [...getSystemFields('acc'), ...fields].map(({ slug, ...rest }) => [
-              slug,
-              { ...rest, name: 'name' in rest ? rest.name : slugToName(slug) },
-            ]),
-          ),
-        ),
+        mapItems('field', [...getSystemFields('acc'), ...fields]),
+        mapItems('index', indexes),
+        mapItems('trigger', triggers),
+        mapItems('preset', presets),
         expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
         'Account',
