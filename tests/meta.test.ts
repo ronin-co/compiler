@@ -15,9 +15,10 @@ import {
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
+import { slugToName } from '@/src/model/defaults';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
-import { getSystemFields, slugToName } from '@/src/utils/model';
+import { getSystemFields } from '@/src/utils/model';
 
 test('create new model', () => {
   const fields: Model['fields'] = [

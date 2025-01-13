@@ -1,3 +1,4 @@
+import { addDefaultModelFields, addDefaultModelPresets } from '@/src/model/defaults';
 import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
@@ -12,8 +13,6 @@ import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
 import {
   PLURAL_MODEL_ENTITIES_VALUES,
   ROOT_MODEL,
-  addDefaultModelFields,
-  addDefaultModelPresets,
   getModelBySlug,
   getSystemModels,
 } from '@/src/utils/model';
