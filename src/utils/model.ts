@@ -980,6 +980,7 @@ export const transformMetaQuery = (
     }
 
     if (action === 'alter' && model) {
+      // const modelBeforeUpdate = structuredClone(model);
       const newModel = jsonValue as unknown as Model;
 
       // Compose default settings for the model.
@@ -1005,6 +1006,8 @@ export const transformMetaQuery = (
         },
         to: modelWithPresets,
       };
+
+      // handleSystemModels(models, dependencyStatements, modelBeforeUpdate, model)
     }
 
     if (action === 'drop' && model) {
