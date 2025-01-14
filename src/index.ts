@@ -144,7 +144,8 @@ class Transaction {
       let existingRecord = records[rowIndex];
 
       const rowAsObject = fields.reduce((acc, field, fieldIndex) => {
-        const parentField = 'parentField' in field ? field.parentField : 'root';
+        const slug =
+          'parentField' in field ? `${field.parentField}.${field.slug}` : field.slug;
 
         let newValue = row[fieldIndex];
 
@@ -154,8 +155,7 @@ class Transaction {
           newValue = Boolean(newValue);
         }
 
-        if (!acc[parentField]) acc[parentField] = {};
-        acc[parentField][field.slug] = newValue;
+        setProperty(acc, slug, newValue);
         return acc;
       }, {});
 
