@@ -360,21 +360,19 @@ export const getProperty = (obj: NestedObject, path: string): unknown => {
 };
 
 /**
- * Sets a property on an object and returns the object with the property set.
+ * Sets a property on an object by mutating the object in place.
  *
  * @param obj - The object on which the property should be set.
  * @param path - The path at which the property should be set.
  * @param value - The value of the property.
  *
- * @returns The object with the property set.
+ * @returns Nothing.
  */
 export const setProperty = <Object = NestedObject>(
   obj: Object,
   path: string,
   value: unknown,
-): Object => {
-  if (!obj) return setProperty({} as Object, path, value);
-
+): void => {
   const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
 
   const _set = (node: NestedObject): void => {
@@ -393,9 +391,7 @@ export const setProperty = <Object = NestedObject>(
     }
   };
 
-  const cloned = structuredClone(obj);
-  _set(cloned);
-  return cloned;
+  _set(obj as NestedObject);
 };
 
 /**

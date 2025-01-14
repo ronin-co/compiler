@@ -1,5 +1,5 @@
 import { getFieldFromModel, getModelBySlug } from '@/src/model';
-import type { Model, ModelField } from '@/src/types/model';
+import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
   QUERY_SYMBOLS,
@@ -18,6 +18,7 @@ import { parseFieldExpression, prepareStatementValue } from '@/src/utils/stateme
  *
  * @param models - A list of models.
  * @param model - The model associated with the current query.
+ * @param single - Whether a single or multiple records are being queried.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
@@ -29,6 +30,7 @@ export const handleSelecting = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
+  single: boolean,
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];
@@ -37,8 +39,8 @@ export const handleSelecting = (
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
   },
-): { columns: string; isJoining: boolean; loadedFields: Array<ModelField> } => {
-  let loadedFields: Array<ModelField> = [];
+): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
+  let loadedFields: Array<InternalModelField> = [];
   let expandColumns = false;
 
   let statement = '*';
@@ -84,12 +86,12 @@ export const handleSelecting = (
         expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
 
         const tableAlias = composeIncludedTableAlias(key);
-        const single = queryModel !== subQueryModel.pluralSlug;
+        const subSingle = queryModel !== subQueryModel.pluralSlug;
 
         // If multiple records are being joined and the root query only targets a single
         // record, we need to alias the root table, because it will receive a dedicated
         // SELECT statement in the `handleIncluding` function.
-        if (!single) {
+        if (single && !subSingle) {
           model.tableAlias = `sub_${model.table}`;
         }
 
@@ -103,7 +105,13 @@ export const handleSelecting = (
             });
 
         for (const field of queryModelFields) {
-          loadedFields.push({ ...field, parentField: key } as unknown as ModelField);
+          loadedFields.push({
+            ...field,
+            parentField: {
+              slug: key,
+              single: subSingle,
+            },
+          });
 
           // If the column names should be expanded, that means we need to alias all
           // columns of the joined table to avoid conflicts with the root table.

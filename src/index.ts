@@ -9,7 +9,11 @@ import {
   addDefaultModelFields,
   addDefaultModelPresets,
 } from '@/src/model/defaults';
-import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
+import type {
+  InternalModelField,
+  Model as PrivateModel,
+  PublicModel,
+} from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
   MultipleRecordResult,
@@ -117,62 +121,40 @@ class Transaction {
   };
 
   #formatRows<Record = NativeRecord>(
-    fields: Array<ModelField>,
+    fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: true,
     isMeta: boolean,
   ): Record;
   #formatRows<Record = NativeRecord>(
-    fields: Array<ModelField>,
+    fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: false,
     isMeta: boolean,
   ): Array<Record>;
 
   #formatRows<Record = NativeRecord>(
-    fields: Array<ModelField>,
+    fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: boolean,
     isMeta: boolean,
   ): Record | Array<Record> {
-    const records: Array<Record> = [];
+    const records: Array<NativeRecord> = [];
 
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
-
-      for (let valueIndex = 0; valueIndex < row.length; valueIndex++) {
-        const value = row[valueIndex];
-        const field = fields[valueIndex];
-
+    for (const row of rows) {
+      const record = fields.reduce((acc, field, fieldIndex) => {
         let newSlug = field.slug;
-        let newValue = value;
+        let newValue = row[fieldIndex];
 
-        if (field.type === 'json') {
-          newValue = JSON.parse(value as string);
-        } else if (field.type === 'boolean') {
-          newValue = Boolean(value);
+        if (field.parentField) {
+          const arrayKey = field.parentField.single ? '' : '[0]';
+          newSlug = `${field.parentField.slug}${arrayKey}.${field.slug}`;
         }
 
-        const parentFieldSlug = (field as ModelField & { parentField?: string })
-          .parentField;
-
-        let usableRowIndex = rowIndex;
-
-        if (parentFieldSlug) {
-          // If the field is nested into a parent field and only one row is available,
-          // prefix the current field with the slug of the parent field, which causes it
-          // to get nested into a parent object in the final record.
-          if (rows.length === 1) {
-            newSlug = `${parentFieldSlug}.${field.slug}`;
-          }
-          // Alternatively, if the field is nested into a parent field and more than one
-          // row is available, that means multiple rows are being joined from a different
-          // table, so we need to create an array as the value of the parent field, and
-          // fill it with the respective joined records.
-          else {
-            newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
-            usableRowIndex = 0;
-          }
+        if (field.type === 'json') {
+          newValue = JSON.parse(newValue as string);
+        } else if (field.type === 'boolean') {
+          newValue = Boolean(newValue);
         }
 
         // If the query is used to alter the database schema, the result of the query
@@ -191,22 +173,52 @@ class Transaction {
             : [];
         }
 
-        records[usableRowIndex] = setProperty<Record>(
-          records[usableRowIndex],
-          newSlug,
-          newValue,
-        );
+        setProperty(acc, newSlug, newValue);
+        return acc;
+      }, {} as NativeRecord);
+
+      const existingRecord = record.id
+        ? records.find((existingRecord) => {
+            return existingRecord.id === record.id;
+          })
+        : null;
+
+      // In the most common scenario that there isn't already a record with the same ID
+      // as the current row, we can simply add the record to the list of records.
+      //
+      // If there is already a record with the same ID, however, that means the current
+      // row is the result of a JOIN operation, in which case we need to push the values
+      // of the current row into the arrays on the existing record.
+      if (!existingRecord) {
+        records.push(record);
+        continue;
+      }
+
+      const joinFields = fields.reduce(
+        (acc, field) => {
+          if (!field.parentField) return acc;
+          const { single, slug } = field.parentField;
+          return single || acc.includes(slug) ? acc : acc.concat([slug]);
+        },
+        [] as Array<string>,
+      );
+
+      for (const parentField of joinFields) {
+        const currentValue = existingRecord[parentField] as Array<NativeRecord>;
+        const newValue = record[parentField] as Array<NativeRecord>;
+
+        currentValue.push(...newValue);
       }
     }
 
-    return single ? records[0] : records;
+    return single ? (records[0] as Record) : (records as Array<Record>);
   }
 
-  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
   formatResults<Record>(
     results: Array<Array<ObjectRow>>,
     raw?: false,
   ): Array<Result<Record>>;
+  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -278,7 +290,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.#formatRows<Record>(rawModelFields, rows, single, isMeta)
+              ? this.#formatRows<Record>(rawModelFields, rows, true, isMeta)
               : null,
             modelFields,
           };
@@ -288,7 +300,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(rawModelFields, rows, single, isMeta),
+          records: this.#formatRows<Record>(rawModelFields, rows, false, isMeta),
           modelFields,
         };
 

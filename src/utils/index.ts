@@ -7,7 +7,7 @@ import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
 import { getModelBySlug, transformMetaQuery } from '@/src/model';
-import type { Model, ModelField } from '@/src/types/model';
+import type { InternalModelField, Model } from '@/src/types/model';
 import type { Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import { formatIdentifiers } from '@/src/utils/statement';
@@ -47,7 +47,7 @@ export const compileQueryInput = (
 ): {
   dependencies: Array<Statement>;
   main: Statement;
-  loadedFields: Array<ModelField>;
+  loadedFields: Array<InternalModelField>;
 } => {
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -94,6 +94,7 @@ export const compileQueryInput = (
     models,
     model,
     statementParams,
+    single,
     {
       selecting: instructions?.selecting,
       including: instructions?.including,
@@ -132,6 +133,7 @@ export const compileQueryInput = (
       models,
       model,
       statementParams,
+      single,
       instructions?.including,
     );
 

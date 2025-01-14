@@ -14,6 +14,7 @@ import { composeConditions } from '@/src/utils/statement';
  * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
+ * @param single - Whether a single or multiple records are being queried.
  * @param instruction - The `including` instruction provided in the current query.
  *
  * @returns The SQL syntax for the provided `including` instruction.
@@ -22,6 +23,7 @@ export const handleIncluding = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
+  single: boolean,
   instruction: Instructions['including'],
 ): {
   statement: string;
@@ -53,7 +55,7 @@ export const handleIncluding = (
     let relatedTableSelector = `"${relatedModel.table}"`;
 
     const tableAlias = composeIncludedTableAlias(ephemeralFieldSlug);
-    const single = queryModel !== relatedModel.pluralSlug;
+    const subSingle = queryModel !== relatedModel.pluralSlug;
 
     // If no `with` query instruction is provided, we want to perform a CROSS
     // JOIN instead of a LEFT JOIN, because it is guaranteed that the joined
@@ -69,7 +71,7 @@ export const handleIncluding = (
       // likely that rows that are being joined differ for every row on the
       // root table, in which case we don't want to use a sub query, since the
       // JOIN itself naturally only selects the rows that are needed.
-      if (single) {
+      if (subSingle) {
         if (!modifiableQueryInstructions) modifiableQueryInstructions = {};
         modifiableQueryInstructions.limitedTo = 1;
       }
@@ -124,7 +126,9 @@ export const handleIncluding = (
     // If multiple records are being joined, we need to prepare a sub query that can be
     // used as a replacement for the root table, since we want to guarantee that the root
     // statement only returns one row, and multiple rows are being joined to it.
-    if (!single) tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
+    if (single && !subSingle) {
+      tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
+    }
   }
 
   return { statement, tableSubQuery };
