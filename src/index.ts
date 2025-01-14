@@ -135,15 +135,10 @@ class Transaction {
     single: boolean,
     isMeta: boolean,
   ): Record | Array<Record> {
-    const records: Array<Record> = [];
+    const records: Array<NativeRecord> = [];
 
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
-
-      if (!records[rowIndex]) records[rowIndex] = {} as Record;
-      let existingRecord = records[rowIndex];
-
-      const rowAsObject = fields.reduce((acc, field, fieldIndex) => {
+    for (const row of rows) {
+      const record = fields.reduce((acc, field, fieldIndex) => {
         const slug =
           'parentField' in field ? `${field.parentField}.${field.slug}` : field.slug;
 
@@ -173,64 +168,47 @@ class Transaction {
 
         setProperty(acc, slug, newValue);
         return acc;
-      }, {});
+      }, {} as NativeRecord);
 
-      console.log('ROW', rowAsObject);
+      const existingRecord = records.find((existingRecord) => {
+        return existingRecord.id === record.id;
+      });
 
-      for (let valueIndex = 0; valueIndex < row.length; valueIndex++) {
-        const value = row[valueIndex];
-        const field = fields[valueIndex];
+      // In the most common scenario that there isn't already a record with the same ID
+      // as the current row, we can simply add the record to the list of records.
+      //
+      // If there is already a record with the same ID, however, that means the current
+      // row is the result of a JOIN operation, in which case we need to push the values
+      // of the current row into the arrays on the existing record.
+      if (!existingRecord) {
+        records.push(record);
+        continue;
+      }
 
-        let newSlug = field.slug;
-        let newValue = value;
+      const parentFields = Array.from(
+        fields.reduce((acc, field) => {
+          if ('parentField' in field) acc.add(field.parentField as string);
+          return acc;
+        }, new Set<string>()),
+      );
 
-        if (field.type === 'json') {
-          newValue = JSON.parse(value as string);
-        } else if (field.type === 'boolean') {
-          newValue = Boolean(value);
+      for (const parentField of parentFields) {
+        const currentValue = existingRecord[parentField] as
+          | NativeRecord
+          | Array<NativeRecord>;
+        const newValue = record[parentField] as NativeRecord;
+
+        if ('id' in currentValue && currentValue.id === newValue.id) continue;
+
+        if (Array.isArray(currentValue)) {
+          currentValue.push(newValue);
+        } else {
+          existingRecord[parentField] = [currentValue, newValue];
         }
-
-        const parentFieldSlug = (field as ModelField & { parentField?: string })
-          .parentField;
-
-        if (parentFieldSlug) {
-          // If the field is nested into a parent field and only one row is available,
-          // prefix the current field with the slug of the parent field, which causes it
-          // to get nested into a parent object in the final record.
-          if (rows.length === 1) {
-            newSlug = `${parentFieldSlug}.${field.slug}`;
-          }
-          // Alternatively, if the field is nested into a parent field and more than one
-          // row is available, that means multiple rows are being joined from a different
-          // table, so we need to create an array as the value of the parent field, and
-          // fill it with the respective joined records.
-          else {
-            newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
-            existingRecord = records[0];
-          }
-        }
-
-        // If the query is used to alter the database schema, the result of the query
-        // will always be a model, because the only available queries for altering the
-        // database schema are `create.model`, `alter.model`, and `drop.model`. That means
-        // we need to ensure that the resulting record always matches the `Model` type,
-        // by formatting its fields accordingly.
-        if (
-          isMeta &&
-          (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(newSlug)
-        ) {
-          newValue = newValue
-            ? Object.entries(newValue as object).map(([slug, attributes]) => {
-                return { slug, ...attributes };
-              })
-            : [];
-        }
-
-        setProperty<Record>(existingRecord, newSlug, newValue);
       }
     }
 
-    return single ? records[0] : records;
+    return single ? (records[0] as Record) : (records as Array<Record>);
   }
 
   formatResults<Record>(
