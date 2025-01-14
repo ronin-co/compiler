@@ -1,4 +1,3 @@
-import { handleSelecting } from '@/src/instructions/selecting';
 import type { WithFilters } from '@/src/instructions/with';
 import { getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
@@ -27,17 +26,13 @@ export const handleIncluding = (
   statementParams: Array<unknown> | null,
   single: boolean,
   instruction: Instructions['including'],
-  options?: {
-    /** Alias column names that are duplicated when joining multiple tables. */
-    expandColumns?: boolean;
-  },
 ): {
   statement: string;
   loadedFields: Array<InternalModelField>;
   tableSubQuery?: string;
 } => {
   let statement = '';
-  let loadedFields: Array<InternalModelField> = [];
+  const loadedFields: Array<InternalModelField> = [];
   let tableSubQuery: string | undefined;
 
   for (const ephemeralFieldSlug in instruction) {
@@ -135,20 +130,6 @@ export const handleIncluding = (
     }
 
     if (modifiableQueryInstructions?.including) {
-      const targetModel = { ...relatedModel, tableAlias };
-
-      ({ loadedFields } = handleSelecting(
-        models,
-        targetModel,
-        statementParams,
-        subSingle,
-        {
-          selecting: modifiableQueryInstructions.selecting,
-          including: modifiableQueryInstructions.including,
-        },
-        options,
-      ));
-
       const subIncluding = handleIncluding(
         models,
         { ...relatedModel, tableAlias },

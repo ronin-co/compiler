@@ -133,14 +133,7 @@ export const compileQueryInput = (
       statement: including,
       tableSubQuery,
       loadedFields: nestedLoadedFields,
-    } = handleIncluding(
-      models,
-      model,
-      statementParams,
-      single,
-      instructions?.including,
-      options,
-    );
+    } = handleIncluding(models, model, statementParams, single, instructions?.including);
 
     if (nestedLoadedFields) loadedFields.push(...nestedLoadedFields);
 

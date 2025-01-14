@@ -412,6 +412,157 @@ test('get multiple records including unrelated records with filter', async () =>
   ]);
 });
 
+test('get multiple records including unrelated records with filter (nested)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          // Perform a LEFT JOIN that adds the `members` table.
+          including: {
+            members: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  members: {
+                    // ON members.account = accounts.id
+                    with: {
+                      account: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                      },
+                    },
+
+                    // Perform a LEFT JOIN that adds the `teams` table.
+                    including: {
+                      team: {
+                        [QUERY_SYMBOLS.QUERY]: {
+                          get: {
+                            team: {
+                              // ON teams.id = members.team
+                              with: {
+                                id: {
+                                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}team`,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: [
+        {
+          slug: 'locations',
+          type: 'json',
+        },
+      ],
+    },
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+        {
+          slug: 'team',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models, expandColumns: true });
+
+  /*
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id") LEFT JOIN "teams" as including_team ON ("including_team"."id" = "including_members"."team")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+  */
+
+  console.log('TRANSACTION STATEMENTS', transaction.statements);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements, false);
+
+  console.log('RAW RESULTS', rawResults);
+
+  const result = transaction.formatResults(
+    rawResults,
+    false,
+    true,
+  )[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: new Array(2).fill({
+        account: expect.stringMatching(RECORD_ID_REGEX),
+        id: expect.stringMatching(RECORD_ID_REGEX),
+        ronin: {
+          locked: false,
+          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          createdBy: null,
+          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+          updatedBy: null,
+        },
+      }),
+    },
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [
+        {
+          account: expect.stringMatching(RECORD_ID_REGEX),
+          id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+      ],
+    },
+  ]);
+});
+
 test('get single record including unrelated records without filter', async () => {
   const queries: Array<Query> = [
     {

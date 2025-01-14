@@ -66,6 +66,7 @@ export const handleSelecting = (
     for (const [key, value] of Object.entries(flatObject)) {
       const symbol = getSymbol(value);
 
+      // A JOIN is being performed.
       if (symbol?.type === 'query') {
         const { queryModel, queryInstructions } = splitQuery(symbol.value);
         const subQueryModel = getModelBySlug(models, queryModel);
@@ -104,15 +105,21 @@ export const handleSelecting = (
               return !(field.type === 'link' && field.kind === 'many');
             });
 
-        for (const field of queryModelFields) {
-          loadedFields.push({
-            ...field,
-            parentField: {
-              slug: key,
-              single: subSingle,
-            },
-          });
+        const { loadedFields: nestedLoadedFields } = handleSelecting(
+          models,
+          { ...subQueryModel, tableAlias },
+          statementParams,
+          subSingle,
+          {
+            selecting: queryInstructions?.selecting,
+            including: queryInstructions?.including,
+          },
+          options,
+        );
 
+        loadedFields.push(...nestedLoadedFields);
+
+        for (const field of queryModelFields) {
           // If the column names should be expanded, that means we need to alias all
           // columns of the joined table to avoid conflicts with the root table.
           if (expandColumns) {
