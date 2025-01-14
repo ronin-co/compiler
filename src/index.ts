@@ -170,9 +170,11 @@ class Transaction {
         return acc;
       }, {} as NativeRecord);
 
-      const existingRecord = records.find((existingRecord) => {
-        return existingRecord.id === record.id;
-      });
+      const existingRecord = record.id
+        ? records.find((existingRecord) => {
+            return existingRecord.id === record.id;
+          })
+        : null;
 
       // In the most common scenario that there isn't already a record with the same ID
       // as the current row, we can simply add the record to the list of records.
