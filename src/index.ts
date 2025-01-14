@@ -194,10 +194,7 @@ class Transaction {
         (acc, field) => {
           if (!('parentField' in field)) return acc;
           const { single, slug } = field.parentField;
-
-          if (!(single || acc.includes(slug))) acc.push(field.parentField.slug);
-
-          return acc;
+          return single || acc.includes(slug) ? acc : acc.concat([slug]);
         },
         [] as Array<string>,
       );
