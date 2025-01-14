@@ -136,39 +136,52 @@ class Transaction {
     isMeta: boolean,
   ): Record | Array<Record> {
     const records: Array<NativeRecord> = [];
+    const joinFields = fields
+      .filter((field) => field.type === 'records')
+      .map((field) => field.slug);
 
     for (const row of rows) {
-      const record = fields.reduce((acc, field, fieldIndex) => {
-        const slug =
-          'parentField' in field ? `${field.parentField}.${field.slug}` : field.slug;
+      const record = fields
+        .filter((field) => field.type !== 'records' && field.type !== 'record')
+        .reduce((acc, field, fieldIndex) => {
+          let newSlug = field.slug;
+          let newValue = row[fieldIndex];
 
-        let newValue = row[fieldIndex];
+          if ('parentField' in field) {
+            const isJoinedField = joinFields.includes(field.parentField);
 
-        if (field.type === 'json') {
-          newValue = JSON.parse(newValue as string);
-        } else if (field.type === 'boolean') {
-          newValue = Boolean(newValue);
-        }
+            if (isJoinedField) {
+              newSlug = `${field.parentField}[0].${field.slug}`;
+            } else {
+              newSlug = `${field.parentField}.${field.slug}`;
+            }
+          }
 
-        // If the query is used to alter the database schema, the result of the query
-        // will always be a model, because the only available queries for altering the
-        // database schema are `create.model`, `alter.model`, and `drop.model`. That means
-        // we need to ensure that the resulting record always matches the `Model` type,
-        // by formatting its fields accordingly.
-        if (
-          isMeta &&
-          (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(slug)
-        ) {
-          newValue = newValue
-            ? Object.entries(newValue as object).map(([slug, attributes]) => {
-                return { slug, ...attributes };
-              })
-            : [];
-        }
+          if (field.type === 'json') {
+            newValue = JSON.parse(newValue as string);
+          } else if (field.type === 'boolean') {
+            newValue = Boolean(newValue);
+          }
 
-        setProperty(acc, slug, newValue);
-        return acc;
-      }, {} as NativeRecord);
+          // If the query is used to alter the database schema, the result of the query
+          // will always be a model, because the only available queries for altering the
+          // database schema are `create.model`, `alter.model`, and `drop.model`. That means
+          // we need to ensure that the resulting record always matches the `Model` type,
+          // by formatting its fields accordingly.
+          if (
+            isMeta &&
+            (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(newSlug)
+          ) {
+            newValue = newValue
+              ? Object.entries(newValue as object).map(([slug, attributes]) => {
+                  return { slug, ...attributes };
+                })
+              : [];
+          }
+
+          setProperty(acc, newSlug, newValue);
+          return acc;
+        }, {} as NativeRecord);
 
       const existingRecord = record.id
         ? records.find((existingRecord) => {
@@ -187,26 +200,11 @@ class Transaction {
         continue;
       }
 
-      const parentFields = Array.from(
-        fields.reduce((acc, field) => {
-          if ('parentField' in field) acc.add(field.parentField as string);
-          return acc;
-        }, new Set<string>()),
-      );
+      for (const parentField of joinFields) {
+        const currentValue = existingRecord[parentField] as Array<NativeRecord>;
+        const newValue = record[parentField] as Array<NativeRecord>;
 
-      for (const parentField of parentFields) {
-        const currentValue = existingRecord[parentField] as
-          | NativeRecord
-          | Array<NativeRecord>;
-        const newValue = record[parentField] as NativeRecord;
-
-        if ('id' in currentValue && currentValue.id === newValue.id) continue;
-
-        if (Array.isArray(currentValue)) {
-          currentValue.push(newValue);
-        } else {
-          existingRecord[parentField] = [currentValue, newValue];
-        }
+        currentValue.push(...newValue);
       }
     }
 
