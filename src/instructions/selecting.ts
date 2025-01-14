@@ -1,5 +1,5 @@
 import { getFieldFromModel, getModelBySlug } from '@/src/model';
-import type { Model, ModelField } from '@/src/types/model';
+import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
   QUERY_SYMBOLS,
@@ -39,8 +39,8 @@ export const handleSelecting = (
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
   },
-): { columns: string; isJoining: boolean; loadedFields: Array<ModelField> } => {
-  let loadedFields: Array<ModelField> = [];
+): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
+  let loadedFields: Array<InternalModelField> = [];
   let expandColumns = false;
 
   let statement = '*';
@@ -111,7 +111,7 @@ export const handleSelecting = (
               slug: key,
               single: subSingle,
             },
-          } as unknown as ModelField);
+          });
 
           // If the column names should be expanded, that means we need to alias all
           // columns of the joined table to avoid conflicts with the root table.

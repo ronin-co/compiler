@@ -9,7 +9,11 @@ import {
   addDefaultModelFields,
   addDefaultModelPresets,
 } from '@/src/model/defaults';
-import type { ModelField, Model as PrivateModel, PublicModel } from '@/src/types/model';
+import type {
+  InternalModelField,
+  Model as PrivateModel,
+  PublicModel,
+} from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
   MultipleRecordResult,
@@ -117,20 +121,20 @@ class Transaction {
   };
 
   #formatRows<Record = NativeRecord>(
-    fields: Array<ModelField>,
+    fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: true,
     isMeta: boolean,
   ): Record;
   #formatRows<Record = NativeRecord>(
-    fields: Array<ModelField>,
+    fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: false,
     isMeta: boolean,
   ): Array<Record>;
 
   #formatRows<Record = NativeRecord>(
-    fields: Array<ModelField>,
+    fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: boolean,
     isMeta: boolean,
@@ -142,7 +146,7 @@ class Transaction {
         let newSlug = field.slug;
         let newValue = row[fieldIndex];
 
-        if ('parentField' in field) {
+        if (field.parentField) {
           const arrayKey = field.parentField.single ? '' : '[0]';
           newSlug = `${field.parentField.slug}${arrayKey}.${field.slug}`;
         }
@@ -192,7 +196,7 @@ class Transaction {
 
       const joinFields = fields.reduce(
         (acc, field) => {
-          if (!('parentField' in field)) return acc;
+          if (!field.parentField) return acc;
           const { single, slug } = field.parentField;
           return single || acc.includes(slug) ? acc : acc.concat([slug]);
         },
