@@ -157,6 +157,7 @@ class Transaction {
           .parentField;
 
         let usableRowIndex = rowIndex;
+        let existingRecord = records[usableRowIndex];
 
         if (parentFieldSlug) {
           // If the field is nested into a parent field and only one row is available,
@@ -172,6 +173,7 @@ class Transaction {
           else {
             newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
             usableRowIndex = 0;
+            existingRecord = records[usableRowIndex];
           }
         }
 
@@ -191,22 +193,18 @@ class Transaction {
             : [];
         }
 
-        records[usableRowIndex] = setProperty<Record>(
-          records[usableRowIndex],
-          newSlug,
-          newValue,
-        );
+        records[usableRowIndex] = setProperty<Record>(existingRecord, newSlug, newValue);
       }
     }
 
     return single ? records[0] : records;
   }
 
-  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
   formatResults<Record>(
     results: Array<Array<ObjectRow>>,
     raw?: false,
   ): Array<Result<Record>>;
+  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -278,7 +276,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.#formatRows<Record>(rawModelFields, rows, single, isMeta)
+              ? this.#formatRows<Record>(rawModelFields, rows, true, isMeta)
               : null,
             modelFields,
           };
@@ -288,7 +286,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(rawModelFields, rows, single, isMeta),
+          records: this.#formatRows<Record>(rawModelFields, rows, false, isMeta),
           modelFields,
         };
 
