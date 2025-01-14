@@ -104,21 +104,14 @@ export const handleSelecting = (
               return !(field.type === 'link' && field.kind === 'many');
             });
 
-        const loadedFieldIndex = loadedFields.findIndex((field) => field.slug === key);
-        const loadedField = {
-          slug: key,
-          type: subSingle ? 'record' : 'records',
-        } as unknown as ModelField;
-
-        // Ensure an internal field that represents the joined record or records.
-        if (loadedFieldIndex > 0) {
-          loadedFields[loadedFieldIndex] = loadedField;
-        } else {
-          loadedFields.push(loadedField);
-        }
-
         for (const field of queryModelFields) {
-          loadedFields.push({ ...field, parentField: key } as unknown as ModelField);
+          loadedFields.push({
+            ...field,
+            parentField: {
+              slug: key,
+              single: subSingle,
+            },
+          } as unknown as ModelField);
 
           // If the column names should be expanded, that means we need to alias all
           // columns of the joined table to avoid conflicts with the root table.

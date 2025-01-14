@@ -136,26 +136,15 @@ class Transaction {
     isMeta: boolean,
   ): Record | Array<Record> {
     const records: Array<NativeRecord> = [];
-    const joinFields = fields
-      .filter((field) => field.type === 'records')
-      .map((field) => field.slug);
-    const regularFields = fields.filter(
-      (field) => field.type !== 'records' && field.type !== 'record',
-    );
 
     for (const row of rows) {
-      const record = regularFields.reduce((acc, field, fieldIndex) => {
+      const record = fields.reduce((acc, field, fieldIndex) => {
         let newSlug = field.slug;
         let newValue = row[fieldIndex];
 
         if ('parentField' in field) {
-          const isJoinedField = joinFields.includes(field.parentField);
-
-          if (isJoinedField) {
-            newSlug = `${field.parentField}[0].${field.slug}`;
-          } else {
-            newSlug = `${field.parentField}.${field.slug}`;
-          }
+          const arrayKey = field.parentField.single ? '' : '[0]';
+          newSlug = `${field.parentField.slug}${arrayKey}.${field.slug}`;
         }
 
         if (field.type === 'json') {
@@ -200,6 +189,18 @@ class Transaction {
         records.push(record);
         continue;
       }
+
+      const joinFields = fields.reduce(
+        (acc, field) => {
+          if (!('parentField' in field)) return acc;
+          const { single, slug } = field.parentField;
+
+          if (!(single || acc.includes(slug))) acc.push(field.parentField.slug);
+
+          return acc;
+        },
+        [] as Array<string>,
+      );
 
       for (const parentField of joinFields) {
         const currentValue = existingRecord[parentField] as Array<NativeRecord>;
