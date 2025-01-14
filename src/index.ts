@@ -140,6 +140,9 @@ class Transaction {
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex];
 
+      if (!records[rowIndex]) records[rowIndex] = {} as Record;
+      let existingRecord = records[rowIndex];
+
       for (let valueIndex = 0; valueIndex < row.length; valueIndex++) {
         const value = row[valueIndex];
         const field = fields[valueIndex];
@@ -156,10 +159,6 @@ class Transaction {
         const parentFieldSlug = (field as ModelField & { parentField?: string })
           .parentField;
 
-        let usableRowIndex = rowIndex;
-        if (!records[usableRowIndex]) records[usableRowIndex] = {} as Record;
-        let existingRecord = records[usableRowIndex];
-
         if (parentFieldSlug) {
           // If the field is nested into a parent field and only one row is available,
           // prefix the current field with the slug of the parent field, which causes it
@@ -173,8 +172,7 @@ class Transaction {
           // fill it with the respective joined records.
           else {
             newSlug = `${parentFieldSlug}[${rowIndex}].${field.slug}`;
-            usableRowIndex = 0;
-            existingRecord = records[usableRowIndex];
+            existingRecord = records[0];
           }
         }
 
