@@ -100,7 +100,7 @@ export const handleSelecting = (
           ? subQueryModel.fields.filter((field) => {
               return queryInstructions.selecting?.includes(field.slug);
             })
-          : // Exclude link fields with cardinality "many", since those don't exist as columns.
+          : // Exclude "one-to-many" link fields, since those don't exist as columns.
             subQueryModel.fields.filter((field) => {
               return !(field.type === 'link' && field.kind === 'many');
             });
