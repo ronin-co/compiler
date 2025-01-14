@@ -126,6 +126,18 @@ export const handleIncluding = (
     if (single && !subSingle) {
       tableSubQuery = `SELECT * FROM "${model.table}" LIMIT 1`;
     }
+
+    if (modifiableQueryInstructions?.including) {
+      const subIncluding = handleIncluding(
+        models,
+        { ...relatedModel, tableAlias },
+        statementParams,
+        subSingle,
+        modifiableQueryInstructions.including,
+      );
+
+      statement += ` ${subIncluding.statement}`;
+    }
   }
 
   return { statement, tableSubQuery };
