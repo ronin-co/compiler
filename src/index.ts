@@ -155,6 +155,22 @@ class Transaction {
           newValue = Boolean(newValue);
         }
 
+        // If the query is used to alter the database schema, the result of the query
+        // will always be a model, because the only available queries for altering the
+        // database schema are `create.model`, `alter.model`, and `drop.model`. That means
+        // we need to ensure that the resulting record always matches the `Model` type,
+        // by formatting its fields accordingly.
+        if (
+          isMeta &&
+          (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(slug)
+        ) {
+          newValue = newValue
+            ? Object.entries(newValue as object).map(([slug, attributes]) => {
+                return { slug, ...attributes };
+              })
+            : [];
+        }
+
         setProperty(acc, slug, newValue);
         return acc;
       }, {});
