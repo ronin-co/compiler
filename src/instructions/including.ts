@@ -57,33 +57,30 @@ export const handleIncluding = (
     const tableAlias = composeIncludedTableAlias(ephemeralFieldSlug);
     const subSingle = queryModel !== relatedModel.pluralSlug;
 
-    // If no `with` query instruction is provided, we want to perform a CROSS
-    // JOIN instead of a LEFT JOIN, because it is guaranteed that the joined
-    // rows are the same for every row in the original table, since they are not
-    // being filtered at all.
+    // If no `with` query instruction is provided, we want to perform a CROSS JOIN
+    // instead of a LEFT JOIN, because it is guaranteed that the joined rows are the same
+    // for every row in the original table, since they are not being filtered at all.
     if (!modifiableQueryInstructions?.with) {
       joinType = 'CROSS';
 
-      // If the query is limited to a single record, we also need to set the
-      // `limitedTo` instruction, so that a sub query is being prepared below.
-      // We are purposefully only doing this if no `with` instruction is
-      // available, because if a `with` instruction is available, it is highly
-      // likely that rows that are being joined differ for every row on the
-      // root table, in which case we don't want to use a sub query, since the
-      // JOIN itself naturally only selects the rows that are needed.
+      // If the query is limited to a single record, we also need to set the `limitedTo`
+      // instruction, so that a sub query is being prepared below. We are purposefully
+      // only doing this if no `with` instruction is available, because if a `with`
+      // instruction is available, it is highly likely that rows that are being joined
+      // differ for every row on the root table, in which case we don't want to use a sub
+      // query, since the JOIN itself naturally only selects the rows that are needed.
       if (subSingle) {
         if (!modifiableQueryInstructions) modifiableQueryInstructions = {};
         modifiableQueryInstructions.limitedTo = 1;
       }
     }
 
-    // If instructions are provided that SQLite does not support as part of a
-    // JOIN, we need to use a sub query to first prepare the rows before we can
-    // perform a JOIN.
+    // If instructions are provided that SQLite does not support as part of a JOIN, we
+    // need to use a sub query to first prepare the rows before we can perform a JOIN.
     //
-    // Sub queries are generally less efficient than joins, since SQLite has to
-    // plan them as a separate query, which is less efficient than planning a
-    // single query just once. However, in this case, it is necessary.
+    // Sub queries are generally less efficient than joins, since SQLite has to plan them
+    // as a separate query, which is less efficient than planning a single query once.
+    // However, in this case, it is necessary.
     if (
       modifiableQueryInstructions?.limitedTo ||
       modifiableQueryInstructions?.orderedBy
