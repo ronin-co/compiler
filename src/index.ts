@@ -143,6 +143,24 @@ class Transaction {
       if (!records[rowIndex]) records[rowIndex] = {} as Record;
       let existingRecord = records[rowIndex];
 
+      const rowAsObject = fields.reduce((acc, field, fieldIndex) => {
+        const parentField = 'parentField' in field ? field.parentField : 'root';
+
+        let newValue = row[fieldIndex];
+
+        if (field.type === 'json') {
+          newValue = JSON.parse(newValue as string);
+        } else if (field.type === 'boolean') {
+          newValue = Boolean(newValue);
+        }
+
+        if (!acc[parentField]) acc[parentField] = {};
+        acc[parentField][field.slug] = newValue;
+        return acc;
+      }, {});
+
+      console.log('ROW', rowAsObject);
+
       for (let valueIndex = 0; valueIndex < row.length; valueIndex++) {
         const value = row[valueIndex];
         const field = fields[valueIndex];

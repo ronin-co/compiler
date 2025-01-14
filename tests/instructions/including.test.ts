@@ -366,6 +366,8 @@ test('get multiple records including unrelated records with filter', async () =>
   const rawResults = await queryEphemeralDatabase(models, transaction.statements, false);
   const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
 
+  console.log('RAW RESULTS', rawResults);
+
   expect(result.records).toEqual([
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
