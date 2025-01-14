@@ -44,12 +44,12 @@ const prefillDatabase = async (
       const data = fixtureData[fixtureSlug] || [];
 
       const formattedData = data.map((row) => {
-        let newRow: Record<string, unknown> = {};
+        const newRow: Record<string, unknown> = {};
 
         for (const field of createdModel.fields || []) {
           const match = getProperty(row, field.slug);
           if (typeof match === 'undefined') continue;
-          newRow = setProperty(newRow, field.slug, match);
+          setProperty(newRow, field.slug, match);
         }
 
         return newRow;

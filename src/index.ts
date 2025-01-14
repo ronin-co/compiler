@@ -157,6 +157,7 @@ class Transaction {
           .parentField;
 
         let usableRowIndex = rowIndex;
+        if (!records[usableRowIndex]) records[usableRowIndex] = {};
         let existingRecord = records[usableRowIndex];
 
         if (parentFieldSlug) {
@@ -193,7 +194,7 @@ class Transaction {
             : [];
         }
 
-        records[usableRowIndex] = setProperty<Record>(existingRecord, newSlug, newValue);
+        setProperty<Record>(existingRecord, newSlug, newValue);
       }
     }
 
