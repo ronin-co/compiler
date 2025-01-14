@@ -351,9 +351,8 @@ test('get multiple records including unrelated records with filter', async () =>
     },
   ];
 
-  const transaction = new Transaction(queries, { models, expandColumns: true });
+  const transaction = new Transaction(queries, { models });
 
-  /*
   expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id")`,
@@ -361,10 +360,9 @@ test('get multiple records including unrelated records with filter', async () =>
       returning: true,
     },
   ]);
-  */
 
-  const rawResults = await queryEphemeralDatabase(models, transaction.statements, false);
-  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
   expect(result.records).toEqual([
     {

@@ -139,49 +139,50 @@ class Transaction {
     const joinFields = fields
       .filter((field) => field.type === 'records')
       .map((field) => field.slug);
+    const regularFields = fields.filter(
+      (field) => field.type !== 'records' && field.type !== 'record',
+    );
 
     for (const row of rows) {
-      const record = fields
-        .filter((field) => field.type !== 'records' && field.type !== 'record')
-        .reduce((acc, field, fieldIndex) => {
-          let newSlug = field.slug;
-          let newValue = row[fieldIndex];
+      const record = regularFields.reduce((acc, field, fieldIndex) => {
+        let newSlug = field.slug;
+        let newValue = row[fieldIndex];
 
-          if ('parentField' in field) {
-            const isJoinedField = joinFields.includes(field.parentField);
+        if ('parentField' in field) {
+          const isJoinedField = joinFields.includes(field.parentField);
 
-            if (isJoinedField) {
-              newSlug = `${field.parentField}[0].${field.slug}`;
-            } else {
-              newSlug = `${field.parentField}.${field.slug}`;
-            }
+          if (isJoinedField) {
+            newSlug = `${field.parentField}[0].${field.slug}`;
+          } else {
+            newSlug = `${field.parentField}.${field.slug}`;
           }
+        }
 
-          if (field.type === 'json') {
-            newValue = JSON.parse(newValue as string);
-          } else if (field.type === 'boolean') {
-            newValue = Boolean(newValue);
-          }
+        if (field.type === 'json') {
+          newValue = JSON.parse(newValue as string);
+        } else if (field.type === 'boolean') {
+          newValue = Boolean(newValue);
+        }
 
-          // If the query is used to alter the database schema, the result of the query
-          // will always be a model, because the only available queries for altering the
-          // database schema are `create.model`, `alter.model`, and `drop.model`. That means
-          // we need to ensure that the resulting record always matches the `Model` type,
-          // by formatting its fields accordingly.
-          if (
-            isMeta &&
-            (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(newSlug)
-          ) {
-            newValue = newValue
-              ? Object.entries(newValue as object).map(([slug, attributes]) => {
-                  return { slug, ...attributes };
-                })
-              : [];
-          }
+        // If the query is used to alter the database schema, the result of the query
+        // will always be a model, because the only available queries for altering the
+        // database schema are `create.model`, `alter.model`, and `drop.model`. That means
+        // we need to ensure that the resulting record always matches the `Model` type,
+        // by formatting its fields accordingly.
+        if (
+          isMeta &&
+          (PLURAL_MODEL_ENTITIES_VALUES as ReadonlyArray<string>).includes(newSlug)
+        ) {
+          newValue = newValue
+            ? Object.entries(newValue as object).map(([slug, attributes]) => {
+                return { slug, ...attributes };
+              })
+            : [];
+        }
 
-          setProperty(acc, newSlug, newValue);
-          return acc;
-        }, {} as NativeRecord);
+        setProperty(acc, newSlug, newValue);
+        return acc;
+      }, {} as NativeRecord);
 
       const existingRecord = record.id
         ? records.find((existingRecord) => {
