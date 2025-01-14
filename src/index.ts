@@ -157,7 +157,7 @@ class Transaction {
           .parentField;
 
         let usableRowIndex = rowIndex;
-        if (!records[usableRowIndex]) records[usableRowIndex] = {};
+        if (!records[usableRowIndex]) records[usableRowIndex] = {} as Record;
         let existingRecord = records[usableRowIndex];
 
         if (parentFieldSlug) {
