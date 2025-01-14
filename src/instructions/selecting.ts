@@ -96,29 +96,6 @@ export const handleSelecting = (
           model.tableAlias = `sub_${model.table}`;
         }
 
-        const queryModelFields = queryInstructions?.selecting
-          ? subQueryModel.fields.filter((field) => {
-              return queryInstructions.selecting?.includes(field.slug);
-            })
-          : // Exclude "one-to-many" link fields, since those don't exist as columns.
-            subQueryModel.fields.filter((field) => {
-              return !(field.type === 'link' && field.kind === 'many');
-            });
-
-        // If the column names should be expanded, that means we need to alias all
-        // columns of the joined table to avoid conflicts with the root table.
-        if (expandColumns) {
-          for (const field of queryModelFields) {
-            const newValue = parseFieldExpression(
-              { ...subQueryModel, tableAlias },
-              'including',
-              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
-            );
-
-            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
-          }
-        }
-
         const { loadedFields: nestedLoadedFields } = handleSelecting(
           models,
           { ...subQueryModel, tableAlias },
@@ -132,6 +109,22 @@ export const handleSelecting = (
         );
 
         loadedFields.push(...nestedLoadedFields);
+
+        // If the column names should be expanded, that means we need to alias all
+        // columns of the joined table to avoid conflicts with the root table.
+        if (expandColumns) {
+          for (const field of loadedFields) {
+            if (field.parentField?.slug.includes('.')) continue;
+
+            const newValue = parseFieldExpression(
+              { ...subQueryModel, tableAlias },
+              'including',
+              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
+            );
+
+            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
+          }
+        }
 
         continue;
       }
