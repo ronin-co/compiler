@@ -262,8 +262,6 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
 
         defaultPresets.push(preset);
 
-        console.log('PRESET', preset);
-
         continue;
       }
 

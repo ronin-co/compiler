@@ -1,6 +1,7 @@
+import { handleSelecting } from '@/src/instructions/selecting';
 import type { WithFilters } from '@/src/instructions/with';
 import { getModelBySlug } from '@/src/model';
-import type { Model } from '@/src/types/model';
+import type { InternalModelField, Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { composeIncludedTableAlias, getSymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
@@ -16,6 +17,7 @@ import { composeConditions } from '@/src/utils/statement';
  * inserted into the query by SQLite.
  * @param single - Whether a single or multiple records are being queried.
  * @param instruction - The `including` instruction provided in the current query.
+ * @param options - Additional options for customizing the behavior of the function.
  *
  * @returns The SQL syntax for the provided `including` instruction.
  */
@@ -25,12 +27,17 @@ export const handleIncluding = (
   statementParams: Array<unknown> | null,
   single: boolean,
   instruction: Instructions['including'],
+  options?: {
+    /** Alias column names that are duplicated when joining multiple tables. */
+    expandColumns?: boolean;
+  },
 ): {
   statement: string;
+  loadedFields: Array<InternalModelField>;
   tableSubQuery?: string;
 } => {
   let statement = '';
-
+  let loadedFields: Array<InternalModelField> = [];
   let tableSubQuery: string | undefined;
 
   for (const ephemeralFieldSlug in instruction) {
@@ -128,6 +135,20 @@ export const handleIncluding = (
     }
 
     if (modifiableQueryInstructions?.including) {
+      const targetModel = { ...relatedModel, tableAlias };
+
+      ({ loadedFields } = handleSelecting(
+        models,
+        targetModel,
+        statementParams,
+        subSingle,
+        {
+          selecting: modifiableQueryInstructions.selecting,
+          including: modifiableQueryInstructions.including,
+        },
+        options,
+      ));
+
       const subIncluding = handleIncluding(
         models,
         { ...relatedModel, tableAlias },
@@ -140,5 +161,5 @@ export const handleIncluding = (
     }
   }
 
-  return { statement, tableSubQuery };
+  return { statement, loadedFields, tableSubQuery };
 };

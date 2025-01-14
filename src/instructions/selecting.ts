@@ -196,5 +196,22 @@ export const handleSelecting = (
       .join(', ');
   }
 
+  // If a table alias was set, we need to set the parent field of all loaded fields to
+  // the table alias, so that the fields are correctly nested in the output.
+  if (model.tableAlias?.startsWith('including_')) {
+    for (const field of loadedFields) {
+      const slug = model.tableAlias.replace('including_', '');
+
+      if (field.parentField) {
+        field.parentField.slug = `${slug}.${field.parentField.slug}`;
+      } else {
+        field.parentField = {
+          slug,
+          single,
+        };
+      }
+    }
+  }
+
   return { columns: statement, isJoining, loadedFields };
 };
