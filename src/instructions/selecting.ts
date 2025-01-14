@@ -18,6 +18,7 @@ import { parseFieldExpression, prepareStatementValue } from '@/src/utils/stateme
  *
  * @param models - A list of models.
  * @param model - The model associated with the current query.
+ * @param single - Whether a single or multiple records are being queried.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param instructions - The instructions associated with the current query.
@@ -29,6 +30,7 @@ export const handleSelecting = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
+  single: boolean,
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];
@@ -84,12 +86,12 @@ export const handleSelecting = (
         expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
 
         const tableAlias = composeIncludedTableAlias(key);
-        const single = queryModel !== subQueryModel.pluralSlug;
+        const subSingle = queryModel !== subQueryModel.pluralSlug;
 
         // If multiple records are being joined and the root query only targets a single
         // record, we need to alias the root table, because it will receive a dedicated
         // SELECT statement in the `handleIncluding` function.
-        if (!single) {
+        if (single && !subSingle) {
           model.tableAlias = `sub_${model.table}`;
         }
 

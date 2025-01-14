@@ -94,6 +94,7 @@ export const compileQueryInput = (
     models,
     model,
     statementParams,
+    single,
     {
       selecting: instructions?.selecting,
       including: instructions?.including,
@@ -132,6 +133,7 @@ export const compileQueryInput = (
       models,
       model,
       statementParams,
+      single,
       instructions?.including,
     );
 
