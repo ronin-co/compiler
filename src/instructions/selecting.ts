@@ -1,8 +1,7 @@
 import { getFieldFromModel, getModelBySlug } from '@/src/model';
-import type { InternalModelField, Model, ModelField } from '@/src/types/model';
+import type { InternalModelField, Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
-  QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
   composeIncludedTableAlias,
@@ -40,11 +39,60 @@ export const handleSelecting = (
     expandColumns?: boolean;
   },
 ): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
-  let loadedFields: Array<InternalModelField> = [];
-  let expandColumns = options?.expandColumns;
+  // let loadedFields: Array<InternalModelField> = [];
+  // let expandColumns = options?.expandColumns;
 
-  let statement = '';
+  // HANDLE SELECTING
+
+  // If specific fields were provided in the `selecting` instruction, select only the
+  // columns of those fields. Otherwise, select all columns using `*`.
+  const loadedFields: Array<InternalModelField> = instructions.selecting
+    ? instructions.selecting.map((slug) => {
+        const { field } = getFieldFromModel(model, slug, {
+          instructionName: 'selecting',
+        });
+
+        return field;
+      })
+    : model.fields.filter((field) => !(field.type === 'link' && field.kind === 'many'));
+
+  /*
+  // If specific fields were provided in the `selecting` instruction, select only the
+  // columns of those fields. Otherwise, select all columns using `*`.
+  if (instructions.selecting) {
+    const usableModel = expandColumns
+      ? { ...model, tableAlias: model.tableAlias || model.table }
+      : model;
+
+    // The model fields that were selected by the root query.
+    const selectedFields: Array<ModelField> = [];
+
+    const extraColumns = instructions.selecting
+      .map((slug) => {
+        const { field, fieldSelector } = getFieldFromModel(usableModel, slug, {
+          instructionName: 'selecting',
+        });
+        selectedFields.push(field);
+        return fieldSelector;
+      })
+      .join(', ');
+
+    // statement = statement === '' ? extraColumns : `${extraColumns}, ${statement}`;
+    loadedFields = [...selectedFields, ...loadedFields];
+  } else {
+    loadedFields = [
+      ...model.fields.filter(
+        (field) => !(field.type === 'link' && field.kind === 'many'),
+      ),
+      ...loadedFields,
+    ];
+  }
+  */
+
+  // let statement = '';
   let isJoining = false;
+
+  // HANDLE INCLUDING
 
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
@@ -84,7 +132,9 @@ export const handleSelecting = (
         // columns of the joined table end up in the final result, which means we cannot
         // use `SELECT *` in the SQL statement, as that would automatically catch all
         // columns of the joined table.
-        expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
+        //
+        // expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
+        if (queryInstructions?.selecting) options!.expandColumns = true;
 
         const tableAlias = composeIncludedTableAlias(key);
         const subSingle = queryModel !== subQueryModel.pluralSlug;
@@ -109,27 +159,19 @@ export const handleSelecting = (
             options,
           );
 
+        /*
         if (options?.expandColumns || nestedColumns !== '*') {
           if (statement.length > 0) statement += ', ';
           statement += nestedColumns;
         }
+        */
 
-        loadedFields.push(...nestedLoadedFields);
-
-        // If the column names should be expanded, that means we need to alias all
-        // columns of the joined table to avoid conflicts with the root table.
-        if (expandColumns) {
-          for (const field of nestedLoadedFields) {
-            if (field.parentField?.slug.includes('.')) continue;
-            const newValue = parseFieldExpression(
-              { ...subQueryModel, tableAlias },
-              'including',
-              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
-            );
-
-            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
-          }
-        }
+        loadedFields.push(
+          ...nestedLoadedFields.map((item) => {
+            item.excludeFromSelect = true;
+            return item;
+          }),
+        );
 
         continue;
       }
@@ -142,17 +184,19 @@ export const handleSelecting = (
         newValue = prepareStatementValue(statementParams, value);
       }
 
-      instructions.including![key] = newValue;
+      // instructions.including![key] = newValue;
 
       loadedFields.push({
         slug: key,
         type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
           ? (typeof value as RawFieldType)
           : 'string',
+        newValue,
       });
     }
   }
 
+  /*
   // If the column names should be expanded, that means we need to alias all columns of
   // the root table to avoid conflicts with columns of joined tables.
   if (expandColumns) {
@@ -163,40 +207,13 @@ export const handleSelecting = (
 
     instructions.selecting = [...(instructions.selecting || []), ...extraColumns];
   }
+  */
 
-  // If specific fields were provided in the `selecting` instruction, select only the
-  // columns of those fields. Otherwise, select all columns using `*`.
-  if (instructions.selecting) {
-    const usableModel = expandColumns
-      ? { ...model, tableAlias: model.tableAlias || model.table }
-      : model;
+  // GENERATE SELECT STATEMENT FROM LOADED FIELDS
 
-    // The model fields that were selected by the root query.
-    const selectedFields: Array<ModelField> = [];
+  // if (statement.length === 0) statement = '*';
 
-    const extraColumns = instructions.selecting
-      .map((slug) => {
-        const { field, fieldSelector } = getFieldFromModel(usableModel, slug, {
-          instructionName: 'selecting',
-        });
-        selectedFields.push(field);
-        return fieldSelector;
-      })
-      .join(', ');
-
-    statement = statement === '' ? extraColumns : `${extraColumns}, ${statement}`;
-    loadedFields = [...selectedFields, ...loadedFields];
-  } else {
-    loadedFields = [
-      ...model.fields.filter(
-        (field) => !(field.type === 'link' && field.kind === 'many'),
-      ),
-      ...loadedFields,
-    ];
-  }
-
-  if (statement.length === 0) statement = '*';
-
+  /*
   if (instructions.including && Object.keys(instructions.including).length > 0) {
     statement += ', ';
 
@@ -205,6 +222,7 @@ export const handleSelecting = (
       .map(([key, value]) => `${value} as "${key}"`)
       .join(', ');
   }
+  */
 
   // If a table alias was set, we need to set the parent field of all loaded fields to
   // the table alias, so that the fields are correctly nested in the output.
@@ -223,5 +241,37 @@ export const handleSelecting = (
     }
   }
 
-  return { columns: statement, isJoining, loadedFields };
+  let columns = '*';
+
+  // If the column names should be expanded, that means we need to explicitly select the
+  // columns of all selected fields.
+  //
+  // If the column names should not be expanded, we only need to explicitly select the
+  // columns of fields that have a custom value, since those are not present in the
+  // database, so their value must regardless be exposed via the SQL statement explicitly.
+  const fieldsToExpand = options?.expandColumns
+    ? loadedFields
+    : loadedFields.filter((loadedField) => typeof loadedField.newValue !== 'undefined');
+
+  const extraColumns = fieldsToExpand
+    .map((loadedField) => {
+      const { fieldSelector } = getFieldFromModel(model, loadedField.slug, {
+        instructionName: 'selecting',
+      });
+
+      if (loadedField.newValue) {
+        return `${loadedField.newValue} as ${fieldSelector}`;
+      }
+
+      return fieldSelector;
+    })
+    .join(', ');
+
+  if (options?.expandColumns) {
+    columns = extraColumns;
+  } else if (extraColumns) {
+    columns += `, ${extraColumns}`;
+  }
+
+  return { columns, isJoining, loadedFields };
 };
