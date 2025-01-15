@@ -1,5 +1,5 @@
 import { getFieldFromModel, getModelBySlug } from '@/src/model';
-import type { InternalModelField, Model } from '@/src/types/model';
+import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
   RAW_FIELD_TYPES,
@@ -43,25 +43,27 @@ export const handleSelecting = (
 
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
-  const selectedFields = model.fields
-    .filter((field) => {
-      const isReal = !(field.type === 'link' && field.kind === 'many');
-      const isSelected = instructions.selecting
-        ? instructions.selecting.includes(field.slug)
-        : true;
-
-      return isReal && isSelected;
-    })
-    .map((field) => {
-      const newField: InternalModelField = { ...field, mountingPath: field.slug };
+  const selectedFields: Array<InternalModelField> = (
+    instructions.selecting
+      ? instructions.selecting.map((slug) => {
+          const { field } = getFieldFromModel(model, slug, {
+            instructionName: 'selecting',
+          });
+          return field;
+        })
+      : model.fields
+  )
+    .filter((field: ModelField) => !(field.type === 'link' && field.kind === 'many'))
+    .map(({ slug: fieldSlug, ...field }) => {
+      const newField: InternalModelField = { ...field, mountingPath: fieldSlug };
 
       // If a table alias was set, we need to set the parent field of all loaded fields to
       // the table alias, so that the fields are correctly nested in the output.
       if (model.tableAlias?.startsWith('including_')) {
         const slug = model.tableAlias.replace('including_', '');
         newField.mountingPath = single
-          ? `${slug}.${field.slug}`
-          : `${slug}[0].${field.slug}`;
+          ? `${slug}.${fieldSlug}`
+          : `${slug}[0].${fieldSlug}`;
       }
 
       return newField;
@@ -69,6 +71,8 @@ export const handleSelecting = (
 
   // Expand all columns if specific fields are being selected.
   if (instructions.selecting) options.expandColumns = true;
+
+  const mountedModels: Record<InternalModelField['mountingPath'], Model> = {};
 
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
@@ -129,14 +133,8 @@ export const handleSelecting = (
           options,
         );
 
-        selectedFields.push(
-          ...nestedLoadedFields.map((item) => {
-            return {
-              ...item,
-              nestedModel: item.nestedModel || { ...subQueryModel, tableAlias },
-            };
-          }),
-        );
+        selectedFields.push(...nestedLoadedFields);
+        mountedModels[key] = { ...subQueryModel, tableAlias };
 
         continue;
       }
@@ -150,7 +148,6 @@ export const handleSelecting = (
       }
 
       selectedFields.push({
-        slug: key,
         mountingPath: key,
         type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
           ? (typeof value as RawFieldType)
@@ -177,19 +174,23 @@ export const handleSelecting = (
   const extraColumns = fieldsToExpand
     .map((loadedField) => {
       if (loadedField.mountedValue) {
-        return `${loadedField.mountedValue} as "${loadedField.slug}"`;
+        return `${loadedField.mountedValue} as "${loadedField.mountingPath}"`;
       }
 
-      const { fieldSelector } = getFieldFromModel(
-        loadedField.nestedModel || model,
-        loadedField.slug,
-        {
-          instructionName: 'selecting',
-        },
-      );
+      const mountedModel: Model = mountedModels[loadedField.mountingPath.split('.')[0]];
 
-      if (loadedField.nestedModel) {
-        return `${fieldSelector} as "${loadedField.nestedModel.tableAlias}.${loadedField.slug}"`;
+      const fieldSlug = mountedModel
+        ? loadedField.mountingPath.split('.').splice(1).join('.')
+        : loadedField.mountingPath;
+
+      console.log('SLUG', mountedModels);
+
+      const { fieldSelector } = getFieldFromModel(mountedModel || model, fieldSlug, {
+        instructionName: 'selecting',
+      });
+
+      if (mountedModel?.tableAlias) {
+        return `${fieldSelector} as "${mountedModel.tableAlias}.${loadedField.mountingPath}"`;
       }
 
       return fieldSelector;

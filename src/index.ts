@@ -196,7 +196,7 @@ class Transaction {
             ? acc.concat([mountingPath.split('[0]')[0]])
             : acc;
         },
-        [] as Array<InternalModelField['slug']>,
+        [] as Array<string>,
       );
 
       for (const arrayField of joinFields) {

@@ -104,7 +104,7 @@ export type ModelField = ModelFieldBasics &
   );
 
 /** An extended version of `ModelField`, for internal use within the compiler. */
-export type InternalModelField = ModelField & {
+export type InternalModelField = Omit<ModelField, 'slug'> & {
   /** The path on the final record where the value of the field should be mounted. */
   mountingPath: string;
   /** A custom value that was provided in the query, which is not stored in the DB. */
