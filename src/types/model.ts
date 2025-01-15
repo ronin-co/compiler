@@ -106,7 +106,9 @@ export type ModelField = ModelFieldBasics &
 /** An extended version of `ModelField`, for internal use within the compiler. */
 export type InternalModelField = ModelField & {
   /** The path on the final record where the value of the field should be mounted. */
-  mountingPath?: string;
+  mountingPath: string;
+  /** A custom value that was provided in the query, which is not stored in the DB. */
+  mountedValue?: unknown;
 };
 
 export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {

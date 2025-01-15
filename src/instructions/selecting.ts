@@ -38,20 +38,34 @@ export const handleSelecting = (
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
   } = {},
-): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
+): { columns: string; isJoining: boolean; selectedFields: Array<InternalModelField> } => {
   let isJoining = false;
 
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
-  const loadedFields: Array<InternalModelField> = instructions.selecting
-    ? instructions.selecting.map((slug) => {
-        const { field } = getFieldFromModel(model, slug, {
-          instructionName: 'selecting',
-        });
+  const selectedFields = model.fields
+    .filter((field) => {
+      const isReal = !(field.type === 'link' && field.kind === 'many');
+      const isSelected = instructions.selecting
+        ? instructions.selecting.includes(field.slug)
+        : true;
 
-        return field;
-      })
-    : model.fields.filter((field) => !(field.type === 'link' && field.kind === 'many'));
+      return isReal && isSelected;
+    })
+    .map((field) => {
+      const newField: InternalModelField = { ...field, mountingPath: field.slug };
+
+      // If a table alias was set, we need to set the parent field of all loaded fields to
+      // the table alias, so that the fields are correctly nested in the output.
+      if (model.tableAlias?.startsWith('including_')) {
+        const slug = model.tableAlias.replace('including_', '');
+        newField.mountingPath = single
+          ? `${slug}.${field.slug}`
+          : `${slug}[0].${field.slug}`;
+      }
+
+      return newField;
+    });
 
   // Expand all columns if specific fields are being selected.
   if (instructions.selecting) options.expandColumns = true;
@@ -103,7 +117,7 @@ export const handleSelecting = (
         // and not from the joined table.
         model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const { loadedFields: nestedLoadedFields } = handleSelecting(
+        const { selectedFields: nestedLoadedFields } = handleSelecting(
           models,
           { ...subQueryModel, tableAlias },
           statementParams,
@@ -115,7 +129,7 @@ export const handleSelecting = (
           options,
         );
 
-        loadedFields.push(
+        selectedFields.push(
           ...nestedLoadedFields.map((item) => {
             return {
               ...item,
@@ -127,34 +141,22 @@ export const handleSelecting = (
         continue;
       }
 
-      let newValue = value;
+      let mountedValue = value;
 
       if (symbol?.type === 'expression') {
-        newValue = `(${parseFieldExpression(model, 'including', symbol.value)})`;
+        mountedValue = `(${parseFieldExpression(model, 'including', symbol.value)})`;
       } else {
-        newValue = prepareStatementValue(statementParams, value);
+        mountedValue = prepareStatementValue(statementParams, value);
       }
 
-      loadedFields.push({
+      selectedFields.push({
         slug: key,
+        mountingPath: key,
         type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
           ? (typeof value as RawFieldType)
           : 'string',
-        newValue,
+        mountedValue,
       });
-    }
-  }
-
-  // If a table alias was set, we need to set the parent field of all loaded fields to
-  // the table alias, so that the fields are correctly nested in the output.
-  for (const field of loadedFields) {
-    if (field.nestedModel) continue;
-
-    if (model.tableAlias?.startsWith('including_')) {
-      const slug = model.tableAlias.replace('including_', '');
-      field.mountingPath = single ? `${slug}.${field.slug}` : `${slug}[0].${field.slug}`;
-    } else {
-      field.mountingPath = field.slug;
     }
   }
 
@@ -167,13 +169,15 @@ export const handleSelecting = (
   // columns of fields that have a custom value, since those are not present in the
   // database, so their value must regardless be exposed via the SQL statement explicitly.
   const fieldsToExpand = options.expandColumns
-    ? loadedFields
-    : loadedFields.filter((loadedField) => typeof loadedField.newValue !== 'undefined');
+    ? selectedFields
+    : selectedFields.filter(
+        (loadedField) => typeof loadedField.mountedValue !== 'undefined',
+      );
 
   const extraColumns = fieldsToExpand
     .map((loadedField) => {
-      if (loadedField.newValue) {
-        return `${loadedField.newValue} as "${loadedField.slug}"`;
+      if (loadedField.mountedValue) {
+        return `${loadedField.mountedValue} as "${loadedField.slug}"`;
       }
 
       const { fieldSelector } = getFieldFromModel(
@@ -198,5 +202,5 @@ export const handleSelecting = (
     columns += `, ${extraColumns}`;
   }
 
-  return { columns, isJoining, loadedFields };
+  return { columns, isJoining, selectedFields };
 };

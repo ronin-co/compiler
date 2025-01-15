@@ -110,7 +110,7 @@ class Transaction {
         ...subStatements.map((statement) => ({
           ...statement,
           query,
-          fields: result.loadedFields,
+          selectedFields: result.selectedFields,
         })),
       );
     }
@@ -140,14 +140,6 @@ class Transaction {
     isMeta: boolean,
   ): Record | Array<Record> {
     const records: Array<NativeRecord> = [];
-
-    console.log(
-      'FIELDS',
-      fields.map((field) => {
-        const { nestedModel, ...rest } = field;
-        return rest;
-      }),
-    );
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
@@ -179,8 +171,6 @@ class Transaction {
         setProperty(acc, newSlug, newValue);
         return acc;
       }, {} as NativeRecord);
-
-      console.log('CLEAN RECORD', record);
 
       const existingRecord = record.id
         ? records.find((existingRecord) => {
@@ -262,11 +252,7 @@ class Transaction {
 
     const formattedResults = normalizedResults.map(
       (rows, index): Result<Record> | null => {
-        const {
-          returning,
-          query,
-          fields: rawModelFields,
-        } = this.#internalStatements[index];
+        const { returning, query, selectedFields } = this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
         // any results, so we can return early.
@@ -296,7 +282,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.#formatRows<Record>(rawModelFields, rows, true, isMeta)
+              ? this.#formatRows<Record>(selectedFields, rows, true, isMeta)
               : null,
             modelFields,
           };
@@ -306,7 +292,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(rawModelFields, rows, false, isMeta),
+          records: this.#formatRows<Record>(selectedFields, rows, false, isMeta),
           modelFields,
         };
 
