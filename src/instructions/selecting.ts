@@ -178,7 +178,7 @@ export const handleSelecting = (
 
   const extraColumns = fieldsToExpand.map((selectedField) => {
     if (selectedField.mountedValue) {
-      return `${selectedField.mountedValue} as "${selectedField.mountingPath}"`;
+      return `${selectedField.mountedValue} as "${selectedField.slug}"`;
     }
 
     const { fieldSelector } = getFieldFromModel(model, selectedField.slug, {
