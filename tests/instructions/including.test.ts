@@ -503,42 +503,16 @@ test('get multiple records including unrelated records with filter (nested)', as
   ]);
   */
 
-  console.log('TRANSACTION STATEMENTS', transaction.statements);
-
   const rawResults = await queryEphemeralDatabase(models, transaction.statements, false);
 
   console.log('RAW RESULTS', rawResults);
 
-  const result = transaction.formatResults(
-    rawResults,
-    false,
-    true,
-  )[0] as MultipleRecordResult;
+  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
 
   expect(result.records).toEqual([
     {
-      id: expect.stringMatching(RECORD_ID_REGEX),
-      ronin: {
-        locked: false,
-        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        createdBy: null,
-        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        updatedBy: null,
-      },
-      members: new Array(2).fill({
-        account: expect.stringMatching(RECORD_ID_REGEX),
-        id: expect.stringMatching(RECORD_ID_REGEX),
-        ronin: {
-          locked: false,
-          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-          createdBy: null,
-          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-          updatedBy: null,
-        },
-      }),
-    },
-    {
-      id: expect.stringMatching(RECORD_ID_REGEX),
+      id: 'acc_39h8fhe98hefah8j',
+      handle: 'elaine',
       ronin: {
         locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -548,8 +522,82 @@ test('get multiple records including unrelated records with filter (nested)', as
       },
       members: [
         {
-          account: expect.stringMatching(RECORD_ID_REGEX),
-          id: expect.stringMatching(RECORD_ID_REGEX),
+          id: 'mem_39h8fhe98hefah0j',
+          account: 'acc_39h8fhe98hefah8j',
+          team: {
+            id: 'tea_39h8fhe98hefah9j',
+            locations: {
+              europe: 'london',
+            },
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+        {
+          id: 'mem_39h8fhe98hefah0j',
+          account: 'acc_39h8fhe98hefah8j',
+          team: {
+            id: 'tea_39h8fhe98hefah8j',
+            locations: {
+              europe: 'berlin',
+            },
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+      ],
+    },
+    {
+      id: 'acc_39h8fhe98hefah9j',
+      handle: 'david',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [
+        {
+          id: 'mem_39h8fhe98hefah9j',
+          account: 'acc_39h8fhe98hefah9j',
+          team: {
+            id: 'tea_39h8fhe98hefah8j',
+            locations: {
+              europe: 'berlin',
+            },
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
           ronin: {
             locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
