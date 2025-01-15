@@ -525,14 +525,14 @@ test('get single record including child records (one-to-many, defined manually)'
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as including_target ON ("including_target"."id" = "including_visitors"."target")`,
+      statement: `SELECT * FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id")`,
       params: [],
       returning: true,
     },
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults, true)[0] as SingleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),

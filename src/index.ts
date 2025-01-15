@@ -134,17 +134,12 @@ class Transaction {
   ): Array<Record>;
 
   #formatRows<Record = NativeRecord>(
-    debug: boolean,
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: boolean,
     isMeta: boolean,
   ): Record | Array<Record> {
     const records: Array<NativeRecord> = [];
-
-    if (debug) {
-      console.log('Fields:', fields);
-    }
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
@@ -240,7 +235,6 @@ class Transaction {
   formatResults<Record>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = true,
-    debug?: boolean,
   ): Array<Result<Record>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
@@ -296,7 +290,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.#formatRows<Record>(debug, rawModelFields, rows, true, isMeta)
+              ? this.#formatRows<Record>(rawModelFields, rows, true, isMeta)
               : null,
             modelFields,
           };
@@ -306,7 +300,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(debug, rawModelFields, rows, false, isMeta),
+          records: this.#formatRows<Record>(rawModelFields, rows, false, isMeta),
           modelFields,
         };
 
