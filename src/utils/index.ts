@@ -47,7 +47,7 @@ export const compileQueryInput = (
 ): {
   dependencies: Array<Statement>;
   main: Statement;
-  loadedFields: Array<InternalModelField>;
+  selectedFields: Array<InternalModelField>;
 } => {
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -66,7 +66,7 @@ export const compileQueryInput = (
 
   // If no further query processing should happen, we need to return early.
   if (query === null)
-    return { dependencies: [], main: dependencyStatements[0], loadedFields: [] };
+    return { dependencies: [], main: dependencyStatements[0], selectedFields: [] };
 
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);
@@ -90,7 +90,7 @@ export const compileQueryInput = (
   }
 
   // A list of columns that should be selected when querying records.
-  const { columns, isJoining, loadedFields } = handleSelecting(
+  const { columns, isJoining, selectedFields } = handleSelecting(
     models,
     model,
     statementParams,
@@ -292,6 +292,6 @@ export const compileQueryInput = (
   return {
     dependencies: dependencyStatements,
     main: mainStatement,
-    loadedFields,
+    selectedFields,
   };
 };

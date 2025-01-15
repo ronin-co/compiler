@@ -110,7 +110,7 @@ class Transaction {
         ...subStatements.map((statement) => ({
           ...statement,
           query,
-          fields: result.loadedFields,
+          selectedFields: result.selectedFields,
         })),
       );
     }
@@ -143,13 +143,8 @@ class Transaction {
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
-        let newSlug = field.slug;
+        const newSlug = field.mountingPath;
         let newValue = row[fieldIndex];
-
-        if (field.parentField) {
-          const arrayKey = field.parentField.single ? '' : '[0]';
-          newSlug = `${field.parentField.slug}${arrayKey}.${field.slug}`;
-        }
 
         if (field.type === 'json') {
           newValue = JSON.parse(newValue as string);
@@ -194,18 +189,14 @@ class Transaction {
         continue;
       }
 
-      const joinFields = fields.reduce(
-        (acc, field) => {
-          if (!field.parentField) return acc;
-          const { single, slug } = field.parentField;
-          return single || acc.includes(slug) ? acc : acc.concat([slug]);
-        },
-        [] as Array<string>,
-      );
+      const joinFields = fields.reduce((acc, { mountingPath }) => {
+        if (mountingPath.includes('[0]')) acc.add(mountingPath.split('[0]')[0]);
+        return acc;
+      }, new Set<string>());
 
-      for (const parentField of joinFields) {
-        const currentValue = existingRecord[parentField] as Array<NativeRecord>;
-        const newValue = record[parentField] as Array<NativeRecord>;
+      for (const arrayField of joinFields.values()) {
+        const currentValue = existingRecord[arrayField] as Array<NativeRecord>;
+        const newValue = record[arrayField] as Array<NativeRecord>;
 
         currentValue.push(...newValue);
       }
@@ -256,11 +247,7 @@ class Transaction {
 
     const formattedResults = normalizedResults.map(
       (rows, index): Result<Record> | null => {
-        const {
-          returning,
-          query,
-          fields: rawModelFields,
-        } = this.#internalStatements[index];
+        const { returning, query, selectedFields } = this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
         // any results, so we can return early.
@@ -290,7 +277,7 @@ class Transaction {
         if (single) {
           return {
             record: rows[0]
-              ? this.#formatRows<Record>(rawModelFields, rows, true, isMeta)
+              ? this.#formatRows<Record>(selectedFields, rows, true, isMeta)
               : null,
             modelFields,
           };
@@ -300,7 +287,7 @@ class Transaction {
 
         // The query is targeting multiple records.
         const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(rawModelFields, rows, false, isMeta),
+          records: this.#formatRows<Record>(selectedFields, rows, false, isMeta),
           modelFields,
         };
 

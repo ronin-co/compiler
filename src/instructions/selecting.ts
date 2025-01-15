@@ -2,7 +2,6 @@ import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
-  QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
   composeIncludedTableAlias,
@@ -35,16 +34,43 @@ export const handleSelecting = (
     selecting: Instructions['selecting'];
     including: Instructions['including'];
   },
-  options?: {
+  options: {
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
-  },
-): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
-  let loadedFields: Array<InternalModelField> = [];
-  let expandColumns = false;
-
-  let statement = '*';
+    /** The path on which the selected fields should be mounted in the final record. */
+    mountingPath?: InternalModelField['mountingPath'];
+  } = {},
+): { columns: string; isJoining: boolean; selectedFields: Array<InternalModelField> } => {
   let isJoining = false;
+
+  // If specific fields were provided in the `selecting` instruction, select only the
+  // columns of those fields. Otherwise, select all columns.
+  const selectedFields: Array<InternalModelField> = (
+    instructions.selecting
+      ? instructions.selecting.map((slug) => {
+          const { field } = getFieldFromModel(model, slug, {
+            instructionName: 'selecting',
+          });
+          return field;
+        })
+      : model.fields
+  )
+    .filter((field: ModelField) => !(field.type === 'link' && field.kind === 'many'))
+    .map((field) => {
+      const newField: InternalModelField = { ...field, mountingPath: field.slug };
+
+      if (options.mountingPath) {
+        newField.mountingPath = `${options.mountingPath}.${field.slug}`;
+      }
+
+      return newField;
+    });
+
+  // Expand all columns if specific fields are being selected.
+  if (instructions.selecting) options.expandColumns = true;
+
+  const joinedSelectedFields: Array<InternalModelField> = [];
+  const joinedColumns: Array<string> = [];
 
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
@@ -66,6 +92,7 @@ export const handleSelecting = (
     for (const [key, value] of Object.entries(flatObject)) {
       const symbol = getSymbol(value);
 
+      // A JOIN is being performed.
       if (symbol?.type === 'query') {
         const { queryModel, queryInstructions } = splitQuery(symbol.value);
         const subQueryModel = getModelBySlug(models, queryModel);
@@ -74,16 +101,11 @@ export const handleSelecting = (
         // tables will be joined later on during the compilation of the query.
         isJoining = true;
 
-        // If a sub query was found in the `including` instruction, that also means we
-        // should alias the columns of all tables if the compiler was instructed to do so
-        // using the respective config option.
-        //
-        // Additionally, if the sub query selects specific fields, we also need to alias
-        // the columns of all tables, because we must ensure that only the selected
-        // columns of the joined table end up in the final result, which means we cannot
-        // use `SELECT *` in the SQL statement, as that would automatically catch all
-        // columns of the joined table.
-        expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
+        // If the sub query selects specific fields, we need to alias the columns of all
+        // tables, because we must ensure that only the selected columns of the joined
+        // table end up in the final result, which means we cannot use `SELECT *` in the
+        // statement, as that would automatically catch all columns of the joined table.
+        if (queryInstructions?.selecting) options.expandColumns = true;
 
         const tableAlias = composeIncludedTableAlias(key);
         const subSingle = queryModel !== subQueryModel.pluralSlug;
@@ -91,110 +113,91 @@ export const handleSelecting = (
         // If multiple records are being joined and the root query only targets a single
         // record, we need to alias the root table, because it will receive a dedicated
         // SELECT statement in the `handleIncluding` function.
-        if (single && !subSingle) {
-          model.tableAlias = `sub_${model.table}`;
-        }
+        //
+        // And even if that's not the case, we need to set an explicit alias in order to
+        // ensure that the columns of the root table are selected from the root table,
+        // and not from the joined table.
+        if (!model.tableAlias)
+          model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const queryModelFields = queryInstructions?.selecting
-          ? subQueryModel.fields.filter((field) => {
-              return queryInstructions.selecting?.includes(field.slug);
-            })
-          : // Exclude link fields with cardinality "many", since those don't exist as columns.
-            subQueryModel.fields.filter((field) => {
-              return !(field.type === 'link' && field.kind === 'many');
-            });
+        const subMountingPath = `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
 
-        for (const field of queryModelFields) {
-          loadedFields.push({
-            ...field,
-            parentField: {
-              slug: key,
-              single: subSingle,
+        const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
+          handleSelecting(
+            models,
+            { ...subQueryModel, tableAlias },
+            statementParams,
+            subSingle,
+            {
+              selecting: queryInstructions?.selecting,
+              including: queryInstructions?.including,
             },
-          });
+            { ...options, mountingPath: subMountingPath },
+          );
 
-          // If the column names should be expanded, that means we need to alias all
-          // columns of the joined table to avoid conflicts with the root table.
-          if (expandColumns) {
-            const newValue = parseFieldExpression(
-              { ...subQueryModel, tableAlias },
-              'including',
-              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
-            );
-
-            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
-          }
-        }
+        if (nestedColumns !== '*') joinedColumns.push(nestedColumns);
+        joinedSelectedFields.push(...nestedSelectedFields);
 
         continue;
       }
 
-      let newValue = value;
+      let mountedValue = value;
 
       if (symbol?.type === 'expression') {
-        newValue = `(${parseFieldExpression(model, 'including', symbol.value)})`;
+        mountedValue = `(${parseFieldExpression(model, 'including', symbol.value)})`;
       } else {
-        newValue = prepareStatementValue(statementParams, value);
+        mountedValue = prepareStatementValue(statementParams, value);
       }
 
-      instructions.including![key] = newValue;
-
-      loadedFields.push({
+      selectedFields.push({
         slug: key,
+        mountingPath: key,
         type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
           ? (typeof value as RawFieldType)
           : 'string',
+        mountedValue,
       });
     }
   }
 
-  // If the column names should be expanded, that means we need to alias all columns of
-  // the root table to avoid conflicts with columns of joined tables.
-  if (expandColumns) {
-    instructions.selecting = model.fields
-      // Exclude link fields with cardinality "many", since those don't exist as columns.
-      .filter((field) => !(field.type === 'link' && field.kind === 'many'))
-      .map((field) => field.slug);
+  let columns = ['*'];
+
+  // If the column names should be expanded, that means we need to explicitly select the
+  // columns of all selected fields.
+  //
+  // If the column names should not be expanded, we only need to explicitly select the
+  // columns of fields that have a custom value, since those are not present in the
+  // database, so their value must regardless be exposed via the SQL statement explicitly.
+  const fieldsToExpand = options.expandColumns
+    ? selectedFields
+    : selectedFields.filter(
+        (loadedField) => typeof loadedField.mountedValue !== 'undefined',
+      );
+
+  const extraColumns = fieldsToExpand.map((selectedField) => {
+    if (selectedField.mountedValue) {
+      return `${selectedField.mountedValue} as "${selectedField.slug}"`;
+    }
+
+    const { fieldSelector } = getFieldFromModel(model, selectedField.slug, {
+      instructionName: 'selecting',
+    });
+
+    if (options.mountingPath) {
+      return `${fieldSelector} as "${options.mountingPath}.${selectedField.slug}"`;
+    }
+
+    return fieldSelector;
+  });
+
+  if (options.expandColumns) {
+    columns = extraColumns;
+  } else if (extraColumns) {
+    columns.push(...extraColumns);
   }
 
-  // If specific fields were provided in the `selecting` instruction, select only the
-  // columns of those fields. Otherwise, select all columns using `*`.
-  if (instructions.selecting) {
-    const usableModel = expandColumns
-      ? { ...model, tableAlias: model.tableAlias || model.table }
-      : model;
+  columns.push(...joinedColumns);
+  selectedFields.push(...joinedSelectedFields);
 
-    // The model fields that were selected by the root query.
-    const selectedFields: Array<ModelField> = [];
-
-    statement = instructions.selecting
-      .map((slug) => {
-        const { field, fieldSelector } = getFieldFromModel(usableModel, slug, {
-          instructionName: 'selecting',
-        });
-        selectedFields.push(field);
-        return fieldSelector;
-      })
-      .join(', ');
-
-    loadedFields = [...selectedFields, ...loadedFields];
-  } else {
-    loadedFields = [
-      ...model.fields.filter(
-        (field) => !(field.type === 'link' && field.kind === 'many'),
-      ),
-      ...loadedFields,
-    ];
-  }
-
-  if (instructions.including && Object.keys(instructions.including).length > 0) {
-    statement += ', ';
-
-    // Format the fields into a comma-separated list of SQL columns.
-    statement += Object.entries(instructions.including)
-      .map(([key, value]) => `${value} as "${key}"`)
-      .join(', ');
-  }
-
-  return { columns: statement, isJoining, loadedFields };
+  return { columns: columns.join(', '), isJoining, selectedFields };
 };

@@ -103,9 +103,11 @@ const getFieldSelector = (
   if (field.type === 'json' && !writing) {
     const dotParts = fieldPath.split('.');
     const columnName = tablePrefix + dotParts.shift();
-    const jsonField = dotParts.join('.');
 
-    return `json_extract(${columnName}, '$.${jsonField}')`;
+    if (dotParts.length > 0) {
+      const jsonField = dotParts.join('.');
+      return `json_extract(${columnName}, '$.${jsonField}')`;
+    }
   }
 
   return `${tablePrefix}"${fieldPath}"`;

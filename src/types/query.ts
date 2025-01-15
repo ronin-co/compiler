@@ -1,4 +1,5 @@
 import type {
+  InternalModelField,
   ModelField,
   ModelIndex,
   ModelPreset,
@@ -198,5 +199,5 @@ export interface Statement {
 
 export interface InternalStatement extends Statement {
   query: Query;
-  fields: Array<ModelField>;
+  selectedFields: Array<InternalModelField>;
 }

@@ -500,6 +500,13 @@ test('get single record including child records (one-to-many, defined manually)'
   const models: Array<Model> = [
     {
       slug: 'account',
+      fields: [
+        { slug: 'handle', type: 'string' },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+      ],
     },
     {
       slug: 'beach',

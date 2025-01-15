@@ -198,7 +198,7 @@ test('get single record including unrelated record with filter and specific fiel
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "including_account.firstName" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "account.firstName" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -399,6 +399,201 @@ test('get multiple records including unrelated records with filter', async () =>
         {
           account: expect.stringMatching(RECORD_ID_REGEX),
           id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+      ],
+    },
+  ]);
+});
+
+test('get multiple records including unrelated records with filter (nested)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          // Perform a LEFT JOIN that adds the `members` table.
+          including: {
+            members: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  members: {
+                    // ON members.account = accounts.id
+                    with: {
+                      account: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                      },
+                    },
+
+                    // Perform a LEFT JOIN that adds the `teams` table.
+                    including: {
+                      team: {
+                        [QUERY_SYMBOLS.QUERY]: {
+                          get: {
+                            team: {
+                              // ON teams.id = members.team
+                              with: {
+                                id: {
+                                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}team`,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: [
+        {
+          slug: 'locations',
+          type: 'json',
+        },
+      ],
+    },
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+        {
+          slug: 'team',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id") LEFT JOIN "teams" as including_team ON ("including_team"."id" = "including_members"."team")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: 'acc_39h8fhe98hefah8j',
+      handle: 'elaine',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [
+        {
+          id: 'mem_39h8fhe98hefah0j',
+          account: 'acc_39h8fhe98hefah8j',
+          team: {
+            id: 'tea_39h8fhe98hefah9j',
+            locations: {
+              europe: 'london',
+            },
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+        {
+          id: 'mem_39h8fhe98hefah8j',
+          account: 'acc_39h8fhe98hefah8j',
+          team: {
+            id: 'tea_39h8fhe98hefah8j',
+            locations: {
+              europe: 'berlin',
+            },
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+      ],
+    },
+    {
+      id: 'acc_39h8fhe98hefah9j',
+      handle: 'david',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [
+        {
+          id: 'mem_39h8fhe98hefah9j',
+          account: 'acc_39h8fhe98hefah9j',
+          team: {
+            id: 'tea_39h8fhe98hefah8j',
+            locations: {
+              europe: 'berlin',
+            },
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
           ronin: {
             locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
