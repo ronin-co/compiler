@@ -34,16 +34,11 @@ export const handleSelecting = (
     selecting: Instructions['selecting'];
     including: Instructions['including'];
   },
-  options?: {
+  options: {
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
-  },
+  } = {},
 ): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
-  // let loadedFields: Array<InternalModelField> = [];
-  // let expandColumns = options?.expandColumns;
-
-  // HANDLE SELECTING
-
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
   const loadedFields: Array<InternalModelField> = instructions.selecting
@@ -56,38 +51,8 @@ export const handleSelecting = (
       })
     : model.fields.filter((field) => !(field.type === 'link' && field.kind === 'many'));
 
-  /*
-  // If specific fields were provided in the `selecting` instruction, select only the
-  // columns of those fields. Otherwise, select all columns using `*`.
-  if (instructions.selecting) {
-    const usableModel = expandColumns
-      ? { ...model, tableAlias: model.tableAlias || model.table }
-      : model;
-
-    // The model fields that were selected by the root query.
-    const selectedFields: Array<ModelField> = [];
-
-    const extraColumns = instructions.selecting
-      .map((slug) => {
-        const { field, fieldSelector } = getFieldFromModel(usableModel, slug, {
-          instructionName: 'selecting',
-        });
-        selectedFields.push(field);
-        return fieldSelector;
-      })
-      .join(', ');
-
-    // statement = statement === '' ? extraColumns : `${extraColumns}, ${statement}`;
-    loadedFields = [...selectedFields, ...loadedFields];
-  } else {
-    loadedFields = [
-      ...model.fields.filter(
-        (field) => !(field.type === 'link' && field.kind === 'many'),
-      ),
-      ...loadedFields,
-    ];
-  }
-  */
+  // Expand all columns if specific fields are being selected.
+  if (instructions.selecting) options.expandColumns = true;
 
   // let statement = '';
   let isJoining = false;
@@ -123,18 +88,11 @@ export const handleSelecting = (
         // tables will be joined later on during the compilation of the query.
         isJoining = true;
 
-        // If a sub query was found in the `including` instruction, that also means we
-        // should alias the columns of all tables if the compiler was instructed to do so
-        // using the respective config option.
-        //
-        // Additionally, if the sub query selects specific fields, we also need to alias
-        // the columns of all tables, because we must ensure that only the selected
-        // columns of the joined table end up in the final result, which means we cannot
-        // use `SELECT *` in the SQL statement, as that would automatically catch all
-        // columns of the joined table.
-        //
-        // expandColumns = Boolean(options?.expandColumns || queryInstructions?.selecting);
-        if (queryInstructions?.selecting) options!.expandColumns = true;
+        // If the sub query selects specific fields, we need to alias the columns of all
+        // tables, because we must ensure that only the selected columns of the joined
+        // table end up in the final result, which means we cannot use `SELECT *` in the
+        // statement, as that would automatically catch all columns of the joined table.
+        if (queryInstructions?.selecting) options.expandColumns = true;
 
         const tableAlias = composeIncludedTableAlias(key);
         const subSingle = queryModel !== subQueryModel.pluralSlug;
@@ -146,18 +104,17 @@ export const handleSelecting = (
           model.tableAlias = `sub_${model.table}`;
         }
 
-        const { loadedFields: nestedLoadedFields, columns: nestedColumns } =
-          handleSelecting(
-            models,
-            { ...subQueryModel, tableAlias },
-            statementParams,
-            subSingle,
-            {
-              selecting: queryInstructions?.selecting,
-              including: queryInstructions?.including,
-            },
-            options,
-          );
+        const { loadedFields: nestedLoadedFields } = handleSelecting(
+          models,
+          { ...subQueryModel, tableAlias },
+          statementParams,
+          subSingle,
+          {
+            selecting: queryInstructions?.selecting,
+            including: queryInstructions?.including,
+          },
+          options,
+        );
 
         /*
         if (options?.expandColumns || nestedColumns !== '*') {
@@ -184,8 +141,6 @@ export const handleSelecting = (
         newValue = prepareStatementValue(statementParams, value);
       }
 
-      // instructions.including![key] = newValue;
-
       loadedFields.push({
         slug: key,
         type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
@@ -195,34 +150,6 @@ export const handleSelecting = (
       });
     }
   }
-
-  /*
-  // If the column names should be expanded, that means we need to alias all columns of
-  // the root table to avoid conflicts with columns of joined tables.
-  if (expandColumns) {
-    const extraColumns = model.fields
-      // Exclude link fields with cardinality "many", since those don't exist as columns.
-      .filter((field) => !(field.type === 'link' && field.kind === 'many'))
-      .map((field) => field.slug);
-
-    instructions.selecting = [...(instructions.selecting || []), ...extraColumns];
-  }
-  */
-
-  // GENERATE SELECT STATEMENT FROM LOADED FIELDS
-
-  // if (statement.length === 0) statement = '*';
-
-  /*
-  if (instructions.including && Object.keys(instructions.including).length > 0) {
-    statement += ', ';
-
-    // Format the fields into a comma-separated list of SQL columns.
-    statement += Object.entries(instructions.including)
-      .map(([key, value]) => `${value} as "${key}"`)
-      .join(', ');
-  }
-  */
 
   // If a table alias was set, we need to set the parent field of all loaded fields to
   // the table alias, so that the fields are correctly nested in the output.
@@ -249,25 +176,25 @@ export const handleSelecting = (
   // If the column names should not be expanded, we only need to explicitly select the
   // columns of fields that have a custom value, since those are not present in the
   // database, so their value must regardless be exposed via the SQL statement explicitly.
-  const fieldsToExpand = options?.expandColumns
+  const fieldsToExpand = options.expandColumns
     ? loadedFields
     : loadedFields.filter((loadedField) => typeof loadedField.newValue !== 'undefined');
 
   const extraColumns = fieldsToExpand
     .map((loadedField) => {
+      if (loadedField.newValue) {
+        return `${loadedField.newValue} as "${loadedField.slug}"`;
+      }
+
       const { fieldSelector } = getFieldFromModel(model, loadedField.slug, {
         instructionName: 'selecting',
       });
-
-      if (loadedField.newValue) {
-        return `${loadedField.newValue} as ${fieldSelector}`;
-      }
 
       return fieldSelector;
     })
     .join(', ');
 
-  if (options?.expandColumns) {
+  if (options.expandColumns) {
     columns = extraColumns;
   } else if (extraColumns) {
     columns += `, ${extraColumns}`;
