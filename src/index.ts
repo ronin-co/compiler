@@ -143,13 +143,8 @@ class Transaction {
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
-        let newSlug = field.slug;
+        const newSlug = field.mountingPath;
         let newValue = row[fieldIndex];
-
-        if (field.parentField) {
-          const arrayKey = field.parentField.single ? '' : '[0]';
-          newSlug = `${field.parentField.slug}${arrayKey}.${field.slug}`;
-        }
 
         if (field.type === 'json') {
           newValue = JSON.parse(newValue as string);
@@ -194,18 +189,17 @@ class Transaction {
         continue;
       }
 
-      const joinFields = fields.reduce(
-        (acc, field) => {
-          if (!field.parentField) return acc;
-          const { single, slug } = field.parentField;
-          return single || acc.includes(slug) ? acc : acc.concat([slug]);
-        },
-        [] as Array<string>,
-      );
+      const joinFields = fields
+        .map((field) => {
+          if (field.mountingPath.includes('[0]'))
+            return field.mountingPath.split('[0]')[0];
+          return null;
+        })
+        .filter((field) => field !== null);
 
-      for (const parentField of joinFields) {
-        const currentValue = existingRecord[parentField] as Array<NativeRecord>;
-        const newValue = record[parentField] as Array<NativeRecord>;
+      for (const arrayField of joinFields) {
+        const currentValue = existingRecord[arrayField] as Array<NativeRecord>;
+        const newValue = record[arrayField] as Array<NativeRecord>;
 
         currentValue.push(...newValue);
       }

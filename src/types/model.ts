@@ -105,16 +105,8 @@ export type ModelField = ModelFieldBasics &
 
 /** An extended version of `ModelField`, for internal use within the compiler. */
 export type InternalModelField = ModelField & {
-  /**
-   * Whether the field should be mounted onto a field higher up in the tree during the
-   * formatting of the database results.
-   */
-  parentField?: {
-    /** The slug of the parent field. */
-    slug: string;
-    /** Whether a single record is being mounted onto the parent field, or multiple. */
-    single: boolean;
-  };
+  /** The path on the final record where the value of the field should be mounted. */
+  mountingPath?: string;
 };
 
 export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {

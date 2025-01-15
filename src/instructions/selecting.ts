@@ -147,18 +147,14 @@ export const handleSelecting = (
 
   // If a table alias was set, we need to set the parent field of all loaded fields to
   // the table alias, so that the fields are correctly nested in the output.
-  if (model.tableAlias?.startsWith('including_')) {
-    for (const field of loadedFields) {
-      const slug = model.tableAlias.replace('including_', '');
+  for (const field of loadedFields) {
+    if (field.nestedModel) continue;
 
-      if (field.parentField) {
-        field.parentField.slug = `${slug}.${field.parentField.slug}`;
-      } else {
-        field.parentField = {
-          slug,
-          single,
-        };
-      }
+    if (model.tableAlias?.startsWith('including_')) {
+      const slug = model.tableAlias.replace('including_', '');
+      field.mountingPath = single ? `${slug}.${field.slug}` : `${slug}[0].${field.slug}`;
+    } else {
+      field.mountingPath = field.slug;
     }
   }
 
