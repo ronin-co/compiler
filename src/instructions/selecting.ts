@@ -121,7 +121,8 @@ export const handleSelecting = (
         // And even if that's not the case, we need to set an explicit alias in order to
         // ensure that the columns of the root table are selected from the root table,
         // and not from the joined table.
-        model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
+        if (!model.tableAlias)
+          model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(
