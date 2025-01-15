@@ -127,8 +127,10 @@ export const handleSelecting = (
 
         loadedFields.push(
           ...nestedLoadedFields.map((item) => {
-            item.nestedModel = { ...subQueryModel, tableAlias };
-            return item;
+            return {
+              ...item,
+              nestedModel: { ...subQueryModel, tableAlias },
+            };
           }),
         );
 
