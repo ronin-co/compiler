@@ -119,7 +119,7 @@ export const handleSelecting = (
         // If the column names should be expanded, that means we need to alias all
         // columns of the joined table to avoid conflicts with the root table.
         if (expandColumns) {
-          for (const field of loadedFields) {
+          for (const field of nestedLoadedFields) {
             if (field.parentField?.slug.includes('.')) continue;
             const newValue = parseFieldExpression(
               { ...subQueryModel, tableAlias },
