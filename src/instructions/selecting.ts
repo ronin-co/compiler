@@ -44,7 +44,7 @@ export const handleSelecting = (
   let isJoining = false;
 
   // If specific fields were provided in the `selecting` instruction, select only the
-  // columns of those fields. Otherwise, select all columns using `*`.
+  // columns of those fields. Otherwise, select all columns.
   const selectedFields: Array<InternalModelField> = (
     instructions.selecting
       ? instructions.selecting.map((slug) => {
@@ -183,10 +183,8 @@ export const handleSelecting = (
       instructionName: 'selecting',
     });
 
-    // If a table alias was set, we need to set the parent field of all loaded fields to
-    // the table alias, so that the fields are correctly nested in the output.
-    if (model.tableAlias?.startsWith('including_')) {
-      return `${fieldSelector} as "${model.tableAlias}.${selectedField.slug}"`;
+    if (options.mountingPath) {
+      return `${fieldSelector} as "${options.mountingPath}.${selectedField.slug}"`;
     }
 
     return fieldSelector;

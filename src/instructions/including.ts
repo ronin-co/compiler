@@ -16,7 +16,6 @@ import { composeConditions } from '@/src/utils/statement';
  * inserted into the query by SQLite.
  * @param single - Whether a single or multiple records are being queried.
  * @param instruction - The `including` instruction provided in the current query.
- * @param options - Additional options for customizing the behavior of the function.
  *
  * @returns The SQL syntax for the provided `including` instruction.
  */
