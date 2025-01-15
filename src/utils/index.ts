@@ -129,13 +129,13 @@ export const compileQueryInput = (
   let isJoiningMultipleRows = false;
 
   if (isJoining) {
-    const {
-      statement: including,
-      tableSubQuery,
-      loadedFields: nestedLoadedFields,
-    } = handleIncluding(models, model, statementParams, single, instructions?.including);
-
-    if (nestedLoadedFields) loadedFields.push(...nestedLoadedFields);
+    const { statement: including, tableSubQuery } = handleIncluding(
+      models,
+      model,
+      statementParams,
+      single,
+      instructions?.including,
+    );
 
     // If multiple rows are being joined from a different table, even though the root
     // query is only supposed to return a single row, we need to ensure a limit for the

@@ -1,6 +1,6 @@
 import type { WithFilters } from '@/src/instructions/with';
 import { getModelBySlug } from '@/src/model';
-import type { InternalModelField, Model } from '@/src/types/model';
+import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { composeIncludedTableAlias, getSymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
@@ -28,11 +28,9 @@ export const handleIncluding = (
   instruction: Instructions['including'],
 ): {
   statement: string;
-  loadedFields: Array<InternalModelField>;
   tableSubQuery?: string;
 } => {
   let statement = '';
-  const loadedFields: Array<InternalModelField> = [];
   let tableSubQuery: string | undefined;
 
   for (const ephemeralFieldSlug in instruction) {
@@ -142,5 +140,5 @@ export const handleIncluding = (
     }
   }
 
-  return { statement, loadedFields, tableSubQuery };
+  return { statement, tableSubQuery };
 };
