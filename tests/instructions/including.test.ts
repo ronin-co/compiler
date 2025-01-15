@@ -491,9 +491,8 @@ test('get multiple records including unrelated records with filter (nested)', as
     },
   ];
 
-  const transaction = new Transaction(queries, { models, expandColumns: true });
+  const transaction = new Transaction(queries, { models });
 
-  /*
   expect(transaction.statements).toEqual([
     {
       statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id") LEFT JOIN "teams" as including_team ON ("including_team"."id" = "including_members"."team")`,
@@ -501,15 +500,10 @@ test('get multiple records including unrelated records with filter (nested)', as
       returning: true,
     },
   ]);
-  */
 
-  console.log('TRANSACTION', transaction.statements);
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
 
-  const rawResults = await queryEphemeralDatabase(models, transaction.statements, false);
-
-  console.log('RAW RESULTS', rawResults);
-
-  const result = transaction.formatResults(rawResults, false)[0] as MultipleRecordResult;
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
   expect(result.records).toEqual([
     {
@@ -548,7 +542,7 @@ test('get multiple records including unrelated records with filter (nested)', as
           },
         },
         {
-          id: 'mem_39h8fhe98hefah0j',
+          id: 'mem_39h8fhe98hefah8j',
           account: 'acc_39h8fhe98hefah8j',
           team: {
             id: 'tea_39h8fhe98hefah8j',
