@@ -35,7 +35,7 @@ type ModelFieldBasics = {
    * The value that should be inserted into the field in the case that no value was
    * explicitly provided for it when a record is created.
    */
-  defaultValue?: unknown;
+  defaultValue?: Expression | unknown;
   /**
    * An expression that should be evaluated to form the value of the field. The
    * expression can either be VIRTUAL (evaluated whenever a record is read) or STORED

@@ -525,7 +525,7 @@ test('get single record including child records (one-to-many, defined manually)'
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id")`,
+      statement: `SELECT * FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as including_ronin_root ON ("including_ronin_root"."id" = "including_visitors"."target")`,
       params: [],
       returning: true,
     },
@@ -543,32 +543,20 @@ test('get single record including child records (one-to-many, defined manually)'
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       updatedBy: null,
     },
-    visitors: [
-      {
-        id: expect.stringMatching(RECORD_ID_REGEX),
-        source: 'bea_39h8fhe98hefah8j',
-        target: 'acc_39h8fhe98hefah8j',
-        ronin: {
-          locked: false,
-          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-          createdBy: null,
-          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-          updatedBy: null,
-        },
+    visitors: new Array(2).fill({
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      source: expect.stringMatching(RECORD_ID_REGEX),
+      target: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
       },
-      {
-        id: expect.stringMatching(RECORD_ID_REGEX),
-        source: 'bea_39h8fhe98hefah8j',
-        target: 'acc_39h8fhe98hefah9j',
-        ronin: {
-          locked: false,
-          createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-          createdBy: null,
-          updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-          updatedBy: null,
-        },
-      },
-    ],
+      handle: expect.any(String),
+      firstName: expect.any(String),
+    }),
   });
 });
 
