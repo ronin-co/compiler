@@ -57,22 +57,14 @@ export const handleSelecting = (
     .map(({ slug: fieldSlug, ...field }) => {
       const newField: InternalModelField = { ...field, mountingPath: fieldSlug };
 
-      // If a table alias was set, we need to set the parent field of all loaded fields to
-      // the table alias, so that the fields are correctly nested in the output.
-      if (model.tableAlias?.startsWith('including_')) {
-        const slug = model.tableAlias.replace('including_', '');
-        newField.mountingPath = single
-          ? `${slug}.${fieldSlug}`
-          : `${slug}[0].${fieldSlug}`;
-      }
-
       return newField;
     });
 
   // Expand all columns if specific fields are being selected.
   if (instructions.selecting) options.expandColumns = true;
 
-  const mountedModels: Record<InternalModelField['mountingPath'], Model> = {};
+  const joinedSelectedFields: Array<InternalModelField> = [];
+  const joinedColumns: Array<string> = [];
 
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
@@ -121,20 +113,21 @@ export const handleSelecting = (
         // and not from the joined table.
         model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const { selectedFields: nestedLoadedFields } = handleSelecting(
-          models,
-          { ...subQueryModel, tableAlias },
-          statementParams,
-          subSingle,
-          {
-            selecting: queryInstructions?.selecting,
-            including: queryInstructions?.including,
-          },
-          options,
-        );
+        const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
+          handleSelecting(
+            models,
+            { ...subQueryModel, tableAlias },
+            statementParams,
+            subSingle,
+            {
+              selecting: queryInstructions?.selecting,
+              including: queryInstructions?.including,
+            },
+            options,
+          );
 
-        selectedFields.push(...nestedLoadedFields);
-        mountedModels[key] = { ...subQueryModel, tableAlias };
+        if (nestedColumns !== '*') joinedColumns.push(nestedColumns);
+        joinedSelectedFields.push(...nestedSelectedFields);
 
         continue;
       }
@@ -157,7 +150,7 @@ export const handleSelecting = (
     }
   }
 
-  let columns = '*';
+  let columns = ['*'];
 
   // If the column names should be expanded, that means we need to explicitly select the
   // columns of all selected fields.
@@ -171,37 +164,39 @@ export const handleSelecting = (
         (loadedField) => typeof loadedField.mountedValue !== 'undefined',
       );
 
-  const extraColumns = fieldsToExpand
-    .map((loadedField) => {
-      if (loadedField.mountedValue) {
-        return `${loadedField.mountedValue} as "${loadedField.mountingPath}"`;
+  const extraColumns = fieldsToExpand.map((selectedField) => {
+    if (selectedField.mountedValue) {
+      return `${selectedField.mountedValue} as "${selectedField.mountingPath}"`;
+    }
+
+    const { fieldSelector } = getFieldFromModel(model, selectedField.mountingPath, {
+      instructionName: 'selecting',
+    });
+
+    if (model?.tableAlias) {
+      let mountingPath = selectedField.mountingPath;
+
+      // If a table alias was set, we need to set the parent field of all loaded fields to
+      // the table alias, so that the fields are correctly nested in the output.
+      if (model.tableAlias?.startsWith('including_')) {
+        const slug = model.tableAlias.replace('including_', '');
+        mountingPath = single ? `${slug}.${mountingPath}` : `${slug}[0].${mountingPath}`;
       }
 
-      const mountedModel: Model = mountedModels[loadedField.mountingPath.split('.')[0]];
+      return `${fieldSelector} as "${model.tableAlias}.${selectedField.mountingPath}"`;
+    }
 
-      const fieldSlug = mountedModel
-        ? loadedField.mountingPath.split('.').splice(1).join('.')
-        : loadedField.mountingPath;
-
-      console.log('SLUG', mountedModels);
-
-      const { fieldSelector } = getFieldFromModel(mountedModel || model, fieldSlug, {
-        instructionName: 'selecting',
-      });
-
-      if (mountedModel?.tableAlias) {
-        return `${fieldSelector} as "${mountedModel.tableAlias}.${loadedField.mountingPath}"`;
-      }
-
-      return fieldSelector;
-    })
-    .join(', ');
+    return fieldSelector;
+  });
 
   if (options.expandColumns) {
     columns = extraColumns;
   } else if (extraColumns) {
-    columns += `, ${extraColumns}`;
+    columns.push(...extraColumns);
   }
 
-  return { columns, isJoining, selectedFields };
+  columns.push(...joinedColumns);
+  selectedFields.push(...joinedSelectedFields);
+
+  return { columns: columns.join(', '), isJoining, selectedFields };
 };
