@@ -412,6 +412,79 @@ test('get multiple records including unrelated records with filter', async () =>
   ]);
 });
 
+test('get multiple records including unrelated records with filter (hoisted)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          including: {
+            [QUERY_SYMBOLS.QUERY]: {
+              get: {
+                members: {
+                  with: {
+                    account: {
+                      [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_ronin_root ON ("including_ronin_root"."account" = "accounts"."id")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual(
+    new Array(3).fill({
+      handle: expect.any(String),
+      account: expect.stringMatching(RECORD_ID_REGEX),
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    }),
+  );
+});
+
 test('get multiple records including unrelated records with filter (nested)', async () => {
   const queries: Array<Query> = [
     {
@@ -613,7 +686,7 @@ test('get multiple records including unrelated records with filter (nested)', as
 // Instead, the results will be added to the parent record entirely, which is useful in
 // cases where the parent record only acts as an associative record that links two
 // otherwise unrelated records together, like when using a "many"-cardinality link field.
-test('get multiple records including unrelated records with filter (nested, at root)', async () => {
+test('get multiple records including unrelated records with filter (nested, hoisted)', async () => {
   const queries: Array<Query> = [
     {
       get: {
