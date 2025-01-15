@@ -2,6 +2,7 @@ import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
+  QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
   composeIncludedTableAlias,
@@ -75,14 +76,16 @@ export const handleSelecting = (
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
   if (instructions.including) {
+    const symbol = getSymbol(instructions.including);
+
+    if (symbol?.type === 'query') {
+      instructions.including.ronin_root = { ...instructions.including };
+      delete instructions.including[QUERY_SYMBOLS.QUERY];
+    }
+
     // Flatten the object to handle deeply nested ephemeral fields, which are the result
     // of developers providing objects as values in the `including` instruction.
     const flatObject = flatten(instructions.including);
-
-    // Clear the object so we can set fresh keys further below. Clearing the object and
-    // setting keys is faster than constructing an entirely new object from arrays of
-    // values that were previously mapped over.
-    instructions.including = {};
 
     // Filter out any fields whose value is a sub query, as those fields are instead
     // converted into SQL JOINs in the `handleIncluding` function, which, in the case of
@@ -120,7 +123,10 @@ export const handleSelecting = (
         if (!model.tableAlias)
           model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const subMountingPath = `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
+        const subMountingPath =
+          key === 'ronin_root'
+            ? options.mountingPath
+            : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(

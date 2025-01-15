@@ -237,6 +237,7 @@ export const getSymbol = (
     }
   | null => {
   if (!isObject(value)) return null;
+
   const objectValue = value as
     | Record<typeof QUERY_SYMBOLS.QUERY, Query>
     | Record<typeof QUERY_SYMBOLS.EXPRESSION, string>;
