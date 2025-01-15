@@ -2,7 +2,6 @@ import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
-  QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
   composeIncludedTableAlias,
@@ -41,9 +40,9 @@ export const handleSelecting = (
   },
 ): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
   let loadedFields: Array<InternalModelField> = [];
-  let expandColumns = false;
+  let expandColumns = options?.expandColumns;
 
-  let statement = '*';
+  let statement = '';
   let isJoining = false;
 
   // If additional fields (that are not part of the model) were provided in the
@@ -96,35 +95,25 @@ export const handleSelecting = (
           model.tableAlias = `sub_${model.table}`;
         }
 
-        const { loadedFields: nestedLoadedFields } = handleSelecting(
-          models,
-          { ...subQueryModel, tableAlias },
-          statementParams,
-          subSingle,
-          {
-            selecting: queryInstructions?.selecting,
-            including: queryInstructions?.including,
-          },
-          options,
-        );
+        const { loadedFields: nestedLoadedFields, columns: nestedColumns } =
+          handleSelecting(
+            models,
+            { ...subQueryModel, tableAlias },
+            statementParams,
+            subSingle,
+            {
+              selecting: queryInstructions?.selecting,
+              including: queryInstructions?.including,
+            },
+            options,
+          );
+
+        if (options?.expandColumns || nestedColumns !== '*') {
+          if (statement.length > 0) statement += ', ';
+          statement += nestedColumns;
+        }
 
         loadedFields.push(...nestedLoadedFields);
-
-        // If the column names should be expanded, that means we need to alias all
-        // columns of the joined table to avoid conflicts with the root table.
-        if (expandColumns) {
-          for (const field of loadedFields) {
-            if (field.parentField?.slug.includes('.')) continue;
-
-            const newValue = parseFieldExpression(
-              { ...subQueryModel, tableAlias },
-              'including',
-              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
-            );
-
-            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
-          }
-        }
 
         continue;
       }
@@ -151,10 +140,12 @@ export const handleSelecting = (
   // If the column names should be expanded, that means we need to alias all columns of
   // the root table to avoid conflicts with columns of joined tables.
   if (expandColumns) {
-    instructions.selecting = model.fields
+    const extraColumns = model.fields
       // Exclude link fields with cardinality "many", since those don't exist as columns.
       .filter((field) => !(field.type === 'link' && field.kind === 'many'))
       .map((field) => field.slug);
+
+    instructions.selecting = [...(instructions.selecting || []), ...extraColumns];
   }
 
   // If specific fields were provided in the `selecting` instruction, select only the
@@ -167,7 +158,7 @@ export const handleSelecting = (
     // The model fields that were selected by the root query.
     const selectedFields: Array<ModelField> = [];
 
-    statement = instructions.selecting
+    const extraColumns = instructions.selecting
       .map((slug) => {
         const { field, fieldSelector } = getFieldFromModel(usableModel, slug, {
           instructionName: 'selecting',
@@ -177,6 +168,7 @@ export const handleSelecting = (
       })
       .join(', ');
 
+    statement = statement === '' ? extraColumns : `${extraColumns}, ${statement}`;
     loadedFields = [...selectedFields, ...loadedFields];
   } else {
     loadedFields = [
@@ -186,6 +178,8 @@ export const handleSelecting = (
       ...loadedFields,
     ];
   }
+
+  if (statement.length === 0) statement = '*';
 
   if (instructions.including && Object.keys(instructions.including).length > 0) {
     statement += ', ';
