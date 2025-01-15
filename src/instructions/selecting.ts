@@ -54,8 +54,18 @@ export const handleSelecting = (
       : model.fields
   )
     .filter((field: ModelField) => !(field.type === 'link' && field.kind === 'many'))
-    .map(({ slug: fieldSlug, ...field }) => {
-      const newField: InternalModelField = { ...field, mountingPath: fieldSlug };
+    .map((field) => {
+      const newField: InternalModelField = { ...field, mountingPath: field.slug };
+
+      // If a table alias was set, we need to set the parent field of all loaded fields to
+      // the table alias, so that the fields are correctly nested in the output.
+      if (model.tableAlias?.startsWith('including_')) {
+        const slug = model.tableAlias.replace('including_', '');
+
+        newField.mountingPath = single
+          ? `${slug}.${field.slug}`
+          : `${slug}[0].${field.slug}`;
+      }
 
       return newField;
     });
@@ -141,6 +151,7 @@ export const handleSelecting = (
       }
 
       selectedFields.push({
+        slug: key,
         mountingPath: key,
         type: RAW_FIELD_TYPES.includes(typeof value as RawFieldType)
           ? (typeof value as RawFieldType)
@@ -169,22 +180,23 @@ export const handleSelecting = (
       return `${selectedField.mountedValue} as "${selectedField.mountingPath}"`;
     }
 
+    const newTest = selectedField.mountingPath
+      .replace(selectedField.slug, '')
+      .slice(0, -1);
+
+    // If a table alias was set, we need to set the parent field of all loaded fields to
+    // the table alias, so that the fields are correctly nested in the output.
+    if (newTest) {
+      const { fieldSelector } = getFieldFromModel(model, selectedField.slug, {
+        instructionName: 'selecting',
+      });
+
+      return `${fieldSelector} as "${model.tableAlias}.${selectedField.slug}"`;
+    }
+
     const { fieldSelector } = getFieldFromModel(model, selectedField.mountingPath, {
       instructionName: 'selecting',
     });
-
-    if (model?.tableAlias) {
-      let mountingPath = selectedField.mountingPath;
-
-      // If a table alias was set, we need to set the parent field of all loaded fields to
-      // the table alias, so that the fields are correctly nested in the output.
-      if (model.tableAlias?.startsWith('including_')) {
-        const slug = model.tableAlias.replace('including_', '');
-        mountingPath = single ? `${slug}.${mountingPath}` : `${slug}[0].${mountingPath}`;
-      }
-
-      return `${fieldSelector} as "${model.tableAlias}.${selectedField.mountingPath}"`;
-    }
 
     return fieldSelector;
   });

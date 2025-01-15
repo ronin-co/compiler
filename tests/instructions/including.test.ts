@@ -503,6 +503,8 @@ test('get multiple records including unrelated records with filter (nested)', as
   ]);
   */
 
+  console.log('TRANSACTION', transaction.statements);
+
   const rawResults = await queryEphemeralDatabase(models, transaction.statements, false);
 
   console.log('RAW RESULTS', rawResults);
