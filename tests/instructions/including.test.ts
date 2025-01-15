@@ -452,6 +452,10 @@ test('get multiple records including unrelated records with filter (hoisted)', a
           slug: 'account',
           type: 'string',
         },
+        {
+          slug: 'team',
+          type: 'string',
+        },
       ],
     },
   ];
@@ -472,7 +476,6 @@ test('get multiple records including unrelated records with filter (hoisted)', a
   expect(result.records).toEqual(
     new Array(3).fill({
       handle: expect.any(String),
-      account: expect.stringMatching(RECORD_ID_REGEX),
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
         locked: false,
@@ -481,6 +484,9 @@ test('get multiple records including unrelated records with filter (hoisted)', a
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         updatedBy: null,
       },
+      // These fields are expected to be present, since they are part of the joined model.
+      account: expect.stringMatching(RECORD_ID_REGEX),
+      team: expect.stringMatching(RECORD_ID_REGEX),
     }),
   );
 });
