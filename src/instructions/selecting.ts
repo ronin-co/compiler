@@ -100,9 +100,11 @@ export const handleSelecting = (
         // If multiple records are being joined and the root query only targets a single
         // record, we need to alias the root table, because it will receive a dedicated
         // SELECT statement in the `handleIncluding` function.
-        if (single && !subSingle) {
-          model.tableAlias = `sub_${model.table}`;
-        }
+        //
+        // And even if that's not the case, we need to set an explicit alias in order to
+        // ensure that the columns of the root table are selected from the root table,
+        // and not from the joined table.
+        model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
         const { loadedFields: nestedLoadedFields } = handleSelecting(
           models,
@@ -125,7 +127,7 @@ export const handleSelecting = (
 
         loadedFields.push(
           ...nestedLoadedFields.map((item) => {
-            item.excludeFromSelect = true;
+            item.nestedModel = { ...subQueryModel, tableAlias };
             return item;
           }),
         );
@@ -180,15 +182,27 @@ export const handleSelecting = (
     ? loadedFields
     : loadedFields.filter((loadedField) => typeof loadedField.newValue !== 'undefined');
 
+  if (options.expandColumns) {
+    // console.log('FIELDS', loadedFields)
+  }
+
   const extraColumns = fieldsToExpand
     .map((loadedField) => {
       if (loadedField.newValue) {
         return `${loadedField.newValue} as "${loadedField.slug}"`;
       }
 
-      const { fieldSelector } = getFieldFromModel(model, loadedField.slug, {
-        instructionName: 'selecting',
-      });
+      const { fieldSelector } = getFieldFromModel(
+        loadedField.nestedModel || model,
+        loadedField.slug,
+        {
+          instructionName: 'selecting',
+        },
+      );
+
+      if (loadedField.nestedModel) {
+        return `${fieldSelector} as "${loadedField.nestedModel.tableAlias}.${loadedField.slug}"`;
+      }
 
       return fieldSelector;
     })
