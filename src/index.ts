@@ -189,17 +189,12 @@ class Transaction {
         continue;
       }
 
-      const joinFields = fields.reduce(
-        (acc, { mountingPath }) => {
-          return mountingPath.includes('[0]') &&
-            !acc.includes(mountingPath.split('[0]')[0])
-            ? acc.concat([mountingPath.split('[0]')[0]])
-            : acc;
-        },
-        [] as Array<string>,
-      );
+      const joinFields = fields.reduce((acc, { mountingPath }) => {
+        if (mountingPath.includes('[0]')) acc.add(mountingPath.split('[0]')[0]);
+        return acc;
+      }, new Set<string>());
 
-      for (const arrayField of joinFields) {
+      for (const arrayField of joinFields.values()) {
         const currentValue = existingRecord[arrayField] as Array<NativeRecord>;
         const newValue = record[arrayField] as Array<NativeRecord>;
 
