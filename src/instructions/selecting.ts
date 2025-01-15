@@ -2,6 +2,7 @@ import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
+  QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
   composeIncludedTableAlias,
@@ -114,6 +115,21 @@ export const handleSelecting = (
         }
 
         loadedFields.push(...nestedLoadedFields);
+
+        // If the column names should be expanded, that means we need to alias all
+        // columns of the joined table to avoid conflicts with the root table.
+        if (expandColumns) {
+          for (const field of loadedFields) {
+            if (field.parentField?.slug.includes('.')) continue;
+            const newValue = parseFieldExpression(
+              { ...subQueryModel, tableAlias },
+              'including',
+              `${QUERY_SYMBOLS.FIELD}${field.slug}`,
+            );
+
+            instructions.including![`${tableAlias}.${field.slug}`] = newValue;
+          }
+        }
 
         continue;
       }
