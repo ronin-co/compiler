@@ -39,6 +39,8 @@ export const handleSelecting = (
     expandColumns?: boolean;
   } = {},
 ): { columns: string; isJoining: boolean; loadedFields: Array<InternalModelField> } => {
+  let isJoining = false;
+
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns using `*`.
   const loadedFields: Array<InternalModelField> = instructions.selecting
@@ -53,11 +55,6 @@ export const handleSelecting = (
 
   // Expand all columns if specific fields are being selected.
   if (instructions.selecting) options.expandColumns = true;
-
-  // let statement = '';
-  let isJoining = false;
-
-  // HANDLE INCLUDING
 
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
@@ -118,18 +115,11 @@ export const handleSelecting = (
           options,
         );
 
-        /*
-        if (options?.expandColumns || nestedColumns !== '*') {
-          if (statement.length > 0) statement += ', ';
-          statement += nestedColumns;
-        }
-        */
-
         loadedFields.push(
           ...nestedLoadedFields.map((item) => {
             return {
               ...item,
-              nestedModel: { ...subQueryModel, tableAlias },
+              nestedModel: item.nestedModel || { ...subQueryModel, tableAlias },
             };
           }),
         );
@@ -183,10 +173,6 @@ export const handleSelecting = (
   const fieldsToExpand = options.expandColumns
     ? loadedFields
     : loadedFields.filter((loadedField) => typeof loadedField.newValue !== 'undefined');
-
-  if (options.expandColumns) {
-    // console.log('FIELDS', loadedFields)
-  }
 
   const extraColumns = fieldsToExpand
     .map((loadedField) => {
