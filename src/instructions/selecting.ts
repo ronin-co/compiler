@@ -181,19 +181,15 @@ export const handleSelecting = (
       return `${selectedField.mountedValue} as "${selectedField.mountingPath}"`;
     }
 
+    const { fieldSelector } = getFieldFromModel(model, selectedField.slug, {
+      instructionName: 'selecting',
+    });
+
     // If a table alias was set, we need to set the parent field of all loaded fields to
     // the table alias, so that the fields are correctly nested in the output.
     if (model.tableAlias?.startsWith('including_')) {
-      const { fieldSelector } = getFieldFromModel(model, selectedField.slug, {
-        instructionName: 'selecting',
-      });
-
       return `${fieldSelector} as "${model.tableAlias}.${selectedField.slug}"`;
     }
-
-    const { fieldSelector } = getFieldFromModel(model, selectedField.mountingPath, {
-      instructionName: 'selecting',
-    });
 
     return fieldSelector;
   });
