@@ -141,6 +141,14 @@ class Transaction {
   ): Record | Array<Record> {
     const records: Array<NativeRecord> = [];
 
+    console.log(
+      'FIELDS',
+      fields.map((field) => {
+        const { nestedModel, ...rest } = field;
+        return rest;
+      }),
+    );
+
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
         const newSlug = field.mountingPath;
@@ -172,6 +180,8 @@ class Transaction {
         return acc;
       }, {} as NativeRecord);
 
+      console.log('CLEAN RECORD', record);
+
       const existingRecord = record.id
         ? records.find((existingRecord) => {
             return existingRecord.id === record.id;
@@ -189,13 +199,15 @@ class Transaction {
         continue;
       }
 
-      const joinFields = fields
-        .map((field) => {
-          if (field.mountingPath.includes('[0]'))
-            return field.mountingPath.split('[0]')[0];
-          return null;
-        })
-        .filter((field) => field !== null);
+      const joinFields = fields.reduce(
+        (acc, { mountingPath }) => {
+          return mountingPath.includes('[0]') &&
+            !acc.includes(mountingPath.split('[0]')[0])
+            ? acc.concat([mountingPath.split('[0]')[0]])
+            : acc;
+        },
+        [] as Array<InternalModelField['slug']>,
+      );
 
       for (const arrayField of joinFields) {
         const currentValue = existingRecord[arrayField] as Array<NativeRecord>;
