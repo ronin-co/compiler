@@ -607,6 +607,184 @@ test('get multiple records including unrelated records with filter (nested)', as
   ]);
 });
 
+// In this test, the results of the joined table will not be mounted at a dedicated
+// property on the parent record.
+//
+// Instead, the results will be added to the parent record entirely, which is useful in
+// cases where the parent record only acts as an associative record that links two
+// otherwise unrelated records together, like when using a "many"-cardinality link field.
+test('get multiple records including unrelated records with filter (nested, at root)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          // Perform a LEFT JOIN that adds the `members` table.
+          including: {
+            members: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  members: {
+                    // ON members.account = accounts.id
+                    with: {
+                      account: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                      },
+                    },
+
+                    // Perform a LEFT JOIN that adds the `teams` table.
+                    including: {
+                      [QUERY_SYMBOLS.QUERY]: {
+                        get: {
+                          team: {
+                            // ON teams.id = members.team
+                            with: {
+                              id: {
+                                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}team`,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: [
+        {
+          slug: 'locations',
+          type: 'json',
+        },
+      ],
+    },
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+        {
+          slug: 'team',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id") LEFT JOIN "teams" as including_ronin_root ON ("including_ronin_root"."id" = "including_members"."team")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: 'acc_39h8fhe98hefah8j',
+      handle: 'elaine',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [
+        {
+          id: 'tea_39h8fhe98hefah9j',
+          locations: {
+            europe: 'london',
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+          // These fields are expected to be present, since they are part of the model
+          // between the first and third model being joined (the second model).
+          account: 'acc_39h8fhe98hefah8j',
+          team: 'tea_39h8fhe98hefah9j',
+        },
+        {
+          id: 'tea_39h8fhe98hefah8j',
+          locations: {
+            europe: 'berlin',
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+          // These fields are expected to be present, since they are part of the model
+          // between the first and third model being joined (the second model).
+          account: 'acc_39h8fhe98hefah8j',
+          team: 'tea_39h8fhe98hefah8j',
+        },
+      ],
+    },
+    {
+      id: 'acc_39h8fhe98hefah9j',
+      handle: 'david',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [
+        {
+          id: 'tea_39h8fhe98hefah8j',
+          locations: {
+            europe: 'berlin',
+          },
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+          // These fields are expected to be present, since they are part of the model
+          // between the first and third model being joined (the second model).
+          account: 'acc_39h8fhe98hefah9j',
+          team: 'tea_39h8fhe98hefah8j',
+        },
+      ],
+    },
+  ]);
+});
+
 test('get single record including unrelated records without filter', async () => {
   const queries: Array<Query> = [
     {
