@@ -210,13 +210,57 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // different queries in the codebase of an application.
   for (const field of model.fields || []) {
     if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
-      const relatedModel = getModelBySlug(list, field.target);
+      const targetModel = getModelBySlug(list, field.target);
 
-      // If a link field has the cardinality "many", we don't need to add a default
-      // preset for resolving its records, because we are already adding an associative
-      // schema in `getSystemModels`, which causes a default preset to get added in the
-      // original schema anyways.
-      if (field.kind === 'many') continue;
+      if (field.kind === 'many') {
+        const systemModel = list.find(({ system }) => {
+          return system?.model === model.id && system?.associationSlug === field.slug;
+        });
+
+        if (!systemModel) continue;
+
+        const preset = {
+          instructions: {
+            // Perform a LEFT JOIN that adds the associative table.
+            including: {
+              [field.slug]: {
+                [QUERY_SYMBOLS.QUERY]: {
+                  get: {
+                    [systemModel.pluralSlug]: {
+                      // ON associative_table.source = origin_model.id
+                      with: {
+                        source: {
+                          [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                        },
+                      },
+
+                      // Perform a LEFT JOIN that adds the target model table.
+                      including: {
+                        [QUERY_SYMBOLS.QUERY]: {
+                          get: {
+                            [targetModel.slug]: {
+                              // ON target_model.id = associative_table.target
+                              with: {
+                                id: {
+                                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}target`,
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          slug: field.slug,
+        };
+
+        defaultPresets.push(preset);
+        continue;
+      }
 
       // For every link field, add a default preset for resolving the linked record in
       // the model that contains the link field.
@@ -226,7 +270,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
             [field.slug]: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
-                  [relatedModel.slug]: {
+                  [targetModel.slug]: {
                     with: {
                       // Compare the `id` field of the related model to the link field on
                       // the root model (`field.slug`).
@@ -250,6 +294,9 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // parent model.
   const childModels = list
     .map((subModel) => {
+      // Do not assign default presets for associative models.
+      if (subModel.system?.associationSlug) return null;
+
       const field = subModel.fields?.find((field) => {
         return field.type === 'link' && field.target === model.slug;
       });
