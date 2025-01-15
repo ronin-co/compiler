@@ -37,6 +37,8 @@ export const handleSelecting = (
   options: {
     /** Alias column names that are duplicated when joining multiple tables. */
     expandColumns?: boolean;
+    /** The path on which the selected fields should be mounted in the final record. */
+    mountingPath?: InternalModelField['mountingPath'];
   } = {},
 ): { columns: string; isJoining: boolean; selectedFields: Array<InternalModelField> } => {
   let isJoining = false;
@@ -57,14 +59,8 @@ export const handleSelecting = (
     .map((field) => {
       const newField: InternalModelField = { ...field, mountingPath: field.slug };
 
-      // If a table alias was set, we need to set the parent field of all loaded fields to
-      // the table alias, so that the fields are correctly nested in the output.
-      if (model.tableAlias?.startsWith('including_')) {
-        const slug = model.tableAlias.replace('including_', '');
-
-        newField.mountingPath = single
-          ? `${slug}.${field.slug}`
-          : `${slug}[0].${field.slug}`;
+      if (options.mountingPath) {
+        newField.mountingPath = `${options.mountingPath}.${field.slug}`;
       }
 
       return newField;
@@ -124,6 +120,8 @@ export const handleSelecting = (
         if (!model.tableAlias)
           model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
+        const subMountingPath = `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
+
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(
             models,
@@ -134,7 +132,7 @@ export const handleSelecting = (
               selecting: queryInstructions?.selecting,
               including: queryInstructions?.including,
             },
-            options,
+            { ...options, mountingPath: subMountingPath },
           );
 
         if (nestedColumns !== '*') joinedColumns.push(nestedColumns);
