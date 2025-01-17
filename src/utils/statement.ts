@@ -1,4 +1,14 @@
+import {
+  WITH_CONDITIONS,
+  type WithCondition,
+  type WithFilters,
+  type WithValue,
+  type WithValueOptions,
+} from '@/src/instructions/with';
+import { getFieldFromModel, getModelBySlug } from '@/src/model';
+import type { Model, ModelField } from '@/src/types/model';
 import type {
+  CombinedInstructions,
   FieldSelector,
   GetInstructions,
   Instructions,
@@ -14,16 +24,6 @@ import {
   getQuerySymbol,
   isObject,
 } from '@/src/utils/helpers';
-
-import {
-  WITH_CONDITIONS,
-  type WithCondition,
-  type WithFilters,
-  type WithValue,
-  type WithValueOptions,
-} from '@/src/instructions/with';
-import { getFieldFromModel, getModelBySlug } from '@/src/model';
-import type { Model } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
 
 /**
@@ -37,6 +37,72 @@ import { compileQueryInput } from '@/src/utils/index';
 const replaceJSON = (key: string, value: string): unknown => {
   if (key === QUERY_SYMBOLS.EXPRESSION) return value.replaceAll(`'`, `''`);
   return value;
+};
+
+/**
+ * Determines which of the provided model fields match a given pattern.
+ *
+ * @param fields - The fields of a particular model.
+ * @param pattern - The pattern to match against the fields.
+ *
+ * @returns The fields that match the provided pattern.
+ */
+const matchSelectedFields = (
+  fields: Array<ModelField>,
+  pattern: string,
+): Array<ModelField> => {
+  // Step 1: Escape real dots
+  let regexStr = pattern.replace(/\./g, '\\.');
+
+  // Step 2: Temporarily replace all '**' so we don't conflict with single '*'
+  regexStr = regexStr.replace(/\*\*/g, '<<DOUBLESTAR>>');
+
+  // Step 3: Replace remaining single '*' with a pattern that cannot cross dots
+  regexStr = regexStr.replace(/\*/g, '[^.]*');
+
+  // Step 4: Replace the <<DOUBLESTAR>> placeholders with a pattern that can cross dots
+  regexStr = regexStr.replace(/<<DOUBLESTAR>>/g, '.*');
+
+  // Finally, build the full RegExp: match from start ^ to end $
+  const regex = new RegExp(`^${regexStr}$`);
+
+  return fields.filter((field) => regex.test(field.slug));
+};
+
+/**
+ * Determines which fields of a model should be selected by a query, based on the value
+ * of a provided `selecting` instruction.
+ *
+ * @param model - The model associated with the current query.
+ * @param instruction - The `selecting` instruction provided in the current query.
+ *
+ * @returns The list of fields that should be selected.
+ */
+export const filterSelectedFields = (
+  model: Model,
+  instruction: CombinedInstructions['selecting'],
+): Array<ModelField> => {
+  if (!instruction) return model.fields;
+
+  let selectedFields: Array<ModelField> = [];
+
+  for (const pattern of instruction) {
+    const isNegative = pattern.startsWith('!');
+    const cleanPattern = isNegative ? pattern.slice(1) : pattern;
+
+    const matchedFields = matchSelectedFields(
+      isNegative ? selectedFields : model.fields,
+      cleanPattern,
+    );
+
+    if (isNegative) {
+      selectedFields = selectedFields.filter((field) => !matchedFields.includes(field));
+    } else {
+      selectedFields.push(...matchedFields);
+    }
+  }
+
+  return selectedFields;
 };
 
 /**

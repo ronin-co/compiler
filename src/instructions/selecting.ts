@@ -10,7 +10,11 @@ import {
   getQuerySymbol,
   splitQuery,
 } from '@/src/utils/helpers';
-import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
+import {
+  filterSelectedFields,
+  parseFieldExpression,
+  prepareStatementValue,
+} from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `selecting` query instruction, which allows for
@@ -46,15 +50,9 @@ export const handleSelecting = (
 
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns.
-  const selectedFields: Array<InternalModelField> = (
-    instructions.selecting
-      ? instructions.selecting.map((slug) => {
-          const { field } = getFieldFromModel(model, slug, {
-            instructionName: 'selecting',
-          });
-          return field;
-        })
-      : model.fields
+  const selectedFields: Array<InternalModelField> = filterSelectedFields(
+    model,
+    instructions.selecting,
   )
     .filter((field: ModelField) => !(field.type === 'link' && field.kind === 'many'))
     .map((field) => {
