@@ -39,6 +39,15 @@ const replaceJSON = (key: string, value: string): unknown => {
   return value;
 };
 
+/**
+ * Determines which fields of a model should be selected by a query, based on the value
+ * of a provided `selecting` instruction.
+ *
+ * @param model - The model associated with the current query.
+ * @param instruction - The `selecting` instruction provided in the current query.
+ *
+ * @returns The list of fields that should be selected.
+ */
 export const filterSelectedFields = (
   model: Model,
   instruction: CombinedInstructions['selecting'],
