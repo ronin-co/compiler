@@ -1,5 +1,9 @@
 import { expect, test } from 'bun:test';
-import { RECORD_ID_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
 
@@ -107,7 +111,8 @@ test('get single record with all fields except specific ones', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT "id", "name" FROM "beaches" LIMIT 1',
+      statement:
+        'SELECT "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -117,7 +122,13 @@ test('get single record with all fields except specific ones', async () => {
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
-    id: expect.stringMatching(RECORD_ID_REGEX),
-    name: expect.any(String),
+    name: 'Bondi',
+    ronin: {
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      locked: false,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
   });
 });

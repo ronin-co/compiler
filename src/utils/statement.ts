@@ -45,11 +45,33 @@ export const filterSelectedFields = (
 ): Array<ModelField> => {
   if (!instruction) return model.fields;
 
-  return instruction.map((slug) => {
-    return getFieldFromModel(model, slug, {
+  const selectedFields: Array<ModelField> = [];
+
+  for (const selectedSlug of instruction) {
+    // Add all fields.
+    if (selectedSlug === '*') {
+      selectedFields.push(...model.fields);
+      continue;
+    }
+
+    // Remove particular fields.
+    if (selectedSlug.startsWith('!')) {
+      const fieldSlug = selectedSlug.slice(1);
+      const existingMatch = selectedFields.findIndex((field) => field.slug === fieldSlug);
+
+      selectedFields.splice(existingMatch, 1);
+      continue;
+    }
+
+    // Add a particular field.
+    const field = getFieldFromModel(model, selectedSlug, {
       instructionName: 'selecting',
     }).field;
-  });
+
+    selectedFields.push(field);
+  }
+
+  return selectedFields;
 };
 
 /**
