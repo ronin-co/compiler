@@ -1,4 +1,14 @@
+import {
+  WITH_CONDITIONS,
+  type WithCondition,
+  type WithFilters,
+  type WithValue,
+  type WithValueOptions,
+} from '@/src/instructions/with';
+import { getFieldFromModel, getModelBySlug } from '@/src/model';
+import type { Model, ModelField } from '@/src/types/model';
 import type {
+  CombinedInstructions,
   FieldSelector,
   GetInstructions,
   Instructions,
@@ -14,16 +24,6 @@ import {
   getQuerySymbol,
   isObject,
 } from '@/src/utils/helpers';
-
-import {
-  WITH_CONDITIONS,
-  type WithCondition,
-  type WithFilters,
-  type WithValue,
-  type WithValueOptions,
-} from '@/src/instructions/with';
-import { getFieldFromModel, getModelBySlug } from '@/src/model';
-import type { Model } from '@/src/types/model';
 import { compileQueryInput } from '@/src/utils/index';
 
 /**
@@ -37,6 +37,19 @@ import { compileQueryInput } from '@/src/utils/index';
 const replaceJSON = (key: string, value: string): unknown => {
   if (key === QUERY_SYMBOLS.EXPRESSION) return value.replaceAll(`'`, `''`);
   return value;
+};
+
+export const filterSelectedFields = (
+  model: Model,
+  instruction: CombinedInstructions['selecting'],
+): Array<ModelField> => {
+  if (!instruction) return model.fields;
+
+  return instruction.map((slug) => {
+    return getFieldFromModel(model, slug, {
+      instructionName: 'selecting',
+    }).field;
+  });
 };
 
 /**
