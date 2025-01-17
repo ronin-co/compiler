@@ -224,7 +224,7 @@ export const isObject = (value: unknown): boolean =>
  *
  * @returns The type and value of the symbol, if the provided value contains one.
  */
-export const getSymbol = (
+export const getQuerySymbol = (
   value: unknown,
 ):
   | {
@@ -326,7 +326,7 @@ export const flatten = (
     const path = prefix ? `${prefix}.${key}` : key;
     const value = obj[key];
 
-    if (typeof value === 'object' && value !== null && !getSymbol(value)) {
+    if (typeof value === 'object' && value !== null && !getQuerySymbol(value)) {
       flatten(value as NestedObject, path, res);
     } else {
       res[path] = value;

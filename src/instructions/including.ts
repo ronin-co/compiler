@@ -2,7 +2,11 @@ import type { WithFilters } from '@/src/instructions/with';
 import { getModelBySlug } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import { composeIncludedTableAlias, getSymbol, splitQuery } from '@/src/utils/helpers';
+import {
+  composeIncludedTableAlias,
+  getQuerySymbol,
+  splitQuery,
+} from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { composeConditions } from '@/src/utils/statement';
 
@@ -35,7 +39,7 @@ export const handleIncluding = (
   for (const ephemeralFieldSlug in instruction) {
     if (!Object.hasOwn(instruction, ephemeralFieldSlug)) continue;
 
-    const symbol = getSymbol(instruction[ephemeralFieldSlug]);
+    const symbol = getQuerySymbol(instruction[ephemeralFieldSlug]);
 
     // The `including` instruction might contain values that are not queries, which are
     // taken care of by the `handleSelecting` function. Specifically, those values are

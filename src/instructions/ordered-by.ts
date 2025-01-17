@@ -1,7 +1,7 @@
 import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
-import { getSymbol } from '@/src/utils/helpers';
+import { getQuerySymbol } from '@/src/utils/helpers';
 import { parseFieldExpression } from '@/src/utils/statement';
 
 /**
@@ -29,7 +29,7 @@ export const handleOrderedBy = (
       statement += ', ';
     }
 
-    const symbol = getSymbol(item.value);
+    const symbol = getQuerySymbol(item.value);
     const instructionName =
       item.order === 'ASC' ? 'orderedBy.ascending' : 'orderedBy.descending';
 

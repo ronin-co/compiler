@@ -7,7 +7,7 @@ import {
   type RawFieldType,
   composeIncludedTableAlias,
   flatten,
-  getSymbol,
+  getQuerySymbol,
   splitQuery,
 } from '@/src/utils/helpers';
 import { parseFieldExpression, prepareStatementValue } from '@/src/utils/statement';
@@ -76,7 +76,7 @@ export const handleSelecting = (
   // If additional fields (that are not part of the model) were provided in the
   // `including` instruction, add ephemeral (non-stored) columns for those fields.
   if (instructions.including) {
-    const symbol = getSymbol(instructions.including);
+    const symbol = getQuerySymbol(instructions.including);
 
     if (symbol?.type === 'query') {
       instructions.including.ronin_root = { ...instructions.including };
@@ -93,7 +93,7 @@ export const handleSelecting = (
     // the case of sub queries resulting in multiple records, it's the only way to
     // include multiple rows of another table.
     for (const [key, value] of Object.entries(flatObject)) {
-      const symbol = getSymbol(value);
+      const symbol = getQuerySymbol(value);
 
       // A JOIN is being performed.
       if (symbol?.type === 'query') {
