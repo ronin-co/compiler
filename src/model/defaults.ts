@@ -249,6 +249,8 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
                           },
                         },
                       },
+
+                      selecting: ['**', '!source', '!target'],
                     },
                   },
                 },
