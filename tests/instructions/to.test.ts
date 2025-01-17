@@ -915,7 +915,7 @@ test('add multiple records with nested sub query and specific fields', async () 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("handle", "id") SELECT "handle", "id" FROM "accounts" RETURNING *',
+        'INSERT INTO "users" ("handle") SELECT "handle" FROM "accounts" RETURNING *',
       params: [],
       returning: true,
     },
@@ -973,7 +973,7 @@ test('add multiple records with nested sub query and specific meta fields', asyn
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("ronin.updatedAt", "id") SELECT "ronin.updatedAt", "id" FROM "accounts" RETURNING *',
+        'INSERT INTO "users" ("ronin.updatedAt") SELECT "ronin.updatedAt" FROM "accounts" RETURNING *',
       params: [],
       returning: true,
     },
