@@ -167,6 +167,88 @@ test('get single record with specific fields (root level, except)', async () => 
   });
 });
 
+test('get single record with specific fields (root level, any prefix)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          selecting: ['*ame'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'SELECT "name" FROM "beaches" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    name: expect.any(String),
+  });
+});
+
+test('get single record with specific fields (root level, any suffix)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          selecting: ['na*'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'SELECT "name" FROM "beaches" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    name: expect.any(String),
+  });
+});
+
 test('get single record with specific fields (all levels)', async () => {
   const queries: Array<Query> = [
     {
