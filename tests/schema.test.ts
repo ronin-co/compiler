@@ -369,6 +369,51 @@ test('alter existing model (slug)', () => {
   ]);
 });
 
+// Ensure that, if the `slug` of a model that is targeted by other models via a link
+// changes during an update, the links in those models are updated as well.
+test('alter existing model (slug) that is targeted by other models', () => {
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'article',
+        to: {
+          slug: 'post',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'article',
+    },
+    {
+      slug: 'user',
+      fields: [
+        {
+          slug: 'likes',
+          type: 'link',
+          target: 'article',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'ALTER TABLE "articles" RENAME TO "posts"',
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
+      params: ['post', 'posts', 'Post', 'Posts', 'pos', 'posts', 'article'],
+      returning: true,
+    },
+  ]);
+});
+
 // Ensure that, if the `slug` of a model that has system models associated with it
 // changes during an update, `ALTER TABLE` statements are generated for the system models.
 // Specifically for models that are the origin of a many-cardinality relationship.
@@ -416,58 +461,6 @@ test('alter existing model (slug) that has system models associated with it (ori
     {
       statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
       params: ['account', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'user'],
-      returning: true,
-    },
-  ]);
-});
-
-// Ensure that, if the `slug` of a model that has system models associatied with it
-// changes during an update, `ALTER TABLE` statements are generated for the system models.
-// Specifically for models that are the target of a many-cardinality relationship.
-test('alter existing model (slug) that has system models associated with it (target)', () => {
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'article',
-        to: {
-          slug: 'post',
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'article',
-    },
-    {
-      slug: 'user',
-      fields: [
-        {
-          slug: 'likes',
-          type: 'link',
-          target: 'article',
-          kind: 'many',
-        },
-      ],
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: 'ALTER TABLE "articles" RENAME TO "posts"',
-      params: [],
-    },
-    {
-      statement:
-        'ALTER TABLE "ronin_link_user_articles" RENAME TO "ronin_link_user_posts"',
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
-      params: ['post', 'posts', 'Post', 'Posts', 'pos', 'posts', 'article'],
       returning: true,
     },
   ]);
