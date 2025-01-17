@@ -79,3 +79,45 @@ test('get single record with specific fields', async () => {
     name: expect.any(String),
   });
 });
+
+test('get single record with all fields except specific ones', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          selecting: ['*', '!id'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'SELECT "id", "name" FROM "beaches" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+  });
+});
