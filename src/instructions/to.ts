@@ -66,17 +66,6 @@ export const handleTo = (
       splitQuery(symbol.value);
     const subQueryModel = getModelBySlug(models, subQueryModelSlug);
 
-    // If specific fields were selected by the sub query, we also need to include the
-    // ID field, since we can't generate fresh IDs for every record that is being added
-    // by the sub query, since the ID would have to be generated in JavaScript (due to
-    // the specific ID format RONIN is using) and we don't know how many records will be
-    // added by the sub query.
-    if (subQueryInstructions?.selecting) {
-      const currentFields = new Set(subQueryInstructions.selecting);
-      currentFields.add('id');
-      subQueryInstructions.selecting = Array.from(currentFields);
-    }
-
     const subQuerySelectedFields = subQueryInstructions?.selecting;
     const subQueryIncludedFields = subQueryInstructions?.including;
 
