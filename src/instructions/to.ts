@@ -13,7 +13,7 @@ import {
   splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
-import { composeConditions } from '@/src/utils/statement';
+import { composeConditions, filterSelectedFields } from '@/src/utils/statement';
 
 /**
  * Generates the SQL syntax for the `to` query instruction, which allows for providing
@@ -71,8 +71,9 @@ export const handleTo = (
 
     // Determine which fields will be returned by the sub query.
     const subQueryFields = [
-      ...(subQuerySelectedFields ||
-        (subQueryModel.fields || []).map((field) => field.slug)),
+      ...filterSelectedFields(subQueryModel, subQuerySelectedFields).map(
+        (field) => field.slug,
+      ),
       ...(subQueryIncludedFields
         ? Object.keys(
             flatten((subQueryIncludedFields || {}) as unknown as Record<string, unknown>),
