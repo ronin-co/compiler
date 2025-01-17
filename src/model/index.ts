@@ -30,7 +30,7 @@ import {
   convertToCamelCase,
   convertToSnakeCase,
   findInObject,
-  getSymbol,
+  getQuerySymbol,
   splitQuery,
 } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
@@ -377,7 +377,7 @@ const getFieldStatement = (
   if (field.required === true) statement += ' NOT NULL';
 
   if (typeof field.defaultValue !== 'undefined') {
-    const symbol = getSymbol(field.defaultValue);
+    const symbol = getQuerySymbol(field.defaultValue);
 
     let value =
       typeof field.defaultValue === 'string'
@@ -397,13 +397,13 @@ const getFieldStatement = (
   }
 
   if (typeof field.check !== 'undefined') {
-    const symbol = getSymbol(field.check);
+    const symbol = getQuerySymbol(field.check);
     statement += ` CHECK (${parseFieldExpression(model, 'to', symbol?.value as string)})`;
   }
 
   if (typeof field.computedAs !== 'undefined') {
     const { kind, value } = field.computedAs;
-    const symbol = getSymbol(value);
+    const symbol = getQuerySymbol(value);
     statement += ` GENERATED ALWAYS AS (${parseFieldExpression(model, 'to', symbol?.value as string)}) ${kind}`;
   }
 

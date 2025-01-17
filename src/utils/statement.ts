@@ -11,7 +11,7 @@ import {
   QUERY_SYMBOLS,
   RONIN_MODEL_FIELD_REGEX,
   RoninError,
-  getSymbol,
+  getQuerySymbol,
   isObject,
 } from '@/src/utils/helpers';
 
@@ -161,7 +161,7 @@ export const composeFieldValues = (
   const collectStatementValue = options.type !== 'fields';
 
   // Determine if the value of the field is a symbol.
-  const symbol = getSymbol(value);
+  const symbol = getQuerySymbol(value);
 
   let conditionMatcher = '=';
   let conditionValue: unknown = value;
@@ -279,7 +279,7 @@ export const composeConditions = (
 
       if (
         (modelField && !(isObject(value) || Array.isArray(value))) ||
-        getSymbol(value) ||
+        getQuerySymbol(value) ||
         consumeJSON
       ) {
         return composeFieldValues(

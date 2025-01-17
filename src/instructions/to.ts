@@ -8,7 +8,7 @@ import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
   flatten,
-  getSymbol,
+  getQuerySymbol,
   isObject,
   splitQuery,
 } from '@/src/utils/helpers';
@@ -56,7 +56,7 @@ export const handleTo = (
   }
 
   // Check whether a query resides at the root of the `to` instruction.
-  const symbol = getSymbol(toInstruction);
+  const symbol = getQuerySymbol(toInstruction);
 
   // If a sub query is provided as the `to` instruction, we don't need to compute a list
   // of fields and/or values for the SQL query, since the fields and values are all

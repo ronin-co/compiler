@@ -390,4 +390,4 @@ const CLEAN_ROOT_MODEL = omit(ROOT_MODEL, ['system']) as PublicModel;
 export { Transaction, CLEAN_ROOT_MODEL as ROOT_MODEL };
 
 // Expose the main error class and query symbols
-export { RoninError, QUERY_SYMBOLS } from '@/src/utils/helpers';
+export { RoninError, QUERY_SYMBOLS, getQuerySymbol } from '@/src/utils/helpers';

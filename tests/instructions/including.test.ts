@@ -412,6 +412,9 @@ test('get multiple records including unrelated records with filter', async () =>
   ]);
 });
 
+// In this test, the results of the joined table will not be mounted at a dedicated
+// field on the parent record. Instead, the fields of the joined records will be merged
+// into the parent record.
 test('get multiple records including unrelated records with filter (hoisted)', async () => {
   const queries: Array<Query> = [
     {
@@ -687,11 +690,8 @@ test('get multiple records including unrelated records with filter (nested)', as
 });
 
 // In this test, the results of the joined table will not be mounted at a dedicated
-// property on the parent record.
-//
-// Instead, the results will be added to the parent record entirely, which is useful in
-// cases where the parent record only acts as an associative record that links two
-// otherwise unrelated records together, like when using a "many"-cardinality link field.
+// field on the parent record. Instead, the fields of the joined records will be merged
+// into the parent record.
 test('get multiple records including unrelated records with filter (nested, hoisted)', async () => {
   const queries: Array<Query> = [
     {
