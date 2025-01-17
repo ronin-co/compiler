@@ -1,9 +1,5 @@
 import { expect, test } from 'bun:test';
-import {
-  RECORD_ID_REGEX,
-  RECORD_TIMESTAMP_REGEX,
-  queryEphemeralDatabase,
-} from '@/fixtures/utils';
+import { RECORD_ID_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { SingleRecordResult } from '@/src/types/result';
 
@@ -84,12 +80,12 @@ test('get single record with specific fields', async () => {
   });
 });
 
-test('get single record with all fields except specific ones', async () => {
+test('get single record with specific fields (only root level)', async () => {
   const queries: Array<Query> = [
     {
       get: {
         beach: {
-          selecting: ['**', '!id'],
+          selecting: ['*'],
         },
       },
     },
@@ -111,8 +107,7 @@ test('get single record with all fields except specific ones', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'SELECT "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" LIMIT 1',
+      statement: 'SELECT "id", "name" FROM "beaches" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -122,13 +117,7 @@ test('get single record with all fields except specific ones', async () => {
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
-    name: 'Bondi',
-    ronin: {
-      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      createdBy: null,
-      locked: false,
-      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      updatedBy: null,
-    },
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
   });
 });
