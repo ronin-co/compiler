@@ -347,3 +347,90 @@ test('get single record with specific fields (all levels, except)', async () => 
     },
   });
 });
+
+test('get single record with specific fields (all levels, any prefix)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          selecting: ['**.createdAt'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: 'SELECT "ronin.createdAt" FROM "beaches" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    ronin: {
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+    },
+  });
+});
+
+test('get single record with specific fields (all levels, any suffix)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          selecting: ['ronin.**'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'SELECT "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "beaches" LIMIT 1',
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    ronin: {
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+    },
+  });
+});
