@@ -89,7 +89,7 @@ test('get single record with all fields except specific ones', async () => {
     {
       get: {
         beach: {
-          selecting: ['*', '!id'],
+          selecting: ['**', '!id'],
         },
       },
     },

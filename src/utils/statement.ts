@@ -40,6 +40,36 @@ const replaceJSON = (key: string, value: string): unknown => {
 };
 
 /**
+ * Determines which of the provided model fields match a given pattern.
+ *
+ * @param fields - The fields of a particular model.
+ * @param pattern - The pattern to match against the fields.
+ *
+ * @returns The fields that match the provided pattern.
+ */
+const matchSelectedFields = (
+  fields: Array<ModelField>,
+  pattern: string,
+): Array<ModelField> => {
+  // Step 1: Escape real dots
+  let regexStr = pattern.replace(/\./g, '\\.');
+
+  // Step 2: Temporarily replace all '**' so we don't conflict with single '*'
+  regexStr = regexStr.replace(/\*\*/g, '<<DOUBLESTAR>>');
+
+  // Step 3: Replace remaining single '*' with a pattern that cannot cross dots
+  regexStr = regexStr.replace(/\*/g, '[^.]*');
+
+  // Step 4: Replace the <<DOUBLESTAR>> placeholders with a pattern that can cross dots
+  regexStr = regexStr.replace(/<<DOUBLESTAR>>/g, '.*');
+
+  // Finally, build the full RegExp: match from start ^ to end $
+  const regex = new RegExp(`^${regexStr}$`);
+
+  return fields.filter((field) => regex.test(field.slug));
+};
+
+/**
  * Determines which fields of a model should be selected by a query, based on the value
  * of a provided `selecting` instruction.
  *
@@ -54,30 +84,22 @@ export const filterSelectedFields = (
 ): Array<ModelField> => {
   if (!instruction) return model.fields;
 
-  const selectedFields: Array<ModelField> = [];
+  let selectedFields: Array<ModelField> = [];
 
-  for (const selectedSlug of instruction) {
-    // Add all fields.
-    if (selectedSlug === '*') {
-      selectedFields.push(...model.fields);
-      continue;
+  for (const pattern of instruction) {
+    const isNegative = pattern.startsWith('!');
+    const cleanPattern = isNegative ? pattern.slice(1) : pattern;
+
+    const matchedFields = matchSelectedFields(
+      isNegative ? selectedFields : model.fields,
+      cleanPattern,
+    );
+
+    if (isNegative) {
+      selectedFields = selectedFields.filter((field) => !matchedFields.includes(field));
+    } else {
+      selectedFields.push(...matchedFields);
     }
-
-    // Remove particular fields.
-    if (selectedSlug.startsWith('!')) {
-      const fieldSlug = selectedSlug.slice(1);
-      const existingMatch = selectedFields.findIndex((field) => field.slug === fieldSlug);
-
-      selectedFields.splice(existingMatch, 1);
-      continue;
-    }
-
-    // Add a particular field.
-    const field = getFieldFromModel(model, selectedSlug, {
-      instructionName: 'selecting',
-    }).field;
-
-    selectedFields.push(field);
   }
 
   return selectedFields;
