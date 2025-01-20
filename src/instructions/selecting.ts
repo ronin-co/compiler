@@ -59,6 +59,11 @@ export const handleSelecting = (
       const newField: InternalModelField = { ...field, mountingPath: field.slug };
 
       if (options.mountingPath) {
+        // Remove all occurrences of `{n}`, which are used to indicate the index of a join
+        // that is being performed on the same nesting level of a record. Meaning if, for
+        // example, multiple different tables are being joined and their outputs must all
+        // be mounted on the same property of a record, `{n}` contains the index of the
+        // join (whether it is the first join, the second one, or so on).
         newField.mountingPath = `${options.mountingPath.replace(/\{\d+\}/g, '')}.${field.slug}`;
       }
 
