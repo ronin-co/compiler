@@ -5,7 +5,7 @@ import {
   QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
-  composeIncludedTableAlias,
+  composeMountingPath,
   flatten,
   getQuerySymbol,
   splitQuery,
@@ -59,7 +59,12 @@ export const handleSelecting = (
       const newField: InternalModelField = { ...field, mountingPath: field.slug };
 
       if (options.mountingPath) {
-        newField.mountingPath = `${options.mountingPath}.${field.slug}`;
+        // Remove all occurrences of `{n}`, which are used to indicate the index of a join
+        // that is being performed on the same nesting level of a record. Meaning if, for
+        // example, multiple different tables are being joined and their outputs must all
+        // be mounted on the same property of a record, `{n}` contains the index of the
+        // join (whether it is the first join, the second one, or so on).
+        newField.mountingPath = `${options.mountingPath.replace(/\{\d+\}/g, '')}.${field.slug}`;
       }
 
       return newField;
@@ -108,7 +113,6 @@ export const handleSelecting = (
         // statement, as that would automatically catch all columns of the joined table.
         if (queryInstructions?.selecting) options.expandColumns = true;
 
-        const tableAlias = composeIncludedTableAlias(key);
         const subSingle = queryModel !== subQueryModel.pluralSlug;
 
         // If multiple records are being joined and the root query only targets a single
@@ -121,10 +125,11 @@ export const handleSelecting = (
         if (!model.tableAlias)
           model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const subMountingPath =
-          key === 'ronin_root'
-            ? options.mountingPath
-            : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
+        const { tableAlias, subMountingPath } = composeMountingPath(
+          subSingle,
+          key,
+          options.mountingPath,
+        );
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(

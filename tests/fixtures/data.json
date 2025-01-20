@@ -162,5 +162,17 @@
       "source": "bea_39h8fhe98hefah8j",
       "target": "acc_39h8fhe98hefah9j"
     }
+  ],
+  "beach_volleyball_teams": [
+    {
+      "id": "vol_39h8fhe98hefah8j",
+      "source": "bea_39h8fhe98hefah8j",
+      "target": "tea_39h8fhe98hefah8j"
+    },
+    {
+      "id": "vol_39h8fhe98hefah9j",
+      "source": "bea_39h8fhe98hefah8j",
+      "target": "tea_39h8fhe98hefah9j"
+    }
   ]
 }

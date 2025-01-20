@@ -1,12 +1,8 @@
 import type { WithFilters } from '@/src/instructions/with';
 import { getModelBySlug } from '@/src/model';
-import type { Model } from '@/src/types/model';
+import type { InternalModelField, Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import {
-  composeIncludedTableAlias,
-  getQuerySymbol,
-  splitQuery,
-} from '@/src/utils/helpers';
+import { composeMountingPath, getQuerySymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { composeConditions } from '@/src/utils/statement';
 
@@ -20,6 +16,7 @@ import { composeConditions } from '@/src/utils/statement';
  * inserted into the query by SQLite.
  * @param single - Whether a single or multiple records are being queried.
  * @param instruction - The `including` instruction provided in the current query.
+ * @param options - Additional options for customizing the behavior of the function.
  *
  * @returns The SQL syntax for the provided `including` instruction.
  */
@@ -29,6 +26,10 @@ export const handleIncluding = (
   statementParams: Array<unknown> | null,
   single: boolean,
   instruction: Instructions['including'],
+  options: {
+    /** The path on which the selected fields should be mounted in the final record. */
+    mountingPath?: InternalModelField['mountingPath'];
+  } = {},
 ): {
   statement: string;
   tableSubQuery?: string;
@@ -57,8 +58,13 @@ export const handleIncluding = (
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
     let relatedTableSelector = `"${relatedModel.table}"`;
 
-    const tableAlias = composeIncludedTableAlias(ephemeralFieldSlug);
     const subSingle = queryModel !== relatedModel.pluralSlug;
+
+    const { tableAlias, subMountingPath } = composeMountingPath(
+      subSingle,
+      ephemeralFieldSlug,
+      options.mountingPath,
+    );
 
     // If no `with` query instruction is provided, we want to perform a CROSS JOIN
     // instead of a LEFT JOIN, because it is guaranteed that the joined rows are the same
@@ -101,7 +107,7 @@ export const handleIncluding = (
       relatedTableSelector = `(${subSelect.main.statement})`;
     }
 
-    statement += `${joinType} JOIN ${relatedTableSelector} as ${tableAlias}`;
+    statement += `${joinType} JOIN ${relatedTableSelector} as "${tableAlias}"`;
 
     // Show the table name for every column in the final SQL statement. By default, it
     // doesn't show, but since we are joining multiple tables together, we need to show
@@ -137,6 +143,7 @@ export const handleIncluding = (
         statementParams,
         subSingle,
         modifiableQueryInstructions.including,
+        { mountingPath: subMountingPath },
       );
 
       statement += ` ${subIncluding.statement}`;

@@ -198,7 +198,20 @@ class Transaction {
         const currentValue = existingRecord[arrayField] as Array<NativeRecord>;
         const newValue = record[arrayField] as Array<NativeRecord>;
 
-        currentValue.push(...newValue);
+        for (const newRecord of newValue) {
+          if ('id' in newRecord) {
+            const existingIndex = currentValue.findIndex((value) => {
+              return value.id === newRecord.id;
+            });
+
+            if (existingIndex > -1) {
+              Object.assign(currentValue[existingIndex], newRecord);
+              continue;
+            }
+          }
+
+          currentValue.push(newRecord);
+        }
       }
     }
 
