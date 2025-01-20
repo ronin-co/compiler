@@ -286,6 +286,83 @@ test('get single record including unrelated record with filter and specific fiel
   });
 });
 
+test('get single record including unrelated records without filter', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        product: {
+          including: {
+            beaches: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  beaches: null,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'product',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as "including_beaches[0]"`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: expect.any(String),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    beaches: new Array(4).fill({
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      name: expect.any(String),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+    }),
+  });
+});
+
 test('get single record including unrelated records with filter', async () => {
   const queries: Array<Query> = [
     {
@@ -1067,83 +1144,6 @@ test('get multiple records including unrelated records with filter (nested, hois
       ],
     },
   ]);
-});
-
-test('get single record including unrelated records without filter', async () => {
-  const queries: Array<Query> = [
-    {
-      get: {
-        product: {
-          including: {
-            beaches: {
-              [QUERY_SYMBOLS.QUERY]: {
-                get: {
-                  beaches: null,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
-          type: 'string',
-        },
-      ],
-    },
-    {
-      slug: 'product',
-      fields: [
-        {
-          slug: 'name',
-          type: 'string',
-        },
-      ],
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `SELECT * FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as "including_beaches[0]"`,
-      params: [],
-      returning: true,
-    },
-  ]);
-
-  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
-
-  expect(result.record).toEqual({
-    id: expect.stringMatching(RECORD_ID_REGEX),
-    name: expect.any(String),
-    ronin: {
-      locked: false,
-      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      createdBy: null,
-      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-      updatedBy: null,
-    },
-    beaches: new Array(4).fill({
-      id: expect.stringMatching(RECORD_ID_REGEX),
-      name: expect.any(String),
-      ronin: {
-        locked: false,
-        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        createdBy: null,
-        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-        updatedBy: null,
-      },
-    }),
-  });
 });
 
 test('get single record including unrelated ordered record', async () => {
