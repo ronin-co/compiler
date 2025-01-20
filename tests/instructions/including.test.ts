@@ -41,7 +41,7 @@ test('get single record including unrelated record without filter', async () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "products" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as including_team LIMIT 1`,
+      statement: `SELECT * FROM "products" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as "including_team" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -116,7 +116,7 @@ test('get single record including unrelated record with filter', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -198,7 +198,7 @@ test('get single record including unrelated record with filter and specific fiel
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "account.firstName" FROM "members" LEFT JOIN "accounts" as including_account ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "account.firstName" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -266,7 +266,7 @@ test('get single record including unrelated records with filter', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as including_members ON ("including_members"."account" = "sub_accounts"."id")`,
+      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id")`,
       params: [],
       returning: true,
     },
@@ -355,7 +355,7 @@ test('get multiple records including unrelated records with filter', async () =>
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id")`,
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id")`,
       params: [],
       returning: true,
     },
@@ -467,7 +467,7 @@ test('get multiple records including unrelated records with filter (hoisted)', a
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_ronin_root ON ("including_ronin_root"."account" = "accounts"."id")`,
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_ronin_root" ON ("including_ronin_root"."account" = "accounts"."id")`,
       params: [],
       returning: true,
     },
@@ -577,7 +577,7 @@ test('get multiple records including unrelated records with filter (nested)', as
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id") LEFT JOIN "teams" as including_team ON ("including_team"."id" = "including_members"."team")`,
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0].team" ON ("including_members[0].team"."id" = "including_members[0]"."team")`,
       params: [],
       returning: true,
     },
@@ -773,7 +773,7 @@ test('get multiple records including unrelated records with filter (nested, hois
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as including_members ON ("including_members"."account" = "accounts"."id") LEFT JOIN "teams" as including_ronin_root ON ("including_ronin_root"."id" = "including_members"."team")`,
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0]" ON ("including_members[0]"."id" = "including_members[0]"."team")`,
       params: [],
       returning: true,
     },
@@ -908,7 +908,7 @@ test('get single record including unrelated records without filter', async () =>
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as including_beaches`,
+      statement: `SELECT * FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as "including_beaches[0]"`,
       params: [],
       returning: true,
     },
@@ -989,7 +989,7 @@ test('get single record including unrelated ordered record', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "products" CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC LIMIT 1) as including_beach LIMIT 1`,
+      statement: `SELECT * FROM "products" CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC LIMIT 1) as "including_beach" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -1070,7 +1070,7 @@ test('get single record including unrelated ordered records', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC) as including_beaches`,
+      statement: `SELECT * FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN (SELECT * FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC) as "including_beaches[0]"`,
       params: [],
       returning: true,
     },
