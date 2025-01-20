@@ -189,7 +189,7 @@ test('get single record including unrelated record that is not found', async () 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM \"members\" LEFT JOIN \"accounts\" as \"including_account\" ON (\"including_account\".\"id\" = ?1) LIMIT 1`,
+      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = ?1) LIMIT 1`,
       params: ['1234'],
       returning: true,
     },
@@ -417,7 +417,7 @@ test('get single record including unrelated records that are not found', async (
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM \"accounts\" LIMIT 1) as sub_accounts LEFT JOIN \"members\" as \"including_members[0]\" ON (\"including_members[0]\".\"account\" = ?1)`,
+      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = ?1)`,
       params: ['1234'],
       returning: true,
     },
@@ -536,6 +536,83 @@ test('get multiple records including unrelated records with filter', async () =>
           },
         },
       ],
+    },
+  ]);
+});
+
+test('get multiple records including unrelated records that are not found', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          including: {
+            members: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  members: {
+                    with: {
+                      account: '1234',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = ?1)`,
+      params: ['1234'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [],
+    },
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      members: [],
     },
   ]);
 });
