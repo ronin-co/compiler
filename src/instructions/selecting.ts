@@ -108,7 +108,6 @@ export const handleSelecting = (
         // statement, as that would automatically catch all columns of the joined table.
         if (queryInstructions?.selecting) options.expandColumns = true;
 
-        const tableAlias = composeIncludedTableAlias(key);
         const subSingle = queryModel !== subQueryModel.pluralSlug;
 
         // If multiple records are being joined and the root query only targets a single
@@ -125,6 +124,8 @@ export const handleSelecting = (
           key === 'ronin_root'
             ? options.mountingPath
             : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
+
+        const tableAlias = composeIncludedTableAlias(subMountingPath || key);
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(
