@@ -6,6 +6,7 @@ import {
   RAW_FIELD_TYPES,
   type RawFieldType,
   composeIncludedTableAlias,
+  composeMountingPath,
   flatten,
   getQuerySymbol,
   splitQuery,
@@ -59,7 +60,7 @@ export const handleSelecting = (
       const newField: InternalModelField = { ...field, mountingPath: field.slug };
 
       if (options.mountingPath) {
-        newField.mountingPath = `${options.mountingPath}.${field.slug}`;
+        newField.mountingPath = `${options.mountingPath.replace(/\{\d+\}/g, '')}.${field.slug}`;
       }
 
       return newField;
@@ -123,6 +124,8 @@ export const handleSelecting = (
         const subMountingPath =
           key === 'ronin_root'
             ? options.mountingPath
+              ? composeMountingPath(options.mountingPath)
+              : undefined
             : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
 
         const tableAlias = composeIncludedTableAlias(subMountingPath || key);

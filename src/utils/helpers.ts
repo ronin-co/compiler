@@ -66,6 +66,12 @@ export const composeIncludedTableAlias = (fieldSlug: string): string => {
   return `including_${fieldSlug}`;
 };
 
+const MOUNTING_PATH_SUFFIX = /(.*?)(\{(\d+)\})?$/;
+
+export const composeMountingPath = (input: string): string => {
+  return input.replace(MOUNTING_PATH_SUFFIX, (_, p, __, n) => `${p}{${n ? +n + 1 : 1}}`);
+};
+
 type RoninErrorCode =
   | 'MODEL_NOT_FOUND'
   | 'FIELD_NOT_FOUND'

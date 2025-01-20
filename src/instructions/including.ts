@@ -4,6 +4,7 @@ import type { InternalModelField, Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import {
   composeIncludedTableAlias,
+  composeMountingPath,
   getQuerySymbol,
   splitQuery,
 } from '@/src/utils/helpers';
@@ -67,6 +68,8 @@ export const handleIncluding = (
     const subMountingPath =
       ephemeralFieldSlug === 'ronin_root'
         ? options.mountingPath
+          ? composeMountingPath(options.mountingPath)
+          : undefined
         : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? ephemeralFieldSlug : `${ephemeralFieldSlug}[0]`}`;
 
     const tableAlias = composeIncludedTableAlias(subMountingPath || ephemeralFieldSlug);

@@ -773,7 +773,7 @@ test('get multiple records including unrelated records with filter (nested, hois
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0]" ON ("including_members[0]"."id" = "including_members[0]"."team")`,
+      statement: `SELECT * FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0]{1}" ON ("including_members[0]{1}"."id" = "including_members[0]"."team")`,
       params: [],
       returning: true,
     },
