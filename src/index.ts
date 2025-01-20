@@ -168,27 +168,51 @@ class Transaction {
             : [];
         }
 
-        function removeLastPart(input: string): string | null {
+        let parentIsArray = false;
+
+        const removeLastPart = (input: string): string | null => {
           const lastDotIndex = input.lastIndexOf('.');
           if (lastDotIndex === -1) return null;
 
           const parent = input.slice(0, lastDotIndex);
-          return parent.endsWith('[0]') ? parent.slice(0, -3) : parent;
-        }
+
+          if (parent.endsWith('[0]')) {
+            parentIsArray = true;
+            return parent.slice(0, -3);
+          }
+
+          return parent;
+        };
 
         const parentField = removeLastPart(newSlug);
 
         if (parentField) {
+          // If the field is nested into another field and the current field is the ID of
+          // a nested record, we need to set the parent field to `null` if the ID is
+          // empty, because IDs are always defined, so if the ID is empty, that means the
+          // nested record doesn't exist.
+          //
+          // Similarily, if the parent field is an array, the value we are saving should
+          // be an empty array instead of `null`.
           if (field.slug === 'id' && newValue === null) {
             newSlug = parentField;
+            newValue = parentIsArray ? [] : null;
           }
 
-          const parentFields = parentField
+          const parentFields = newSlug
             .split('.')
             .map((_, index, array) => array.slice(0, index + 1).join('.'))
             .reverse();
 
-          if (parentFields.some((item) => getProperty(acc, item) === null)) {
+          if (
+            parentFields.some((item) => {
+              const isArray = item.endsWith('[0]');
+              const value = getProperty(acc, item.replaceAll('[0]', ''));
+              return isArray
+                ? Array.isArray(value) && value.length === 0
+                : value === null;
+            })
+          ) {
             return acc;
           }
         }
