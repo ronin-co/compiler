@@ -168,23 +168,21 @@ class Transaction {
             : [];
         }
 
-        let parentIsArray = false;
+        const { parentField, parentIsArray } = ((): {
+          parentField: string | null;
+          parentIsArray?: true;
+        } => {
+          const lastDotIndex = newSlug.lastIndexOf('.');
+          if (lastDotIndex === -1) return { parentField: null };
 
-        const removeLastPart = (input: string): string | null => {
-          const lastDotIndex = input.lastIndexOf('.');
-          if (lastDotIndex === -1) return null;
-
-          const parent = input.slice(0, lastDotIndex);
+          const parent = newSlug.slice(0, lastDotIndex);
 
           if (parent.endsWith('[0]')) {
-            parentIsArray = true;
-            return parent.slice(0, -3);
+            return { parentField: parent.slice(0, -3), parentIsArray: true };
           }
 
-          return parent;
-        };
-
-        const parentField = removeLastPart(newSlug);
+          return { parentField: parent };
+        })();
 
         if (parentField) {
           // If the field is nested into another field and the current field is the ID of
@@ -204,6 +202,9 @@ class Transaction {
             .map((_, index, array) => array.slice(0, index + 1).join('.'))
             .reverse();
 
+          // If one of the parent fields of the current field is set to `null` or an
+          // empty array, that means the nested record doesn't exist, so we can skip
+          // setting the current field, since its value is `null` anyways.
           if (
             parentFields.some((item) => {
               const isArray = item.endsWith('[0]');
