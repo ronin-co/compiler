@@ -23,7 +23,7 @@ import type {
   Result,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
+import { getProperty, omit, setProperty, splitQuery } from '@/src/utils/helpers';
 import { generatePaginationCursor } from '@/src/utils/pagination';
 
 interface TransactionOptions {
@@ -143,7 +143,7 @@ class Transaction {
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
-        const newSlug = field.mountingPath;
+        let newSlug = field.mountingPath;
         let newValue = row[fieldIndex];
 
         if (field.type === 'json') {
@@ -166,6 +166,31 @@ class Transaction {
                 return { slug, ...attributes };
               })
             : [];
+        }
+
+        function removeLastPart(input: string): string | null {
+          const lastDotIndex = input.lastIndexOf('.');
+          if (lastDotIndex === -1) return null;
+
+          const parent = input.slice(0, lastDotIndex);
+          return parent.endsWith('[0]') ? parent.slice(0, -3) : parent;
+        }
+
+        const parentField = removeLastPart(newSlug);
+
+        if (parentField) {
+          if (field.slug === 'id' && newValue === null) {
+            newSlug = parentField;
+          }
+
+          const parentFields = parentField
+            .split('.')
+            .map((_, index, array) => array.slice(0, index + 1).join('.'))
+            .reverse();
+
+          if (parentFields.some((item) => getProperty(acc, item) === null)) {
+            return acc;
+          }
         }
 
         setProperty(acc, newSlug, newValue);
