@@ -147,6 +147,70 @@ test('get single record including unrelated record with filter', async () => {
   });
 });
 
+test('get single record including unrelated record that is not found', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          including: {
+            account: {
+              [QUERY_SYMBOLS.QUERY]: {
+                get: {
+                  account: {
+                    with: {
+                      id: '1234'
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM \"members\" LEFT JOIN \"accounts\" as \"including_account\" ON (\"including_account\".\"id\" = ?1) LIMIT 1`,
+      params: ['1234'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: null
+  });
+});
+
 test('get single record including unrelated record with filter and specific fields', async () => {
   const queries: Array<Query> = [
     {
