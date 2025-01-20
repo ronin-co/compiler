@@ -5,7 +5,6 @@ import {
   QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
   type RawFieldType,
-  composeIncludedTableAlias,
   composeMountingPath,
   flatten,
   getQuerySymbol,
@@ -121,14 +120,11 @@ export const handleSelecting = (
         if (!model.tableAlias)
           model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const subMountingPath =
-          key === 'ronin_root'
-            ? options.mountingPath
-              ? composeMountingPath(options.mountingPath)
-              : undefined
-            : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? key : `${key}[0]`}`;
-
-        const tableAlias = composeIncludedTableAlias(subMountingPath || key);
+        const { tableAlias, subMountingPath } = composeMountingPath(
+          subSingle,
+          key,
+          options.mountingPath,
+        );
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(

@@ -54,22 +54,35 @@ export const CURRENT_TIME_EXPRESSION = {
   [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
 };
 
-/**
- * Composes an alias for a table that should be joined into the root table.
- *
- * @param fieldSlug - The field on the root record(s) onto which the joined records
- * should eventually be mounted.
- *
- * @returns An alias for the joined table.
- */
-export const composeIncludedTableAlias = (fieldSlug: string): string => {
-  return `including_${fieldSlug}`;
-};
-
 const MOUNTING_PATH_SUFFIX = /(.*?)(\{(\d+)\})?$/;
 
-export const composeMountingPath = (input: string): string => {
-  return input.replace(MOUNTING_PATH_SUFFIX, (_, p, __, n) => `${p}{${n ? +n + 1 : 1}}`);
+/**
+ * Determines the mounting path and table alias for a sub query.
+ *
+ * @param single - Whether a single or multiple records are being queried.
+ * @param key - The key defined for `including` under which the sub query is mounted.
+ * @param mountingPath - The path of a parent field under which the sub query is mounted.
+ *
+ * @returns A mounting path and a table alias.
+ */
+export const composeMountingPath = (
+  single: boolean,
+  key: string,
+  mountingPath?: string,
+): { subMountingPath?: string; tableAlias: string } => {
+  const subMountingPath =
+    key === 'ronin_root'
+      ? mountingPath
+        ? mountingPath.replace(
+            MOUNTING_PATH_SUFFIX,
+            (_, p, __, n) => `${p}{${n ? +n + 1 : 1}}`,
+          )
+        : undefined
+      : `${mountingPath ? `${mountingPath}.` : ''}${single ? key : `${key}[0]`}`;
+
+  const tableAlias = `including_${subMountingPath || key}`;
+
+  return { subMountingPath, tableAlias };
 };
 
 type RoninErrorCode =

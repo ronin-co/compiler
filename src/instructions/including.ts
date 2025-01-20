@@ -2,12 +2,7 @@ import type { WithFilters } from '@/src/instructions/with';
 import { getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
-import {
-  composeIncludedTableAlias,
-  composeMountingPath,
-  getQuerySymbol,
-  splitQuery,
-} from '@/src/utils/helpers';
+import { composeMountingPath, getQuerySymbol, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { composeConditions } from '@/src/utils/statement';
 
@@ -65,14 +60,11 @@ export const handleIncluding = (
 
     const subSingle = queryModel !== relatedModel.pluralSlug;
 
-    const subMountingPath =
-      ephemeralFieldSlug === 'ronin_root'
-        ? options.mountingPath
-          ? composeMountingPath(options.mountingPath)
-          : undefined
-        : `${options?.mountingPath ? `${options?.mountingPath}.` : ''}${subSingle ? ephemeralFieldSlug : `${ephemeralFieldSlug}[0]`}`;
-
-    const tableAlias = composeIncludedTableAlias(subMountingPath || ephemeralFieldSlug);
+    const { tableAlias, subMountingPath } = composeMountingPath(
+      subSingle,
+      ephemeralFieldSlug,
+      options.mountingPath,
+    );
 
     // If no `with` query instruction is provided, we want to perform a CROSS JOIN
     // instead of a LEFT JOIN, because it is guaranteed that the joined rows are the same
