@@ -23,7 +23,7 @@ import type {
   Result,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { omit, setProperty, splitQuery } from '@/src/utils/helpers';
+import { getProperty, omit, setProperty, splitQuery } from '@/src/utils/helpers';
 import { generatePaginationCursor } from '@/src/utils/pagination';
 
 interface TransactionOptions {
@@ -143,7 +143,7 @@ class Transaction {
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
-        const newSlug = field.mountingPath;
+        let newSlug = field.mountingPath;
         let newValue = row[fieldIndex];
 
         if (field.type === 'json') {
@@ -166,6 +166,56 @@ class Transaction {
                 return { slug, ...attributes };
               })
             : [];
+        }
+
+        const { parentField, parentIsArray } = ((): {
+          parentField: string | null;
+          parentIsArray?: true;
+        } => {
+          const lastDotIndex = newSlug.lastIndexOf('.');
+          if (lastDotIndex === -1) return { parentField: null };
+
+          const parent = newSlug.slice(0, lastDotIndex);
+
+          if (parent.endsWith('[0]')) {
+            return { parentField: parent.slice(0, -3), parentIsArray: true };
+          }
+
+          return { parentField: parent };
+        })();
+
+        if (parentField) {
+          // If the field is nested into another field and the current field is the ID of
+          // a nested record, we need to set the parent field to `null` if the ID is
+          // empty, because IDs are always defined, so if the ID is empty, that means the
+          // nested record doesn't exist.
+          //
+          // Similarily, if the parent field is an array, the value we are saving should
+          // be an empty array instead of `null`.
+          if (field.slug === 'id' && newValue === null) {
+            newSlug = parentField;
+            newValue = parentIsArray ? [] : null;
+          }
+
+          const parentFields = newSlug
+            .split('.')
+            .map((_, index, array) => array.slice(0, index + 1).join('.'))
+            .reverse();
+
+          // If one of the parent fields of the current field is set to `null` or an
+          // empty array, that means the nested record doesn't exist, so we can skip
+          // setting the current field, since its value is `null` anyways.
+          if (
+            parentFields.some((item) => {
+              const isArray = item.endsWith('[0]');
+              const value = getProperty(acc, item.replaceAll('[0]', ''));
+              return isArray
+                ? Array.isArray(value) && value.length === 0
+                : value === null;
+            })
+          ) {
+            return acc;
+          }
         }
 
         setProperty(acc, newSlug, newValue);
