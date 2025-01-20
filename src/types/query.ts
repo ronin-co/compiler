@@ -116,12 +116,12 @@ export type Instructions =
   | RemoveInstructions
   | CountInstructions;
 
-type CreateQuery = {
+export type CreateQuery = {
   model: string | PublicModel;
   to?: PublicModel;
 };
 
-type AlterQuery = {
+export type AlterQuery = {
   model: string;
   to?: Partial<PublicModel>;
   create?: {
@@ -150,7 +150,7 @@ type AlterQuery = {
   drop?: Partial<Record<ModelEntityEnum, string>>;
 };
 
-type DropQuery = {
+export type DropQuery = {
   model: string;
 };
 
