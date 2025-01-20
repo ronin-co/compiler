@@ -558,6 +558,101 @@ test('get single record including child records (one-to-many, defined manually)'
   });
 });
 
+test('get single record including child records (one-to-many, defined manually, multiple fields)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          for: ['visitors', 'volleyballTeams'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        { slug: 'handle', type: 'string' },
+        {
+          slug: 'firstName',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'team',
+      fields: [{ slug: 'locations', type: 'json' }],
+    },
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'visitors',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+        {
+          slug: 'volleyballTeams',
+          type: 'link',
+          target: 'team',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_volleyballTeams"."id" as "volleyballTeams[0].id", "including_volleyballTeams"."ronin.locked" as "volleyballTeams[0].ronin.locked", "including_volleyballTeams"."ronin.createdAt" as "volleyballTeams[0].ronin.createdAt", "including_volleyballTeams"."ronin.createdBy" as "volleyballTeams[0].ronin.createdBy", "including_volleyballTeams"."ronin.updatedAt" as "volleyballTeams[0].ronin.updatedAt", "including_volleyballTeams"."ronin.updatedBy" as "volleyballTeams[0].ronin.updatedBy", "including_ronin_root"."id" as "volleyballTeams[0].id", "including_ronin_root"."ronin.locked" as "volleyballTeams[0].ronin.locked", "including_ronin_root"."ronin.createdAt" as "volleyballTeams[0].ronin.createdAt", "including_ronin_root"."ronin.createdBy" as "volleyballTeams[0].ronin.createdBy", "including_ronin_root"."ronin.updatedAt" as "volleyballTeams[0].ronin.updatedAt", "including_ronin_root"."ronin.updatedBy" as "volleyballTeams[0].ronin.updatedBy", "including_ronin_root"."locations" as "volleyballTeams[0].locations", "including_visitors"."id" as "visitors[0].id", "including_visitors"."ronin.locked" as "visitors[0].ronin.locked", "including_visitors"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_ronin_root"."id" as "visitors[0].id", "including_ronin_root"."ronin.locked" as "visitors[0].ronin.locked", "including_ronin_root"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_ronin_root"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_ronin_root"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_ronin_root"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_ronin_root"."handle" as "visitors[0].handle", "including_ronin_root"."firstName" as "visitors[0].firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_volleyball_teams" as including_volleyballTeams ON ("including_volleyballTeams"."source" = "sub_beaches"."id") LEFT JOIN "teams" as including_ronin_root ON ("including_ronin_root"."id" = "including_volleyballTeams"."target")LEFT JOIN "ronin_link_beach_visitors" as including_visitors ON ("including_visitors"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as including_ronin_root ON ("including_ronin_root"."id" = "including_visitors"."target")`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    visitors: new Array(2).fill({
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      handle: expect.any(String),
+      firstName: expect.any(String),
+    }),
+    volleyballTeams: new Array(2).fill({
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      locations: {
+        europe: expect.any(String),
+      },
+    }),
+  });
+});
+
 test('get single record including child records (one-to-many, defined automatically)', async () => {
   const queries: Array<Query> = [
     {
