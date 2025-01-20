@@ -158,7 +158,7 @@ test('get single record including unrelated record that is not found', async () 
                 get: {
                   account: {
                     with: {
-                      id: '1234'
+                      id: '1234',
                     },
                   },
                 },
@@ -207,7 +207,7 @@ test('get single record including unrelated record that is not found', async () 
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       updatedBy: null,
     },
-    account: null
+    account: null,
   });
 });
 
