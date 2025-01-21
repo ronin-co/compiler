@@ -132,13 +132,13 @@ export const handleTo = (
       const composeStatement = (
         subQueryType: 'add' | 'remove',
         value?: unknown,
-      ): Statement => {
+      ): void => {
         const source = queryType === 'add' ? toInstruction : withInstruction;
         const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
 
-        return compileQueryInput(
+        const query = compileQueryInput(
           {
             [subQueryType]: {
               [associativeModelSlug]:
@@ -149,13 +149,21 @@ export const handleTo = (
           [],
           { returning: false },
         ).main;
+
+        const details: Statement = { ...query };
+
+        if (subQueryType === 'add') {
+          details.after = true;
+        }
+
+        dependencyStatements.push(details);
       };
 
       if (Array.isArray(fieldValue)) {
-        dependencyStatements.push(composeStatement('remove'));
+        composeStatement('remove');
 
         for (const record of fieldValue) {
-          dependencyStatements.push(composeStatement('add', record));
+          composeStatement('add', record);
         }
       } else if (isObject(fieldValue)) {
         const value = fieldValue as {
@@ -164,11 +172,11 @@ export const handleTo = (
         };
 
         for (const recordToAdd of value.containing || []) {
-          dependencyStatements.push(composeStatement('add', recordToAdd));
+          composeStatement('add', recordToAdd);
         }
 
         for (const recordToRemove of value.notContaining || []) {
-          dependencyStatements.push(composeStatement('remove', recordToRemove));
+          composeStatement('remove', recordToRemove);
         }
       }
     }

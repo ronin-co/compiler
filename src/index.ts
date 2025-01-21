@@ -84,7 +84,7 @@ class Transaction {
     const statements: Array<Statement> = [];
 
     for (const query of queries) {
-      const result = compileQueryInput(
+      const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
         options?.inlineParams ? null : [],
@@ -100,7 +100,11 @@ class Transaction {
       // other hand, are expected to produce output, and that output should be a 1:1 match
       // between RONIN queries and SQL statements, meaning one RONIN query should produce
       // one main SQL statement.
-      const subStatements = [...result.dependencies, result.main];
+      const preDependencies = dependencies.filter(({ after }) => !after);
+      const postDependencies = dependencies
+        .map(({ after, ...rest }) => (after ? rest : null))
+        .filter((item) => item != null);
+      const subStatements = [...preDependencies, main, ...postDependencies];
 
       // These statements will be made publicly available (outside the compiler).
       this.statements.push(...subStatements);
@@ -110,7 +114,7 @@ class Transaction {
         ...subStatements.map((statement) => ({
           ...statement,
           query,
-          selectedFields: result.selectedFields,
+          selectedFields,
         })),
       );
     }
