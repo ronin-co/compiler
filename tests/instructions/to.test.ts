@@ -288,6 +288,10 @@ test('add single record with many-cardinality link field (add)', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
+  expect(result.record).toMatchObject({
+    handle: 'markus',
+  });
+
   expect(result.record?.followers).toBeUndefined();
   expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
 });
