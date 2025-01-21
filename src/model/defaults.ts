@@ -91,7 +91,7 @@ const modelAttributes: Array<
   ['pluralSlug', 'slug', pluralize],
   ['name', 'slug', slugToName],
   ['pluralName', 'pluralSlug', slugToName],
-  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+  ['idPrefix', 'slug', (slug: string) => (slug.length >= 3 ? slug.slice(0, 3) : 'rec')],
   ['table', 'pluralSlug', convertToSnakeCase],
 ];
 
@@ -180,7 +180,7 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
  *
  * @returns The updated model.
  */
-export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
+export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
   const copiedModel = { ...model };
   const newFields = copiedModel.fields || [];
 

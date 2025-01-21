@@ -207,9 +207,7 @@ export function getFieldFromModel(
 }
 
 /** These fields are required by the system and automatically added to every model. */
-export const getSystemFields = (
-  idPrefix: Model['idPrefix'] = 'rec',
-): Array<ModelField> => [
+export const getSystemFields = (idPrefix: Model['idPrefix']): Array<ModelField> => [
   {
     name: 'ID',
     type: 'string',
@@ -299,10 +297,7 @@ export const ROOT_MODEL: PartialModel = {
  *
  * @returns The list of system models.
  */
-export const getSystemModels = (
-  models: Array<Model>,
-  model: Model,
-): Array<PartialModel> => {
+export const getSystemModels = (models: Array<Model>, model: Model): Array<Model> => {
   const addedModels: Array<PartialModel> = [];
 
   for (const field of model.fields || []) {
