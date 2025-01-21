@@ -269,17 +269,18 @@ test('add single record with many-cardinality link field (add)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1)',
-      params: ['acc_39h8fhe98hefah8j'],
+      statement:
+        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1))',
+      params: ['markus'],
     },
     {
       statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['acc_39h8fhe98hefah8j', 'david'],
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['markus', 'david'],
     },
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
-      params: ['acc_39h8fhe98hefah8j'],
+      statement: `INSERT INTO "accounts" ("handle") VALUES (?1) RETURNING *`,
+      params: ['markus'],
       returning: true,
     },
   ]);

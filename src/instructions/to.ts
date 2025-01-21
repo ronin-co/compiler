@@ -133,7 +133,7 @@ export const handleTo = (
         subQueryType: 'add' | 'remove',
         value?: unknown,
       ): Statement => {
-        const source = queryType === 'add' ? { id: toInstruction.id } : withInstruction;
+        const source = queryType === 'add' ? toInstruction : withInstruction;
         const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
