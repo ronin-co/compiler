@@ -52,13 +52,13 @@ test('set single record to new string field', async () => {
 test('set single record to new blob field', async () => {
   const storedObject: StoredObject = {
     key: 'test-key',
-    name: 'example.jpeg',
+    name: 'example.png',
     src: 'https://storage.ronin.co/test-key',
     meta: {
       height: 100,
       width: 100,
       size: 100,
-      type: 'image/jpeg',
+      type: 'image/png',
     },
     placeholder: {
       base64: '',

@@ -818,6 +818,49 @@ test('get single record with json field', async () => {
   expect(result.record?.locations).toHaveProperty('europe', 'berlin');
 });
 
+test('get single record with blob field', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            avatar: {
+              type: 'image/png',
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'avatar',
+          type: 'blob',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT * FROM "accounts" WHERE (json_extract(avatar, '$.type') = ?1) LIMIT 1`,
+      params: ['image/png'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.avatar).toHaveProperty('type', 'image/png');
+});
+
 test('get single record with one of fields', async () => {
   const queries: Array<Query> = [
     {
