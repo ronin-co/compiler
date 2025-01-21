@@ -216,3 +216,11 @@ export interface InternalStatement extends Statement {
   query: Query;
   selectedFields: Array<InternalModelField>;
 }
+
+export interface InternalDependencyStatement extends Statement {
+  /**
+   * By default, the dependency statement is run before the main statement. By setting
+   * `after` to `true`, the dependency statement is run after the main statement instead.
+   */
+  after?: boolean;
+}

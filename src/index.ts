@@ -84,7 +84,7 @@ class Transaction {
     const statements: Array<Statement> = [];
 
     for (const query of queries) {
-      const result = compileQueryInput(
+      const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
         options?.inlineParams ? null : [],
@@ -92,15 +92,17 @@ class Transaction {
       );
 
       // Every query can only produce one main statement (which can return output), but
-      // multiple dependency statements (which must be executed before the main one, but
-      // cannot return output themselves).
+      // multiple dependency statements (which must be executed either before or after
+      // the main one, but cannot return output themselves).
       //
-      // The order is essential, since the dependency statements are expected to not
-      // produce any output, so they should be executed first. The main statements, on the
-      // other hand, are expected to produce output, and that output should be a 1:1 match
-      // between RONIN queries and SQL statements, meaning one RONIN query should produce
-      // one main SQL statement.
-      const subStatements = [...result.dependencies, result.main];
+      // The main statements, unlike the dependency statements, are expected to produce
+      // output, and that output should be a 1:1 match between RONIN queries and SQL
+      // statements, meaning one RONIN query should produce one main SQL statement.
+      const preDependencies = dependencies.filter(({ after }) => !after);
+      const postDependencies = dependencies
+        .map(({ after, ...rest }) => (after ? rest : null))
+        .filter((item) => item != null);
+      const subStatements = [...preDependencies, main, ...postDependencies];
 
       // These statements will be made publicly available (outside the compiler).
       this.statements.push(...subStatements);
@@ -110,7 +112,7 @@ class Transaction {
         ...subStatements.map((statement) => ({
           ...statement,
           query,
-          selectedFields: result.selectedFields,
+          selectedFields,
         })),
       );
     }

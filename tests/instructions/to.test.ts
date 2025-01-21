@@ -233,13 +233,71 @@ test('set single record to new one-cardinality link field', async () => {
   expect(result.record?.account).toBe(targetRecord.id);
 });
 
+test('add single record with many-cardinality link field (add)', async () => {
+  const queries: Array<Query> = [
+    {
+      add: {
+        account: {
+          to: {
+            handle: 'markus',
+            followers: [{ handle: 'david' }],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'followers',
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `INSERT INTO "accounts" ("handle") VALUES (?1) RETURNING *`,
+      params: ['markus'],
+      returning: true,
+    },
+    {
+      statement:
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['markus', 'david'],
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    handle: 'markus',
+  });
+
+  expect(result.record?.followers).toBeUndefined();
+  expect(result.record?.ronin.updatedAt).toMatch(RECORD_TIMESTAMP_REGEX);
+});
+
 test('set single record to new many-cardinality link field', async () => {
   const queries: Array<Query> = [
     {
       set: {
         account: {
           with: {
-            id: 'acc_39h8fhe98hefah8j',
+            handle: 'elaine',
           },
           to: {
             followers: [{ handle: 'david' }],
@@ -271,18 +329,19 @@ test('set single record to new many-cardinality link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1)',
-      params: ['acc_39h8fhe98hefah8j'],
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
+      params: ['elaine'],
+      returning: true,
     },
     {
       statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['acc_39h8fhe98hefah8j', 'david'],
+        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1))',
+      params: ['elaine'],
     },
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
-      params: ['acc_39h8fhe98hefah8j'],
-      returning: true,
+      statement:
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['elaine', 'david'],
     },
   ]);
 
@@ -299,7 +358,7 @@ test('set single record to new many-cardinality link field (add)', async () => {
       set: {
         account: {
           with: {
-            id: 'acc_39h8fhe98hefah8j',
+            handle: 'elaine',
           },
           to: {
             followers: {
@@ -333,14 +392,14 @@ test('set single record to new many-cardinality link field (add)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES (?1, (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['acc_39h8fhe98hefah8j', 'david'],
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
+      params: ['elaine'],
+      returning: true,
     },
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
-      params: ['acc_39h8fhe98hefah8j'],
-      returning: true,
+      statement:
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['elaine', 'david'],
     },
   ]);
 
@@ -357,7 +416,7 @@ test('set single record to new many-cardinality link field (remove)', async () =
       set: {
         account: {
           with: {
-            id: 'acc_39h8fhe98hefah8j',
+            handle: 'elaine',
           },
           to: {
             followers: {
@@ -391,14 +450,14 @@ test('set single record to new many-cardinality link field (remove)', async () =
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = ?1 AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['acc_39h8fhe98hefah8j', 'david'],
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
+      params: ['elaine'],
+      returning: true,
     },
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?1) RETURNING *`,
-      params: ['acc_39h8fhe98hefah8j'],
-      returning: true,
+      statement:
+        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1) AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['elaine', 'david'],
     },
   ]);
 

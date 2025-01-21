@@ -4,7 +4,11 @@ import {
   getModelBySlug,
 } from '@/src/model';
 import type { Model } from '@/src/types/model';
-import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
+import type {
+  FieldValue,
+  InternalDependencyStatement,
+  SetInstructions,
+} from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
   flatten,
@@ -36,7 +40,7 @@ export const handleTo = (
   model: Model,
   statementParams: Array<unknown> | null,
   queryType: 'add' | 'set',
-  dependencyStatements: Array<Statement>,
+  dependencyStatements: Array<InternalDependencyStatement>,
   instructions: {
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
@@ -132,13 +136,13 @@ export const handleTo = (
       const composeStatement = (
         subQueryType: 'add' | 'remove',
         value?: unknown,
-      ): Statement => {
-        const source = queryType === 'add' ? { id: toInstruction.id } : withInstruction;
+      ): void => {
+        const source = queryType === 'add' ? toInstruction : withInstruction;
         const recordDetails: Record<string, unknown> = { source };
 
         if (value) recordDetails.target = value;
 
-        return compileQueryInput(
+        const query = compileQueryInput(
           {
             [subQueryType]: {
               [associativeModelSlug]:
@@ -149,13 +153,31 @@ export const handleTo = (
           [],
           { returning: false },
         ).main;
+
+        // We are passing `after: true` here to ensure that the dependency statement is
+        // executed after the main statement. This is necessary because, in the case that
+        // the main statement creates a record, the record must of course first be
+        // created before it can be referenced from the associative table.
+        //
+        // We could first check if the main query and dependency query are both of type
+        // `add` and only then add the `after: true` property, but that would mean the
+        // list of generated dependency statements differs depending what kind of action
+        // is being performed, and that seems less clear in the output of the compiler.
+        //
+        // It seems clearer and more predictable to ensure that the dependency statements
+        // required for interacting with associative tables are always executed after the
+        // main statement, regardless of the type of action being performed.
+        dependencyStatements.push({ ...query, after: true });
       };
 
       if (Array.isArray(fieldValue)) {
-        dependencyStatements.push(composeStatement('remove'));
+        // If a record is being updated, clear all existing records of the associative
+        // model before inserting the new ones, to ensure that only the new ones are
+        // present and no old ones remain.
+        if (queryType === 'set') composeStatement('remove');
 
         for (const record of fieldValue) {
-          dependencyStatements.push(composeStatement('add', record));
+          composeStatement('add', record);
         }
       } else if (isObject(fieldValue)) {
         const value = fieldValue as {
@@ -164,11 +186,11 @@ export const handleTo = (
         };
 
         for (const recordToAdd of value.containing || []) {
-          dependencyStatements.push(composeStatement('add', recordToAdd));
+          composeStatement('add', recordToAdd);
         }
 
         for (const recordToRemove of value.notContaining || []) {
-          dependencyStatements.push(composeStatement('remove', recordToRemove));
+          composeStatement('remove', recordToRemove);
         }
       }
     }
