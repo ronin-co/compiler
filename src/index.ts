@@ -146,7 +146,7 @@ class Transaction {
         let newSlug = field.mountingPath;
         let newValue = row[fieldIndex];
 
-        if (field.type === 'json') {
+        if (field.type === 'json' || field.type === 'blob') {
           newValue = JSON.parse(newValue as string);
         } else if (field.type === 'boolean') {
           newValue = Boolean(newValue);

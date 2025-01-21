@@ -341,7 +341,9 @@ export const composeConditions = (
       const { field: modelField } = fieldDetails || {};
 
       // If the `to` instruction is used, JSON should be written as-is.
-      const consumeJSON = modelField?.type === 'json' && instructionName === 'to';
+      const consumeJSON =
+        (modelField?.type === 'json' || modelField?.type === 'blob') &&
+        instructionName === 'to';
 
       if (
         (modelField && !(isObject(value) || Array.isArray(value))) ||

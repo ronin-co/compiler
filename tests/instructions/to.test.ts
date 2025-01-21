@@ -100,8 +100,8 @@ test('set single record to new blob field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
-      params: ['mia', 'elaine'],
+      statement: `UPDATE "accounts" SET "avatar" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: [JSON.stringify(storedObject), 'elaine'],
       returning: true,
     },
   ]);
@@ -109,7 +109,7 @@ test('set single record to new blob field', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record?.handle).toBe('mia');
+  expect(result.record?.avatar).toMatchObject(storedObject);
 });
 
 test('set single record to new string field with expression referencing fields', async () => {
