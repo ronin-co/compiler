@@ -180,7 +180,7 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
  *
  * @returns The updated model.
  */
-export const addDefaultModelFields = (model: PartialModel, isNew: boolean): Model => {
+export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
   const copiedModel = { ...model };
   const newFields = copiedModel.fields || [];
 

@@ -54,6 +54,8 @@ export const CURRENT_TIME_EXPRESSION = {
   [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
 };
 
+// A regular expression for splitting up the components of a field mounting path, meaning
+// the path within a record under which a particular field's value should be mounted.
 const MOUNTING_PATH_SUFFIX = /(.*?)(\{(\d+)\})?$/;
 
 /**
