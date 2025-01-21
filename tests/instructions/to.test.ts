@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type Model, type Query, type StoredObject, Transaction } from '@/src/index';
 
 import { RECORD_TIMESTAMP_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
 import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
@@ -47,6 +47,69 @@ test('set single record to new string field', async () => {
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record?.handle).toBe('mia');
+});
+
+test('set single record to new blob field', async () => {
+  const storedObject: StoredObject = {
+    key: 'test-key',
+    name: 'example.png',
+    src: 'https://storage.ronin.co/test-key',
+    meta: {
+      height: 100,
+      width: 100,
+      size: 100,
+      type: 'image/png',
+    },
+    placeholder: {
+      base64: '',
+    },
+  };
+
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            avatar: storedObject,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'avatar',
+          type: 'blob',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "avatar" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?2) RETURNING *`,
+      params: [JSON.stringify(storedObject), 'elaine'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.avatar).toMatchObject(storedObject);
 });
 
 test('set single record to new string field with expression referencing fields', async () => {
