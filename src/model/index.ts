@@ -325,6 +325,10 @@ export const getSystemModels = (
             model: model.id,
             associationSlug: field.slug,
           },
+          // The default `idPrefix` for associative models is `ron`, since the `fieldSlug`
+          // above starts with `roninLink`. Because we want he `idPrefix` to instead
+          // match the original slug of the field, we need to set it explicitly here.
+          idPrefix: field.slug.length >= 3 ? field.slug.slice(0, 3) : undefined,
           fields: [
             {
               slug: 'source',
