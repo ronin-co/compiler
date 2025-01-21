@@ -329,6 +329,11 @@ test('set single record to new many-cardinality link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
+      params: ['elaine'],
+      returning: true,
+    },
+    {
       statement:
         'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1))',
       params: ['elaine'],
@@ -337,11 +342,6 @@ test('set single record to new many-cardinality link field', async () => {
       statement:
         'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
       params: ['elaine', 'david'],
-    },
-    {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
-      params: ['elaine'],
-      returning: true,
     },
   ]);
 
@@ -392,14 +392,14 @@ test('set single record to new many-cardinality link field (add)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['elaine', 'david'],
-    },
-    {
       statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
       params: ['elaine'],
       returning: true,
+    },
+    {
+      statement:
+        'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['elaine', 'david'],
     },
   ]);
 
@@ -450,14 +450,14 @@ test('set single record to new many-cardinality link field (remove)', async () =
 
   expect(transaction.statements).toEqual([
     {
-      statement:
-        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1) AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
-      params: ['elaine', 'david'],
-    },
-    {
       statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("handle" = ?1) RETURNING *`,
       params: ['elaine'],
       returning: true,
+    },
+    {
+      statement:
+        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1) AND "target" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
+      params: ['elaine', 'david'],
     },
   ]);
 

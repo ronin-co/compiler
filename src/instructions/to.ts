@@ -154,13 +154,16 @@ export const handleTo = (
           { returning: false },
         ).main;
 
-        const details: InternalDependencyStatement = { ...query };
-
-        if (queryType === 'add' && subQueryType === 'add') {
-          details.after = true;
-        }
-
-        dependencyStatements.push(details);
+        // We are passing `after: true` here to ensure that the dependency statement is
+        // executed after the main statement. This is necessary because, in the case that
+        // the main statement creates a record, the record must of course first be
+        // created before it can be referenced from the associative table.
+        //
+        // We could first check if the main query and dependency query are both of type
+        // `add` and only then add the `after: true` property, but that would mean the
+        // list of generated dependency statements differs depending what kind of action
+        // is being performed, and that seems less clear in the output of the compiler.
+        dependencyStatements.push({ ...query, after: true });
       };
 
       if (Array.isArray(fieldValue)) {
