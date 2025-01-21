@@ -15,7 +15,22 @@ export type ModelEntityEnum = 'field' | 'index' | 'trigger' | 'preset';
 
 // Field and Expressions
 export type FieldValue = string | number | boolean | null | unknown;
-export type FieldSelector = Record<string, FieldValue>;
+export type FieldSelector = Record<string, FieldValue | StoredObject>;
+
+export type StoredObject = {
+  key: string;
+  src: string;
+  name: string | null;
+  placeholder: {
+    base64: string | null;
+  } | null;
+  meta: {
+    size: number;
+    type: string;
+    width?: number;
+    height?: number;
+  };
+};
 
 export type Expression = {
   [QUERY_SYMBOLS.EXPRESSION]: string;

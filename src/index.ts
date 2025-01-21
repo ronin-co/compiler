@@ -444,6 +444,8 @@ export type {
   CombinedInstructions,
   // Compiled Queries
   Statement,
+  // Miscellaneous
+  StoredObject,
 } from '@/src/types/query';
 
 // Expose result types
