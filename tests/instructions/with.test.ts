@@ -825,7 +825,9 @@ test('get single record with blob field', async () => {
         account: {
           with: {
             avatar: {
-              type: 'image/png',
+              meta: {
+                type: 'image/png',
+              },
             },
           },
         },
@@ -849,7 +851,7 @@ test('get single record with blob field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" WHERE (json_extract(avatar, '$.type') = ?1) LIMIT 1`,
+      statement: `SELECT * FROM "accounts" WHERE (json_extract(avatar, '$.meta.type') = ?1) LIMIT 1`,
       params: ['image/png'],
       returning: true,
     },
@@ -858,7 +860,7 @@ test('get single record with blob field', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record?.avatar).toHaveProperty('type', 'image/png');
+  expect(result.record?.avatar).toHaveProperty('meta.type', 'image/png');
 });
 
 test('get single record with one of fields', async () => {
