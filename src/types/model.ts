@@ -35,7 +35,7 @@ type ModelFieldBasics = {
    * The value that should be inserted into the field in the case that no value was
    * explicitly provided for it when a record is created.
    */
-  defaultValue?: Expression | unknown;
+  defaultValue?: Expression | unknown | (() => Expression);
   /**
    * An expression that should be evaluated to form the value of the field. The
    * expression can either be VIRTUAL (evaluated whenever a record is read) or STORED
@@ -43,10 +43,10 @@ type ModelFieldBasics = {
    */
   computedAs?: {
     kind: 'VIRTUAL' | 'STORED';
-    value: Expression;
+    value: Expression | unknown | ((fields: Record<string, unknown>) => Expression);
   };
   /** An expression that gets evaluated every time a value is provided for the field. */
-  check?: Expression;
+  check?: Expression | ((fields: Record<string, unknown>) => Expression);
 };
 
 // We have to list the types separately, in order for `Extract` to work.
