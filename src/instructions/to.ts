@@ -152,7 +152,7 @@ export const handleTo = (
 
         const details: Statement = { ...query };
 
-        if (subQueryType === 'add') {
+        if (queryType === 'add' && subQueryType === 'add') {
           details.after = true;
         }
 
