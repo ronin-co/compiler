@@ -163,6 +163,10 @@ export const handleTo = (
         // `add` and only then add the `after: true` property, but that would mean the
         // list of generated dependency statements differs depending what kind of action
         // is being performed, and that seems less clear in the output of the compiler.
+        //
+        // It seems clearer and more predictable to ensure that the dependency statements
+        // required for interacting with associative tables are always executed after the
+        // main statement, regardless of the type of action being performed.
         dependencyStatements.push({ ...query, after: true });
       };
 
