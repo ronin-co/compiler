@@ -8,7 +8,7 @@ import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
 import { getModelBySlug, transformMetaQuery } from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
-import type { Query, Statement } from '@/src/types/query';
+import type { InternalDependencyStatement, Query, Statement } from '@/src/types/query';
 import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import { formatIdentifiers } from '@/src/utils/statement';
 
@@ -45,7 +45,7 @@ export const compileQueryInput = (
     expandColumns?: boolean;
   },
 ): {
-  dependencies: Array<Statement>;
+  dependencies: Array<InternalDependencyStatement>;
   main: Statement;
   selectedFields: Array<InternalModelField>;
 } => {
@@ -53,7 +53,7 @@ export const compileQueryInput = (
   // statement. Their output is not relevant for the main statement, as they are merely
   // used to update the database in a way that is required for the main read statement
   // to return the expected results.
-  const dependencyStatements: Array<Statement> = [];
+  const dependencyStatements: Array<InternalDependencyStatement> = [];
 
   // If the query is a meta query of type `create`, `alter`, or `drop`, we need to
   // transform it into a regular query before it can be processed further.

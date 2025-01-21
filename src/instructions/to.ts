@@ -4,7 +4,11 @@ import {
   getModelBySlug,
 } from '@/src/model';
 import type { Model } from '@/src/types/model';
-import type { FieldValue, SetInstructions, Statement } from '@/src/types/query';
+import type {
+  FieldValue,
+  InternalDependencyStatement,
+  SetInstructions,
+} from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
   flatten,
@@ -36,7 +40,7 @@ export const handleTo = (
   model: Model,
   statementParams: Array<unknown> | null,
   queryType: 'add' | 'set',
-  dependencyStatements: Array<Statement>,
+  dependencyStatements: Array<InternalDependencyStatement>,
   instructions: {
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
@@ -150,7 +154,7 @@ export const handleTo = (
           { returning: false },
         ).main;
 
-        const details: Statement = { ...query };
+        const details: InternalDependencyStatement = { ...query };
 
         if (queryType === 'add' && subQueryType === 'add') {
           details.after = true;

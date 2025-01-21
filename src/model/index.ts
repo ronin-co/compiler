@@ -16,11 +16,11 @@ import type {
   PublicModel,
 } from '@/src/types/model';
 import type {
+  InternalDependencyStatement,
   ModelEntityType,
   ModelQueryType,
   Query,
   QueryInstructionType,
-  Statement,
 } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
@@ -481,7 +481,7 @@ const formatModelEntity = (
  */
 const handleSystemModel = (
   models: Array<Model>,
-  dependencyStatements: Array<Statement>,
+  dependencyStatements: Array<InternalDependencyStatement>,
   action: 'create' | 'alter' | 'drop',
   systemModel: PartialModel,
   newModel?: PartialModel,
@@ -517,7 +517,7 @@ const handleSystemModel = (
  */
 const handleSystemModels = (
   models: Array<Model>,
-  dependencyStatements: Array<Statement>,
+  dependencyStatements: Array<InternalDependencyStatement>,
   previousModel: Model,
   newModel: Model,
 ): void => {
@@ -603,7 +603,7 @@ const handleSystemModels = (
  */
 export const transformMetaQuery = (
   models: Array<Model>,
-  dependencyStatements: Array<Statement>,
+  dependencyStatements: Array<InternalDependencyStatement>,
   statementParams: Array<unknown> | null,
   query: Query,
 ): Query | null => {
