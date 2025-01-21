@@ -92,14 +92,12 @@ class Transaction {
       );
 
       // Every query can only produce one main statement (which can return output), but
-      // multiple dependency statements (which must be executed before the main one, but
-      // cannot return output themselves).
+      // multiple dependency statements (which must be executed either before or after
+      // the main one, but cannot return output themselves).
       //
-      // The order is essential, since the dependency statements are expected to not
-      // produce any output, so they should be executed first. The main statements, on the
-      // other hand, are expected to produce output, and that output should be a 1:1 match
-      // between RONIN queries and SQL statements, meaning one RONIN query should produce
-      // one main SQL statement.
+      // The main statements, unlike the dependency statements, are expected to produce
+      // output, and that output should be a 1:1 match between RONIN queries and SQL
+      // statements, meaning one RONIN query should produce one main SQL statement.
       const preDependencies = dependencies.filter(({ after }) => !after);
       const postDependencies = dependencies
         .map(({ after, ...rest }) => (after ? rest : null))
