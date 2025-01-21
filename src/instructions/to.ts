@@ -160,7 +160,10 @@ export const handleTo = (
       };
 
       if (Array.isArray(fieldValue)) {
-        composeStatement('remove');
+        // If a record is being updated, clear all existing records of the associative
+        // model before inserting the new ones, to ensure that only the new ones are
+        // present and no old ones remain.
+        if (queryType === 'set') composeStatement('remove');
 
         for (const record of fieldValue) {
           composeStatement('add', record);

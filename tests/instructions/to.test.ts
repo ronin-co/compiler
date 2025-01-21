@@ -275,11 +275,6 @@ test('add single record with many-cardinality link field (add)', async () => {
     },
     {
       statement:
-        'DELETE FROM "ronin_link_account_followers" WHERE ("source" = (SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1))',
-      params: ['markus'],
-    },
-    {
-      statement:
         'INSERT INTO "ronin_link_account_followers" ("source", "target") VALUES ((SELECT "id" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1), (SELECT "id" FROM "accounts" WHERE ("handle" = ?2) LIMIT 1))',
       params: ['markus', 'david'],
     },
