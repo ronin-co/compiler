@@ -43,7 +43,7 @@ type ModelFieldBasics = {
    */
   computedAs?: {
     kind: 'VIRTUAL' | 'STORED';
-    value: Expression | unknown | ((fields: Record<string, string>) => string);
+    value: ((fields: Record<string, string>) => string) | string | Expression;
   };
   /** An expression that gets evaluated every time a value is provided for the field. */
   check?: Expression | ((fields: Record<string, string>) => string);
