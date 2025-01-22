@@ -17,10 +17,10 @@ import type {
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
   MultipleRecordResult,
-  NativeRecord,
   ObjectRow,
   RawRow,
   Result,
+  ResultRecord,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import { getProperty, omit, setProperty, splitQuery } from '@/src/utils/helpers';
@@ -122,26 +122,26 @@ class Transaction {
     return statements;
   };
 
-  #formatRows<Record = NativeRecord>(
+  #formatRows<Record = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: true,
     isMeta: boolean,
   ): Record;
-  #formatRows<Record = NativeRecord>(
+  #formatRows<Record = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: false,
     isMeta: boolean,
   ): Array<Record>;
 
-  #formatRows<Record = NativeRecord>(
+  #formatRows<Record = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: boolean,
     isMeta: boolean,
   ): Record | Array<Record> {
-    const records: Array<NativeRecord> = [];
+    const records: Array<ResultRecord> = [];
 
     for (const row of rows) {
       const record = fields.reduce((acc, field, fieldIndex) => {
@@ -222,7 +222,7 @@ class Transaction {
 
         setProperty(acc, newSlug, newValue);
         return acc;
-      }, {} as NativeRecord);
+      }, {} as ResultRecord);
 
       const existingRecord = record.id
         ? records.find((existingRecord) => {
@@ -247,8 +247,8 @@ class Transaction {
       }, new Set<string>());
 
       for (const arrayField of joinFields.values()) {
-        const currentValue = existingRecord[arrayField] as Array<NativeRecord>;
-        const newValue = record[arrayField] as Array<NativeRecord>;
+        const currentValue = existingRecord[arrayField] as Array<ResultRecord>;
+        const newValue = record[arrayField] as Array<ResultRecord>;
 
         for (const newRecord of newValue) {
           if ('id' in newRecord) {
@@ -372,7 +372,7 @@ class Transaction {
             const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
             const lastRecord = output.records.at(
               direction === 'moreAfter' ? -1 : 0,
-            ) as NativeRecord;
+            ) as ResultRecord;
 
             output[direction] = generatePaginationCursor(
               model,
@@ -387,7 +387,7 @@ class Transaction {
             const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
             const firstRecord = output.records.at(
               direction === 'moreAfter' ? -1 : 0,
-            ) as NativeRecord;
+            ) as ResultRecord;
 
             output[direction] = generatePaginationCursor(
               model,
@@ -451,7 +451,7 @@ export type {
 } from '@/src/types/query';
 
 // Expose result types
-export type { Result } from '@/src/types/result';
+export type { Result, ResultRecord } from '@/src/types/result';
 
 // Strip any properties from the root model that are internal
 const CLEAN_ROOT_MODEL = omit(ROOT_MODEL, ['system']) as PublicModel;

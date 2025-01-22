@@ -7,8 +7,8 @@ import {
 import { type Model, type Query, Transaction } from '@/src/index';
 import type {
   AmountResult,
-  NativeRecord,
   Result,
+  ResultRecord,
   SingleRecordResult,
 } from '@/src/types/result';
 
@@ -170,7 +170,7 @@ test('pass multiple record queries at once', async () => {
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const results = transaction.formatResults(rawResults) as Array<
-    Result<Partial<NativeRecord>>
+    Result<Partial<ResultRecord>>
   >;
 
   // Assert whether the results are provided in the same order as the original queries.

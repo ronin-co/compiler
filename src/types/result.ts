@@ -5,7 +5,7 @@ export type ObjectRow = Record<string, unknown>;
 
 export type Row = RawRow | ObjectRow;
 
-export type NativeRecord = Record<string, unknown> & {
+export type ResultRecord = Record<string, unknown> & {
   id: string;
   ronin: {
     locked: boolean;
@@ -16,13 +16,13 @@ export type NativeRecord = Record<string, unknown> & {
   };
 };
 
-export type SingleRecordResult<T = NativeRecord> = {
+export type SingleRecordResult<T = ResultRecord> = {
   record: T | null;
 
   modelFields: Record<ModelField['slug'], ModelField['type']>;
 };
 
-export type MultipleRecordResult<T = NativeRecord> = {
+export type MultipleRecordResult<T = ResultRecord> = {
   records: Array<T>;
   moreAfter?: string;
   moreBefore?: string;
@@ -34,7 +34,7 @@ export type AmountResult = {
   amount: number;
 };
 
-export type Result<T = NativeRecord> =
+export type Result<T = ResultRecord> =
   | SingleRecordResult<T>
   | MultipleRecordResult<T>
   | AmountResult;

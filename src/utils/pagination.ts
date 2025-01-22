@@ -1,7 +1,7 @@
 import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { GetInstructions } from '@/src/types/query';
-import type { NativeRecord } from '@/src/types/result';
+import type { ResultRecord } from '@/src/types/result';
 import { getProperty } from '@/src/utils/helpers';
 
 // The separator and NULL placeholder have to be somewhat unique so that they don't
@@ -21,7 +21,7 @@ export const CURSOR_NULL_PLACEHOLDER = 'RONIN_NULL';
 export const generatePaginationCursor = (
   model: Model,
   orderedBy: GetInstructions['orderedBy'],
-  record: NativeRecord,
+  record: ResultRecord,
 ): string => {
   const { ascending = [], descending = [] } = orderedBy || {};
   const keys = [...ascending, ...descending];
