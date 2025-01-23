@@ -8,8 +8,14 @@ import { handleTo } from '@/src/instructions/to';
 import { handleWith } from '@/src/instructions/with';
 import { getModelBySlug, transformMetaQuery } from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
-import type { InternalDependencyStatement, Query, Statement } from '@/src/types/query';
-import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
+import type {
+  Instructions,
+  InternalDependencyStatement,
+  Query,
+  SetInstructions,
+  Statement,
+} from '@/src/types/query';
+import { QUERY_SYMBOLS, RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -89,6 +95,19 @@ export const compileQueryInput = (
     instructions = handleFor(model, instructions);
   }
 
+  // If a `count` query was provided, ensure that the final select statement only includes
+  // a single column that contains the amount of records that were matched by the query.
+  if (queryType === 'count') {
+    if (!instructions) instructions = {} as Instructions & SetInstructions;
+
+    instructions!.selecting = ['amount'];
+    instructions!.including = Object.assign(instructions?.including || {}, {
+      amount: {
+        [QUERY_SYMBOLS.EXPRESSION]: 'COUNT(*)',
+      },
+    });
+  }
+
   // A list of columns that should be selected when querying records.
   const { columns, isJoining, selectedFields } = handleSelecting(
     models,
@@ -106,6 +125,7 @@ export const compileQueryInput = (
 
   switch (queryType) {
     case 'get':
+    case 'count':
       statement += `SELECT ${columns} FROM `;
       break;
 
@@ -119,10 +139,6 @@ export const compileQueryInput = (
 
     case 'remove':
       statement += 'DELETE FROM ';
-      break;
-
-    case 'count':
-      statement += `SELECT COUNT(${columns}) FROM `;
       break;
   }
 
