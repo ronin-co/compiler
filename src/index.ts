@@ -303,9 +303,16 @@ class Transaction {
     const normalizedResults: Array<Array<RawRow>> = raw
       ? (results as Array<Array<RawRow>>)
       : results.map((rows) => {
-          return rows.map((row) => {
+          return rows.map((row, index) => {
+            const { query } = this.#internalStatements[index];
+
+            // If the row is already an array, return it as-is.
             if (Array.isArray(row)) return row;
-            if (row['COUNT(*)']) return [row['COUNT(*)']];
+
+            // If the row is the result of a `count` query, return its amount result.
+            if (query.count) return [row.amount];
+
+            // If the row is an object, return its values as an array.
             return Object.values(row);
           });
         });

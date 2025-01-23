@@ -103,7 +103,7 @@ test('count multiple records', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT COUNT(*) FROM "accounts"`,
+      statement: `SELECT (COUNT(*)) as "amount" FROM "accounts"`,
       params: [],
       returning: true,
     },
@@ -152,7 +152,7 @@ test('pass multiple record queries at once', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT COUNT(*) FROM "accounts"',
+      statement: 'SELECT (COUNT(*)) as "amount" FROM "accounts"',
       params: [],
       returning: true,
     },
