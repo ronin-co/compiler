@@ -299,10 +299,10 @@ class Transaction {
     // format expected by developers.
     const normalizedResults: Array<Array<RawRow>> = raw
       ? (results as Array<Array<RawRow>>)
-      : results.map((rows) => {
-          return rows.map((row, index) => {
-            const { query } = this.#internalStatements[index];
+      : results.map((rows, index) => {
+          const { query } = this.#internalStatements[index];
 
+          return rows.map((row) => {
             // If the row is already an array, return it as-is.
             if (Array.isArray(row)) return row;
 
