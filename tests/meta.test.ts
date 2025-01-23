@@ -288,7 +288,8 @@ test('get existing models', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "ronin_schema"',
+      statement:
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets" FROM "ronin_schema"',
       params: [],
       returning: true,
     },
@@ -543,7 +544,7 @@ test('query a model that was just created', () => {
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
     `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
     'INSERT INTO "ronin_schema" ("slug", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING *',
-    'SELECT * FROM "accounts" LIMIT 1',
+    'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" LIMIT 1',
     'DROP TABLE "accounts"',
     'DELETE FROM "ronin_schema" WHERE ("slug" = ?1) RETURNING *',
   ]);
@@ -579,7 +580,7 @@ test('query a model that was just updated', () => {
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
     'ALTER TABLE "accounts" RENAME TO "users"',
     `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "name" = ?3, "pluralName" = ?4, "idPrefix" = ?5, "table" = ?6, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("slug" = ?7) RETURNING *`,
-    'SELECT * FROM "users" LIMIT 1',
+    'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "users" LIMIT 1',
   ]);
 });
 

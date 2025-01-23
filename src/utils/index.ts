@@ -47,8 +47,6 @@ export const compileQueryInput = (
      * the parent model in the nested query (the current query).
      */
     parentModel?: Model;
-    /** Alias column names that are duplicated when joining multiple tables. */
-    expandColumns?: boolean;
   },
 ): {
   dependencies: Array<InternalDependencyStatement>;
@@ -118,7 +116,6 @@ export const compileQueryInput = (
       selecting: instructions?.selecting,
       including: instructions?.including,
     },
-    options,
   );
 
   let statement = '';
