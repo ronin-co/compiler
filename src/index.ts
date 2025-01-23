@@ -287,7 +287,7 @@ class Transaction {
    */
   formatResults<Record>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
-    raw = true,
+    raw = false,
   ): Array<Result<Record>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
