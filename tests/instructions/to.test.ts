@@ -216,16 +216,12 @@ test('set single record to new one-cardinality link field', async () => {
     },
   ]);
 
-  const [[targetRecord]] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
-        params: [],
-      },
-    ],
-    false,
-  );
+  const [[targetRecord]] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
@@ -668,16 +664,12 @@ test('set single record to new nested link field', async () => {
     },
   ]);
 
-  const [[targetRecord]] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
-        params: [],
-      },
-    ],
-    false,
-  );
+  const [[targetRecord]] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
@@ -793,16 +785,12 @@ test('set single record to result of nested query', async () => {
     },
   ]);
 
-  const [[targetRecord]] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT lastName FROM "accounts" WHERE ("handle" = 'david') LIMIT 1`,
-        params: [],
-      },
-    ],
-    false,
-  );
+  const [[targetRecord]] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT lastName FROM "accounts" WHERE ("handle" = 'david') LIMIT 1`,
+      params: [],
+    },
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
@@ -903,17 +891,13 @@ test('add multiple records with nested sub query', async () => {
     },
   ]);
 
-  const [targetRecords] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT * FROM "accounts"`,
-        params: [],
-      },
-      ...transaction.statements,
-    ],
-    false,
-  );
+  const [targetRecords] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+    ...transaction.statements,
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
@@ -1044,16 +1028,12 @@ test('add multiple records with nested sub query and specific fields', async () 
     },
   ]);
 
-  const [targetRecords] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT * FROM "accounts"`,
-        params: [],
-      },
-    ],
-    false,
-  );
+  const [targetRecords] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
@@ -1102,16 +1082,12 @@ test('add multiple records with nested sub query and specific meta fields', asyn
     },
   ]);
 
-  const [targetRecords] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT * FROM "accounts"`,
-        params: [],
-      },
-    ],
-    false,
-  );
+  const [targetRecords] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts"`,
+      params: [],
+    },
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;

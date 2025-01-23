@@ -278,16 +278,16 @@ class Transaction {
    *
    * @param results - A list of results from the database, where each result is an array
    * of rows.
-   * @param raw - By default, rows are expected to be arrays of values, which is how SQL
-   * databases return rows by default. If the driver being used returns rows as objects
-   * instead, this option should be set to `false`.
+   * @param raw - By default, rows are expected to be objects. If the driver being used
+   * returns rows as arrays of values (which is how SQL databases return rows directly),
+   * this option should be set to `true`.
    *
    * @returns A list of formatted RONIN results, where each result is either a single
    * RONIN record, an array of RONIN records, or a RONIN count result.
    */
   formatResults<Record>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
-    raw = true,
+    raw = false,
   ): Array<Result<Record>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
@@ -299,10 +299,10 @@ class Transaction {
     // format expected by developers.
     const normalizedResults: Array<Array<RawRow>> = raw
       ? (results as Array<Array<RawRow>>)
-      : results.map((rows) => {
-          return rows.map((row, index) => {
-            const { query } = this.#internalStatements[index];
+      : results.map((rows, index) => {
+          const { query } = this.#internalStatements[index];
 
+          return rows.map((row) => {
             // If the row is already an array, return it as-is.
             if (Array.isArray(row)) return row;
 

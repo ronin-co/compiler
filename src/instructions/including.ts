@@ -60,11 +60,13 @@ export const handleIncluding = (
 
     const subSingle = queryModel !== relatedModel.pluralSlug;
 
-    const { tableAlias, subMountingPath } = composeMountingPath(
+    const subMountingPath = composeMountingPath(
       subSingle,
       ephemeralFieldSlug,
       options.mountingPath,
     );
+
+    const tableAlias = `including_${subMountingPath}`;
 
     // If no `with` query instruction is provided, we want to perform a CROSS JOIN
     // instead of a LEFT JOIN, because it is guaranteed that the joined rows are the same

@@ -56,7 +56,7 @@ export const handleSelecting = (
     .map((field) => {
       const newField: InternalModelField = { ...field, mountingPath: field.slug };
 
-      if (options.mountingPath) {
+      if (options.mountingPath && options.mountingPath !== 'ronin_root') {
         // Remove all occurrences of `{n}`, which are used to indicate the index of a join
         // that is being performed on the same nesting level of a record. Meaning if, for
         // example, multiple different tables are being joined and their outputs must all
@@ -114,16 +114,12 @@ export const handleSelecting = (
         if (!model.tableAlias)
           model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const { tableAlias, subMountingPath } = composeMountingPath(
-          subSingle,
-          key,
-          options.mountingPath,
-        );
+        const subMountingPath = composeMountingPath(subSingle, key, options.mountingPath);
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(
             models,
-            { ...subQueryModel, tableAlias },
+            { ...subQueryModel, tableAlias: `including_${subMountingPath}` },
             statementParams,
             subSingle,
             {

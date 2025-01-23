@@ -3,7 +3,6 @@ import { type Model, type Query, ROOT_MODEL, Transaction } from '@/src/index';
 import { convertToSnakeCase, getProperty, setProperty } from '@/src/utils/helpers';
 import { type Database, Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
-import { WasmDriver } from '@ronin/engine/drivers/wasm';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
 import type { Row, Statement } from '@ronin/engine/types';
 
@@ -72,12 +71,7 @@ const prefillDatabase = async (
   await database.query(statements);
 };
 
-const RAW_ENGINE = new Engine({
-  resolvers: [(engine) => new MemoryResolver(engine)],
-  driver: new WasmDriver(),
-});
-
-const NON_RAW_ENGINE = new Engine({
+const ENGINE = new Engine({
   resolvers: [(engine) => new MemoryResolver(engine)],
   driver: new BunDriver(),
 });
@@ -87,29 +81,22 @@ const NON_RAW_ENGINE = new Engine({
  *
  * @param models - The models that should be inserted into the database.
  * @param statements - The statements that should be executed.
- * @param raw - By default, the results are returned in a raw format, meaning in the same
- * format in which SQLite returns them (rows being arrays of values). If `raw` is set to
- * `false`, the rows are returned as objects, which simulates the behavior of drivers that
- * are incapable of returning raw results.
  *
  * @returns A list of rows resulting from the executed statements.
  */
 export const queryEphemeralDatabase = async (
   models: Array<Model>,
   statements: Array<Statement>,
-  raw = true,
 ): Promise<Array<Array<Row>>> => {
-  const engine = raw ? RAW_ENGINE : NON_RAW_ENGINE;
-
   const databaseId = Math.random().toString(36).substring(7);
-  const database = await engine.createDatabase({ id: databaseId });
+  const database = await ENGINE.createDatabase({ id: databaseId });
 
   await prefillDatabase(database, models);
 
-  const results = await database.query(statements, raw ? { shape: 'values-only' } : {});
+  const results = await database.query(statements);
   const formattedResults = results.map((result) => result.rows);
 
-  await engine.deleteDatabase({ id: databaseId });
+  await ENGINE.deleteDatabase({ id: databaseId });
 
   return formattedResults;
 };

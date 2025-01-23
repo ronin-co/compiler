@@ -675,16 +675,12 @@ test('get single record with link field', async () => {
     },
   ]);
 
-  const [[targetRecord]] = await queryEphemeralDatabase(
-    models,
-    [
-      {
-        statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
-        params: [],
-      },
-    ],
-    false,
-  );
+  const [[targetRecord]] = await queryEphemeralDatabase(models, [
+    {
+      statement: `SELECT * FROM "accounts" WHERE ("handle" = 'elaine') LIMIT 1`,
+      params: [],
+    },
+  ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;

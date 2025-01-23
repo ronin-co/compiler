@@ -70,7 +70,7 @@ executed and their results can be formatted by the compiler as well:
 
 ```typescript
 // Passing `rawResults` (rows being arrays of values) provided by the database (ideal)
-const results: Array<Result> = transaction.formatResults(rawResults);
+const results: Array<Result> = transaction.formatResults(rawResults, true);
 
 // Passing `objectResults` (rows being objects) provided by a driver
 const results: Array<Result> = transaction.formatResults(objectResults, false);

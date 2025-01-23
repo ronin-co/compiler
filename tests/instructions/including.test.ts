@@ -749,7 +749,7 @@ test('get multiple records including unrelated records with filter (hoisted)', a
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_ronin_root"."id", "including_ronin_root"."ronin.locked", "including_ronin_root"."ronin.createdAt", "including_ronin_root"."ronin.createdBy", "including_ronin_root"."ronin.updatedAt", "including_ronin_root"."ronin.updatedBy", "including_ronin_root"."account", "including_ronin_root"."team" FROM "accounts" LEFT JOIN "members" as "including_ronin_root" ON ("including_ronin_root"."account" = "accounts"."id")`,
+      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_ronin_root"."id" as "ronin_root.id", "including_ronin_root"."ronin.locked" as "ronin_root.ronin.locked", "including_ronin_root"."ronin.createdAt" as "ronin_root.ronin.createdAt", "including_ronin_root"."ronin.createdBy" as "ronin_root.ronin.createdBy", "including_ronin_root"."ronin.updatedAt" as "ronin_root.ronin.updatedAt", "including_ronin_root"."ronin.updatedBy" as "ronin_root.ronin.updatedBy", "including_ronin_root"."account" as "ronin_root.account", "including_ronin_root"."team" as "ronin_root.team" FROM "accounts" LEFT JOIN "members" as "including_ronin_root" ON ("including_ronin_root"."account" = "accounts"."id")`,
       params: [],
       returning: true,
     },
