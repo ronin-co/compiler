@@ -100,14 +100,13 @@ const getFieldSelector = (
 
   // If the field is of type JSON and the field is being selected in a read query, that
   // means we should extract the nested property from the JSON field.
-  if ((field.type === 'json' || field.type === 'blob') && !writing) {
-    const dotParts = fieldPath.split('.');
-    const columnName = tablePrefix + dotParts.shift();
-
-    if (dotParts.length > 0) {
-      const jsonField = dotParts.join('.');
-      return `json_extract(${columnName}, '$.${jsonField}')`;
-    }
+  if (
+    (field.type === 'json' || field.type === 'blob') &&
+    !writing &&
+    fieldPath.length > field.slug.length
+  ) {
+    const jsonField = fieldPath.replace(`${field.slug}.`, '');
+    return `json_extract(${tablePrefix + field.slug}, '$.${jsonField}')`;
   }
 
   return `${tablePrefix}"${fieldPath}"`;

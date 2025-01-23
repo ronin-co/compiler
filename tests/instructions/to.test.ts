@@ -711,7 +711,7 @@ test('set single record to new nested json field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING *`,
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE ("id" = ?2) RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.invoiceRecipients"`,
       params: ['["receipts@test.co"]', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
