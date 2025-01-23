@@ -52,7 +52,8 @@ test('get single record for preset', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "members" WHERE ("account" = ?1) LIMIT 1',
+      statement:
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE ("account" = ?1) LIMIT 1',
       params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -156,7 +157,7 @@ test('get single record for preset containing field with condition', async () =>
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT * FROM "products" WHERE ("team" = (SELECT "team" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "team" FROM "products" WHERE ("team" = (SELECT "team" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -259,7 +260,7 @@ test('get single record for preset containing field without condition', async ()
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT * FROM "products" WHERE ("team" = (SELECT "team" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "team" FROM "products" WHERE ("team" = (SELECT "team" FROM "members" WHERE ("account" = ?1) ORDER BY "activeAt" DESC LIMIT 1)) LIMIT 1',
       params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -334,7 +335,8 @@ test('get single record for preset on existing object instruction', async () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "members" WHERE ("team" = ?1 AND "account" = ?2) LIMIT 1',
+      statement:
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account", "team" FROM "members" WHERE ("team" = ?1 AND "account" = ?2) LIMIT 1',
       params: ['tea_39h8fhe98hefah9j', 'acc_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -455,7 +457,7 @@ test('get single record including parent record (many-to-one)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -774,7 +776,7 @@ test('get single record including child records (one-to-many, defined automatica
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id") WHERE ("sub_accounts"."handle" = ?1)`,
+      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "sub_accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id") WHERE ("sub_accounts"."handle" = ?1)`,
       params: ['elaine'],
       returning: true,
     },

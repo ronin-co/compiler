@@ -896,7 +896,8 @@ test('add multiple records with nested sub query', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'INSERT INTO "users" SELECT * FROM "accounts" RETURNING *',
+      statement:
+        'INSERT INTO "users" SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" RETURNING *',
       params: [],
       returning: true,
     },
@@ -973,7 +974,7 @@ test('add multiple records with nested sub query including additional fields', a
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" SELECT *, ?1 as "nonExistingField" FROM "accounts" RETURNING *',
+        'INSERT INTO "users" SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", ?1 as "nonExistingField" FROM "accounts" RETURNING *',
       params: ['Custom Field Value'],
       returning: true,
     },
