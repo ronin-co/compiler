@@ -71,20 +71,17 @@ export const composeMountingPath = (
   single: boolean,
   key: string,
   mountingPath?: string,
-): { subMountingPath: string; tableAlias: string } => {
-  const subMountingPath =
-    key === 'ronin_root'
-      ? mountingPath
-        ? mountingPath.replace(
-            MOUNTING_PATH_SUFFIX,
-            (_, p, __, n) => `${p}{${n ? +n + 1 : 1}}`,
-          )
-        : key
-      : `${mountingPath ? `${mountingPath}.` : ''}${single ? key : `${key}[0]`}`;
+): string => {
+  if (key === 'ronin_root') {
+    return mountingPath
+      ? mountingPath.replace(
+          MOUNTING_PATH_SUFFIX,
+          (_, p, __, n) => `${p}{${n ? +n + 1 : 1}}`,
+        )
+      : key;
+  }
 
-  const tableAlias = `including_${subMountingPath}`;
-
-  return { subMountingPath, tableAlias };
+  return `${mountingPath ? `${mountingPath}.` : ''}${single ? key : `${key}[0]`}`;
 };
 
 type RoninErrorCode =

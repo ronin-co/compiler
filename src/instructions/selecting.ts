@@ -114,16 +114,12 @@ export const handleSelecting = (
         if (!model.tableAlias)
           model.tableAlias = single && !subSingle ? `sub_${model.table}` : model.table;
 
-        const { tableAlias, subMountingPath } = composeMountingPath(
-          subSingle,
-          key,
-          options.mountingPath,
-        );
+        const subMountingPath = composeMountingPath(subSingle, key, options.mountingPath);
 
         const { columns: nestedColumns, selectedFields: nestedSelectedFields } =
           handleSelecting(
             models,
-            { ...subQueryModel, tableAlias },
+            { ...subQueryModel, tableAlias: `including_${subMountingPath}` },
             statementParams,
             subSingle,
             {
