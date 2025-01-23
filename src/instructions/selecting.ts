@@ -40,8 +40,6 @@ export const handleSelecting = (
     including: Instructions['including'];
   },
   options: {
-    /** Alias column names that are duplicated when joining multiple tables. */
-    expandColumns?: boolean;
     /** The path on which the selected fields should be mounted in the final record. */
     mountingPath?: InternalModelField['mountingPath'];
   } = {},
@@ -69,9 +67,6 @@ export const handleSelecting = (
 
       return newField;
     });
-
-  // Expand all columns if specific fields are being selected.
-  if (instructions.selecting) options.expandColumns = true;
 
   const joinedSelectedFields: Array<InternalModelField> = [];
   const joinedColumns: Array<string> = [];
@@ -106,12 +101,6 @@ export const handleSelecting = (
         // If a sub query was found in the `including` instruction, that means different
         // tables will be joined later on during the compilation of the query.
         isJoining = true;
-
-        // If the sub query selects specific fields, we need to alias the columns of all
-        // tables, because we must ensure that only the selected columns of the joined
-        // table end up in the final result, which means we cannot use `SELECT *` in the
-        // statement, as that would automatically catch all columns of the joined table.
-        if (queryInstructions?.selecting) options.expandColumns = true;
 
         const subSingle = queryModel !== subQueryModel.pluralSlug;
 
@@ -169,21 +158,7 @@ export const handleSelecting = (
     }
   }
 
-  let columns = ['*'];
-
-  // If the column names should be expanded, that means we need to explicitly select the
-  // columns of all selected fields.
-  //
-  // If the column names should not be expanded, we only need to explicitly select the
-  // columns of fields that have a custom value, since those are not present in the
-  // database, so their value must regardless be exposed via the SQL statement explicitly.
-  const fieldsToExpand = options.expandColumns
-    ? selectedFields
-    : selectedFields.filter(
-        (loadedField) => typeof loadedField.mountedValue !== 'undefined',
-      );
-
-  const extraColumns = fieldsToExpand.map((selectedField) => {
+  const columns = selectedFields.map((selectedField) => {
     if (selectedField.mountedValue) {
       return `${selectedField.mountedValue} as "${selectedField.slug}"`;
     }
@@ -198,12 +173,6 @@ export const handleSelecting = (
 
     return fieldSelector;
   });
-
-  if (options.expandColumns) {
-    columns = extraColumns;
-  } else if (extraColumns) {
-    columns.push(...extraColumns);
-  }
 
   columns.push(...joinedColumns);
   selectedFields.push(...joinedSelectedFields);
