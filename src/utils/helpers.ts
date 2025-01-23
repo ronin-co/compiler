@@ -71,7 +71,7 @@ export const composeMountingPath = (
   single: boolean,
   key: string,
   mountingPath?: string,
-): { subMountingPath?: string; tableAlias: string } => {
+): { subMountingPath: string; tableAlias: string } => {
   const subMountingPath =
     key === 'ronin_root'
       ? mountingPath
@@ -79,10 +79,10 @@ export const composeMountingPath = (
             MOUNTING_PATH_SUFFIX,
             (_, p, __, n) => `${p}{${n ? +n + 1 : 1}}`,
           )
-        : undefined
+        : key
       : `${mountingPath ? `${mountingPath}.` : ''}${single ? key : `${key}[0]`}`;
 
-  const tableAlias = `including_${subMountingPath || key}`;
+  const tableAlias = `including_${subMountingPath}`;
 
   return { subMountingPath, tableAlias };
 };
