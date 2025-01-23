@@ -33,7 +33,7 @@ test('get multiple records ordered by field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC`,
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC`,
       params: [],
       returning: true,
     },
@@ -89,7 +89,7 @@ test('get multiple records ordered by expression', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY ("firstName" || ' ' || "lastName") ASC`,
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName", "lastName" FROM "accounts" ORDER BY ("firstName" || ' ' || "lastName") ASC`,
       params: [],
       returning: true,
     },
@@ -143,7 +143,7 @@ test('get multiple records ordered by multiple fields', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "lastName" COLLATE NOCASE ASC`,
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "lastName" FROM "accounts" ORDER BY "handle" COLLATE NOCASE ASC, "lastName" COLLATE NOCASE ASC`,
       params: [],
       returning: true,
     },

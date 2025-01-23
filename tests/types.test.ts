@@ -31,7 +31,8 @@ test('get single record', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: 'SELECT * FROM "accounts" LIMIT 1',
+      statement:
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -162,7 +163,8 @@ test('pass multiple record queries at once', async () => {
       returning: true,
     },
     {
-      statement: 'SELECT * FROM "accounts" LIMIT 1',
+      statement:
+        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1',
       params: [],
       returning: true,
     },

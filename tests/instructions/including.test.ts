@@ -41,7 +41,7 @@ test('get single record including unrelated record without filter', async () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "products" CROSS JOIN (SELECT * FROM "teams" LIMIT 1) as "including_team" LIMIT 1`,
+      statement: `SELECT "products"."id", "products"."ronin.locked", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "including_team"."id" as "team.id", "including_team"."ronin.locked" as "team.ronin.locked", "including_team"."ronin.createdAt" as "team.ronin.createdAt", "including_team"."ronin.createdBy" as "team.ronin.createdBy", "including_team"."ronin.updatedAt" as "team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "team.ronin.updatedBy" FROM "products" CROSS JOIN (SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams" LIMIT 1) as "including_team" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -116,7 +116,7 @@ test('get single record including unrelated record with filter', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT * FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
