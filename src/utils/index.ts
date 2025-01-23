@@ -116,7 +116,6 @@ export const compileQueryInput = (
       selecting: instructions?.selecting,
       including: instructions?.including,
     },
-    options,
   );
 
   let statement = '';
