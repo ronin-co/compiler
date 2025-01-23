@@ -288,7 +288,7 @@ export const compileQueryInput = (
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
   if (['add', 'set', 'remove'].includes(queryType) && returning) {
-    statement += 'RETURNING * ';
+    statement += `RETURNING ${columns}`;
   }
 
   const mainStatement: Statement = {
