@@ -91,7 +91,7 @@ const modelAttributes: Array<
   ['pluralSlug', 'slug', pluralize],
   ['name', 'slug', slugToName],
   ['pluralName', 'pluralSlug', slugToName],
-  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3)],
+  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3).toLowerCase()],
   ['table', 'pluralSlug', convertToSnakeCase],
 ];
 

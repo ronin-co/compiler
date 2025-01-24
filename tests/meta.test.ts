@@ -207,6 +207,22 @@ test('create new model with suitable default identifiers', () => {
   expect(transaction.statements[1].params[9]).toEqual('handle');
 });
 
+test('create new model with lowercased id prefix', () => {
+  const queries: Array<Query> = [
+    {
+      create: {
+        model: { slug: 'myPaintings' },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[1].params[5]).toBe('myp');
+});
+
 // Assert whether the system models associated with the model are correctly created.
 test('create new model that has system models associated with it', () => {
   const fields: Model['fields'] = [
