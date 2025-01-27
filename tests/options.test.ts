@@ -107,6 +107,7 @@ test('inline statement parameters containing serialized expression', async () =>
   });
 });
 
+// Ensure that default fields are not repeated if they are already present.
 test('provide models containing default fields', async () => {
   const queries: Array<Query> = [
     {
@@ -154,6 +155,7 @@ test('provide models containing default fields', async () => {
   });
 });
 
+// Ensure that default presets are not repeated if they are already present.
 test('provide models containing default presets', async () => {
   const queries: Array<Query> = [
     {
