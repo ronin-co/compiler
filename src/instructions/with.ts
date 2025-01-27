@@ -70,14 +70,14 @@ export const handleWith = (
   instruction: GetInstructions['with'],
   parentModel?: Model,
 ): string => {
-  const subStatement = composeConditions(
+  return composeConditions(
     models,
     model,
     statementParams,
     'with',
     instruction as WithFilters,
-    { parentModel },
+    {
+      parentModel,
+    },
   );
-
-  return `(${subStatement})`;
 };
