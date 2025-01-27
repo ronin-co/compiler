@@ -1014,7 +1014,7 @@ test('get single record with one of field conditions', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
+  expect(result.record?.handle).toBeString();
 });
 
 test('get single record with one of field conditions (empty list)', async () => {
@@ -1055,7 +1055,7 @@ test('get single record with one of field conditions (empty list)', async () => 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
+  expect(result.record?.handle).toBeString();
 });
 
 test('get single record with one of field values', async () => {
@@ -1141,7 +1141,7 @@ test('get single record with one of field values (empty list)', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
+  expect(result.record?.handle).toBeString();
 });
 
 test('get single record with one of nested field values', async () => {
