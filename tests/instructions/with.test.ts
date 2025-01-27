@@ -1017,6 +1017,47 @@ test('get single record with one of field conditions', async () => {
   expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
 });
 
+test('get single record with one of field conditions (empty list)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: [],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
+});
+
 test('get single record with one of field values', async () => {
   const queries: Array<Query> = [
     {
