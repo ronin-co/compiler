@@ -1101,6 +1101,49 @@ test('get single record with one of field values', async () => {
   expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
 });
 
+test('get single record with one of field values (empty list)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: {
+              being: [],
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.handle).toBeOneOf(['elaine', 'david']);
+});
+
 test('get single record with one of nested field values', async () => {
   const queries: Array<Query> = [
     {
@@ -1134,6 +1177,52 @@ test('get single record with one of nested field values', async () => {
     {
       statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency" FROM "teams" WHERE "billing.currency" = ?1 OR "billing.currency" = ?2 LIMIT 1`,
       params: ['EUR', 'USD'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect((result.record?.billing as Record<string, unknown>).currency).toBeOneOf([
+    'EUR',
+    'USD',
+  ]);
+});
+
+test('get single record with one of nested field values (empty list)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        team: {
+          with: {
+            billing: {
+              currency: [],
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: [
+        {
+          slug: 'billing.currency',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency" FROM "teams" LIMIT 1`,
+      params: [],
       returning: true,
     },
   ]);
