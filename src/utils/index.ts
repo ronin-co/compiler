@@ -240,7 +240,8 @@ export const compileQueryInput = (
 
   if (
     instructions &&
-    (Object.hasOwn(instructions, 'before') || Object.hasOwn(instructions, 'after'))
+    (typeof instructions.before !== 'undefined' ||
+      typeof instructions.after !== 'undefined')
   ) {
     if (single) {
       throw new RoninError({

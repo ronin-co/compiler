@@ -1,5 +1,9 @@
 import { expect, test } from 'bun:test';
-import { RECORD_TIMESTAMP_REGEX, queryEphemeralDatabase } from '@/fixtures/utils';
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { RoninError } from '@/src/utils/helpers';
@@ -618,6 +622,132 @@ test('get multiple records before cursor while filtering', async () => {
 
   expect(result.moreBefore).toBe(firstRecordTime.getTime().toString());
   expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
+});
+
+test('get multiple records before undefined cursor', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          before: undefined,
+          limitedTo: 2,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: expect.any(String),
+    },
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: expect.any(String),
+    },
+  ]);
+});
+
+test('get multiple records after undefined cursor', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          after: undefined,
+          limitedTo: 2,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'name',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: expect.any(String),
+    },
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      name: expect.any(String),
+    },
+  ]);
 });
 
 test('try to paginate without providing page size', () => {
