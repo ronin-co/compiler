@@ -340,8 +340,15 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
     });
   }
 
-  if (Object.keys(defaultPresets).length > 0) {
-    model.presets = [...defaultPresets, ...(model.presets || [])];
+  if (defaultPresets.length > 0) {
+    const existingPresets = model.presets || [];
+    const additionalPresets = defaultPresets.filter((preset) => {
+      return !existingPresets.some(
+        (existingPreset) => existingPreset.slug === preset.slug,
+      );
+    });
+
+    model.presets = [...additionalPresets, ...existingPresets];
   }
 
   return model;
