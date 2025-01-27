@@ -187,7 +187,11 @@ export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
   // If the model is being newly created or if new fields were provided for an existing
   // model, we would like to attach the system fields to the model.
   if (isNew || newFields.length > 0) {
-    copiedModel.fields = [...getSystemFields(copiedModel.idPrefix), ...newFields];
+    const additionalFields = getSystemFields(copiedModel.idPrefix).filter((field) => {
+      return !newFields.some((newField) => newField.slug === field.slug);
+    });
+
+    copiedModel.fields = [...additionalFields, ...newFields];
   }
 
   return copiedModel as Model;

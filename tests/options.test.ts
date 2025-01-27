@@ -106,3 +106,50 @@ test('inline statement parameters containing serialized expression', async () =>
     fields: [...getSystemFields('acc'), newField],
   });
 });
+
+test('provide models containing default fields', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        ...getSystemFields('acc'),
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    inlineParams: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = 'elaine' LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    handle: 'elaine',
+  });
+});
