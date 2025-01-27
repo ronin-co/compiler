@@ -182,16 +182,17 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
  */
 export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
   const copiedModel = { ...model };
-  const newFields = copiedModel.fields || [];
+  const existingFields = copiedModel.fields || [];
 
   // If the model is being newly created or if new fields were provided for an existing
   // model, we would like to attach the system fields to the model.
-  if (isNew || newFields.length > 0) {
-    const additionalFields = getSystemFields(copiedModel.idPrefix).filter((field) => {
-      return !newFields.some((newField) => newField.slug === field.slug);
+  if (isNew || existingFields.length > 0) {
+    // Only add default fields that are not already present in the model.
+    const additionalFields = getSystemFields(copiedModel.idPrefix).filter((newField) => {
+      return !existingFields.some(({ slug }) => slug === newField.slug);
     });
 
-    copiedModel.fields = [...additionalFields, ...newFields];
+    copiedModel.fields = [...additionalFields, ...existingFields];
   }
 
   return copiedModel as Model;
@@ -342,10 +343,10 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
 
   if (defaultPresets.length > 0) {
     const existingPresets = model.presets || [];
-    const additionalPresets = defaultPresets.filter((preset) => {
-      return !existingPresets.some(
-        (existingPreset) => existingPreset.slug === preset.slug,
-      );
+
+    // Only add default presets that are not already present in the model.
+    const additionalPresets = defaultPresets.filter((newPreset) => {
+      return !existingPresets.some(({ slug }) => slug === newPreset.slug);
     });
 
     model.presets = [...additionalPresets, ...existingPresets];
