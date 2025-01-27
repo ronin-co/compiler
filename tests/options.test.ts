@@ -106,3 +106,118 @@ test('inline statement parameters containing serialized expression', async () =>
     fields: [...getSystemFields('acc'), newField],
   });
 });
+
+// Ensure that default fields are not repeated if they are already present.
+test('provide models containing default fields', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        ...getSystemFields('acc'),
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    inlineParams: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = 'elaine' LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    handle: 'elaine',
+  });
+});
+
+// Ensure that default presets are not repeated if they are already present.
+test('provide models containing default presets', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          for: ['account'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'link',
+          target: 'account',
+        },
+      ],
+      presets: [
+        {
+          slug: 'account',
+          instructions: {
+            with: {
+              account: {
+                handle: 'elaine',
+              },
+            },
+          },
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    inlineParams: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = (SELECT "id" FROM "accounts" WHERE "handle" = 'elaine' LIMIT 1) LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    account: 'acc_39h8fhe98hefah8j',
+  });
+});
