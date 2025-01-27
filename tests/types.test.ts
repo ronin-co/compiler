@@ -74,7 +74,7 @@ test('remove single record', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'DELETE FROM "accounts" WHERE ("handle" = ?1) RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
+        'DELETE FROM "accounts" WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
       params: ['elaine'],
       returning: true,
     },

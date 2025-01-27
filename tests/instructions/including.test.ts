@@ -1428,7 +1428,7 @@ test('get single record including ephemeral field containing expression', async 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName", "lastName", "handle", ("firstName" || ' ' || "lastName") as "fullName" FROM "accounts" WHERE ("handle" = ?1) LIMIT 1`,
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName", "lastName", "handle", ("firstName" || ' ' || "lastName") as "fullName" FROM "accounts" WHERE "handle" = ?1 LIMIT 1`,
       params: ['elaine'],
       returning: true,
     },

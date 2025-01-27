@@ -579,7 +579,7 @@ test('get multiple records before cursor while filtering', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "products" WHERE (("name" IS NOT NULL) AND (("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "products" WHERE ("name" IS NOT NULL AND (("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
