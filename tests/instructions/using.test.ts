@@ -9,12 +9,12 @@ import {
 import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
-test('get single record for preset', async () => {
+test('get single record using preset', async () => {
   const queries: Array<Query> = [
     {
       get: {
         member: {
-          for: ['specificAccount'],
+          using: ['specificAccount'],
         },
       },
     },
@@ -75,12 +75,12 @@ test('get single record for preset', async () => {
   });
 });
 
-test('get single record for preset containing field with condition', async () => {
+test('get single record using preset containing field with condition', async () => {
   const queries: Array<Query> = [
     {
       get: {
         product: {
-          for: {
+          using: {
             activeMember: 'acc_39h8fhe98hefah8j',
           },
         },
@@ -180,12 +180,12 @@ test('get single record for preset containing field with condition', async () =>
   });
 });
 
-test('get single record for preset containing field without condition', async () => {
+test('get single record using preset containing field without condition', async () => {
   const queries: Array<Query> = [
     {
       get: {
         product: {
-          for: {
+          using: {
             activeMember: 'acc_39h8fhe98hefah8j',
           },
         },
@@ -283,7 +283,7 @@ test('get single record for preset containing field without condition', async ()
   });
 });
 
-test('get single record for preset on existing object instruction', async () => {
+test('get single record using preset on existing object instruction', async () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -291,7 +291,7 @@ test('get single record for preset on existing object instruction', async () => 
           with: {
             account: 'acc_39h8fhe98hefah8j',
           },
-          for: ['specificTeam'],
+          using: ['specificTeam'],
         },
       },
     },
@@ -359,13 +359,13 @@ test('get single record for preset on existing object instruction', async () => 
   });
 });
 
-test('get single record for preset on existing array instruction', async () => {
+test('get single record using preset on existing array instruction', async () => {
   const queries: Array<Query> = [
     {
       get: {
         member: {
           selecting: ['account'],
-          for: ['selectedTeam'],
+          using: ['selectedTeam'],
         },
       },
     },
@@ -430,7 +430,7 @@ test('get single record including parent record (many-to-one)', async () => {
     {
       get: {
         member: {
-          for: ['account'],
+          using: ['account'],
         },
       },
     },
@@ -493,7 +493,7 @@ test('get single record including child records (one-to-many, defined manually)'
     {
       get: {
         beach: {
-          for: ['visitors'],
+          using: ['visitors'],
         },
       },
     },
@@ -565,7 +565,7 @@ test('get single record including child records (one-to-many, defined manually, 
     {
       get: {
         beach: {
-          for: ['visitors', 'volleyballTeams'],
+          using: ['visitors', 'volleyballTeams'],
         },
       },
     },
@@ -660,7 +660,7 @@ test('get single record including child records that are partially not found (on
     {
       get: {
         beach: {
-          for: ['visitors', 'soccerTeams'],
+          using: ['visitors', 'soccerTeams'],
         },
       },
     },
@@ -744,7 +744,7 @@ test('get single record including child records (one-to-many, defined automatica
       get: {
         account: {
           with: { handle: 'elaine' },
-          for: ['members'],
+          using: ['members'],
         },
       },
     },
@@ -827,7 +827,7 @@ test('try get single record with non-existing preset', () => {
     {
       get: {
         account: {
-          for: {
+          using: {
             activeMember: 'acc_39h8fhe98hefah8j',
           },
         },
