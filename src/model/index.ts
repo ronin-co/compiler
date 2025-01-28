@@ -740,7 +740,7 @@ export const transformMetaQuery = (
         Object.defineProperty(modelWithObjects, entity, { value: entities[entity] });
       }
 
-      queryTypeDetails = { to: modelWithObjects };
+      queryTypeDetails = { with: modelWithObjects };
 
       // Add any system models that might be needed by the model.
       getSystemModels(models, modelWithPresets).map((systemModel) => {

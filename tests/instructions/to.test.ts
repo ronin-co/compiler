@@ -234,7 +234,7 @@ test('add single record with many-cardinality link field (add)', async () => {
     {
       add: {
         account: {
-          to: {
+          with: {
             handle: 'markus',
             followers: [{ handle: 'david' }],
           },
@@ -847,7 +847,7 @@ test('add multiple records with nested sub query', async () => {
     {
       add: {
         users: {
-          to: {
+          with: {
             [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: null,
@@ -912,7 +912,7 @@ test('add multiple records with nested sub query including additional fields', a
     {
       add: {
         users: {
-          to: {
+          with: {
             [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: {
@@ -982,7 +982,7 @@ test('add multiple records with nested sub query and specific fields', async () 
     {
       add: {
         users: {
-          to: {
+          with: {
             [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: {
@@ -1048,7 +1048,7 @@ test('add multiple records with nested sub query and specific meta fields', asyn
     {
       add: {
         users: {
-          to: {
+          with: {
             [QUERY_SYMBOLS.QUERY]: {
               get: {
                 accounts: {
@@ -1108,7 +1108,7 @@ test('try to add multiple records with nested sub query including non-existent f
     {
       add: {
         newAccounts: {
-          to: {
+          with: {
             [QUERY_SYMBOLS.QUERY]: {
               get: {
                 oldAccounts: {

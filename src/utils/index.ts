@@ -9,6 +9,7 @@ import { handleWith } from '@/src/instructions/with';
 import { getModelBySlug, transformMetaQuery } from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
 import type {
+  CombinedInstructions,
   Instructions,
   InternalDependencyStatement,
   Query,
@@ -167,12 +168,18 @@ export const compileQueryInput = (
   }
 
   if (queryType === 'add' || queryType === 'set') {
+    const instructionName = queryType === 'add' ? 'with' : 'to';
+    const instructionValue = instructions![instructionName] as CombinedInstructions['to'];
+
     // This validation must be performed before any default fields (such as `ronin`) are
     // added to the record. Otherwise there are always fields present.
-    if (!isObject(instructions!.to) || Object.keys(instructions!.to).length === 0) {
+    if (
+      !(instructionValue && isObject(instructionValue)) ||
+      Object.keys(instructionValue).length === 0
+    ) {
       throw new RoninError({
-        message: `When using a \`${queryType}\` query, the \`to\` instruction must be a non-empty object.`,
-        code: 'INVALID_TO_VALUE',
+        message: `When using a \`${queryType}\` query, the \`${instructionName}\` instruction must be a non-empty object.`,
+        code: instructionName === 'to' ? 'INVALID_TO_VALUE' : 'INVALID_WITH_VALUE',
         queries: [query],
       });
     }
@@ -183,7 +190,7 @@ export const compileQueryInput = (
       statementParams,
       queryType,
       dependencyStatements,
-      { with: instructions!.with, to: instructions!.to },
+      { with: instructions!.with, to: instructionValue },
       options?.parentModel,
     );
 

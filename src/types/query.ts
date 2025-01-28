@@ -111,7 +111,7 @@ export type SetQuery = Record<
 >;
 export type AddQuery = Record<
   string,
-  Omit<CombinedInstructions, 'with' | 'using'> & { to: FieldSelector }
+  Omit<CombinedInstructions, 'with' | 'using'> & { with: FieldSelector }
 >;
 export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
 export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;

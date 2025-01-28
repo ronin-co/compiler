@@ -10,7 +10,7 @@ test('inline statement parameters', async () => {
     {
       add: {
         account: {
-          to: {
+          with: {
             handle: 'elaine',
             emails: ['test@site.co', 'elaine@site.com'],
           },

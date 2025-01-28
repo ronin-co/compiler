@@ -55,7 +55,7 @@ const prefillDatabase = async (
       });
 
       return formattedData.map((row): Query => {
-        return { add: { [createdModel.slug]: { to: row } } };
+        return { add: { [createdModel.slug]: { with: row } } };
       });
     },
   );

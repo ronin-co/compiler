@@ -63,7 +63,7 @@ test('create new model', () => {
         {
           add: {
             signup: {
-              to: {
+              with: {
                 year: 2000,
               },
             },
@@ -1282,7 +1282,7 @@ test('create new trigger for creating records', () => {
       {
         add: {
           signup: {
-            to: {
+            with: {
               year: 2000,
             },
           },
@@ -1335,7 +1335,7 @@ test('create new trigger for creating records with targeted fields', () => {
       {
         add: {
           signup: {
-            to: {
+            with: {
               year: 2000,
             },
           },
@@ -1394,7 +1394,7 @@ test('create new trigger for creating records with multiple effects', () => {
       {
         add: {
           signup: {
-            to: {
+            with: {
               year: 2000,
             },
           },
@@ -1403,7 +1403,7 @@ test('create new trigger for creating records with multiple effects', () => {
       {
         add: {
           candidate: {
-            to: {
+            with: {
               year: 2020,
             },
           },
@@ -1460,7 +1460,7 @@ test('create new per-record trigger for creating records', () => {
       {
         add: {
           member: {
-            to: {
+            with: {
               account: {
                 [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
               },
@@ -1593,7 +1593,7 @@ test('create new per-record trigger with filters for creating records', () => {
       {
         add: {
           member: {
-            to: {
+            with: {
               account: {
                 [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
               },
@@ -1677,7 +1677,7 @@ test('drop existing trigger', () => {
           action: 'INSERT',
           effects: [
             {
-              add: { member: { to: { account: 'test' } } },
+              add: { member: { with: { account: 'test' } } },
             },
           ],
         },
@@ -2003,7 +2003,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
     {
       add: {
         signup: {
-          to: {
+          with: {
             year: 2000,
           },
         },
