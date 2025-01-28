@@ -74,8 +74,8 @@ export type OrderedByInstruction = {
   descending?: Array<string | Expression>;
 };
 
-// For Instructions
-export type ForInstruction = Array<string> | Record<string, string>;
+// Using Instructions
+export type UsingInstruction = Array<string> | Record<string, string>;
 
 // Query Instructions
 export type CombinedInstructions = {
@@ -87,7 +87,7 @@ export type CombinedInstructions = {
   before?: string | null;
   after?: string | null;
   limitedTo?: number;
-  for?: ForInstruction;
+  using?: UsingInstruction;
 };
 
 export type InstructionSchema =
@@ -101,7 +101,7 @@ export type InstructionSchema =
   | 'before'
   | 'after'
   | 'limitedTo'
-  | 'for';
+  | 'using';
 
 // Query Types
 export type GetQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
@@ -111,7 +111,7 @@ export type SetQuery = Record<
 >;
 export type AddQuery = Record<
   string,
-  Omit<CombinedInstructions, 'with' | 'for'> & { to: FieldSelector }
+  Omit<CombinedInstructions, 'with' | 'using'> & { to: FieldSelector }
 >;
 export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
 export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
@@ -119,7 +119,7 @@ export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>
 // Individual Instructions
 export type GetInstructions = Omit<CombinedInstructions, 'to'>;
 export type SetInstructions = Omit<CombinedInstructions, 'to'> & { to: FieldSelector };
-export type AddInstructions = Omit<CombinedInstructions, 'with' | 'for'> & {
+export type AddInstructions = Omit<CombinedInstructions, 'with' | 'using'> & {
   to: FieldSelector;
 };
 export type RemoveInstructions = Omit<CombinedInstructions, 'to'>;

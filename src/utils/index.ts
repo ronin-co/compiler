@@ -1,5 +1,5 @@
 import { handleBeforeOrAfter } from '@/src/instructions/before-after';
-import { handleFor } from '@/src/instructions/for';
+import { handleUsing } from '@/src/instructions/for';
 import { handleIncluding } from '@/src/instructions/including';
 import { handleLimitedTo } from '@/src/instructions/limited-to';
 import { handleOrderedBy } from '@/src/instructions/ordered-by';
@@ -89,8 +89,8 @@ export const compileQueryInput = (
   const returning = options?.returning ?? true;
 
   // Apply any presets that are potentially being selected by the query.
-  if (instructions && Object.hasOwn(instructions, 'for')) {
-    instructions = handleFor(model, instructions);
+  if (instructions && typeof instructions.using !== 'undefined') {
+    instructions = handleUsing(model, instructions);
   }
 
   // If a `count` query was provided, ensure that the final select statement only includes

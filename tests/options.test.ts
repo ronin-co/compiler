@@ -161,7 +161,7 @@ test('provide models containing default presets', async () => {
     {
       get: {
         member: {
-          for: ['account'],
+          using: ['account'],
         },
       },
     },
