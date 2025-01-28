@@ -145,8 +145,7 @@ export const handleTo = (
         const query = compileQueryInput(
           {
             [subQueryType]: {
-              [associativeModelSlug]:
-                subQueryType === 'add' ? { to: recordDetails } : { with: recordDetails },
+              [associativeModelSlug]: { with: recordDetails },
             },
           },
           models,
