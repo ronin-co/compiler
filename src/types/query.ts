@@ -138,7 +138,9 @@ export type CreateQuery = {
 
 export type AlterQuery = {
   model: string;
-  to?: Partial<Omit<PublicModel, 'fields' | 'indexes' | 'triggers' | 'presets' | 'idPrefix'>>;
+  to?: Partial<
+    Omit<PublicModel, 'fields' | 'indexes' | 'triggers' | 'presets' | 'idPrefix'>
+  >;
   create?: {
     field?: ModelField;
     index?: ModelIndex;
