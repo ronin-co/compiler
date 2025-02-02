@@ -18,14 +18,14 @@ export const handleUsing = (
   // The `using` instruction might either contain an array of preset slugs, or an object
   // in which the keys are preset slugs and the values are arguments that should be
   // passed to the respective presets.
-  const normalizedFor = Array.isArray(instructions.using)
+  const normalizedUsing = Array.isArray(instructions.using)
     ? Object.fromEntries(instructions.using.map((presetSlug) => [presetSlug, null]))
     : instructions.using;
 
-  for (const presetSlug in normalizedFor) {
-    if (!Object.hasOwn(normalizedFor, presetSlug)) continue;
+  for (const presetSlug in normalizedUsing) {
+    if (!Object.hasOwn(normalizedUsing, presetSlug)) continue;
 
-    const arg = normalizedFor[presetSlug];
+    const arg = normalizedUsing[presetSlug];
     const preset = model.presets?.find((preset) => preset.slug === presetSlug);
 
     if (!preset) {
