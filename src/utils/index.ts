@@ -1,10 +1,10 @@
 import { handleBeforeOrAfter } from '@/src/instructions/before-after';
-import { handleUsing } from '@/src/instructions/for';
 import { handleIncluding } from '@/src/instructions/including';
 import { handleLimitedTo } from '@/src/instructions/limited-to';
 import { handleOrderedBy } from '@/src/instructions/ordered-by';
 import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
+import { handleUsing } from '@/src/instructions/using';
 import { handleWith } from '@/src/instructions/with';
 import { getModelBySlug, transformMetaQuery } from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
