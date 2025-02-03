@@ -92,7 +92,7 @@ export type ModelField = ModelFieldBasics &
         /** The target model of the relationship that is being established. */
         target: string;
         /** Whether the field should be related to one record, or many records. */
-        kind?: 'one' | 'many';
+        kind?: 'one';
         /**
          * If the target record is updated or deleted, the defined actions maybe executed.
          */
@@ -100,6 +100,14 @@ export type ModelField = ModelFieldBasics &
           onDelete?: ModelFieldLinkAction;
           onUpdate?: ModelFieldLinkAction;
         };
+      }
+    | {
+        /** The kind of value that should be stored inside the field. */
+        type: 'link';
+        /** The target model of the relationship that is being established. */
+        target: string;
+        /** Whether the field should be related to one record, or many records. */
+        kind: 'many';
       }
   );
 
