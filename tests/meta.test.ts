@@ -247,7 +247,7 @@ test('create new model that has system models associated with it', () => {
   const transaction = new Transaction(queries, { models });
 
   expect(transaction.statements[1]).toEqual({
-    statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('ron_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+    statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('ron_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id") ON DELETE CASCADE ON UPDATE CASCADE, "target" TEXT REFERENCES accounts("id") ON DELETE CASCADE ON UPDATE CASCADE)`,
     params: [],
   });
 });
@@ -750,7 +750,7 @@ test('create new field with many-cardinality relationship', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('ron_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id"), "target" TEXT REFERENCES accounts("id"))`,
+      statement: `CREATE TABLE "ronin_link_account_followers" ("id" TEXT PRIMARY KEY DEFAULT ('ron_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.locked" BOOLEAN, "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "source" TEXT REFERENCES accounts("id") ON DELETE CASCADE ON UPDATE CASCADE, "target" TEXT REFERENCES accounts("id") ON DELETE CASCADE ON UPDATE CASCADE)`,
       params: [],
     },
     {
