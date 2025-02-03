@@ -1,6 +1,7 @@
 import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
+import { compileQueryInput } from '@/src/utils';
 import {
   QUERY_SYMBOLS,
   RAW_FIELD_TYPES,
@@ -95,8 +96,23 @@ export const handleSelecting = (
 
       // A JOIN is being performed.
       if (symbol?.type === 'query') {
-        const { queryModel, queryInstructions } = splitQuery(symbol.value);
+        const { queryType, queryModel, queryInstructions } = splitQuery(symbol.value);
         const subQueryModel = getModelBySlug(models, queryModel);
+
+        if (queryType === 'count') {
+          const subSelect = compileQueryInput(symbol.value, models, statementParams, {
+            parentModel: { ...model, tableAlias: model.table },
+          });
+
+          selectedFields.push({
+            slug: key,
+            mountingPath: key,
+            type: 'number',
+            mountedValue: `(${subSelect.main.statement})`,
+          });
+
+          continue;
+        }
 
         // If a sub query was found in the `including` instruction, that means different
         // tables will be joined later on during the compilation of the query.
