@@ -324,11 +324,19 @@ export const getSystemModels = (models: Array<Model>, model: Model): Array<Model
               slug: 'source',
               type: 'link',
               target: model.slug,
+              actions: {
+                onDelete: 'CASCADE',
+                onUpdate: 'CASCADE',
+              },
             },
             {
               slug: 'target',
               type: 'link',
               target: relatedModel.slug,
+              actions: {
+                onDelete: 'CASCADE',
+                onUpdate: 'CASCADE',
+              },
             },
           ],
         });
