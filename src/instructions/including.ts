@@ -53,6 +53,9 @@ export const handleIncluding = (
     const { queryType, queryModel, queryInstructions } = splitQuery(symbol.value);
     let modifiableQueryInstructions = queryInstructions;
 
+    // If the query is of type `count`, it was already added in `handleSelecting` instead.
+    if (queryType === 'count') continue;
+
     const relatedModel = getModelBySlug(models, queryModel);
 
     let joinType: 'LEFT' | 'CROSS' = 'LEFT';
@@ -104,6 +107,7 @@ export const handleIncluding = (
         },
         models,
         statementParams,
+        { parentModel: model },
       );
 
       relatedTableSelector = `(${subSelect.main.statement})`;

@@ -516,6 +516,72 @@ test('get single record including unrelated records that are not found', async (
   });
 });
 
+test('get single record including count of unrelated records', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        account: {
+          including: {
+            memberAmount: {
+              [QUERY_SYMBOLS.QUERY]: {
+                count: {
+                  members: {
+                    with: {
+                      account: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", (SELECT (COUNT(*)) as "amount" FROM "members" WHERE "account" = "accounts"."id") as "memberAmount" FROM "accounts" LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    memberAmount: 2,
+  });
+});
+
 test('get multiple records including unrelated records with filter', async () => {
   const queries: Array<Query> = [
     {
@@ -1142,6 +1208,85 @@ test('get multiple records including unrelated records with filter (nested, hois
           team: 'tea_39h8fhe98hefah8j',
         },
       ],
+    },
+  ]);
+});
+
+test('get multiple records including count of unrelated records', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        accounts: {
+          including: {
+            memberAmount: {
+              [QUERY_SYMBOLS.QUERY]: {
+                count: {
+                  members: {
+                    with: {
+                      account: {
+                        [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT}id`,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", (SELECT (COUNT(*)) as "amount" FROM "members" WHERE "account" = "accounts"."id") as "memberAmount" FROM "accounts"`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toEqual([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      memberAmount: 2,
+    },
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      memberAmount: 1,
     },
   ]);
 });
