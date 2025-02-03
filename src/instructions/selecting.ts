@@ -99,6 +99,8 @@ export const handleSelecting = (
         const { queryType, queryModel, queryInstructions } = splitQuery(symbol.value);
         const subQueryModel = getModelBySlug(models, queryModel);
 
+        // If the query is of type `count`, generate a sub SQL statement for counting the
+        // records and add the result as a selected column to the main query.
         if (queryType === 'count') {
           const subSelect = compileQueryInput(symbol.value, models, statementParams, {
             parentModel: { ...model, tableAlias: model.table },
