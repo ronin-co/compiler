@@ -20,7 +20,7 @@ export const handleUsing = (
   // passed to the respective presets.
   const normalizedUsing = Array.isArray(instructions.using)
     ? Object.fromEntries(instructions.using.map((presetSlug) => [presetSlug, null]))
-    : (instructions.using as Record<string, unknown>);
+    : (instructions.using as Record<string, string>);
 
   // If a preset with the slug `links` is being requested, add the presets of all link
   // fields separately.
