@@ -20,10 +20,20 @@ export const handleUsing = (
   // passed to the respective presets.
   const normalizedUsing = Array.isArray(instructions.using)
     ? Object.fromEntries(instructions.using.map((presetSlug) => [presetSlug, null]))
-    : instructions.using;
+    : (instructions.using as Record<string, unknown>);
+
+  // If a preset with the slug `links` is being requested, add the presets of all link
+  // fields separately.
+  if ('links' in normalizedUsing) {
+    for (const field of model.fields) {
+      if (field.type !== 'link' || field.kind === 'many') continue;
+      normalizedUsing[field.slug] = null;
+    }
+  }
 
   for (const presetSlug in normalizedUsing) {
-    if (!Object.hasOwn(normalizedUsing, presetSlug)) continue;
+    // Ignore the `links` slug, because it is a special alias that is resolved above.
+    if (!Object.hasOwn(normalizedUsing, presetSlug) || presetSlug === 'links') continue;
 
     const arg = normalizedUsing[presetSlug];
     const preset = model.presets?.find((preset) => preset.slug === presetSlug);

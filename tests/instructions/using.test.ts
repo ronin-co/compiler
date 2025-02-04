@@ -425,6 +425,104 @@ test('get single record using preset on existing array instruction', async () =>
   });
 });
 
+test('get single record using preset for including all link fields', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          with: { id: 'mem_39h8fhe98hefah8j' },
+          using: ['links'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+      ],
+    },
+    {
+      slug: 'team',
+      fields: [
+        {
+          slug: 'locations',
+          type: 'json',
+        },
+      ],
+    },
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'account',
+          type: 'link',
+          target: 'account',
+        },
+        {
+          slug: 'team',
+          type: 'link',
+          target: 'team',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "members"."team", "including_team"."id" as "team.id", "including_team"."ronin.locked" as "team.ronin.locked", "including_team"."ronin.createdAt" as "team.ronin.createdAt", "including_team"."ronin.createdBy" as "team.ronin.createdBy", "including_team"."ronin.updatedAt" as "team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "team.ronin.updatedBy", "including_team"."locations" as "team.locations", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy", "including_account"."handle" as "account.handle" FROM "members" LEFT JOIN "teams" as "including_team" ON ("including_team"."id" = "members"."team")LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") WHERE "members"."id" = ?1 LIMIT 1',
+      params: ['mem_39h8fhe98hefah8j'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: 'mem_39h8fhe98hefah8j',
+    ronin: {
+      locked: false,
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    account: {
+      id: 'acc_39h8fhe98hefah8j',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      handle: 'elaine',
+    },
+    team: {
+      id: 'tea_39h8fhe98hefah8j',
+      ronin: {
+        locked: false,
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        createdBy: null,
+        updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        updatedBy: null,
+      },
+      locations: {
+        europe: 'berlin',
+      },
+    },
+  });
+});
+
 test('get single record including parent record (many-to-one)', async () => {
   const queries: Array<Query> = [
     {
