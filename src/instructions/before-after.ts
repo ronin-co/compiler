@@ -1,6 +1,6 @@
 import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
-import type { GetInstructions } from '@/src/types/query';
+import type { GetInstructions, QueryType } from '@/src/types/query';
 import { RoninError } from '@/src/utils/helpers';
 import { CURSOR_NULL_PLACEHOLDER, CURSOR_SEPARATOR } from '@/src/utils/pagination';
 import { prepareStatementValue } from '@/src/utils/statement';
@@ -16,6 +16,7 @@ import { prepareStatementValue } from '@/src/utils/statement';
  * @param model - The model associated with the current query.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
+ * @param queryType - The type of query that is being executed.
  * @param instructions - The instructions associated with the current query.
  *
  * @returns The SQL syntax for the provided `before` or `after` instruction.
@@ -23,6 +24,7 @@ import { prepareStatementValue } from '@/src/utils/statement';
 export const handleBeforeOrAfter = (
   model: Model,
   statementParams: Array<unknown> | null,
+  queryType: QueryType,
   instructions: {
     before?: GetInstructions['before'];
     after?: GetInstructions['after'];
@@ -45,7 +47,7 @@ export const handleBeforeOrAfter = (
     });
   }
 
-  if (!instructions.limitedTo) {
+  if (!instructions.limitedTo && queryType !== 'count') {
     let message = 'When providing a pagination cursor in the `before` or `after`';
     message += ' instruction, a `limitedTo` instruction must be provided as well, to';
     message += ' define the page size.';
