@@ -1,6 +1,7 @@
 import {
   PLURAL_MODEL_ENTITIES_VALUES,
   ROOT_MODEL,
+  ROOT_MODEL_WITH_ATTRIBUTES,
   getModelBySlug,
   getSystemModels,
 } from '@/src/model';
@@ -62,7 +63,7 @@ class Transaction {
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
-    const modelsWithAttributes = [ROOT_MODEL, ...models].map((model) => {
+    const modelsWithAttributes = models.map((model) => {
       return addDefaultModelAttributes(model, true);
     });
 
@@ -70,7 +71,7 @@ class Transaction {
       ...modelsWithAttributes.flatMap((model) => {
         return getSystemModels(modelsWithAttributes, model);
       }),
-      ...modelsWithAttributes,
+      ...[ROOT_MODEL_WITH_ATTRIBUTES, ...modelsWithAttributes],
     ].map((model) => {
       return addDefaultModelFields(model, true);
     });
@@ -81,7 +82,28 @@ class Transaction {
 
     const statements: Array<Statement> = [];
 
-    for (const query of queries) {
+    // Check if the list of queries contains any queries with the model `all`, as those
+    // must be expanded into multiple queries.
+    const expandedQueries: Array<{ query: Query; queryIndex?: number }> = queries.flatMap(
+      (query, queryIndex) => {
+        const { queryType, queryModel, queryInstructions } = splitQuery(query);
+
+        // If the model defined in the query is called `all`, that means we need to expand
+        // the query into multiple queries: One for each model.
+        if (queryModel === 'all') {
+          return modelsWithAttributes.map((model) => {
+            const query: Query = {
+              [queryType]: { [model.pluralSlug]: queryInstructions },
+            };
+            return { query, queryIndex };
+          });
+        }
+
+        return { query };
+      },
+    );
+
+    for (const { query, queryIndex } of expandedQueries) {
       const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
@@ -110,6 +132,7 @@ class Transaction {
           ...statement,
           query,
           selectedFields,
+          queryIndex,
         })),
       );
     }
@@ -119,25 +142,25 @@ class Transaction {
     return statements;
   };
 
-  #formatRows<Record = ResultRecord>(
+  #formatRows<RecordType = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: true,
     isMeta: boolean,
-  ): Record;
-  #formatRows<Record = ResultRecord>(
+  ): RecordType;
+  #formatRows<RecordType = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: false,
     isMeta: boolean,
-  ): Array<Record>;
+  ): Array<RecordType>;
 
-  #formatRows<Record = ResultRecord>(
+  #formatRows<RecordType = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: boolean,
     isMeta: boolean,
-  ): Record | Array<Record> {
+  ): RecordType | Array<RecordType> {
     const records: Array<ResultRecord> = [];
 
     for (const row of rows) {
@@ -264,14 +287,17 @@ class Transaction {
       }
     }
 
-    return single ? (records[0] as Record) : (records as Array<Record>);
+    return single ? (records[0] as RecordType) : (records as Array<RecordType>);
   }
 
-  formatResults<Record>(
+  formatResults<RecordType>(
     results: Array<Array<ObjectRow>>,
     raw?: false,
-  ): Array<Result<Record>>;
-  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
+  ): Array<Result<RecordType>>;
+  formatResults<RecordType>(
+    results: Array<Array<RawRow>>,
+    raw?: true,
+  ): Array<Result<RecordType>>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -285,10 +311,10 @@ class Transaction {
    * @returns A list of formatted RONIN results, where each result is either a single
    * RONIN record, an array of RONIN records, or a RONIN count result.
    */
-  formatResults<Record>(
+  formatResults<RecordType>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = false,
-  ): Array<Result<Record>> {
+  ): Array<Result<RecordType>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
@@ -314,9 +340,15 @@ class Transaction {
           });
         });
 
+    const expandedResults: Record<
+      number,
+      Record<PublicModel['slug'], Result<RecordType>>
+    > = {};
+
     const formattedResults = normalizedResults.map(
-      (rows, index): Result<Record> | null => {
-        const { returning, query, selectedFields } = this.#internalStatements[index];
+      (rows, index): Result<RecordType> | null => {
+        const { returning, query, selectedFields, queryIndex } =
+          this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
         // any results, so we can return early.
@@ -336,7 +368,15 @@ class Transaction {
 
         // The query is expected to count records.
         if (queryType === 'count') {
-          return { amount: rows[0][0] as number };
+          const output = { amount: rows[0][0] as number };
+
+          if (typeof queryIndex !== 'undefined') {
+            if (!expandedResults[queryIndex]) expandedResults[queryIndex] = {};
+            expandedResults[queryIndex][queryModel] = output;
+            return null;
+          }
+
+          return output;
         }
 
         // Whether the query will interact with a single record, or multiple at the same time.
@@ -344,19 +384,27 @@ class Transaction {
 
         // The query is targeting a single record.
         if (single) {
-          return {
+          const output = {
             record: rows[0]
-              ? this.#formatRows<Record>(selectedFields, rows, true, isMeta)
+              ? this.#formatRows<RecordType>(selectedFields, rows, true, isMeta)
               : null,
             modelFields,
           };
+
+          if (typeof queryIndex !== 'undefined') {
+            if (!expandedResults[queryIndex]) expandedResults[queryIndex] = {};
+            expandedResults[queryIndex][queryModel] = output;
+            return null;
+          }
+
+          return output;
         }
 
         const pageSize = queryInstructions?.limitedTo;
 
         // The query is targeting multiple records.
-        const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(selectedFields, rows, false, isMeta),
+        const output: MultipleRecordResult<RecordType> = {
+          records: this.#formatRows<RecordType>(selectedFields, rows, false, isMeta),
           modelFields,
         };
 
@@ -399,6 +447,12 @@ class Transaction {
               firstRecord,
             );
           }
+        }
+
+        if (typeof queryIndex !== 'undefined') {
+          if (!expandedResults[queryIndex]) expandedResults[queryIndex] = {};
+          expandedResults[queryIndex][queryModel] = output;
+          return null;
         }
 
         return output;

@@ -215,8 +215,15 @@ export interface Statement {
 }
 
 export interface InternalStatement extends Statement {
+  /** The RONIN query for which the SQL statement was generated. */
   query: Query;
+  /** The RONIN model fields that were selected for the SQL statement. */
   selectedFields: Array<InternalModelField>;
+  /**
+   * If the associated RONIN query was automatically generated because a different
+   * RONIN query was expanded, this contains the index of the original query.
+   */
+  queryIndex?: number;
 }
 
 export interface InternalDependencyStatement extends Statement {
