@@ -354,9 +354,11 @@ class Transaction {
           result: RegularResult<RecordType>,
         ): Array<Result<RecordType>> => {
           if (typeof expansionIndex !== 'undefined') {
-            if (!finalResults[expansionIndex]) finalResults[expansionIndex] = {};
-            (finalResults[expansionIndex] as ExpandedResult<RecordType>)[queryModel] =
-              result;
+            let match = finalResults[expansionIndex] as
+              | ExpandedResult<RecordType>
+              | undefined;
+            if (!match) match = finalResults[expansionIndex] = { models: {} };
+            match.models[queryModel] = result;
           } else {
             finalResults.push(result);
           }

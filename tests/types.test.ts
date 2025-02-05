@@ -250,59 +250,61 @@ test('get all records of all models', async () => {
   const result = transaction.formatResults(rawResults)[0];
 
   expect(result).toMatchObject({
-    accounts: {
-      records: [
-        {
-          id: expect.stringMatching(RECORD_ID_REGEX),
-          ronin: {
-            locked: false,
-            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            createdBy: null,
-            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            updatedBy: null,
+    models: {
+      accounts: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
           },
-        },
-        {
-          id: expect.stringMatching(RECORD_ID_REGEX),
-          ronin: {
-            locked: false,
-            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            createdBy: null,
-            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            updatedBy: null,
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
           },
-        },
-      ],
-      modelFields: expect.objectContaining({
-        id: 'string',
-      }),
-    },
-    teams: {
-      records: [
-        {
-          id: expect.stringMatching(RECORD_ID_REGEX),
-          ronin: {
-            locked: false,
-            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            createdBy: null,
-            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            updatedBy: null,
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+      },
+      teams: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
           },
-        },
-        {
-          id: expect.stringMatching(RECORD_ID_REGEX),
-          ronin: {
-            locked: false,
-            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            createdBy: null,
-            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            updatedBy: null,
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              locked: false,
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
           },
-        },
-      ],
-      modelFields: expect.objectContaining({
-        id: 'string',
-      }),
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+      },
     },
   });
 });
@@ -344,11 +346,13 @@ test('count all records of all models', async () => {
   const result = transaction.formatResults(rawResults)[0];
 
   expect(result).toMatchObject({
-    accounts: {
-      amount: 2,
-    },
-    beaches: {
-      amount: 4,
+    models: {
+      accounts: {
+        amount: 2,
+      },
+      beaches: {
+        amount: 4,
+      },
     },
   });
 });

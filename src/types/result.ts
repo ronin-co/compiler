@@ -39,6 +39,8 @@ export type RegularResult<T = ResultRecord> =
   | MultipleRecordResult<T>
   | AmountResult;
 
-export type ExpandedResult<T = ResultRecord> = Record<Model['slug'], RegularResult<T>>;
+export type ExpandedResult<T = ResultRecord> = {
+  models: Record<Model['slug'], RegularResult<T>>;
+};
 
 export type Result<T = ResultRecord> = RegularResult<T> | ExpandedResult<T>;
