@@ -86,8 +86,8 @@ class Transaction {
 
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
-    const expandedQueries: Array<{ query: Query; expansionIndex?: number }> = queries.flatMap(
-      (query, expansionIndex) => {
+    const expandedQueries: Array<{ query: Query; expansionIndex?: number }> =
+      queries.flatMap((query, expansionIndex) => {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the model defined in the query is called `all`, that means we need to expand
@@ -102,8 +102,7 @@ class Transaction {
         }
 
         return { query };
-      },
-    );
+      });
 
     for (const { query, expansionIndex } of expandedQueries) {
       const { dependencies, main, selectedFields } = compileQueryInput(
@@ -356,7 +355,8 @@ class Transaction {
         ): Array<Result<RecordType>> => {
           if (typeof expansionIndex !== 'undefined') {
             if (!finalResults[expansionIndex]) finalResults[expansionIndex] = {};
-            (finalResults[expansionIndex] as ExpandedResult<RecordType>)[queryModel] = result;
+            (finalResults[expansionIndex] as ExpandedResult<RecordType>)[queryModel] =
+              result;
           } else {
             finalResults.push(result);
           }
