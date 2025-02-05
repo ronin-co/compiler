@@ -223,7 +223,7 @@ export interface InternalStatement extends Statement {
    * If the associated RONIN query was automatically generated because a different
    * RONIN query was expanded, this contains the index of the original query.
    */
-  queryIndex?: number;
+  expansionIndex?: number;
 }
 
 export interface InternalDependencyStatement extends Statement {

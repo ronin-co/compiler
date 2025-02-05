@@ -86,8 +86,8 @@ class Transaction {
 
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
-    const expandedQueries: Array<{ query: Query; queryIndex?: number }> = queries.flatMap(
-      (query, queryIndex) => {
+    const expandedQueries: Array<{ query: Query; expansionIndex?: number }> = queries.flatMap(
+      (query, expansionIndex) => {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the model defined in the query is called `all`, that means we need to expand
@@ -97,7 +97,7 @@ class Transaction {
             const query: Query = {
               [queryType]: { [model.pluralSlug]: queryInstructions },
             };
-            return { query, queryIndex };
+            return { query, expansionIndex };
           });
         }
 
@@ -105,7 +105,7 @@ class Transaction {
       },
     );
 
-    for (const { query, queryIndex } of expandedQueries) {
+    for (const { query, expansionIndex } of expandedQueries) {
       const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
@@ -134,7 +134,7 @@ class Transaction {
           ...statement,
           query,
           selectedFields,
-          queryIndex,
+          expansionIndex,
         })),
       );
     }
@@ -344,7 +344,7 @@ class Transaction {
 
     return normalizedResults.reduce(
       (finalResults, rows, index) => {
-        const { returning, query, selectedFields, queryIndex } =
+        const { returning, query, selectedFields, expansionIndex } =
           this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
@@ -354,9 +354,9 @@ class Transaction {
         const addResult = (
           result: RegularResult<RecordType>,
         ): Array<Result<RecordType>> => {
-          if (typeof queryIndex !== 'undefined') {
-            if (!finalResults[queryIndex]) finalResults[queryIndex] = {};
-            (finalResults[queryIndex] as ExpandedResult<RecordType>)[queryModel] = result;
+          if (typeof expansionIndex !== 'undefined') {
+            if (!finalResults[expansionIndex]) finalResults[expansionIndex] = {};
+            (finalResults[expansionIndex] as ExpandedResult<RecordType>)[queryModel] = result;
           } else {
             finalResults.push(result);
           }
