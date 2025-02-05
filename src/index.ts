@@ -1,6 +1,7 @@
 import {
   PLURAL_MODEL_ENTITIES_VALUES,
   ROOT_MODEL,
+  ROOT_MODEL_WITH_ATTRIBUTES,
   getModelBySlug,
   getSystemModels,
 } from '@/src/model';
@@ -16,9 +17,11 @@ import type {
 } from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
+  ExpandedResult,
   MultipleRecordResult,
   ObjectRow,
   RawRow,
+  RegularResult,
   Result,
   ResultRecord,
 } from '@/src/types/result';
@@ -62,7 +65,7 @@ class Transaction {
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
-    const modelsWithAttributes = [ROOT_MODEL, ...models].map((model) => {
+    const modelsWithAttributes = models.map((model) => {
       return addDefaultModelAttributes(model, true);
     });
 
@@ -70,7 +73,7 @@ class Transaction {
       ...modelsWithAttributes.flatMap((model) => {
         return getSystemModels(modelsWithAttributes, model);
       }),
-      ...modelsWithAttributes,
+      ...[ROOT_MODEL_WITH_ATTRIBUTES, ...modelsWithAttributes],
     ].map((model) => {
       return addDefaultModelFields(model, true);
     });
@@ -81,7 +84,27 @@ class Transaction {
 
     const statements: Array<Statement> = [];
 
-    for (const query of queries) {
+    // Check if the list of queries contains any queries with the model `all`, as those
+    // must be expanded into multiple queries.
+    const expandedQueries: Array<{ query: Query; expansionIndex?: number }> =
+      queries.flatMap((query, expansionIndex) => {
+        const { queryType, queryModel, queryInstructions } = splitQuery(query);
+
+        // If the model defined in the query is called `all`, that means we need to expand
+        // the query into multiple queries: One for each model.
+        if (queryModel === 'all') {
+          return modelsWithAttributes.map((model) => {
+            const query: Query = {
+              [queryType]: { [model.pluralSlug]: queryInstructions },
+            };
+            return { query, expansionIndex };
+          });
+        }
+
+        return { query };
+      });
+
+    for (const { query, expansionIndex } of expandedQueries) {
       const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
@@ -110,6 +133,7 @@ class Transaction {
           ...statement,
           query,
           selectedFields,
+          expansionIndex,
         })),
       );
     }
@@ -119,25 +143,25 @@ class Transaction {
     return statements;
   };
 
-  #formatRows<Record = ResultRecord>(
+  #formatRows<RecordType = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: true,
     isMeta: boolean,
-  ): Record;
-  #formatRows<Record = ResultRecord>(
+  ): RecordType;
+  #formatRows<RecordType = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: false,
     isMeta: boolean,
-  ): Array<Record>;
+  ): Array<RecordType>;
 
-  #formatRows<Record = ResultRecord>(
+  #formatRows<RecordType = ResultRecord>(
     fields: Array<InternalModelField>,
     rows: Array<RawRow>,
     single: boolean,
     isMeta: boolean,
-  ): Record | Array<Record> {
+  ): RecordType | Array<RecordType> {
     const records: Array<ResultRecord> = [];
 
     for (const row of rows) {
@@ -264,14 +288,17 @@ class Transaction {
       }
     }
 
-    return single ? (records[0] as Record) : (records as Array<Record>);
+    return single ? (records[0] as RecordType) : (records as Array<RecordType>);
   }
 
-  formatResults<Record>(
+  formatResults<RecordType>(
     results: Array<Array<ObjectRow>>,
     raw?: false,
-  ): Array<Result<Record>>;
-  formatResults<Record>(results: Array<Array<RawRow>>, raw?: true): Array<Result<Record>>;
+  ): Array<Result<RecordType>>;
+  formatResults<RecordType>(
+    results: Array<Array<RawRow>>,
+    raw?: true,
+  ): Array<Result<RecordType>>;
 
   /**
    * Format the results returned from the database into RONIN records.
@@ -285,10 +312,10 @@ class Transaction {
    * @returns A list of formatted RONIN results, where each result is either a single
    * RONIN record, an array of RONIN records, or a RONIN count result.
    */
-  formatResults<Record>(
+  formatResults<RecordType>(
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = false,
-  ): Array<Result<Record>> {
+  ): Array<Result<RecordType>> {
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
@@ -314,13 +341,28 @@ class Transaction {
           });
         });
 
-    const formattedResults = normalizedResults.map(
-      (rows, index): Result<Record> | null => {
-        const { returning, query, selectedFields } = this.#internalStatements[index];
+    return normalizedResults.reduce(
+      (finalResults, rows, index) => {
+        const { returning, query, selectedFields, expansionIndex } =
+          this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
         // any results, so we can return early.
-        if (!returning) return null;
+        if (!returning) return finalResults;
+
+        const addResult = (
+          result: RegularResult<RecordType>,
+        ): Array<Result<RecordType>> => {
+          if (typeof expansionIndex !== 'undefined') {
+            if (!finalResults[expansionIndex]) finalResults[expansionIndex] = {};
+            (finalResults[expansionIndex] as ExpandedResult<RecordType>)[queryModel] =
+              result;
+          } else {
+            finalResults.push(result);
+          }
+
+          return finalResults;
+        };
 
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
         const model = getModelBySlug(this.models, queryModel);
@@ -336,7 +378,7 @@ class Transaction {
 
         // The query is expected to count records.
         if (queryType === 'count') {
-          return { amount: rows[0][0] as number };
+          return addResult({ amount: rows[0][0] as number });
         }
 
         // Whether the query will interact with a single record, or multiple at the same time.
@@ -344,41 +386,41 @@ class Transaction {
 
         // The query is targeting a single record.
         if (single) {
-          return {
+          return addResult({
             record: rows[0]
-              ? this.#formatRows<Record>(selectedFields, rows, true, isMeta)
+              ? this.#formatRows<RecordType>(selectedFields, rows, true, isMeta)
               : null,
             modelFields,
-          };
+          });
         }
 
         const pageSize = queryInstructions?.limitedTo;
 
         // The query is targeting multiple records.
-        const output: MultipleRecordResult<Record> = {
-          records: this.#formatRows<Record>(selectedFields, rows, false, isMeta),
+        const result: MultipleRecordResult<RecordType> = {
+          records: this.#formatRows<RecordType>(selectedFields, rows, false, isMeta),
           modelFields,
         };
 
         // If the amount of records was limited to a specific amount, that means pagination
         // should be activated. This is only possible if the query matched any records.
-        if (pageSize && output.records.length > 0) {
+        if (pageSize && result.records.length > 0) {
           // Pagination cursor for the next page.
-          if (output.records.length > pageSize) {
+          if (result.records.length > pageSize) {
             // Remove one record from the list, because we always load one too much, in
             // order to see if there are more records available.
             if (queryInstructions?.before) {
-              output.records.shift();
+              result.records.shift();
             } else {
-              output.records.pop();
+              result.records.pop();
             }
 
             const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
-            const lastRecord = output.records.at(
+            const lastRecord = result.records.at(
               direction === 'moreAfter' ? -1 : 0,
             ) as ResultRecord;
 
-            output[direction] = generatePaginationCursor(
+            result[direction] = generatePaginationCursor(
               model,
               queryInstructions.orderedBy,
               lastRecord,
@@ -389,11 +431,11 @@ class Transaction {
           // cursor was provided in the query instructions.
           if (queryInstructions?.before || queryInstructions?.after) {
             const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
-            const firstRecord = output.records.at(
+            const firstRecord = result.records.at(
               direction === 'moreAfter' ? -1 : 0,
             ) as ResultRecord;
 
-            output[direction] = generatePaginationCursor(
+            result[direction] = generatePaginationCursor(
               model,
               queryInstructions.orderedBy,
               firstRecord,
@@ -401,12 +443,10 @@ class Transaction {
           }
         }
 
-        return output;
+        return addResult(result);
       },
+      [] as Array<Result<RecordType>>,
     );
-
-    // Filter out results whose statements are not expected to return any data.
-    return formattedResults.filter((result) => result !== null);
   }
 }
 

@@ -288,6 +288,12 @@ export const ROOT_MODEL: PartialModel = {
 };
 
 /**
+ * We're adding the attributes of the root model at bootup time, so that the performance
+ * of the query compilation is not affected.
+ */
+export const ROOT_MODEL_WITH_ATTRIBUTES = addDefaultModelAttributes(ROOT_MODEL, true);
+
+/**
  * Composes a list of potential system models that might be required for a manually
  * provided model.
  *

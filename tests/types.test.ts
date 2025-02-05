@@ -212,3 +212,143 @@ test('pass multiple record queries at once', async () => {
     },
   ]);
 });
+
+test('get all records of all models', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        all: null,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'team',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts"`,
+      params: [],
+      returning: true,
+    },
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams"`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0];
+
+  expect(result).toMatchObject({
+    accounts: {
+      records: [
+        {
+          id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+        {
+          id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+      ],
+      modelFields: expect.objectContaining({
+        id: 'string',
+      }),
+    },
+    teams: {
+      records: [
+        {
+          id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+        {
+          id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            locked: false,
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        },
+      ],
+      modelFields: expect.objectContaining({
+        id: 'string',
+      }),
+    },
+  });
+});
+
+test('count all records of all models', async () => {
+  const queries: Array<Query> = [
+    {
+      count: {
+        all: null,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'beach',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT (COUNT(*)) as "amount" FROM "accounts"`,
+      params: [],
+      returning: true,
+    },
+    {
+      statement: `SELECT (COUNT(*)) as "amount" FROM "beaches"`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0];
+
+  expect(result).toMatchObject({
+    accounts: {
+      amount: 2,
+    },
+    beaches: {
+      amount: 4,
+    },
+  });
+});
