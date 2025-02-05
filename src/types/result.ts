@@ -1,4 +1,4 @@
-import type { ModelField } from '@/src/types/model';
+import type { Model, ModelField } from '@/src/types/model';
 
 export type RawRow = Array<unknown>;
 export type ObjectRow = Record<string, unknown>;
@@ -34,7 +34,11 @@ export type AmountResult = {
   amount: number;
 };
 
-export type Result<T = ResultRecord> =
+export type RegularResult<T = ResultRecord> =
   | SingleRecordResult<T>
   | MultipleRecordResult<T>
   | AmountResult;
+
+export type ExpandedResult<T = ResultRecord> = Record<Model['slug'], RegularResult<T>>;
+
+export type Result<T = ResultRecord> = RegularResult<T> | ExpandedResult<T>;

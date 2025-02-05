@@ -227,7 +227,7 @@ test('count all records of all models', async () => {
       slug: 'account',
     },
     {
-      slug: 'team',
+      slug: 'beach',
     },
   ];
 
@@ -240,14 +240,21 @@ test('count all records of all models', async () => {
       returning: true,
     },
     {
-      statement: `SELECT (COUNT(*)) as "amount" FROM "teams"`,
+      statement: `SELECT (COUNT(*)) as "amount" FROM "beaches"`,
       params: [],
       returning: true,
     },
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults);
+  const result = transaction.formatResults(rawResults)[0];
 
-  console.log('result', result);
+  expect(result).toMatchObject({
+    accounts: {
+      amount: 2,
+    },
+    beaches: {
+      amount: 4,
+    },
+  });
 });

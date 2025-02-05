@@ -17,9 +17,11 @@ import type {
 } from '@/src/types/model';
 import type { InternalStatement, Query, Statement } from '@/src/types/query';
 import type {
+  ExpandedResult,
   MultipleRecordResult,
   ObjectRow,
   RawRow,
+  RegularResult,
   Result,
   ResultRecord,
 } from '@/src/types/result';
@@ -340,19 +342,27 @@ class Transaction {
           });
         });
 
-    const expandedResults: Record<
-      number,
-      Record<PublicModel['slug'], Result<RecordType>>
-    > = {};
-
-    const formattedResults = normalizedResults.map(
-      (rows, index): Result<RecordType> | null => {
+    return normalizedResults.reduce(
+      (finalResults, rows, index) => {
         const { returning, query, selectedFields, queryIndex } =
           this.#internalStatements[index];
 
         // If the statement is not expected to return any data, there is no need to format
         // any results, so we can return early.
-        if (!returning) return null;
+        if (!returning) return finalResults;
+
+        const addResult = (
+          result: RegularResult<RecordType>,
+        ): Array<Result<RecordType>> => {
+          if (typeof queryIndex !== 'undefined') {
+            if (!finalResults[queryIndex]) finalResults[queryIndex] = {};
+            (finalResults[queryIndex] as ExpandedResult<RecordType>)[queryModel] = result;
+          } else {
+            finalResults.push(result);
+          }
+
+          return finalResults;
+        };
 
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
         const model = getModelBySlug(this.models, queryModel);
@@ -368,15 +378,7 @@ class Transaction {
 
         // The query is expected to count records.
         if (queryType === 'count') {
-          const output = { amount: rows[0][0] as number };
-
-          if (typeof queryIndex !== 'undefined') {
-            if (!expandedResults[queryIndex]) expandedResults[queryIndex] = {};
-            expandedResults[queryIndex][queryModel] = output;
-            return null;
-          }
-
-          return output;
+          return addResult({ amount: rows[0][0] as number });
         }
 
         // Whether the query will interact with a single record, or multiple at the same time.
@@ -384,49 +386,41 @@ class Transaction {
 
         // The query is targeting a single record.
         if (single) {
-          const output = {
+          return addResult({
             record: rows[0]
               ? this.#formatRows<RecordType>(selectedFields, rows, true, isMeta)
               : null,
             modelFields,
-          };
-
-          if (typeof queryIndex !== 'undefined') {
-            if (!expandedResults[queryIndex]) expandedResults[queryIndex] = {};
-            expandedResults[queryIndex][queryModel] = output;
-            return null;
-          }
-
-          return output;
+          });
         }
 
         const pageSize = queryInstructions?.limitedTo;
 
         // The query is targeting multiple records.
-        const output: MultipleRecordResult<RecordType> = {
+        const result: MultipleRecordResult<RecordType> = {
           records: this.#formatRows<RecordType>(selectedFields, rows, false, isMeta),
           modelFields,
         };
 
         // If the amount of records was limited to a specific amount, that means pagination
         // should be activated. This is only possible if the query matched any records.
-        if (pageSize && output.records.length > 0) {
+        if (pageSize && result.records.length > 0) {
           // Pagination cursor for the next page.
-          if (output.records.length > pageSize) {
+          if (result.records.length > pageSize) {
             // Remove one record from the list, because we always load one too much, in
             // order to see if there are more records available.
             if (queryInstructions?.before) {
-              output.records.shift();
+              result.records.shift();
             } else {
-              output.records.pop();
+              result.records.pop();
             }
 
             const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
-            const lastRecord = output.records.at(
+            const lastRecord = result.records.at(
               direction === 'moreAfter' ? -1 : 0,
             ) as ResultRecord;
 
-            output[direction] = generatePaginationCursor(
+            result[direction] = generatePaginationCursor(
               model,
               queryInstructions.orderedBy,
               lastRecord,
@@ -437,11 +431,11 @@ class Transaction {
           // cursor was provided in the query instructions.
           if (queryInstructions?.before || queryInstructions?.after) {
             const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
-            const firstRecord = output.records.at(
+            const firstRecord = result.records.at(
               direction === 'moreAfter' ? -1 : 0,
             ) as ResultRecord;
 
-            output[direction] = generatePaginationCursor(
+            result[direction] = generatePaginationCursor(
               model,
               queryInstructions.orderedBy,
               firstRecord,
@@ -449,18 +443,10 @@ class Transaction {
           }
         }
 
-        if (typeof queryIndex !== 'undefined') {
-          if (!expandedResults[queryIndex]) expandedResults[queryIndex] = {};
-          expandedResults[queryIndex][queryModel] = output;
-          return null;
-        }
-
-        return output;
+        return addResult(result);
       },
+      [] as Array<Result<RecordType>>,
     );
-
-    // Filter out results whose statements are not expected to return any data.
-    return formattedResults.filter((result) => result !== null);
   }
 }
 
