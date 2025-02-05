@@ -224,9 +224,9 @@ export const compileQueryInput = (
   // specific column, otherwise the cursor wouldn't work, since the order of the rows
   // might differ between pages.
   if (
-    (queryType === 'get' || queryType === 'count') &&
     !single &&
-    instructions?.limitedTo
+    ((queryType === 'get' && instructions?.limitedTo) ||
+      (queryType === 'count' && (instructions?.before || instructions?.after)))
   ) {
     instructions = instructions || {};
     instructions.orderedBy = instructions.orderedBy || {};
@@ -259,13 +259,18 @@ export const compileQueryInput = (
       });
     }
 
-    const beforeAndAfterStatement = handleBeforeOrAfter(model, statementParams, {
-      before: instructions.before,
-      after: instructions.after,
-      with: instructions.with,
-      orderedBy: instructions.orderedBy,
-      limitedTo: instructions.limitedTo,
-    });
+    const beforeAndAfterStatement = handleBeforeOrAfter(
+      model,
+      statementParams,
+      queryType,
+      {
+        before: instructions.before,
+        after: instructions.after,
+        with: instructions.with,
+        orderedBy: instructions.orderedBy,
+        limitedTo: instructions.limitedTo,
+      },
+    );
 
     conditions.push(beforeAndAfterStatement);
   }

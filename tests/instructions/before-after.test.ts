@@ -5,7 +5,7 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
-import type { MultipleRecordResult } from '@/src/types/result';
+import type { AmountResult, MultipleRecordResult } from '@/src/types/result';
 import { RoninError } from '@/src/utils/helpers';
 import { CURSOR_NULL_PLACEHOLDER } from '@/src/utils/pagination';
 
@@ -750,7 +750,7 @@ test('get multiple records after undefined cursor', async () => {
   ]);
 });
 
-test('try to paginate without providing page size', () => {
+test('get multiple records before cursor without limit', () => {
   const queries: Array<Query> = [
     {
       get: {
@@ -781,4 +781,37 @@ test('try to paginate without providing page size', () => {
     'When providing a pagination cursor in the `before` or `after` instruction, a `limitedTo` instruction must be provided as well, to define the page size.',
   );
   expect(error).toHaveProperty('code', 'MISSING_INSTRUCTION');
+});
+
+test('count multiple records before cursor without limit', async () => {
+  const queries: Array<Query> = [
+    {
+      count: {
+        accounts: {
+          before: '1667575193779',
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT (COUNT(*)) as "amount" FROM "accounts" WHERE (("ronin.createdAt" > '2022-11-04T15:19:53.779Z')) ORDER BY "ronin.createdAt" DESC`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as AmountResult;
+
+  expect(result.amount).toBeNumber();
 });
