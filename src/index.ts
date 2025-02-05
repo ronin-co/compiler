@@ -495,7 +495,12 @@ export type {
 } from '@/src/types/query';
 
 // Expose result types
-export type { Result, ResultRecord } from '@/src/types/result';
+export type {
+  Result,
+  RegularResult,
+  ExpandedResult,
+  ResultRecord,
+} from '@/src/types/result';
 
 // Strip any properties from the root model that are internal
 const CLEAN_ROOT_MODEL = omit(ROOT_MODEL, ['system']) as PublicModel;
