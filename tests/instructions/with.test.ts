@@ -874,6 +874,47 @@ test('get single record with blob field', async () => {
   expect(result.record?.avatar).toHaveProperty('meta.type', 'image/png');
 });
 
+test('get single record with empty field', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beach: {
+          with: {
+            region: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: [
+        {
+          slug: 'region',
+          type: 'string',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "region" FROM "beaches" WHERE "region" IS NULL LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('region', null);
+});
+
 test('get single record with one of fields', async () => {
   const queries: Array<Query> = [
     {
