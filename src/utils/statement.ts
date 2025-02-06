@@ -126,6 +126,8 @@ export const prepareStatementValue = (
   // which is desired in cases where there is no risk of SQL injection and where the
   // values must be plainly visible for manual human inspection.
   if (!statementParams) {
+    if (typeof value === 'boolean') return value ? '1' : '0';
+
     const valueString =
       typeof value === 'object'
         ? `json('${JSON.stringify(value, replaceJSON)}')`
