@@ -139,7 +139,7 @@ test('inline statement parameters containing boolean', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE "pending" = 0 LIMIT 1`,
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE "pending" = false LIMIT 1`,
       params: [],
       returning: true,
     },
