@@ -107,6 +107,52 @@ test('inline statement parameters containing serialized expression', async () =>
   });
 });
 
+test('inline statement parameters containing boolean', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        member: {
+          with: {
+            pending: false,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'member',
+      fields: [
+        {
+          slug: 'pending',
+          type: 'boolean',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    inlineParams: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE "pending" = false LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    pending: false,
+  });
+});
+
 // Ensure that default fields are not repeated if they are already present.
 test('provide models containing default fields', async () => {
   const queries: Array<Query> = [

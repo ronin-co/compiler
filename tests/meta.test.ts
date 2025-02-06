@@ -149,7 +149,7 @@ test('create new model', () => {
     {
       params: [],
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (\'2000\'); END',
+        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END',
     },
     {
       statement:
@@ -1316,7 +1316,7 @@ test('create new trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES ('2000'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END`,
       params: [],
     },
     {
@@ -1375,7 +1375,7 @@ test('create new trigger for creating records with targeted fields', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES ('2000'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END`,
       params: [],
     },
     {
@@ -1441,7 +1441,7 @@ test('create new trigger for creating records with multiple effects', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES ('2000'); INSERT INTO "candidates" ("year") VALUES ('2020'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); INSERT INTO "candidates" ("year") VALUES (2020); END`,
       params: [],
     },
     {
@@ -1508,7 +1508,7 @@ test('create new per-record trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 'false'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', false); END`,
       params: [],
     },
     {
@@ -1644,7 +1644,7 @@ test('create new per-record trigger with filters for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN (NEW."handle" LIKE '%_hidden') BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 'false'); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN (NEW."handle" LIKE '%_hidden') BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', false); END`,
       params: [],
     },
     {
