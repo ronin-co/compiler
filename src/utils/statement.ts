@@ -4,6 +4,7 @@ import {
   type WithFilters,
   type WithValue,
   type WithValueOptions,
+  getMatcher,
 } from '@/src/instructions/with';
 import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { Model, ModelField } from '@/src/types/model';
@@ -231,7 +232,7 @@ export const composeFieldValues = (
   // Determine if the value of the field is a symbol.
   const symbol = getQuerySymbol(value);
 
-  let conditionMatcher = '=';
+  let conditionMatcher = instructionName === 'to' ? '=' : getMatcher(value, false);
   let conditionValue: unknown = value;
 
   // Obtain the SQL syntax that should be used for the current condition.

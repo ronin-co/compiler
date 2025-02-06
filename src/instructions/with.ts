@@ -10,7 +10,7 @@ import { composeConditions } from '@/src/utils/statement';
  *
  * @returns The SQL assertion syntax for the given value.
  */
-const getMatcher = (value: unknown, negative: boolean): string => {
+export const getMatcher = (value: unknown, negative: boolean): string => {
   if (negative) {
     if (value === null) return 'IS NOT';
     return '!=';
