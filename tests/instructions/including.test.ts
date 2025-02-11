@@ -41,7 +41,7 @@ test('get single record including unrelated record without filter', async () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "products"."id", "products"."ronin.locked", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "including_team"."id" as "team.id", "including_team"."ronin.locked" as "team.ronin.locked", "including_team"."ronin.createdAt" as "team.ronin.createdAt", "including_team"."ronin.createdBy" as "team.ronin.createdBy", "including_team"."ronin.updatedAt" as "team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "team.ronin.updatedBy" FROM "products" CROSS JOIN (SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams" LIMIT 1) as "including_team" LIMIT 1`,
+      statement: `SELECT "products"."id", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "including_team"."id" as "team.id", "including_team"."ronin.createdAt" as "team.ronin.createdAt", "including_team"."ronin.createdBy" as "team.ronin.createdBy", "including_team"."ronin.updatedAt" as "team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "team.ronin.updatedBy" FROM "products" CROSS JOIN (SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams" LIMIT 1) as "including_team" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -53,7 +53,6 @@ test('get single record including unrelated record without filter', async () => 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -62,7 +61,6 @@ test('get single record including unrelated record without filter', async () => 
     team: {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -116,7 +114,7 @@ test('get single record including unrelated record with filter', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -128,7 +126,6 @@ test('get single record including unrelated record with filter', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -137,7 +134,6 @@ test('get single record including unrelated record with filter', async () => {
     account: {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -189,7 +185,7 @@ test('get single record including unrelated record that is not found', async () 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = ?1) LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = ?1) LIMIT 1`,
       params: ['1234'],
       returning: true,
     },
@@ -201,7 +197,6 @@ test('get single record including unrelated record that is not found', async () 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -262,7 +257,7 @@ test('get single record including unrelated record with filter and specific fiel
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "account.firstName" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."firstName" as "account.firstName" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -274,7 +269,6 @@ test('get single record including unrelated record with filter and specific fiel
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -330,7 +324,7 @@ test('get single record including unrelated records without filter', async () =>
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_products"."id", "sub_products"."ronin.locked", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches[0]"."id" as "beaches[0].id", "including_beaches[0]"."ronin.locked" as "beaches[0].ronin.locked", "including_beaches[0]"."ronin.createdAt" as "beaches[0].ronin.createdAt", "including_beaches[0]"."ronin.createdBy" as "beaches[0].ronin.createdBy", "including_beaches[0]"."ronin.updatedAt" as "beaches[0].ronin.updatedAt", "including_beaches[0]"."ronin.updatedBy" as "beaches[0].ronin.updatedBy", "including_beaches[0]"."name" as "beaches[0].name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as "including_beaches[0]"`,
+      statement: `SELECT "sub_products"."id", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches[0]"."id" as "beaches[0].id", "including_beaches[0]"."ronin.createdAt" as "beaches[0].ronin.createdAt", "including_beaches[0]"."ronin.createdBy" as "beaches[0].ronin.createdBy", "including_beaches[0]"."ronin.updatedAt" as "beaches[0].ronin.updatedAt", "including_beaches[0]"."ronin.updatedBy" as "beaches[0].ronin.updatedBy", "including_beaches[0]"."name" as "beaches[0].name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN "beaches" as "including_beaches[0]"`,
       params: [],
       returning: true,
     },
@@ -343,7 +337,6 @@ test('get single record including unrelated records without filter', async () =>
     id: expect.stringMatching(RECORD_ID_REGEX),
     name: expect.any(String),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -353,7 +346,6 @@ test('get single record including unrelated records without filter', async () =>
       id: expect.stringMatching(RECORD_ID_REGEX),
       name: expect.any(String),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -407,7 +399,7 @@ test('get single record including unrelated records with filter', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id")`,
+      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id")`,
       params: [],
       returning: true,
     },
@@ -419,7 +411,6 @@ test('get single record including unrelated records with filter', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -430,7 +421,6 @@ test('get single record including unrelated records with filter', async () => {
         account: expect.stringMatching(RECORD_ID_REGEX),
         id: expect.stringMatching(RECORD_ID_REGEX),
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -441,7 +431,6 @@ test('get single record including unrelated records with filter', async () => {
         account: expect.stringMatching(RECORD_ID_REGEX),
         id: expect.stringMatching(RECORD_ID_REGEX),
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -494,7 +483,7 @@ test('get single record including unrelated records that are not found', async (
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = ?1)`,
+      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = ?1)`,
       params: ['1234'],
       returning: true,
     },
@@ -506,7 +495,6 @@ test('get single record including unrelated records that are not found', async (
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -560,7 +548,7 @@ test('get single record including count of unrelated records', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", (SELECT (COUNT(*)) as "amount" FROM "members" WHERE "account" = "accounts"."id") as "memberAmount" FROM "accounts" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", (SELECT (COUNT(*)) as "amount" FROM "members" WHERE "account" = "accounts"."id") as "memberAmount" FROM "accounts" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -572,7 +560,6 @@ test('get single record including count of unrelated records', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -626,7 +613,7 @@ test('get multiple records including unrelated records with filter', async () =>
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id")`,
+      statement: `SELECT "accounts"."id", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id")`,
       params: [],
       returning: true,
     },
@@ -639,7 +626,6 @@ test('get multiple records including unrelated records with filter', async () =>
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -649,7 +635,6 @@ test('get multiple records including unrelated records with filter', async () =>
         account: expect.stringMatching(RECORD_ID_REGEX),
         id: expect.stringMatching(RECORD_ID_REGEX),
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -660,7 +645,6 @@ test('get multiple records including unrelated records with filter', async () =>
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -671,7 +655,6 @@ test('get multiple records including unrelated records with filter', async () =>
           account: expect.stringMatching(RECORD_ID_REGEX),
           id: expect.stringMatching(RECORD_ID_REGEX),
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -725,7 +708,7 @@ test('get multiple records including unrelated records that are not found', asyn
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = ?1)`,
+      statement: `SELECT "accounts"."id", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = ?1)`,
       params: ['1234'],
       returning: true,
     },
@@ -738,7 +721,6 @@ test('get multiple records including unrelated records that are not found', asyn
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -749,7 +731,6 @@ test('get multiple records including unrelated records that are not found', asyn
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -815,7 +796,7 @@ test('get multiple records including unrelated records with filter (hoisted)', a
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_ronin_root"."id" as "ronin_root.id", "including_ronin_root"."ronin.locked" as "ronin_root.ronin.locked", "including_ronin_root"."ronin.createdAt" as "ronin_root.ronin.createdAt", "including_ronin_root"."ronin.createdBy" as "ronin_root.ronin.createdBy", "including_ronin_root"."ronin.updatedAt" as "ronin_root.ronin.updatedAt", "including_ronin_root"."ronin.updatedBy" as "ronin_root.ronin.updatedBy", "including_ronin_root"."account" as "ronin_root.account", "including_ronin_root"."team" as "ronin_root.team" FROM "accounts" LEFT JOIN "members" as "including_ronin_root" ON ("including_ronin_root"."account" = "accounts"."id")`,
+      statement: `SELECT "accounts"."id", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_ronin_root"."id" as "ronin_root.id", "including_ronin_root"."ronin.createdAt" as "ronin_root.ronin.createdAt", "including_ronin_root"."ronin.createdBy" as "ronin_root.ronin.createdBy", "including_ronin_root"."ronin.updatedAt" as "ronin_root.ronin.updatedAt", "including_ronin_root"."ronin.updatedBy" as "ronin_root.ronin.updatedBy", "including_ronin_root"."account" as "ronin_root.account", "including_ronin_root"."team" as "ronin_root.team" FROM "accounts" LEFT JOIN "members" as "including_ronin_root" ON ("including_ronin_root"."account" = "accounts"."id")`,
       params: [],
       returning: true,
     },
@@ -829,7 +810,6 @@ test('get multiple records including unrelated records with filter (hoisted)', a
       handle: expect.any(String),
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -925,7 +905,7 @@ test('get multiple records including unrelated records with filter (nested)', as
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account", "including_members[0]"."team" as "members[0].team", "including_members[0].team"."id" as "members[0].team.id", "including_members[0].team"."ronin.locked" as "members[0].team.ronin.locked", "including_members[0].team"."ronin.createdAt" as "members[0].team.ronin.createdAt", "including_members[0].team"."ronin.createdBy" as "members[0].team.ronin.createdBy", "including_members[0].team"."ronin.updatedAt" as "members[0].team.ronin.updatedAt", "including_members[0].team"."ronin.updatedBy" as "members[0].team.ronin.updatedBy", "including_members[0].team"."locations" as "members[0].team.locations" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0].team" ON ("including_members[0].team"."id" = "including_members[0]"."team")`,
+      statement: `SELECT "accounts"."id", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account", "including_members[0]"."team" as "members[0].team", "including_members[0].team"."id" as "members[0].team.id", "including_members[0].team"."ronin.createdAt" as "members[0].team.ronin.createdAt", "including_members[0].team"."ronin.createdBy" as "members[0].team.ronin.createdBy", "including_members[0].team"."ronin.updatedAt" as "members[0].team.ronin.updatedAt", "including_members[0].team"."ronin.updatedBy" as "members[0].team.ronin.updatedBy", "including_members[0].team"."locations" as "members[0].team.locations" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0].team" ON ("including_members[0].team"."id" = "including_members[0]"."team")`,
       params: [],
       returning: true,
     },
@@ -940,7 +920,6 @@ test('get multiple records including unrelated records with filter (nested)', as
       id: 'acc_39h8fhe98hefah8j',
       handle: 'elaine',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -956,7 +935,6 @@ test('get multiple records including unrelated records with filter (nested)', as
               europe: 'london',
             },
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -964,7 +942,6 @@ test('get multiple records including unrelated records with filter (nested)', as
             },
           },
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -980,7 +957,6 @@ test('get multiple records including unrelated records with filter (nested)', as
               europe: 'berlin',
             },
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -988,7 +964,6 @@ test('get multiple records including unrelated records with filter (nested)', as
             },
           },
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1001,7 +976,6 @@ test('get multiple records including unrelated records with filter (nested)', as
       id: 'acc_39h8fhe98hefah9j',
       handle: 'david',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1017,7 +991,6 @@ test('get multiple records including unrelated records with filter (nested)', as
               europe: 'berlin',
             },
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1025,7 +998,6 @@ test('get multiple records including unrelated records with filter (nested)', as
             },
           },
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1121,7 +1093,7 @@ test('get multiple records including unrelated records with filter (nested, hois
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "accounts"."id", "accounts"."ronin.locked", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account", "including_members[0]"."team" as "members[0].team", "including_members[0]{1}"."id" as "members[0]{1}.id", "including_members[0]{1}"."ronin.locked" as "members[0]{1}.ronin.locked", "including_members[0]{1}"."ronin.createdAt" as "members[0]{1}.ronin.createdAt", "including_members[0]{1}"."ronin.createdBy" as "members[0]{1}.ronin.createdBy", "including_members[0]{1}"."ronin.updatedAt" as "members[0]{1}.ronin.updatedAt", "including_members[0]{1}"."ronin.updatedBy" as "members[0]{1}.ronin.updatedBy", "including_members[0]{1}"."locations" as "members[0]{1}.locations" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0]{1}" ON ("including_members[0]{1}"."id" = "including_members[0]"."team")`,
+      statement: `SELECT "accounts"."id", "accounts"."ronin.createdAt", "accounts"."ronin.createdBy", "accounts"."ronin.updatedAt", "accounts"."ronin.updatedBy", "accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account", "including_members[0]"."team" as "members[0].team", "including_members[0]{1}"."id" as "members[0]{1}.id", "including_members[0]{1}"."ronin.createdAt" as "members[0]{1}.ronin.createdAt", "including_members[0]{1}"."ronin.createdBy" as "members[0]{1}.ronin.createdBy", "including_members[0]{1}"."ronin.updatedAt" as "members[0]{1}.ronin.updatedAt", "including_members[0]{1}"."ronin.updatedBy" as "members[0]{1}.ronin.updatedBy", "including_members[0]{1}"."locations" as "members[0]{1}.locations" FROM "accounts" LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "accounts"."id") LEFT JOIN "teams" as "including_members[0]{1}" ON ("including_members[0]{1}"."id" = "including_members[0]"."team")`,
       params: [],
       returning: true,
     },
@@ -1136,7 +1108,6 @@ test('get multiple records including unrelated records with filter (nested, hois
       id: 'acc_39h8fhe98hefah8j',
       handle: 'elaine',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1149,7 +1120,6 @@ test('get multiple records including unrelated records with filter (nested, hois
             europe: 'london',
           },
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1166,7 +1136,6 @@ test('get multiple records including unrelated records with filter (nested, hois
             europe: 'berlin',
           },
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1183,7 +1152,6 @@ test('get multiple records including unrelated records with filter (nested, hois
       id: 'acc_39h8fhe98hefah9j',
       handle: 'david',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1196,7 +1164,6 @@ test('get multiple records including unrelated records with filter (nested, hois
             europe: 'berlin',
           },
           ronin: {
-            locked: false,
             createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
             createdBy: null,
             updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1256,7 +1223,7 @@ test('get multiple records including count of unrelated records', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", (SELECT (COUNT(*)) as "amount" FROM "members" WHERE "account" = "accounts"."id") as "memberAmount" FROM "accounts"`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", (SELECT (COUNT(*)) as "amount" FROM "members" WHERE "account" = "accounts"."id") as "memberAmount" FROM "accounts"`,
       params: [],
       returning: true,
     },
@@ -1269,7 +1236,6 @@ test('get multiple records including count of unrelated records', async () => {
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1280,7 +1246,6 @@ test('get multiple records including count of unrelated records', async () => {
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1339,7 +1304,7 @@ test('get single record including unrelated ordered record', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "products"."id", "products"."ronin.locked", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "products"."name", "including_beach"."id" as "beach.id", "including_beach"."ronin.locked" as "beach.ronin.locked", "including_beach"."ronin.createdAt" as "beach.ronin.createdAt", "including_beach"."ronin.createdBy" as "beach.ronin.createdBy", "including_beach"."ronin.updatedAt" as "beach.ronin.updatedAt", "including_beach"."ronin.updatedBy" as "beach.ronin.updatedBy", "including_beach"."name" as "beach.name" FROM "products" CROSS JOIN (SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC LIMIT 1) as "including_beach" LIMIT 1`,
+      statement: `SELECT "products"."id", "products"."ronin.createdAt", "products"."ronin.createdBy", "products"."ronin.updatedAt", "products"."ronin.updatedBy", "products"."name", "including_beach"."id" as "beach.id", "including_beach"."ronin.createdAt" as "beach.ronin.createdAt", "including_beach"."ronin.createdBy" as "beach.ronin.createdBy", "including_beach"."ronin.updatedAt" as "beach.ronin.updatedAt", "including_beach"."ronin.updatedBy" as "beach.ronin.updatedBy", "including_beach"."name" as "beach.name" FROM "products" CROSS JOIN (SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC LIMIT 1) as "including_beach" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -1352,7 +1317,6 @@ test('get single record including unrelated ordered record', async () => {
     id: expect.stringMatching(RECORD_ID_REGEX),
     name: expect.any(String),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1362,7 +1326,6 @@ test('get single record including unrelated ordered record', async () => {
       id: 'bea_39h8fhe98hefah9j',
       name: 'Manly',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1420,7 +1383,7 @@ test('get single record including unrelated ordered records', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_products"."id", "sub_products"."ronin.locked", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches[0]"."id" as "beaches[0].id", "including_beaches[0]"."ronin.locked" as "beaches[0].ronin.locked", "including_beaches[0]"."ronin.createdAt" as "beaches[0].ronin.createdAt", "including_beaches[0]"."ronin.createdBy" as "beaches[0].ronin.createdBy", "including_beaches[0]"."ronin.updatedAt" as "beaches[0].ronin.updatedAt", "including_beaches[0]"."ronin.updatedBy" as "beaches[0].ronin.updatedBy", "including_beaches[0]"."name" as "beaches[0].name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN (SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC) as "including_beaches[0]"`,
+      statement: `SELECT "sub_products"."id", "sub_products"."ronin.createdAt", "sub_products"."ronin.createdBy", "sub_products"."ronin.updatedAt", "sub_products"."ronin.updatedBy", "sub_products"."name", "including_beaches[0]"."id" as "beaches[0].id", "including_beaches[0]"."ronin.createdAt" as "beaches[0].ronin.createdAt", "including_beaches[0]"."ronin.createdBy" as "beaches[0].ronin.createdBy", "including_beaches[0]"."ronin.updatedAt" as "beaches[0].ronin.updatedAt", "including_beaches[0]"."ronin.updatedBy" as "beaches[0].ronin.updatedBy", "including_beaches[0]"."name" as "beaches[0].name" FROM (SELECT * FROM "products" LIMIT 1) as sub_products CROSS JOIN (SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "name" COLLATE NOCASE DESC) as "including_beaches[0]"`,
       params: [],
       returning: true,
     },
@@ -1433,7 +1396,6 @@ test('get single record including unrelated ordered records', async () => {
     id: expect.stringMatching(RECORD_ID_REGEX),
     name: expect.any(String),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1444,7 +1406,6 @@ test('get single record including unrelated ordered records', async () => {
         id: 'bea_39h8fhe98hefah8j',
         name: 'Bondi',
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1455,7 +1416,6 @@ test('get single record including unrelated ordered records', async () => {
         id: 'bea_39h8fhe98hefah9j',
         name: 'Manly',
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1466,7 +1426,6 @@ test('get single record including unrelated ordered records', async () => {
         id: 'bea_39h8fhe98hefah0j',
         name: 'Coogee',
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1477,7 +1436,6 @@ test('get single record including unrelated ordered records', async () => {
         id: 'bea_39h8fhe98hefah1j',
         name: 'Cronulla',
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1511,7 +1469,7 @@ test('get single record including ephemeral field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", ?1 as "companyName" FROM "teams" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", ?1 as "companyName" FROM "teams" LIMIT 1`,
       params: ['Example Company'],
       returning: true,
     },
@@ -1524,7 +1482,6 @@ test('get single record including ephemeral field', async () => {
     id: expect.stringMatching(RECORD_ID_REGEX),
     companyName: 'Example Company',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1573,7 +1530,7 @@ test('get single record including ephemeral field containing expression', async 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName", "lastName", "handle", ("firstName" || ' ' || "lastName") as "fullName" FROM "accounts" WHERE "handle" = ?1 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName", "lastName", "handle", ("firstName" || ' ' || "lastName") as "fullName" FROM "accounts" WHERE "handle" = ?1 LIMIT 1`,
       params: ['elaine'],
       returning: true,
     },
@@ -1589,7 +1546,6 @@ test('get single record including ephemeral field containing expression', async 
     firstName: 'Elaine',
     lastName: 'Jones',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -1623,7 +1579,7 @@ test('get single record including deeply nested ephemeral field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", ?1 as "sand.quality" FROM "beaches" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", ?1 as "sand.quality" FROM "beaches" LIMIT 1`,
       params: ['extraordinary'],
       returning: true,
     },
@@ -1635,7 +1591,6 @@ test('get single record including deeply nested ephemeral field', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),

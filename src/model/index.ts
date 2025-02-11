@@ -219,11 +219,6 @@ export const getSystemFields = (idPrefix: Model['idPrefix']): Array<ModelField> 
     },
   },
   {
-    name: 'RONIN - Locked',
-    type: 'boolean',
-    slug: 'ronin.locked',
-  },
-  {
     name: 'RONIN - Created At',
     type: 'date',
     slug: 'ronin.createdAt',

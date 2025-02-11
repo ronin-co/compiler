@@ -35,7 +35,7 @@ test('get single record with field being value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 LIMIT 1',
       params: ['elaine'],
       returning: true,
     },
@@ -79,7 +79,7 @@ test('get single record with field not being value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" != ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" != ?1 LIMIT 1',
       params: ['elaine'],
       returning: true,
     },
@@ -123,7 +123,7 @@ test('get single record with field not being empty', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" IS NOT NULL LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" IS NOT NULL LIMIT 1',
       params: [],
       returning: true,
     },
@@ -167,7 +167,7 @@ test('get single record with field starting with value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" LIKE ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" LIKE ?1 LIMIT 1',
       params: ['el%'],
       returning: true,
     },
@@ -211,7 +211,7 @@ test('get single record with field not starting with value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" NOT LIKE ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" NOT LIKE ?1 LIMIT 1',
       params: ['el%'],
       returning: true,
     },
@@ -255,7 +255,7 @@ test('get single record with field ending with value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" LIKE ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" LIKE ?1 LIMIT 1',
       params: ['%ne'],
       returning: true,
     },
@@ -299,7 +299,7 @@ test('get single record with field not ending with value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" NOT LIKE ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" NOT LIKE ?1 LIMIT 1',
       params: ['%ne'],
       returning: true,
     },
@@ -343,7 +343,7 @@ test('get single record with field containing value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" LIKE ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" LIKE ?1 LIMIT 1',
       params: ['%ain%'],
       returning: true,
     },
@@ -387,7 +387,7 @@ test('get single record with field not containing value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" NOT LIKE ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" NOT LIKE ?1 LIMIT 1',
       params: ['%ain%'],
       returning: true,
     },
@@ -431,7 +431,7 @@ test('get single record with field greater than value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" > ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" > ?1 LIMIT 1',
       params: [1],
       returning: true,
     },
@@ -475,7 +475,7 @@ test('get single record with field greater or equal to value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" >= ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" >= ?1 LIMIT 1',
       params: [2],
       returning: true,
     },
@@ -519,7 +519,7 @@ test('get single record with field less than value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" < ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" < ?1 LIMIT 1',
       params: [3],
       returning: true,
     },
@@ -563,7 +563,7 @@ test('get single record with field less or equal to value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" <= ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position" FROM "products" WHERE "position" <= ?1 LIMIT 1',
       params: [3],
       returning: true,
     },
@@ -614,7 +614,7 @@ test('get single record with multiple fields being value', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName" FROM "accounts" WHERE "handle" = ?1 AND "firstName" = ?2 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName" FROM "accounts" WHERE "handle" = ?1 AND "firstName" = ?2 LIMIT 1',
       params: ['elaine', 'Elaine'],
       returning: true,
     },
@@ -669,7 +669,7 @@ test('get single record with link field', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = (SELECT "id" FROM "accounts" WHERE "handle" = ?1 LIMIT 1) LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = (SELECT "id" FROM "accounts" WHERE "handle" = ?1 LIMIT 1) LIMIT 1',
       params: ['elaine'],
       returning: true,
     },
@@ -724,7 +724,7 @@ test('get single record with link field and id', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = ?1 LIMIT 1',
       params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -774,7 +774,7 @@ test('get single record with link field and id with condition', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = ?1 LIMIT 1',
       params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -817,7 +817,7 @@ test('get single record with json field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "locations" FROM "teams" WHERE json_extract(locations, '$.europe') = ?1 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "locations" FROM "teams" WHERE json_extract(locations, '$.europe') = ?1 LIMIT 1`,
       params: ['berlin'],
       returning: true,
     },
@@ -862,7 +862,7 @@ test('get single record with blob field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "avatar" FROM "accounts" WHERE json_extract(avatar, '$.meta.type') = ?1 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "avatar" FROM "accounts" WHERE json_extract(avatar, '$.meta.type') = ?1 LIMIT 1`,
       params: ['image/png'],
       returning: true,
     },
@@ -903,7 +903,7 @@ test('get single record with empty field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "region" FROM "beaches" WHERE "region" IS NULL LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "region" FROM "beaches" WHERE "region" IS NULL LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -953,7 +953,7 @@ test('get single record with one of fields', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName" FROM "accounts" WHERE "handle" = ?1 OR "firstName" = ?2 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName" FROM "accounts" WHERE "handle" = ?1 OR "firstName" = ?2 LIMIT 1`,
       params: ['elaine', 'David'],
       returning: true,
     },
@@ -998,7 +998,7 @@ test('get single record with one of fields (empty list)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName" FROM "accounts" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName" FROM "accounts" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -1046,7 +1046,7 @@ test('get single record with one of field conditions', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 OR "handle" = ?2 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 OR "handle" = ?2 LIMIT 1`,
       params: ['elaine', 'david'],
       returning: true,
     },
@@ -1087,7 +1087,7 @@ test('get single record with one of field conditions (empty list)', async () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -1130,7 +1130,7 @@ test('get single record with one of field values', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 OR "handle" = ?2 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 OR "handle" = ?2 LIMIT 1`,
       params: ['elaine', 'david'],
       returning: true,
     },
@@ -1173,7 +1173,7 @@ test('get single record with one of field values (empty list)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -1216,7 +1216,7 @@ test('get single record with one of nested field values', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency" FROM "teams" WHERE "billing.currency" = ?1 OR "billing.currency" = ?2 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency" FROM "teams" WHERE "billing.currency" = ?1 OR "billing.currency" = ?2 LIMIT 1`,
       params: ['EUR', 'USD'],
       returning: true,
     },
@@ -1262,7 +1262,7 @@ test('get single record with one of nested field values (empty list)', async () 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency" FROM "teams" LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency" FROM "teams" LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -1311,7 +1311,7 @@ test('get single record with name identifier', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName" FROM "accounts" WHERE "firstName" = ?1 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "firstName" FROM "accounts" WHERE "firstName" = ?1 LIMIT 1`,
       params: ['Elaine'],
       returning: true,
     },
@@ -1357,7 +1357,7 @@ test('get single record with slug identifier', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" WHERE "handle" = ?1 LIMIT 1`,
       params: ['elaine'],
       returning: true,
     },

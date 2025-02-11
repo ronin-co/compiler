@@ -32,7 +32,7 @@ test('get single record', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -74,7 +74,7 @@ test('remove single record', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'DELETE FROM "accounts" WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
+        'DELETE FROM "accounts" WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
       params: ['elaine'],
       returning: true,
     },
@@ -165,7 +165,7 @@ test('pass multiple record queries at once', async () => {
     },
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -198,7 +198,6 @@ test('pass multiple record queries at once', async () => {
       record: {
         id: expect.stringMatching(RECORD_ID_REGEX),
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -235,12 +234,12 @@ test('get all records of all models', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts"`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts"`,
       params: [],
       returning: true,
     },
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams"`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams"`,
       params: [],
       returning: true,
     },
@@ -256,7 +255,6 @@ test('get all records of all models', async () => {
           {
             id: expect.stringMatching(RECORD_ID_REGEX),
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -266,7 +264,6 @@ test('get all records of all models', async () => {
           {
             id: expect.stringMatching(RECORD_ID_REGEX),
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -283,7 +280,6 @@ test('get all records of all models', async () => {
           {
             id: expect.stringMatching(RECORD_ID_REGEX),
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -293,7 +289,6 @@ test('get all records of all models', async () => {
           {
             id: expect.stringMatching(RECORD_ID_REGEX),
             ronin: {
-              locked: false,
               createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
               createdBy: null,
               updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),

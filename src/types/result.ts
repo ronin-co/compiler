@@ -8,7 +8,6 @@ export type Row = RawRow | ObjectRow;
 export type ResultRecord = Record<string, unknown> & {
   id: string;
   ronin: {
-    locked: boolean;
     createdAt: string;
     createdBy: string | null;
     updatedAt: string;
