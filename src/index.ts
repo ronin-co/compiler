@@ -172,7 +172,7 @@ class Transaction {
         if (field.type === 'json' || field.type === 'blob') {
           newValue = JSON.parse(newValue as string);
         } else if (field.type === 'boolean') {
-          newValue = Boolean(newValue);
+          newValue = newValue === null ? newValue : Boolean(newValue);
         }
 
         // If the query is used to alter the database schema, the result of the query

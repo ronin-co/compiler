@@ -423,10 +423,10 @@ test('get multiple records before cursor ordered by empty boolean field', async 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
-  const firstRecordSwimming = false;
+  const firstRecordSwimming: null = null;
   const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
 
-  const lastRecordSwimming = false;
+  const lastRecordSwimming: null = null;
   const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
 
   expect(result.records).toEqual([
@@ -454,8 +454,8 @@ test('get multiple records before cursor ordered by empty boolean field', async 
     },
   ]);
 
-  expect(result.moreBefore).toBe(`${firstRecordSwimming},${firstRecordTime.getTime()}`);
-  expect(result.moreAfter).toBe(`${lastRecordSwimming},${lastRecordTime.getTime()}`);
+  expect(result.moreBefore).toBe(`RONIN_NULL,${firstRecordTime.getTime()}`);
+  expect(result.moreAfter).toBe(`RONIN_NULL,${lastRecordTime.getTime()}`);
 });
 
 test('get multiple records before cursor ordered by empty number field', async () => {
