@@ -53,7 +53,7 @@ test('get single record using preset', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" WHERE "account" = ?1 LIMIT 1',
       params: ['acc_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -65,7 +65,6 @@ test('get single record using preset', async () => {
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -157,7 +156,7 @@ test('get single record using preset containing field with condition', async () 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "team" FROM "products" WHERE "team" = (SELECT "team" FROM "members" WHERE "account" = ?1 ORDER BY "activeAt" DESC LIMIT 1) LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "team" FROM "products" WHERE "team" = (SELECT "team" FROM "members" WHERE "account" = ?1 ORDER BY "activeAt" DESC LIMIT 1) LIMIT 1',
       params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -170,7 +169,6 @@ test('get single record using preset containing field with condition', async () 
     id: 'pro_39h8fhe98hefah8j',
     name: 'Apple',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -260,7 +258,7 @@ test('get single record using preset containing field without condition', async 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "team" FROM "products" WHERE "team" = (SELECT "team" FROM "members" WHERE "account" = ?1 ORDER BY "activeAt" DESC LIMIT 1) LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "team" FROM "products" WHERE "team" = (SELECT "team" FROM "members" WHERE "account" = ?1 ORDER BY "activeAt" DESC LIMIT 1) LIMIT 1',
       params: ['acc_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -273,7 +271,6 @@ test('get single record using preset containing field without condition', async 
     id: 'pro_39h8fhe98hefah8j',
     name: 'Apple',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -336,7 +333,7 @@ test('get single record using preset on existing object instruction', async () =
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account", "team" FROM "members" WHERE "team" = ?1 AND "account" = ?2 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account", "team" FROM "members" WHERE "team" = ?1 AND "account" = ?2 LIMIT 1',
       params: ['tea_39h8fhe98hefah9j', 'acc_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -348,7 +345,6 @@ test('get single record using preset on existing object instruction', async () =
   expect(result.record).toEqual({
     id: 'mem_39h8fhe98hefah0j',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -478,7 +474,7 @@ test('get single record using preset for including all link fields', async () =>
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "members"."team", "including_team"."id" as "team.id", "including_team"."ronin.locked" as "team.ronin.locked", "including_team"."ronin.createdAt" as "team.ronin.createdAt", "including_team"."ronin.createdBy" as "team.ronin.createdBy", "including_team"."ronin.updatedAt" as "team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "team.ronin.updatedBy", "including_team"."locations" as "team.locations", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy", "including_account"."handle" as "account.handle" FROM "members" LEFT JOIN "teams" as "including_team" ON ("including_team"."id" = "members"."team")LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") WHERE "members"."id" = ?1 LIMIT 1',
+        'SELECT "members"."id", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "members"."team", "including_team"."id" as "team.id", "including_team"."ronin.createdAt" as "team.ronin.createdAt", "including_team"."ronin.createdBy" as "team.ronin.createdBy", "including_team"."ronin.updatedAt" as "team.ronin.updatedAt", "including_team"."ronin.updatedBy" as "team.ronin.updatedBy", "including_team"."locations" as "team.locations", "including_account"."id" as "account.id", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy", "including_account"."handle" as "account.handle" FROM "members" LEFT JOIN "teams" as "including_team" ON ("including_team"."id" = "members"."team")LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") WHERE "members"."id" = ?1 LIMIT 1',
       params: ['mem_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -490,7 +486,6 @@ test('get single record using preset for including all link fields', async () =>
   expect(result.record).toEqual({
     id: 'mem_39h8fhe98hefah8j',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -499,7 +494,6 @@ test('get single record using preset for including all link fields', async () =>
     account: {
       id: 'acc_39h8fhe98hefah8j',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -510,7 +504,6 @@ test('get single record using preset for including all link fields', async () =>
     team: {
       id: 'tea_39h8fhe98hefah8j',
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -555,7 +548,7 @@ test('get single record including parent record (many-to-one)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "members"."id", "members"."ronin.locked", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.locked" as "account.ronin.locked", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
+      statement: `SELECT "members"."id", "members"."ronin.createdAt", "members"."ronin.createdBy", "members"."ronin.updatedAt", "members"."ronin.updatedBy", "members"."account", "including_account"."id" as "account.id", "including_account"."ronin.createdAt" as "account.ronin.createdAt", "including_account"."ronin.createdBy" as "account.ronin.createdBy", "including_account"."ronin.updatedAt" as "account.ronin.updatedAt", "including_account"."ronin.updatedBy" as "account.ronin.updatedBy" FROM "members" LEFT JOIN "accounts" as "including_account" ON ("including_account"."id" = "members"."account") LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -569,7 +562,6 @@ test('get single record including parent record (many-to-one)', async () => {
     account: {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -577,7 +569,6 @@ test('get single record including parent record (many-to-one)', async () => {
       },
     },
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -625,7 +616,7 @@ test('get single record including child records (one-to-many, defined manually)'
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_visitors[0]"."id" as "visitors[0].id", "including_visitors[0]"."ronin.locked" as "visitors[0].ronin.locked", "including_visitors[0]"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors[0]"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors[0]"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors[0]"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_visitors[0]{1}"."id" as "visitors[0]{1}.id", "including_visitors[0]{1}"."ronin.locked" as "visitors[0]{1}.ronin.locked", "including_visitors[0]{1}"."ronin.createdAt" as "visitors[0]{1}.ronin.createdAt", "including_visitors[0]{1}"."ronin.createdBy" as "visitors[0]{1}.ronin.createdBy", "including_visitors[0]{1}"."ronin.updatedAt" as "visitors[0]{1}.ronin.updatedAt", "including_visitors[0]{1}"."ronin.updatedBy" as "visitors[0]{1}.ronin.updatedBy", "including_visitors[0]{1}"."handle" as "visitors[0]{1}.handle", "including_visitors[0]{1}"."firstName" as "visitors[0]{1}.firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as "including_visitors[0]" ON ("including_visitors[0]"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as "including_visitors[0]{1}" ON ("including_visitors[0]{1}"."id" = "including_visitors[0]"."target")`,
+      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_visitors[0]"."id" as "visitors[0].id", "including_visitors[0]"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors[0]"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors[0]"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors[0]"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_visitors[0]{1}"."id" as "visitors[0]{1}.id", "including_visitors[0]{1}"."ronin.createdAt" as "visitors[0]{1}.ronin.createdAt", "including_visitors[0]{1}"."ronin.createdBy" as "visitors[0]{1}.ronin.createdBy", "including_visitors[0]{1}"."ronin.updatedAt" as "visitors[0]{1}.ronin.updatedAt", "including_visitors[0]{1}"."ronin.updatedBy" as "visitors[0]{1}.ronin.updatedBy", "including_visitors[0]{1}"."handle" as "visitors[0]{1}.handle", "including_visitors[0]{1}"."firstName" as "visitors[0]{1}.firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_visitors" as "including_visitors[0]" ON ("including_visitors[0]"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as "including_visitors[0]{1}" ON ("including_visitors[0]{1}"."id" = "including_visitors[0]"."target")`,
       params: [],
       returning: true,
     },
@@ -637,7 +628,6 @@ test('get single record including child records (one-to-many, defined manually)'
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -646,7 +636,6 @@ test('get single record including child records (one-to-many, defined manually)'
     visitors: new Array(2).fill({
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -707,7 +696,7 @@ test('get single record including child records (one-to-many, defined manually, 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_volleyballTeams[0]"."id" as "volleyballTeams[0].id", "including_volleyballTeams[0]"."ronin.locked" as "volleyballTeams[0].ronin.locked", "including_volleyballTeams[0]"."ronin.createdAt" as "volleyballTeams[0].ronin.createdAt", "including_volleyballTeams[0]"."ronin.createdBy" as "volleyballTeams[0].ronin.createdBy", "including_volleyballTeams[0]"."ronin.updatedAt" as "volleyballTeams[0].ronin.updatedAt", "including_volleyballTeams[0]"."ronin.updatedBy" as "volleyballTeams[0].ronin.updatedBy", "including_volleyballTeams[0]{1}"."id" as "volleyballTeams[0]{1}.id", "including_volleyballTeams[0]{1}"."ronin.locked" as "volleyballTeams[0]{1}.ronin.locked", "including_volleyballTeams[0]{1}"."ronin.createdAt" as "volleyballTeams[0]{1}.ronin.createdAt", "including_volleyballTeams[0]{1}"."ronin.createdBy" as "volleyballTeams[0]{1}.ronin.createdBy", "including_volleyballTeams[0]{1}"."ronin.updatedAt" as "volleyballTeams[0]{1}.ronin.updatedAt", "including_volleyballTeams[0]{1}"."ronin.updatedBy" as "volleyballTeams[0]{1}.ronin.updatedBy", "including_volleyballTeams[0]{1}"."locations" as "volleyballTeams[0]{1}.locations", "including_visitors[0]"."id" as "visitors[0].id", "including_visitors[0]"."ronin.locked" as "visitors[0].ronin.locked", "including_visitors[0]"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors[0]"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors[0]"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors[0]"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_visitors[0]{1}"."id" as "visitors[0]{1}.id", "including_visitors[0]{1}"."ronin.locked" as "visitors[0]{1}.ronin.locked", "including_visitors[0]{1}"."ronin.createdAt" as "visitors[0]{1}.ronin.createdAt", "including_visitors[0]{1}"."ronin.createdBy" as "visitors[0]{1}.ronin.createdBy", "including_visitors[0]{1}"."ronin.updatedAt" as "visitors[0]{1}.ronin.updatedAt", "including_visitors[0]{1}"."ronin.updatedBy" as "visitors[0]{1}.ronin.updatedBy", "including_visitors[0]{1}"."handle" as "visitors[0]{1}.handle", "including_visitors[0]{1}"."firstName" as "visitors[0]{1}.firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_volleyball_teams" as "including_volleyballTeams[0]" ON ("including_volleyballTeams[0]"."source" = "sub_beaches"."id") LEFT JOIN "teams" as "including_volleyballTeams[0]{1}" ON ("including_volleyballTeams[0]{1}"."id" = "including_volleyballTeams[0]"."target")LEFT JOIN "ronin_link_beach_visitors" as "including_visitors[0]" ON ("including_visitors[0]"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as "including_visitors[0]{1}" ON ("including_visitors[0]{1}"."id" = "including_visitors[0]"."target")`,
+      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_volleyballTeams[0]"."id" as "volleyballTeams[0].id", "including_volleyballTeams[0]"."ronin.createdAt" as "volleyballTeams[0].ronin.createdAt", "including_volleyballTeams[0]"."ronin.createdBy" as "volleyballTeams[0].ronin.createdBy", "including_volleyballTeams[0]"."ronin.updatedAt" as "volleyballTeams[0].ronin.updatedAt", "including_volleyballTeams[0]"."ronin.updatedBy" as "volleyballTeams[0].ronin.updatedBy", "including_volleyballTeams[0]{1}"."id" as "volleyballTeams[0]{1}.id", "including_volleyballTeams[0]{1}"."ronin.createdAt" as "volleyballTeams[0]{1}.ronin.createdAt", "including_volleyballTeams[0]{1}"."ronin.createdBy" as "volleyballTeams[0]{1}.ronin.createdBy", "including_volleyballTeams[0]{1}"."ronin.updatedAt" as "volleyballTeams[0]{1}.ronin.updatedAt", "including_volleyballTeams[0]{1}"."ronin.updatedBy" as "volleyballTeams[0]{1}.ronin.updatedBy", "including_volleyballTeams[0]{1}"."locations" as "volleyballTeams[0]{1}.locations", "including_visitors[0]"."id" as "visitors[0].id", "including_visitors[0]"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors[0]"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors[0]"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors[0]"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_visitors[0]{1}"."id" as "visitors[0]{1}.id", "including_visitors[0]{1}"."ronin.createdAt" as "visitors[0]{1}.ronin.createdAt", "including_visitors[0]{1}"."ronin.createdBy" as "visitors[0]{1}.ronin.createdBy", "including_visitors[0]{1}"."ronin.updatedAt" as "visitors[0]{1}.ronin.updatedAt", "including_visitors[0]{1}"."ronin.updatedBy" as "visitors[0]{1}.ronin.updatedBy", "including_visitors[0]{1}"."handle" as "visitors[0]{1}.handle", "including_visitors[0]{1}"."firstName" as "visitors[0]{1}.firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_volleyball_teams" as "including_volleyballTeams[0]" ON ("including_volleyballTeams[0]"."source" = "sub_beaches"."id") LEFT JOIN "teams" as "including_volleyballTeams[0]{1}" ON ("including_volleyballTeams[0]{1}"."id" = "including_volleyballTeams[0]"."target")LEFT JOIN "ronin_link_beach_visitors" as "including_visitors[0]" ON ("including_visitors[0]"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as "including_visitors[0]{1}" ON ("including_visitors[0]{1}"."id" = "including_visitors[0]"."target")`,
       params: [],
       returning: true,
     },
@@ -719,7 +708,6 @@ test('get single record including child records (one-to-many, defined manually, 
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -728,7 +716,6 @@ test('get single record including child records (one-to-many, defined manually, 
     visitors: new Array(2).fill({
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -740,7 +727,6 @@ test('get single record including child records (one-to-many, defined manually, 
     volleyballTeams: new Array(2).fill({
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -802,7 +788,7 @@ test('get single record including child records that are partially not found (on
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.locked", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_soccerTeams[0]"."id" as "soccerTeams[0].id", "including_soccerTeams[0]"."ronin.locked" as "soccerTeams[0].ronin.locked", "including_soccerTeams[0]"."ronin.createdAt" as "soccerTeams[0].ronin.createdAt", "including_soccerTeams[0]"."ronin.createdBy" as "soccerTeams[0].ronin.createdBy", "including_soccerTeams[0]"."ronin.updatedAt" as "soccerTeams[0].ronin.updatedAt", "including_soccerTeams[0]"."ronin.updatedBy" as "soccerTeams[0].ronin.updatedBy", "including_soccerTeams[0]{1}"."id" as "soccerTeams[0]{1}.id", "including_soccerTeams[0]{1}"."ronin.locked" as "soccerTeams[0]{1}.ronin.locked", "including_soccerTeams[0]{1}"."ronin.createdAt" as "soccerTeams[0]{1}.ronin.createdAt", "including_soccerTeams[0]{1}"."ronin.createdBy" as "soccerTeams[0]{1}.ronin.createdBy", "including_soccerTeams[0]{1}"."ronin.updatedAt" as "soccerTeams[0]{1}.ronin.updatedAt", "including_soccerTeams[0]{1}"."ronin.updatedBy" as "soccerTeams[0]{1}.ronin.updatedBy", "including_soccerTeams[0]{1}"."locations" as "soccerTeams[0]{1}.locations", "including_visitors[0]"."id" as "visitors[0].id", "including_visitors[0]"."ronin.locked" as "visitors[0].ronin.locked", "including_visitors[0]"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors[0]"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors[0]"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors[0]"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_visitors[0]{1}"."id" as "visitors[0]{1}.id", "including_visitors[0]{1}"."ronin.locked" as "visitors[0]{1}.ronin.locked", "including_visitors[0]{1}"."ronin.createdAt" as "visitors[0]{1}.ronin.createdAt", "including_visitors[0]{1}"."ronin.createdBy" as "visitors[0]{1}.ronin.createdBy", "including_visitors[0]{1}"."ronin.updatedAt" as "visitors[0]{1}.ronin.updatedAt", "including_visitors[0]{1}"."ronin.updatedBy" as "visitors[0]{1}.ronin.updatedBy", "including_visitors[0]{1}"."handle" as "visitors[0]{1}.handle", "including_visitors[0]{1}"."firstName" as "visitors[0]{1}.firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_soccer_teams" as "including_soccerTeams[0]" ON ("including_soccerTeams[0]"."source" = "sub_beaches"."id") LEFT JOIN "teams" as "including_soccerTeams[0]{1}" ON ("including_soccerTeams[0]{1}"."id" = "including_soccerTeams[0]"."target")LEFT JOIN "ronin_link_beach_visitors" as "including_visitors[0]" ON ("including_visitors[0]"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as "including_visitors[0]{1}" ON ("including_visitors[0]{1}"."id" = "including_visitors[0]"."target")`,
+      statement: `SELECT "sub_beaches"."id", "sub_beaches"."ronin.createdAt", "sub_beaches"."ronin.createdBy", "sub_beaches"."ronin.updatedAt", "sub_beaches"."ronin.updatedBy", "including_soccerTeams[0]"."id" as "soccerTeams[0].id", "including_soccerTeams[0]"."ronin.createdAt" as "soccerTeams[0].ronin.createdAt", "including_soccerTeams[0]"."ronin.createdBy" as "soccerTeams[0].ronin.createdBy", "including_soccerTeams[0]"."ronin.updatedAt" as "soccerTeams[0].ronin.updatedAt", "including_soccerTeams[0]"."ronin.updatedBy" as "soccerTeams[0].ronin.updatedBy", "including_soccerTeams[0]{1}"."id" as "soccerTeams[0]{1}.id", "including_soccerTeams[0]{1}"."ronin.createdAt" as "soccerTeams[0]{1}.ronin.createdAt", "including_soccerTeams[0]{1}"."ronin.createdBy" as "soccerTeams[0]{1}.ronin.createdBy", "including_soccerTeams[0]{1}"."ronin.updatedAt" as "soccerTeams[0]{1}.ronin.updatedAt", "including_soccerTeams[0]{1}"."ronin.updatedBy" as "soccerTeams[0]{1}.ronin.updatedBy", "including_soccerTeams[0]{1}"."locations" as "soccerTeams[0]{1}.locations", "including_visitors[0]"."id" as "visitors[0].id", "including_visitors[0]"."ronin.createdAt" as "visitors[0].ronin.createdAt", "including_visitors[0]"."ronin.createdBy" as "visitors[0].ronin.createdBy", "including_visitors[0]"."ronin.updatedAt" as "visitors[0].ronin.updatedAt", "including_visitors[0]"."ronin.updatedBy" as "visitors[0].ronin.updatedBy", "including_visitors[0]{1}"."id" as "visitors[0]{1}.id", "including_visitors[0]{1}"."ronin.createdAt" as "visitors[0]{1}.ronin.createdAt", "including_visitors[0]{1}"."ronin.createdBy" as "visitors[0]{1}.ronin.createdBy", "including_visitors[0]{1}"."ronin.updatedAt" as "visitors[0]{1}.ronin.updatedAt", "including_visitors[0]{1}"."ronin.updatedBy" as "visitors[0]{1}.ronin.updatedBy", "including_visitors[0]{1}"."handle" as "visitors[0]{1}.handle", "including_visitors[0]{1}"."firstName" as "visitors[0]{1}.firstName" FROM (SELECT * FROM "beaches" LIMIT 1) as sub_beaches LEFT JOIN "ronin_link_beach_soccer_teams" as "including_soccerTeams[0]" ON ("including_soccerTeams[0]"."source" = "sub_beaches"."id") LEFT JOIN "teams" as "including_soccerTeams[0]{1}" ON ("including_soccerTeams[0]{1}"."id" = "including_soccerTeams[0]"."target")LEFT JOIN "ronin_link_beach_visitors" as "including_visitors[0]" ON ("including_visitors[0]"."source" = "sub_beaches"."id") LEFT JOIN "accounts" as "including_visitors[0]{1}" ON ("including_visitors[0]{1}"."id" = "including_visitors[0]"."target")`,
       params: [],
       returning: true,
     },
@@ -814,7 +800,6 @@ test('get single record including child records that are partially not found (on
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -823,7 +808,6 @@ test('get single record including child records that are partially not found (on
     visitors: new Array(2).fill({
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -874,7 +858,7 @@ test('get single record including child records (one-to-many, defined automatica
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.locked", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "sub_accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.locked" as "members[0].ronin.locked", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id") WHERE "sub_accounts"."handle" = ?1`,
+      statement: `SELECT "sub_accounts"."id", "sub_accounts"."ronin.createdAt", "sub_accounts"."ronin.createdBy", "sub_accounts"."ronin.updatedAt", "sub_accounts"."ronin.updatedBy", "sub_accounts"."handle", "including_members[0]"."id" as "members[0].id", "including_members[0]"."ronin.createdAt" as "members[0].ronin.createdAt", "including_members[0]"."ronin.createdBy" as "members[0].ronin.createdBy", "including_members[0]"."ronin.updatedAt" as "members[0].ronin.updatedAt", "including_members[0]"."ronin.updatedBy" as "members[0].ronin.updatedBy", "including_members[0]"."account" as "members[0].account" FROM (SELECT * FROM "accounts" LIMIT 1) as sub_accounts LEFT JOIN "members" as "including_members[0]" ON ("including_members[0]"."account" = "sub_accounts"."id") WHERE "sub_accounts"."handle" = ?1`,
       params: ['elaine'],
       returning: true,
     },
@@ -887,7 +871,6 @@ test('get single record including child records (one-to-many, defined automatica
     id: 'acc_39h8fhe98hefah8j',
     handle: 'elaine',
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -898,7 +881,6 @@ test('get single record including child records (one-to-many, defined automatica
         id: 'mem_39h8fhe98hefah8j',
         account: 'acc_39h8fhe98hefah8j',
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -909,7 +891,6 @@ test('get single record including child records (one-to-many, defined automatica
         id: 'mem_39h8fhe98hefah0j',
         account: 'acc_39h8fhe98hefah8j',
         ronin: {
-          locked: false,
           createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
           createdBy: null,
           updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),

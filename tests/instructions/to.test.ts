@@ -37,7 +37,7 @@ test('set single record to new string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
+      statement: `UPDATE "accounts" SET "handle" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
       params: ['mia', 'elaine'],
       returning: true,
     },
@@ -100,7 +100,7 @@ test('set single record to new blob field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "avatar" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "avatar"`,
+      statement: `UPDATE "accounts" SET "avatar" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "avatar"`,
       params: [JSON.stringify(storedObject), 'elaine'],
       returning: true,
     },
@@ -154,7 +154,7 @@ test('set single record to new string field with expression referencing fields',
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = LOWER("firstName" || "lastName"), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName", "lastName"`,
+      statement: `UPDATE "accounts" SET "handle" = LOWER("firstName" || "lastName"), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "firstName", "lastName"`,
       params: ['elaine'],
       returning: true,
     },
@@ -210,7 +210,7 @@ test('set single record to new one-cardinality link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE "handle" = ?1 LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account"`,
+      statement: `UPDATE "members" SET "account" = (SELECT "id" FROM "accounts" WHERE "handle" = ?1 LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account"`,
       params: ['elaine', 'mem_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -265,7 +265,7 @@ test('add single record with many-cardinality link field (add)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `INSERT INTO "accounts" ("handle") VALUES (?1) RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
+      statement: `INSERT INTO "accounts" ("handle") VALUES (?1) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
       params: ['markus'],
       returning: true,
     },
@@ -325,7 +325,7 @@ test('set single record to new many-cardinality link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
       params: ['elaine'],
       returning: true,
     },
@@ -388,7 +388,7 @@ test('set single record to new many-cardinality link field (add)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
       params: ['elaine'],
       returning: true,
     },
@@ -446,7 +446,7 @@ test('set single record to new many-cardinality link field (remove)', async () =
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
+      statement: `UPDATE "accounts" SET "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
       params: ['elaine'],
       returning: true,
     },
@@ -500,7 +500,7 @@ test('set single record to new json field with array', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
       params: ['["elaine@site.co","elaine@company.co"]', 'elaine'],
       returning: true,
     },
@@ -551,7 +551,7 @@ test('set single record to new json field with object', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
+      statement: `UPDATE "accounts" SET "emails" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
       params: ['{"site":"elaine@site.co","hobby":"dancer@dancing.co"}', 'elaine'],
       returning: true,
     },
@@ -600,7 +600,7 @@ test('set single record to new nested string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency"`,
+      statement: `UPDATE "teams" SET "billing.currency" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.currency"`,
       params: ['USD', 'tea_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -658,7 +658,7 @@ test('set single record to new nested link field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE "handle" = ?1 LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.manager"`,
+      statement: `UPDATE "teams" SET "billing.manager" = (SELECT "id" FROM "accounts" WHERE "handle" = ?1 LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.manager"`,
       params: ['elaine', 'tea_39h8fhe98hefah8j'],
       returning: true,
     },
@@ -711,7 +711,7 @@ test('set single record to new nested json field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.invoiceRecipients"`,
+      statement: `UPDATE "teams" SET "billing.invoiceRecipients" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "billing.invoiceRecipients"`,
       params: ['["receipts@test.co"]', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -779,7 +779,7 @@ test('set single record to result of nested query', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE "handle" = ?1 LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name"`,
+      statement: `UPDATE "teams" SET "name" = (SELECT "lastName" FROM "accounts" WHERE "handle" = ?1 LIMIT 1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "id" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name"`,
       params: ['david', 'tea_39h8fhe98hefah9j'],
       returning: true,
     },
@@ -830,7 +830,7 @@ test('set single record to empty field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "accounts" SET "handle" = NULL, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
+      statement: `UPDATE "accounts" SET "handle" = NULL, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"`,
       params: ['elaine'],
       returning: true,
     },
@@ -885,7 +885,7 @@ test('add multiple records with nested sub query', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
+        'INSERT INTO "users" SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle" FROM "accounts" RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
       params: [],
       returning: true,
     },
@@ -958,7 +958,7 @@ test('add multiple records with nested sub query including additional fields', a
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", ?1 as "nonExistingField" FROM "accounts" RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "nonExistingField"',
+        'INSERT INTO "users" SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", ?1 as "nonExistingField" FROM "accounts" RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "nonExistingField"',
       params: ['Custom Field Value'],
       returning: true,
     },
@@ -1022,7 +1022,7 @@ test('add multiple records with nested sub query and specific fields', async () 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("handle") SELECT "handle" FROM "accounts" RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
+        'INSERT INTO "users" ("handle") SELECT "handle" FROM "accounts" RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle"',
       params: [],
       returning: true,
     },
@@ -1076,7 +1076,7 @@ test('add multiple records with nested sub query and specific meta fields', asyn
   expect(transaction.statements).toEqual([
     {
       statement:
-        'INSERT INTO "users" ("ronin.updatedAt") SELECT "ronin.updatedAt" FROM "accounts" RETURNING "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy"',
+        'INSERT INTO "users" ("ronin.updatedAt") SELECT "ronin.updatedAt" FROM "accounts" RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy"',
       params: [],
       returning: true,
     },

@@ -25,7 +25,7 @@ test('get multiple records limited to amount', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3',
       params: [],
       returning: true,
     },
@@ -74,7 +74,7 @@ test('get multiple records limited to amount ordered by link field', async () =>
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" ORDER BY "account" DESC, "ronin.createdAt" DESC LIMIT 3',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "account" FROM "members" ORDER BY "account" DESC, "ronin.createdAt" DESC LIMIT 3',
       params: [],
       returning: true,
     },

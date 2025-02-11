@@ -277,7 +277,7 @@ test('get single record with specific fields (all levels)', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -290,7 +290,6 @@ test('get single record with specific fields (all levels)', async () => {
     id: expect.stringMatching(RECORD_ID_REGEX),
     name: expect.any(String),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -327,7 +326,7 @@ test('get single record with specific fields (all levels, except)', async () => 
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" LIMIT 1',
+        'SELECT "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" LIMIT 1',
       params: [],
       returning: true,
     },
@@ -339,7 +338,6 @@ test('get single record with specific fields (all levels, except)', async () => 
   expect(result.record).toMatchObject({
     name: expect.any(String),
     ronin: {
-      locked: false,
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
       createdBy: null,
       updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -419,7 +417,7 @@ test('get single record with specific fields (all levels, any suffix)', async ()
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "beaches" LIMIT 1',
+        'SELECT "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "beaches" LIMIT 1',
       params: [],
       returning: true,
     },

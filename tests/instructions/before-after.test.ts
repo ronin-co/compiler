@@ -37,7 +37,7 @@ test('get multiple records before cursor', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" WHERE (("ronin.createdAt" > '2024-12-08T10:47:58.079Z')) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" WHERE (("ronin.createdAt" > '2024-12-08T10:47:58.079Z')) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -53,7 +53,6 @@ test('get multiple records before cursor', async () => {
     {
       id: 'bea_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -64,7 +63,6 @@ test('get multiple records before cursor', async () => {
     {
       id: 'bea_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -109,7 +107,7 @@ test('get multiple records before cursor ordered by string field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" WHERE ((IFNULL("name", -1e999) < ?1 COLLATE NOCASE) OR ("name" = ?1 AND ("ronin.createdAt" > '2024-12-10T10:47:58.079Z'))) ORDER BY "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" WHERE ((IFNULL("name", -1e999) < ?1 COLLATE NOCASE) OR ("name" = ?1 AND ("ronin.createdAt" > '2024-12-10T10:47:58.079Z'))) ORDER BY "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 3`,
       params: ['Manly'],
       returning: true,
     },
@@ -128,7 +126,6 @@ test('get multiple records before cursor ordered by string field', async () => {
     {
       id: 'bea_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -139,7 +136,6 @@ test('get multiple records before cursor ordered by string field', async () => {
     {
       id: 'bea_39h8fhe98hefah1j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -184,7 +180,7 @@ test('get multiple records before cursor ordered by boolean field', async () => 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE ((IFNULL("pending", -1e999) < ?1) OR ("pending" = ?1 AND ("ronin.createdAt" > '2024-10-09T10:47:58.079Z'))) ORDER BY "pending" ASC, "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE ((IFNULL("pending", -1e999) < ?1) OR ("pending" = ?1 AND ("ronin.createdAt" > '2024-10-09T10:47:58.079Z'))) ORDER BY "pending" ASC, "ronin.createdAt" DESC LIMIT 3`,
       params: [1],
       returning: true,
     },
@@ -203,7 +199,6 @@ test('get multiple records before cursor ordered by boolean field', async () => 
     {
       id: 'mem_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -214,7 +209,6 @@ test('get multiple records before cursor ordered by boolean field', async () => 
     {
       id: 'mem_39h8fhe98hefah8j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -263,7 +257,7 @@ test('get multiple records before cursor ordered by number field', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position", "name" FROM "products" WHERE (("position" > ?1) OR ("position" = ?1 AND ("ronin.createdAt" > '2024-12-11T10:47:58.079Z'))) ORDER BY "position" DESC, "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "position", "name" FROM "products" WHERE (("position" > ?1) OR ("position" = ?1 AND ("ronin.createdAt" > '2024-12-11T10:47:58.079Z'))) ORDER BY "position" DESC, "ronin.createdAt" DESC LIMIT 3`,
       params: [1],
       returning: true,
     },
@@ -282,7 +276,6 @@ test('get multiple records before cursor ordered by number field', async () => {
     {
       id: 'pro_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -294,7 +287,6 @@ test('get multiple records before cursor ordered by number field', async () => {
     {
       id: 'pro_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -344,7 +336,7 @@ test('get multiple records before cursor ordered by empty string field', async (
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "sandColor" FROM "beaches" WHERE (("sandColor" IS NOT NULL) OR ("sandColor" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "sandColor" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "sandColor" FROM "beaches" WHERE (("sandColor" IS NOT NULL) OR ("sandColor" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "sandColor" COLLATE NOCASE DESC, "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -360,7 +352,6 @@ test('get multiple records before cursor ordered by empty string field', async (
     {
       id: 'bea_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -372,7 +363,6 @@ test('get multiple records before cursor ordered by empty string field', async (
     {
       id: 'bea_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -424,7 +414,7 @@ test('get multiple records before cursor ordered by empty boolean field', async 
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "swimmingAllowed" FROM "beaches" WHERE (("swimmingAllowed" IS NOT NULL) OR ("swimmingAllowed" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "swimmingAllowed" DESC, "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "swimmingAllowed" FROM "beaches" WHERE (("swimmingAllowed" IS NOT NULL) OR ("swimmingAllowed" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "swimmingAllowed" DESC, "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -443,7 +433,6 @@ test('get multiple records before cursor ordered by empty boolean field', async 
     {
       id: 'bea_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -455,7 +444,6 @@ test('get multiple records before cursor ordered by empty boolean field', async 
     {
       id: 'bea_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -505,7 +493,7 @@ test('get multiple records before cursor ordered by empty number field', async (
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "rating" FROM "beaches" WHERE (("rating" IS NOT NULL) OR ("rating" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "rating" DESC, "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "rating" FROM "beaches" WHERE (("rating" IS NOT NULL) OR ("rating" IS NULL AND ("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "rating" DESC, "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -521,7 +509,6 @@ test('get multiple records before cursor ordered by empty number field', async (
     {
       id: 'bea_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -533,7 +520,6 @@ test('get multiple records before cursor ordered by empty number field', async (
     {
       id: 'bea_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -583,7 +569,7 @@ test('get multiple records before cursor while filtering', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "products" WHERE ("name" IS NOT NULL AND (("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "products" WHERE ("name" IS NOT NULL AND (("ronin.createdAt" > '2024-12-08T10:47:58.079Z'))) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -599,7 +585,6 @@ test('get multiple records before cursor while filtering', async () => {
     {
       id: 'pro_39h8fhe98hefah9j',
       ronin: {
-        locked: false,
         createdAt: firstRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -610,7 +595,6 @@ test('get multiple records before cursor while filtering', async () => {
     {
       id: 'pro_39h8fhe98hefah0j',
       ronin: {
-        locked: false,
         createdAt: lastRecordTime.toISOString(),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -652,7 +636,7 @@ test('get multiple records before undefined cursor', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -665,7 +649,6 @@ test('get multiple records before undefined cursor', async () => {
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -676,7 +659,6 @@ test('get multiple records before undefined cursor', async () => {
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -715,7 +697,7 @@ test('get multiple records after undefined cursor', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.locked", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name" FROM "beaches" ORDER BY "ronin.createdAt" DESC LIMIT 3`,
       params: [],
       returning: true,
     },
@@ -728,7 +710,6 @@ test('get multiple records after undefined cursor', async () => {
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
@@ -739,7 +720,6 @@ test('get multiple records after undefined cursor', async () => {
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
       ronin: {
-        locked: false,
         createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
         createdBy: null,
         updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
