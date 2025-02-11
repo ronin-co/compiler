@@ -911,6 +911,47 @@ test('get single record with json field', async () => {
   expect(result.record?.locations).toHaveProperty('europe', 'berlin');
 });
 
+test('get single record with json field (empty)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        team: {
+          with: {
+            someEmptyField: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: [
+        {
+          slug: 'someEmptyField',
+          type: 'json',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "someEmptyField" FROM "teams" WHERE "someEmptyField" IS NULL LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('someEmptyField', null);
+});
+
 test('get single record with blob field', async () => {
   const queries: Array<Query> = [
     {
@@ -962,7 +1003,7 @@ test('get single record with string field (empty)', async () => {
       get: {
         beach: {
           with: {
-            region: null,
+            someEmptyField: null,
           },
         },
       },
@@ -974,7 +1015,7 @@ test('get single record with string field (empty)', async () => {
       slug: 'beach',
       fields: [
         {
-          slug: 'region',
+          slug: 'someEmptyField',
           type: 'string',
         },
       ],
@@ -985,7 +1026,7 @@ test('get single record with string field (empty)', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "region" FROM "beaches" WHERE "region" IS NULL LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "someEmptyField" FROM "beaches" WHERE "someEmptyField" IS NULL LIMIT 1`,
       params: [],
       returning: true,
     },
@@ -994,7 +1035,7 @@ test('get single record with string field (empty)', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record).toHaveProperty('region', null);
+  expect(result.record).toHaveProperty('someEmptyField', null);
 });
 
 test('get single record with one of fields', async () => {
