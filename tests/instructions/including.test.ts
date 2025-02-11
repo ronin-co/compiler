@@ -101,12 +101,11 @@ test('get single record including unrelated record with filter', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -172,12 +171,11 @@ test('get single record including unrelated record that is not found', async () 
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -235,21 +233,19 @@ test('get single record including unrelated record with filter and specific fiel
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'firstName',
+      fields: {
+        firstName: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -302,21 +298,19 @@ test('get single record including unrelated records without filter', async () =>
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -386,12 +380,11 @@ test('get single record including unrelated records with filter', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -470,12 +463,11 @@ test('get single record including unrelated records that are not found', async (
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -535,12 +527,11 @@ test('get single record including count of unrelated records', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -600,12 +591,11 @@ test('get multiple records including unrelated records with filter', async () =>
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -695,12 +685,11 @@ test('get multiple records including unrelated records that are not found', asyn
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -770,25 +759,22 @@ test('get multiple records including unrelated records with filter (hoisted)', a
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -870,34 +856,30 @@ test('get multiple records including unrelated records with filter (nested)', as
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'locations',
+      fields: {
+        locations: {
           type: 'json',
         },
-      ],
+      },
     },
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1058,34 +1040,30 @@ test('get multiple records including unrelated records with filter (nested, hois
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'locations',
+      fields: {
+        locations: {
           type: 'json',
         },
-      ],
+      },
     },
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1210,12 +1188,11 @@ test('get multiple records including count of unrelated records', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1282,21 +1259,19 @@ test('get single record including unrelated ordered record', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1361,21 +1336,19 @@ test('get single record including unrelated ordered records', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1509,20 +1482,17 @@ test('get single record including ephemeral field containing expression', async 
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'firstName',
+      fields: {
+        firstName: {
           type: 'string',
         },
-        {
-          slug: 'lastName',
+        lastName: {
           type: 'string',
         },
-        {
-          slug: 'handle',
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

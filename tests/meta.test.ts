@@ -23,13 +23,11 @@ import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('create new model', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'handle',
+  const fields: Model['fields'] = {
+    handle: {
       type: 'string',
     },
-    {
-      slug: 'email',
+    email: {
       type: 'string',
       required: true,
       unique: true,
@@ -38,13 +36,11 @@ test('create new model', () => {
       },
       collation: 'NOCASE',
     },
-    {
-      slug: 'position',
+    position: {
       type: 'number',
       increment: true,
     },
-    {
-      slug: 'name',
+    name: {
       type: 'string',
       computedAs: {
         kind: 'STORED',
@@ -53,7 +49,7 @@ test('create new model', () => {
         },
       },
     },
-  ];
+  };
 
   const triggers: Model['triggers'] = [
     {
@@ -177,19 +173,17 @@ test('create new model', () => {
 // Ensure that a reasonable display name and URL slug are automatically selected for the
 // model, based on which fields are available.
 test('create new model with suitable default identifiers', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'name',
+  const fields: Model['fields'] = {
+    name: {
       type: 'string',
       required: true,
     },
-    {
-      slug: 'handle',
+    handle: {
       type: 'string',
       required: true,
       unique: true,
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -225,14 +219,13 @@ test('create new model with lowercased id prefix', () => {
 
 // Assert whether the system models associated with the model are correctly created.
 test('create new model that has system models associated with it', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'followers',
+  const fields: Model['fields'] = {
+    followers: {
       type: 'link',
       target: 'account',
       kind: 'many',
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -253,13 +246,12 @@ test('create new model that has system models associated with it', () => {
 });
 
 test('create new model that references itself', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'parentTeam',
+  const fields: Model['fields'] = {
+    parentTeam: {
       type: 'link',
       target: 'team',
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {

@@ -20,12 +20,11 @@ test('get multiple records ordered by field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -72,16 +71,14 @@ test('get multiple records ordered by expression', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'firstName',
+      fields: {
+        firstName: {
           type: 'string',
         },
-        {
-          slug: 'lastName',
+        lastName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -126,16 +123,14 @@ test('get multiple records ordered by multiple fields', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'lastName',
+        lastName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

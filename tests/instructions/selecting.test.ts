@@ -56,12 +56,11 @@ test('get single record with specific fields', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -98,12 +97,11 @@ test('get single record with specific fields (root level)', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -140,12 +138,11 @@ test('get single record with specific fields (root level, except)', async () => 
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -181,12 +178,11 @@ test('get single record with specific fields (root level, any prefix)', async ()
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -222,12 +218,11 @@ test('get single record with specific fields (root level, any suffix)', async ()
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -263,12 +258,11 @@ test('get single record with specific fields (all levels)', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -312,12 +306,11 @@ test('get single record with specific fields (all levels, except)', async () => 
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -360,12 +353,11 @@ test('get single record with specific fields (all levels, any prefix)', async ()
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -403,12 +395,11 @@ test('get single record with specific fields (all levels, any suffix)', async ()
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

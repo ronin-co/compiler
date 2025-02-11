@@ -22,16 +22,14 @@ test('inline statement parameters', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'emails',
+        emails: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -58,12 +56,13 @@ test('inline statement parameters', async () => {
 });
 
 test('inline statement parameters containing serialized expression', async () => {
-  const newField: ModelField = {
-    slug: 'activeAt',
-    name: 'Active At',
-    type: 'date',
-    defaultValue: {
-      [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
+  const newField = {
+    activeAt: {
+      name: 'Active At',
+      type: 'date' as const,
+      defaultValue: {
+        [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
+      },
     },
   };
 
@@ -72,7 +71,7 @@ test('inline statement parameters containing serialized expression', async () =>
       create: {
         model: {
           slug: 'account',
-          fields: [newField],
+          fields: newField,
           // Ensure that the ID in the asserted output stays stable.
           id: 'mod_1f052f8432bc861b',
         },
@@ -123,12 +122,11 @@ test('inline statement parameters containing boolean', async () => {
   const models: Array<Model> = [
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'pending',
+      fields: {
+        pending: {
           type: 'boolean',
         },
-      ],
+      },
     },
   ];
 
@@ -170,13 +168,12 @@ test('provide models containing default fields', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        ...getSystemFields('acc'),
-        {
-          slug: 'handle',
+      fields: {
+        ...Object.fromEntries(getSystemFields('acc').map(f => [f.slug, f])),
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -216,22 +213,20 @@ test('provide models containing default presets', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
       presets: [
         {
           slug: 'account',
