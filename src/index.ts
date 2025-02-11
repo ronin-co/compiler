@@ -169,10 +169,13 @@ class Transaction {
         let newSlug = field.mountingPath;
         let newValue = row[fieldIndex];
 
-        if (field.type === 'json' || field.type === 'blob') {
-          newValue = JSON.parse(newValue as string);
-        } else if (field.type === 'boolean') {
-          newValue = Boolean(newValue);
+        // If the value of the field isn't empty, format it.
+        if (newValue !== null) {
+          if (field.type === 'json' || field.type === 'blob') {
+            newValue = JSON.parse(newValue as string);
+          } else if (field.type === 'boolean') {
+            newValue = Boolean(newValue);
+          }
         }
 
         // If the query is used to alter the database schema, the result of the query
