@@ -119,7 +119,9 @@ export type InternalModelField = ModelField & {
   mountedValue?: unknown;
 };
 
-export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
+export type ModelIndexField<
+  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
+> = {
   /** The collating sequence used for text placed inside the field. */
   collation?: ModelFieldCollation;
   /** How the records in the index should be ordered. */
@@ -127,7 +129,7 @@ export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
 } & (
   | {
       /** The field slug for which the index should be created. */
-      slug: T[number]['slug'];
+      slug: keyof T;
     }
   | {
       /** The field expression for which the index should be created. */
@@ -135,7 +137,9 @@ export type ModelIndexField<T extends Array<ModelField> = Array<ModelField>> = {
     }
 );
 
-export type ModelIndex<T extends Array<ModelField> = Array<ModelField>> = {
+export type ModelIndex<
+  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
+> = {
   /**
    * The list of fields in the model for which the index should be created.
    */
@@ -155,15 +159,19 @@ export type ModelIndex<T extends Array<ModelField> = Array<ModelField>> = {
   filter?: WithInstruction;
 };
 
-export type ModelTriggerField<T extends Array<ModelField> = Array<ModelField>> = {
+export type ModelTriggerField<
+  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
+> = {
   /**
    * The slug of the field that should cause the trigger to fire if the value of the
    * field has changed.
    */
-  slug: T[number]['slug'];
+  slug: keyof T;
 };
 
-export type ModelTrigger<T extends Array<ModelField> = Array<ModelField>> = {
+export type ModelTrigger<
+  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
+> = {
   /**
    * The identifier of the trigger.
    */
@@ -192,7 +200,14 @@ export type ModelPreset = {
 
 export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
 
-export interface Model<T extends Array<ModelField> = Array<ModelField>> {
+type ModelEntityList<T extends { slug?: string }> = Record<
+  NonNullable<T['slug']>,
+  Omit<T, 'slug'>
+>;
+
+export interface Model<
+  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
+> {
   id: string;
 
   name: string;
@@ -201,8 +216,8 @@ export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   pluralSlug: string;
 
   identifiers: {
-    name: T[number]['slug'];
-    slug: T[number]['slug'];
+    name: keyof T;
+    slug: keyof T;
   };
   idPrefix: string;
 
@@ -234,9 +249,9 @@ export interface Model<T extends Array<ModelField> = Array<ModelField>> {
   // the compiler from the outside, the fields are optional, because the compiler will
   // add the default fields automatically, and those are enough to create a model.
   fields: T;
-  indexes?: Array<ModelIndex<T>>;
-  triggers?: Array<ModelTrigger<T>>;
-  presets?: Array<ModelPreset>;
+  indexes?: ModelEntityList<ModelIndex<T>>;
+  triggers?: ModelEntityList<ModelTrigger<T>>;
+  presets?: ModelEntityList<ModelPreset>;
 }
 
 export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
@@ -245,10 +260,9 @@ export type PartialModel = Omit<Partial<Model>, 'identifiers'> & {
 
 // In models provided to the compiler, all settings are optional, except for the `slug`,
 // which is the required bare minimum.
-export type PublicModel<T extends Array<ModelField> = Array<ModelField>> = Omit<
-  Partial<Model<T>>,
-  'slug' | 'identifiers' | 'system' | 'tableAlias'
-> & {
+export type PublicModel<
+  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
+> = Omit<Partial<Model<T>>, 'slug' | 'identifiers' | 'system' | 'tableAlias'> & {
   slug: Required<Model['slug']>;
 
   // It should also be possible for models to only define one of the two identifiers,
