@@ -110,7 +110,10 @@ export const handleTo = (
       statement = `(${columns.join(', ')}) `;
     }
 
-    statement += compileQueryInput(symbol.value, models, statementParams).main.statement;
+    statement += compileQueryInput(symbol.value, models, statementParams, {
+      // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+      inlineDefaults: options?.inlineDefaults || false,
+    }).main.statement;
     return statement;
   }
 
@@ -156,7 +159,8 @@ export const handleTo = (
           },
           models,
           [],
-          { returning: false },
+          // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+          { returning: false, inlineDefaults: options?.inlineDefaults || false },
         ).main;
 
         // We are passing `after: true` here to ensure that the dependency statement is

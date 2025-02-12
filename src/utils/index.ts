@@ -51,7 +51,7 @@ export const compileQueryInput = (
     /**
      * Whether to compute default field values as part of the generated statement.
      */
-    inlineDefaults?: boolean;
+    inlineDefaults: boolean;
   },
 ): {
   dependencies: Array<InternalDependencyStatement>;
@@ -71,6 +71,10 @@ export const compileQueryInput = (
     dependencyStatements,
     statementParams,
     defaultQuery,
+    {
+      // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+      inlineDefaults: options?.inlineDefaults || false,
+    },
   );
 
   // If no further query processing should happen, we need to return early.
@@ -121,6 +125,9 @@ export const compileQueryInput = (
       selecting: instructions?.selecting,
       including: instructions?.including,
     },
+
+    // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+    { inlineDefaults: options?.inlineDefaults || false },
   );
 
   let statement = '';

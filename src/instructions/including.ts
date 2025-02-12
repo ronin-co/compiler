@@ -29,7 +29,13 @@ export const handleIncluding = (
   options: {
     /** The path on which the selected fields should be mounted in the final record. */
     mountingPath?: InternalModelField['mountingPath'];
-  } = {},
+    /**
+     * Whether to compute default field values as part of the generated statement.
+     */
+    inlineDefaults: boolean;
+  } = {
+    inlineDefaults: false,
+  },
 ): {
   statement: string;
   tableSubQuery?: string;
@@ -107,7 +113,7 @@ export const handleIncluding = (
         },
         models,
         statementParams,
-        { parentModel: model },
+        { parentModel: model, inlineDefaults: options.inlineDefaults },
       );
 
       relatedTableSelector = `(${subSelect.main.statement})`;
@@ -149,7 +155,7 @@ export const handleIncluding = (
         statementParams,
         subSingle,
         modifiableQueryInstructions.including,
-        { mountingPath: subMountingPath },
+        { mountingPath: subMountingPath, inlineDefaults: options.inlineDefaults },
       );
 
       statement += ` ${subIncluding.statement}`;
