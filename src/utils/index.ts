@@ -48,6 +48,10 @@ export const compileQueryInput = (
      * the parent model in the nested query (the current query).
      */
     parentModel?: Model;
+    /**
+     * Whether to compute default field values as part of the generated statement.
+     */
+    inlineDefaults?: boolean;
   },
 ): {
   dependencies: Array<InternalDependencyStatement>;
@@ -191,7 +195,7 @@ export const compileQueryInput = (
       queryType,
       dependencyStatements,
       { with: instructions!.with, to: instructionValue },
-      options?.parentModel,
+      options,
     );
 
     statement += `${toStatement} `;

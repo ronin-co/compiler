@@ -31,7 +31,7 @@ import { composeConditions, filterSelectedFields } from '@/src/utils/statement';
  * @param dependencyStatements - A list of SQL statements to be executed before the main
  * SQL statement, in order to prepare for it.
  * @param instructions - The `to` and `with` instruction included in the query.
- * @param parentModel - The model of the parent query, if there is one.
+ * @param options - Additional options to adjust the behavior of the statement generation.
  *
  * @returns The SQL syntax for the provided `to` instruction.
  */
@@ -45,18 +45,24 @@ export const handleTo = (
     with: NonNullable<SetInstructions['with']> | undefined;
     to: NonNullable<SetInstructions['to']>;
   },
-  parentModel?: Model,
+  options?: Parameters<typeof compileQueryInput>[3],
 ): string => {
   const { with: withInstruction, to: toInstruction } = instructions;
   const defaultFields: Record<string, unknown> = {};
 
-  if (queryType === 'set' || toInstruction.ronin) {
-    defaultFields.ronin = {
+  if (queryType === 'add' || queryType === 'set' || toInstruction.ronin) {
+    const defaults = {
+      // If records are being created, set their creation time.
+      ...(queryType === 'add' && options?.inlineDefaults
+        ? { createdAt: CURRENT_TIME_EXPRESSION }
+        : {}),
       // If records are being updated, bump their update time.
       ...(queryType === 'set' ? { updatedAt: CURRENT_TIME_EXPRESSION } : {}),
       // Allow for overwriting the default values provided above.
       ...(toInstruction.ronin as object),
     };
+
+    if (Object.keys(defaults).length > 0) defaultFields.ronin = defaults;
   }
 
   // Check whether a query resides at the root of the `to` instruction.
@@ -196,7 +202,7 @@ export const handleTo = (
   }
 
   let statement = composeConditions(models, model, statementParams, 'to', toInstruction, {
-    parentModel,
+    parentModel: options?.parentModel,
     type: queryType === 'add' ? 'fields' : undefined,
   });
 
@@ -208,7 +214,7 @@ export const handleTo = (
       'to',
       toInstruction,
       {
-        parentModel,
+        parentModel: options?.parentModel,
         type: 'values',
       },
     );
