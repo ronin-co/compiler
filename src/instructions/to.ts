@@ -11,6 +11,7 @@ import type {
 } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
+  ID_EXPRESSION,
   flatten,
   getQuerySymbol,
   isObject,
@@ -50,14 +51,22 @@ export const handleTo = (
   const { with: withInstruction, to: toInstruction } = instructions;
   const defaultFields: Record<string, unknown> = {};
 
+  const inlineDefaultInsertionFields = queryType === 'add' && options?.inlineDefaults;
+
+  // If records are being created, assign a default ID to them, unless a custom ID was
+  // already provided in the query.
+  if (inlineDefaultInsertionFields) {
+    defaultFields.id = toInstruction.id || ID_EXPRESSION(model.idPrefix);
+  }
+
   if (queryType === 'add' || queryType === 'set' || toInstruction.ronin) {
     const defaults = {
       // If records are being created, set their creation time.
-      ...(queryType === 'add' && options?.inlineDefaults
-        ? { createdAt: CURRENT_TIME_EXPRESSION }
-        : {}),
+      ...(inlineDefaultInsertionFields ? { createdAt: CURRENT_TIME_EXPRESSION } : {}),
       // If records are being updated, bump their update time.
-      ...(queryType === 'set' ? { updatedAt: CURRENT_TIME_EXPRESSION } : {}),
+      ...(queryType === 'set' || inlineDefaultInsertionFields
+        ? { updatedAt: CURRENT_TIME_EXPRESSION }
+        : {}),
       // Allow for overwriting the default values provided above.
       ...(toInstruction.ronin as object),
     };

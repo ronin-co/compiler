@@ -153,6 +153,58 @@ test('inline statement parameters containing boolean', async () => {
   });
 });
 
+test('inline default values', async () => {
+  const queries: Array<Query> = [
+    {
+      add: {
+        account: {
+          with: {
+            handle: 'elaine',
+            emails: ['test@site.co', 'elaine@site.com'],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: [
+        {
+          slug: 'handle',
+          type: 'string',
+        },
+        {
+          slug: 'emails',
+          type: 'json',
+        },
+      ],
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    inlineDefaults: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, 'acc_' || lower(substr(hex(randomblob(12)), 1, 16)), strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z', strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
+      params: ['elaine', '["test@site.co","elaine@site.com"]'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toMatchObject({
+    handle: 'elaine',
+    emails: ['test@site.co', 'elaine@site.com'],
+  });
+});
+
 // Ensure that default fields are not repeated if they are already present.
 test('provide models containing default fields', async () => {
   const queries: Array<Query> = [
