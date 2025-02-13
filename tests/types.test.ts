@@ -60,12 +60,11 @@ test('remove single record', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -141,12 +140,11 @@ test('pass multiple record queries at once', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

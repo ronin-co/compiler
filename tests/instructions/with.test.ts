@@ -21,12 +21,11 @@ test('get single record with field being value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -65,12 +64,11 @@ test('get single record with field not being value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -109,12 +107,11 @@ test('get single record with field not being empty', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -153,12 +150,11 @@ test('get single record with field starting with value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -197,12 +193,11 @@ test('get single record with field not starting with value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -241,12 +236,11 @@ test('get single record with field ending with value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -285,12 +279,11 @@ test('get single record with field not ending with value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -329,12 +322,11 @@ test('get single record with field containing value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -373,12 +365,11 @@ test('get single record with field not containing value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -417,12 +408,11 @@ test('get single record with field greater than value', async () => {
   const models: Array<Model> = [
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'position',
+      fields: {
+        position: {
           type: 'number',
         },
-      ],
+      },
     },
   ];
 
@@ -461,12 +451,11 @@ test('get single record with field greater or equal to value', async () => {
   const models: Array<Model> = [
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'position',
+      fields: {
+        position: {
           type: 'number',
         },
-      ],
+      },
     },
   ];
 
@@ -505,12 +494,11 @@ test('get single record with field less than value', async () => {
   const models: Array<Model> = [
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'position',
+      fields: {
+        position: {
           type: 'number',
         },
-      ],
+      },
     },
   ];
 
@@ -549,12 +537,11 @@ test('get single record with field less or equal to value', async () => {
   const models: Array<Model> = [
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'position',
+      fields: {
+        position: {
           type: 'number',
         },
-      ],
+      },
     },
   ];
 
@@ -596,16 +583,14 @@ test('get single record with multiple fields being value', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'firstName',
+        firstName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -645,22 +630,20 @@ test('get single record with link field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 
@@ -709,13 +692,12 @@ test('get single record with link field and id', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 
@@ -759,13 +741,12 @@ test('get single record with link field and id with condition', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 
@@ -802,12 +783,11 @@ test('get single record with boolean field', async () => {
   const models: Array<Model> = [
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'pending',
+      fields: {
+        pending: {
           type: 'boolean',
         },
-      ],
+      },
     },
   ];
 
@@ -843,12 +823,11 @@ test('get single record with boolean field (empty)', async () => {
   const models: Array<Model> = [
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'someEmptyField',
+      fields: {
+        someEmptyField: {
           type: 'boolean',
         },
-      ],
+      },
     },
   ];
 
@@ -886,12 +865,11 @@ test('get single record with json field', async () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'locations',
+      fields: {
+        locations: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -927,12 +905,11 @@ test('get single record with json field (empty)', async () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'someEmptyField',
+      fields: {
+        someEmptyField: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -972,12 +949,11 @@ test('get single record with blob field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'avatar',
+      fields: {
+        avatar: {
           type: 'blob',
         },
-      ],
+      },
     },
   ];
 
@@ -1013,12 +989,11 @@ test('get single record with string field (empty)', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'someEmptyField',
+      fields: {
+        someEmptyField: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1059,16 +1034,14 @@ test('get single record with one of fields', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'firstName',
+        firstName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1104,16 +1077,14 @@ test('get single record with one of fields (empty list)', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'firstName',
+        firstName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1156,12 +1127,11 @@ test('get single record with one of field conditions', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1197,12 +1167,11 @@ test('get single record with one of field conditions (empty list)', async () => 
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1240,12 +1209,11 @@ test('get single record with one of field values', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1283,12 +1251,11 @@ test('get single record with one of field values (empty list)', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1326,12 +1293,11 @@ test('get single record with one of nested field values', async () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'billing.currency',
+      fields: {
+        'billing.currency': {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1372,12 +1338,11 @@ test('get single record with one of nested field values (empty list)', async () 
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'billing.currency',
+      fields: {
+        'billing.currency': {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1418,12 +1383,11 @@ test('get single record with name identifier', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'firstName',
+      fields: {
+        firstName: {
           type: 'string',
         },
-      ],
+      },
       identifiers: {
         name: 'firstName',
       },
@@ -1464,12 +1428,11 @@ test('get single record with slug identifier', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
       identifiers: {
         slug: 'handle',
       },

@@ -85,12 +85,11 @@ test('get single record with empty `with` instruction', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

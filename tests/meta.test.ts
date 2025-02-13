@@ -17,19 +17,15 @@ import {
 } from '@/fixtures/utils';
 import { getSystemFields } from '@/src/model';
 import { slugToName } from '@/src/model/defaults';
-import type { ModelEntity } from '@/src/types/model';
-import type { ModelEntityType } from '@/src/types/query';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
 test('create new model', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'handle',
+  const fields: Model['fields'] = {
+    handle: {
       type: 'string',
     },
-    {
-      slug: 'email',
+    email: {
       type: 'string',
       required: true,
       unique: true,
@@ -38,13 +34,11 @@ test('create new model', () => {
       },
       collation: 'NOCASE',
     },
-    {
-      slug: 'position',
+    position: {
       type: 'number',
       increment: true,
     },
-    {
-      slug: 'name',
+    name: {
       type: 'string',
       computedAs: {
         kind: 'STORED',
@@ -53,10 +47,10 @@ test('create new model', () => {
         },
       },
     },
-  ];
+  };
 
-  const triggers: Model['triggers'] = [
-    {
+  const triggers: Model['triggers'] = {
+    triggerSlug: {
       when: 'AFTER',
       action: 'INSERT',
       effects: [
@@ -71,10 +65,10 @@ test('create new model', () => {
         },
       ],
     },
-  ];
+  };
 
-  const indexes: Model['indexes'] = [
-    {
+  const indexes: Model['indexes'] = {
+    indexSlug: {
       fields: [
         {
           slug: 'handle',
@@ -82,11 +76,10 @@ test('create new model', () => {
       ],
       unique: true,
     },
-  ];
+  };
 
-  const presets: Model['presets'] = [
-    {
-      slug: 'companyEmployees',
+  const presets: Model['presets'] = {
+    companyEmployees: {
       instructions: {
         with: {
           email: {
@@ -95,7 +88,7 @@ test('create new model', () => {
         },
       },
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -108,32 +101,11 @@ test('create new model', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
   ];
-
-  const mapItems = (type: ModelEntityType, items: Array<ModelEntity>): string => {
-    return JSON.stringify(
-      Object.fromEntries(
-        items.map(({ slug: defaultSlug, ...rest }) => {
-          const slug = defaultSlug || `${type}Slug`;
-
-          return [
-            slug,
-            {
-              ...rest,
-              name:
-                type === 'field'
-                  ? 'name' in rest
-                    ? rest.name
-                    : slugToName(slug)
-                  : undefined,
-            },
-          ];
-        }),
-      ),
-    );
-  };
 
   const transaction = new Transaction(queries, { models });
 
@@ -156,10 +128,18 @@ test('create new model', () => {
         'INSERT INTO "ronin_schema" ("slug", "fields", "indexes", "triggers", "presets", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
       params: [
         'account',
-        mapItems('field', [...getSystemFields('acc'), ...fields]),
-        mapItems('index', indexes),
-        mapItems('trigger', triggers),
-        mapItems('preset', presets),
+        JSON.stringify({
+          ...getSystemFields('acc'),
+          ...Object.fromEntries(
+            Object.entries(fields).map(([fieldSlug, rest]) => [
+              fieldSlug,
+              { ...rest, name: slugToName(fieldSlug) },
+            ]),
+          ),
+        }),
+        JSON.stringify(indexes),
+        JSON.stringify(triggers),
+        JSON.stringify(presets),
         expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
         'Account',
@@ -177,19 +157,17 @@ test('create new model', () => {
 // Ensure that a reasonable display name and URL slug are automatically selected for the
 // model, based on which fields are available.
 test('create new model with suitable default identifiers', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'name',
+  const fields: Model['fields'] = {
+    name: {
       type: 'string',
       required: true,
     },
-    {
-      slug: 'handle',
+    handle: {
       type: 'string',
       required: true,
       unique: true,
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -225,14 +203,13 @@ test('create new model with lowercased id prefix', () => {
 
 // Assert whether the system models associated with the model are correctly created.
 test('create new model that has system models associated with it', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'followers',
+  const fields: Model['fields'] = {
+    followers: {
       type: 'link',
       target: 'account',
       kind: 'many',
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -253,13 +230,12 @@ test('create new model that has system models associated with it', () => {
 });
 
 test('create new model that references itself', () => {
-  const fields: Model['fields'] = [
-    {
-      slug: 'parentTeam',
+  const fields: Model['fields'] = {
+    parentTeam: {
       type: 'link',
       target: 'team',
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -291,12 +267,11 @@ test('get existing models', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -335,17 +310,16 @@ test('get existing models', async () => {
         slug: 'id',
       },
       table: 'accounts',
-      fields: [
+      fields: {
         ...getSystemFields('acc'),
-        {
+        handle: {
           name: 'Handle',
-          slug: 'handle',
           type: 'string',
         },
-      ],
-      indexes: [],
-      triggers: [],
-      presets: [],
+      },
+      indexes: {},
+      triggers: {},
+      presets: {},
     },
   ]);
 });
@@ -405,14 +379,13 @@ test('alter existing model (slug) that has system models associated with it', ()
     },
     {
       slug: 'user',
-      fields: [
-        {
-          slug: 'likes',
+      fields: {
+        likes: {
           type: 'link',
           target: 'post',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -511,14 +484,13 @@ test('drop existing model that has system models associated with it', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'followers',
+      fields: {
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -782,7 +754,9 @@ test('alter existing field (slug)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -794,8 +768,8 @@ test('alter existing field (slug)', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(newFieldDetails), 'account'],
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.email'), '$.emailAddress', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      params: [JSON.stringify({ name: 'Email Address' }), 'account'],
       returning: true,
     },
   ]);
@@ -823,14 +797,13 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'followers',
+      fields: {
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -843,8 +816,8 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.followers', json_patch(json_extract("fields", '$.followers'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(newFieldDetails), 'account'],
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.followers'), '$.subscribers', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      params: [JSON.stringify({ name: 'Subscribers' }), 'account'],
       returning: true,
     },
   ]);
@@ -872,7 +845,9 @@ test('alter existing field (name)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -902,7 +877,9 @@ test('drop existing field', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -945,7 +922,13 @@ test('drop existing field that has system models associated with it', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [field],
+      fields: {
+        followers: {
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      },
     },
   ];
 
@@ -981,20 +964,18 @@ test('drop existing field on model with other many-cardinality fields', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'followers',
+      fields: {
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-        {
-          slug: 'subscribers',
+        subscribers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -1008,6 +989,7 @@ test('drop existing field on model with other many-cardinality fields', () => {
 
 test('create new index', () => {
   const index: ModelIndex = {
+    slug: 'indexSlug',
     fields: [
       {
         slug: 'email',
@@ -1029,7 +1011,9 @@ test('create new index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1042,7 +1026,7 @@ test('create new index', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
+      params: [JSON.stringify(index), 'account'],
       returning: true,
     },
   ]);
@@ -1050,6 +1034,7 @@ test('create new index', () => {
 
 test('create new index with filter', () => {
   const index: ModelIndex = {
+    slug: 'indexSlug',
     fields: [
       {
         slug: 'email',
@@ -1076,7 +1061,9 @@ test('create new index with filter', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1089,7 +1076,7 @@ test('create new index with filter', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
+      params: [JSON.stringify(index), 'account'],
       returning: true,
     },
   ]);
@@ -1097,6 +1084,7 @@ test('create new index with filter', () => {
 
 test('create new index with field expressions', () => {
   const index: ModelIndex = {
+    slug: 'indexSlug',
     fields: [
       {
         expression: `LOWER(${QUERY_SYMBOLS.FIELD}firstName || ' ' || ${QUERY_SYMBOLS.FIELD}lastName)`,
@@ -1118,16 +1106,10 @@ test('create new index with field expressions', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'firstName',
-          type: 'string',
-        },
-        {
-          slug: 'lastName',
-          type: 'string',
-        },
-      ],
+      fields: {
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+      },
     },
   ];
 
@@ -1140,7 +1122,7 @@ test('create new index with field expressions', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
+      params: [JSON.stringify(index), 'account'],
       returning: true,
     },
   ]);
@@ -1148,6 +1130,7 @@ test('create new index with field expressions', () => {
 
 test('create new index with ordered and collated fields', () => {
   const index: ModelIndex = {
+    slug: 'indexSlug',
     fields: [
       {
         slug: 'email',
@@ -1171,7 +1154,9 @@ test('create new index with ordered and collated fields', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1184,7 +1169,7 @@ test('create new index with ordered and collated fields', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
+      params: [JSON.stringify(index), 'account'],
       returning: true,
     },
   ]);
@@ -1192,6 +1177,7 @@ test('create new index with ordered and collated fields', () => {
 
 test('create new unique index', () => {
   const index: ModelIndex = {
+    slug: 'indexSlug',
     fields: [
       {
         slug: 'email',
@@ -1214,7 +1200,9 @@ test('create new unique index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1227,7 +1215,7 @@ test('create new unique index', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'indexSlug', ...index }), 'account'],
+      params: [JSON.stringify(index), 'account'],
       returning: true,
     },
   ]);
@@ -1248,13 +1236,14 @@ test('drop existing index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
-      indexes: [
-        {
-          slug: 'indexSlug',
+      fields: {
+        email: { type: 'string' },
+      },
+      indexes: {
+        indexSlug: {
           fields: [{ slug: 'email' }],
         },
-      ],
+      },
     },
   ];
 
@@ -1275,6 +1264,7 @@ test('drop existing index', () => {
 
 test('create new trigger for creating records', () => {
   const trigger: ModelTrigger = {
+    slug: 'triggerSlug',
     when: 'AFTER',
     action: 'INSERT',
     effects: [
@@ -1304,7 +1294,9 @@ test('create new trigger for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
@@ -1320,7 +1312,7 @@ test('create new trigger for creating records', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'account'],
+      params: [JSON.stringify(trigger), 'account'],
       returning: true,
     },
   ]);
@@ -1328,6 +1320,7 @@ test('create new trigger for creating records', () => {
 
 test('create new trigger for creating records with targeted fields', () => {
   const trigger: ModelTrigger = {
+    slug: 'triggerSlug',
     when: 'AFTER',
     action: 'UPDATE',
     effects: [
@@ -1362,11 +1355,15 @@ test('create new trigger for creating records with targeted fields', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1379,7 +1376,7 @@ test('create new trigger for creating records with targeted fields', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'account'],
+      params: [JSON.stringify(trigger), 'account'],
       returning: true,
     },
   ]);
@@ -1387,6 +1384,7 @@ test('create new trigger for creating records with targeted fields', () => {
 
 test('create new trigger for creating records with multiple effects', () => {
   const trigger: ModelTrigger = {
+    slug: 'triggerSlug',
     when: 'AFTER',
     action: 'INSERT',
     effects: [
@@ -1425,11 +1423,15 @@ test('create new trigger for creating records with multiple effects', () => {
   const models: Array<Model> = [
     {
       slug: 'candidate',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
@@ -1445,7 +1447,7 @@ test('create new trigger for creating records with multiple effects', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'account'],
+      params: [JSON.stringify(trigger), 'account'],
       returning: true,
     },
   ]);
@@ -1453,6 +1455,7 @@ test('create new trigger for creating records with multiple effects', () => {
 
 test('create new per-record trigger for creating records', () => {
   const trigger: ModelTrigger = {
+    slug: 'triggerSlug',
     when: 'AFTER',
     action: 'INSERT',
     effects: [
@@ -1486,20 +1489,17 @@ test('create new per-record trigger for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'createdBy',
-          type: 'string',
-        },
-      ],
+      fields: {
+        createdBy: { type: 'string' },
+      },
     },
     {
       slug: 'member',
-      fields: [
-        { slug: 'account', type: 'string' },
-        { slug: 'role', type: 'string' },
-        { slug: 'pending', type: 'boolean' },
-      ],
+      fields: {
+        account: { type: 'string' },
+        role: { type: 'string' },
+        pending: { type: 'boolean' },
+      },
     },
   ];
 
@@ -1512,7 +1512,7 @@ test('create new per-record trigger for creating records', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'team'],
+      params: [JSON.stringify(trigger), 'team'],
       returning: true,
     },
   ]);
@@ -1520,6 +1520,7 @@ test('create new per-record trigger for creating records', () => {
 
 test('create new per-record trigger for removing records', () => {
   const trigger: ModelTrigger = {
+    slug: 'triggerSlug',
     when: 'AFTER',
     action: 'DELETE',
     effects: [
@@ -1551,20 +1552,17 @@ test('create new per-record trigger for removing records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'createdBy',
-          type: 'string',
-        },
-      ],
+      fields: {
+        createdBy: { type: 'string' },
+      },
     },
     {
       slug: 'member',
-      fields: [
-        { slug: 'account', type: 'string' },
-        { slug: 'role', type: 'string' },
-        { slug: 'pending', type: 'boolean' },
-      ],
+      fields: {
+        account: { type: 'string' },
+        role: { type: 'string' },
+        pending: { type: 'boolean' },
+      },
     },
   ];
 
@@ -1578,7 +1576,7 @@ test('create new per-record trigger for removing records', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'team'],
+      params: [JSON.stringify(trigger), 'team'],
       returning: true,
     },
   ]);
@@ -1586,6 +1584,7 @@ test('create new per-record trigger for removing records', () => {
 
 test('create new per-record trigger with filters for creating records', () => {
   const trigger: ModelTrigger = {
+    slug: 'triggerSlug',
     when: 'AFTER',
     action: 'INSERT',
     effects: [
@@ -1624,18 +1623,18 @@ test('create new per-record trigger with filters for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        { slug: 'handle', type: 'string' },
-        { slug: 'createdBy', type: 'string' },
-      ],
+      fields: {
+        handle: { type: 'string' },
+        createdBy: { type: 'string' },
+      },
     },
     {
       slug: 'member',
-      fields: [
-        { slug: 'account', type: 'string' },
-        { slug: 'role', type: 'string' },
-        { slug: 'pending', type: 'boolean' },
-      ],
+      fields: {
+        account: { type: 'string' },
+        role: { type: 'string' },
+        pending: { type: 'boolean' },
+      },
     },
   ];
 
@@ -1648,7 +1647,7 @@ test('create new per-record trigger with filters for creating records', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ slug: 'triggerSlug', ...trigger }), 'team'],
+      params: [JSON.stringify(trigger), 'team'],
       returning: true,
     },
   ]);
@@ -1669,9 +1668,8 @@ test('drop existing trigger', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      triggers: [
-        {
-          slug: 'triggerSlug',
+      triggers: {
+        triggerSlug: {
           when: 'AFTER',
           action: 'INSERT',
           effects: [
@@ -1680,7 +1678,7 @@ test('drop existing trigger', () => {
             },
           ],
         },
-      ],
+      },
     },
   ];
 
@@ -1725,7 +1723,9 @@ test('create new preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1766,13 +1766,14 @@ test('alter existing preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
-      presets: [
-        {
-          slug: 'companyEmployees',
+      fields: {
+        email: { type: 'string' },
+      },
+      presets: {
+        companyEmployees: {
           instructions: { with: { email: 'test@site.org' } },
         },
-      ],
+      },
     },
   ];
 
@@ -1802,13 +1803,14 @@ test('drop existing preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
-      presets: [
-        {
-          slug: 'companyEmployees',
+      fields: {
+        email: { type: 'string' },
+      },
+      presets: {
+        companyEmployees: {
           instructions: { with: { email: 'test' } },
         },
-      ],
+      },
     },
   ];
 
@@ -2016,6 +2018,7 @@ test('try to create new trigger with targeted fields and wrong action', () => {
         model: 'account',
         create: {
           trigger: {
+            slug: 'triggerSlug',
             when: 'AFTER',
             action: 'INSERT',
             fields: [{ slug: 'email' }],
@@ -2029,7 +2032,9 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
@@ -2060,6 +2065,7 @@ test('try to create new index without fields', () => {
         model: 'account',
         create: {
           index: {
+            slug: 'indexSlug',
             unique: true,
             fields: [],
           },
@@ -2097,6 +2103,7 @@ test('try to create new index with non-existent field', () => {
         model: 'account',
         create: {
           index: {
+            slug: 'indexSlug',
             unique: true,
             fields: [
               {

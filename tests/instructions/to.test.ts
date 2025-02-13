@@ -24,12 +24,11 @@ test('set single record to new string field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -83,16 +82,14 @@ test('set single record to new blob field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'avatar',
+        avatar: {
           type: 'blob',
         },
-      ],
+      },
     },
   ];
 
@@ -133,20 +130,17 @@ test('set single record to new string field with expression referencing fields',
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'firstName',
+        firstName: {
           type: 'string',
         },
-        {
-          slug: 'lastName',
+        lastName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -187,22 +181,20 @@ test('set single record to new one-cardinality link field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 
@@ -246,18 +238,16 @@ test('add single record with many-cardinality link field (add)', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'followers',
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -306,18 +296,16 @@ test('set single record to new many-cardinality link field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'followers',
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -369,18 +357,16 @@ test('set single record to new many-cardinality link field (add)', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'followers',
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -427,18 +413,16 @@ test('set single record to new many-cardinality link field (remove)', async () =
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'followers',
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -483,16 +467,14 @@ test('set single record to new json field with array', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'emails',
+        emails: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -534,16 +516,14 @@ test('set single record to new json field with object', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'emails',
+        emails: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -587,12 +567,11 @@ test('set single record to new nested string field', async () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'billing.currency',
+      fields: {
+        'billing.currency': {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -635,22 +614,20 @@ test('set single record to new nested link field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'billing.manager',
+      fields: {
+        'billing.manager': {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 
@@ -698,12 +675,11 @@ test('set single record to new nested json field', async () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'billing.invoiceRecipients',
+      fields: {
+        'billing.invoiceRecipients': {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -753,25 +729,22 @@ test('set single record to result of nested query', async () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'lastName',
+        lastName: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -817,12 +790,11 @@ test('set single record to empty field', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -862,21 +834,19 @@ test('add multiple records with nested sub query', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'user',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -931,25 +901,22 @@ test('add multiple records with nested sub query including additional fields', a
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'user',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'nonExistingField',
+        nonExistingField: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -999,21 +966,19 @@ test('add multiple records with nested sub query and specific fields', async () 
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'user',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -1127,21 +1092,19 @@ test('try to add multiple records with nested sub query including non-existent f
   const models: Array<Model> = [
     {
       slug: 'oldAccount',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'newAccount',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

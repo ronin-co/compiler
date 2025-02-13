@@ -59,13 +59,12 @@ test('get multiple records limited to amount ordered by link field', async () =>
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 

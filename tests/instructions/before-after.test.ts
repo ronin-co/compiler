@@ -24,12 +24,11 @@ test('get multiple records before cursor', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -94,12 +93,11 @@ test('get multiple records before cursor ordered by string field', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -167,12 +165,11 @@ test('get multiple records before cursor ordered by boolean field', async () => 
   const models: Array<Model> = [
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'pending',
+      fields: {
+        pending: {
           type: 'boolean',
         },
-      ],
+      },
     },
   ];
 
@@ -240,16 +237,14 @@ test('get multiple records before cursor ordered by number field', async () => {
   const models: Array<Model> = [
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'position',
+      fields: {
+        position: {
           type: 'number',
         },
-        {
-          slug: 'name',
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -319,16 +314,14 @@ test('get multiple records before cursor ordered by empty string field', async (
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-        {
-          slug: 'sandColor',
+        sandColor: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -397,16 +390,14 @@ test('get multiple records before cursor ordered by empty boolean field', async 
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-        {
-          slug: 'swimmingAllowed',
+        swimmingAllowed: {
           type: 'boolean',
         },
-      ],
+      },
     },
   ];
 
@@ -476,16 +467,14 @@ test('get multiple records before cursor ordered by empty number field', async (
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-        {
-          slug: 'rating',
+        rating: {
           type: 'number',
         },
-      ],
+      },
     },
   ];
 
@@ -556,12 +545,11 @@ test('get multiple records before cursor while filtering', async () => {
   const models: Array<Model> = [
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -623,12 +611,11 @@ test('get multiple records before undefined cursor', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -684,12 +671,11 @@ test('get multiple records after undefined cursor', async () => {
   const models: Array<Model> = [
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 

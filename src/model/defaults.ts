@@ -1,5 +1,5 @@
 import { getModelBySlug, getSystemFields } from '@/src/model';
-import type { Model, ModelPreset, PartialModel } from '@/src/types/model';
+import type { Model, ModelField, ModelPreset, PartialModel } from '@/src/types/model';
 import { QUERY_SYMBOLS, convertToSnakeCase } from '@/src/utils/helpers';
 import title from 'title';
 
@@ -138,34 +138,34 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
   // If the model is being newly created or if new fields were provided for an existing
   // model, we would like to re-generate the list of `identifiers` and attach the system
   // fields to the model.
-  if (isNew || newFields.length > 0) {
+  if (isNew || Object.keys(newFields).length > 0) {
     if (!copiedModel.identifiers) copiedModel.identifiers = {};
 
     // Intelligently select a reasonable default for which field should be used as the
     // display name of the records in the model (e.g. used in lists on the dashboard).
     if (!copiedModel.identifiers.name) {
-      const suitableField = newFields.find(
-        (field) =>
+      const suitableField = Object.entries(newFields).find(
+        ([fieldSlug, field]) =>
           field.type === 'string' &&
           field.required === true &&
-          ['name'].includes(field.slug),
+          ['name'].includes(fieldSlug),
       );
 
-      copiedModel.identifiers.name = suitableField?.slug || 'id';
+      copiedModel.identifiers.name = suitableField?.[0] || 'id';
     }
 
     // Intelligently select a reasonable default for which field should be used as the
     // slug of the records in the model (e.g. used in URLs on the dashboard).
     if (!copiedModel.identifiers.slug) {
-      const suitableField = newFields.find(
-        (field) =>
+      const suitableField = Object.entries(newFields).find(
+        ([fieldSlug, field]) =>
           field.type === 'string' &&
           field.unique === true &&
           field.required === true &&
-          ['slug', 'handle'].includes(field.slug),
+          ['slug', 'handle'].includes(fieldSlug),
       );
 
-      copiedModel.identifiers.slug = suitableField?.slug || 'id';
+      copiedModel.identifiers.slug = suitableField?.[0] || 'id';
     }
   }
 
@@ -186,13 +186,15 @@ export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
 
   // If the model is being newly created or if new fields were provided for an existing
   // model, we would like to attach the system fields to the model.
-  if (isNew || existingFields.length > 0) {
+  if (isNew || Object.keys(existingFields).length > 0) {
     // Only add default fields that are not already present in the model.
-    const additionalFields = getSystemFields(copiedModel.idPrefix).filter((newField) => {
-      return !existingFields.some(({ slug }) => slug === newField.slug);
-    });
+    const additionalFields = Object.fromEntries(
+      Object.entries(getSystemFields(copiedModel.idPrefix)).filter(([newFieldSlug]) => {
+        return !Object.hasOwn(existingFields, newFieldSlug);
+      }),
+    );
 
-    copiedModel.fields = [...additionalFields, ...existingFields];
+    copiedModel.fields = { ...additionalFields, ...existingFields };
   }
 
   return copiedModel as Model;
@@ -207,14 +209,16 @@ export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
  * @returns The model with default presets added.
  */
 export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model => {
-  const defaultPresets: Array<ModelPreset> = [];
+  const defaultPresets: Model['presets'] = {};
 
   // Add default presets, which people can overwrite if they want to. Presets are
   // used to provide concise ways of writing advanced queries, by allowing for defining
   // complex queries inside the model definitions and re-using them across many
   // different queries in the codebase of an application.
-  for (const field of model.fields || []) {
-    if (field.type === 'link' && !field.slug.startsWith('ronin.')) {
+  for (const [fieldSlug, rest] of Object.entries(model.fields || {})) {
+    const field = { slug: fieldSlug, ...rest } as ModelField;
+
+    if (field.type === 'link' && !fieldSlug.startsWith('ronin.')) {
       const targetModel = getModelBySlug(list, field.target);
 
       if (field.kind === 'many') {
@@ -224,11 +228,11 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
 
         if (!systemModel) continue;
 
-        const preset = {
+        const preset: Omit<ModelPreset, 'slug'> = {
           instructions: {
             // Perform a LEFT JOIN that adds the associative table.
             including: {
-              [field.slug]: {
+              [fieldSlug]: {
                 [QUERY_SYMBOLS.QUERY]: {
                   get: {
                     [systemModel.pluralSlug]: {
@@ -262,19 +266,18 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
               },
             },
           },
-          slug: field.slug,
         };
 
-        defaultPresets.push(preset);
+        defaultPresets[fieldSlug] = preset;
         continue;
       }
 
       // For every link field, add a default preset for resolving the linked record in
       // the model that contains the link field.
-      defaultPresets.push({
+      const preset: Omit<ModelPreset, 'slug'> = {
         instructions: {
           including: {
-            [field.slug]: {
+            [fieldSlug]: {
               [QUERY_SYMBOLS.QUERY]: {
                 get: {
                   [targetModel.slug]: {
@@ -291,8 +294,9 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
             },
           },
         },
-        slug: field.slug,
-      });
+      };
+
+      defaultPresets[fieldSlug] = preset;
     }
   }
 
@@ -304,12 +308,12 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
       // Do not assign default presets for associative models.
       if (subModel.system?.associationSlug) return null;
 
-      const field = subModel.fields?.find((field) => {
+      const field = Object.entries(subModel.fields).find(([_, field]) => {
         return field.type === 'link' && field.target === model.slug;
       });
 
       if (!field) return null;
-      return { model: subModel, field };
+      return { model: subModel, field: { slug: field[0], ...field[1] } };
     })
     .filter((match) => match !== null);
 
@@ -319,7 +323,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
 
     const presetSlug = childModel.system?.associationSlug || pluralSlug;
 
-    defaultPresets.push({
+    const preset: Omit<ModelPreset, 'slug'> = {
       instructions: {
         including: {
           [presetSlug]: {
@@ -337,19 +341,22 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
           },
         },
       },
-      slug: presetSlug,
-    });
+    };
+
+    defaultPresets[presetSlug] = preset;
   }
 
-  if (defaultPresets.length > 0) {
-    const existingPresets = model.presets || [];
+  if (Object.keys(defaultPresets).length > 0) {
+    const existingPresets = model.presets;
 
     // Only add default presets that are not already present in the model.
-    const additionalPresets = defaultPresets.filter((newPreset) => {
-      return !existingPresets.some(({ slug }) => slug === newPreset.slug);
-    });
+    const additionalPresets = Object.fromEntries(
+      Object.entries(defaultPresets).filter(([newPresetSlug]) => {
+        return !existingPresets?.[newPresetSlug];
+      }),
+    );
 
-    model.presets = [...additionalPresets, ...existingPresets];
+    model.presets = { ...additionalPresets, ...existingPresets };
   }
 
   return model;

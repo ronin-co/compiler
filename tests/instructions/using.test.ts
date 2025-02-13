@@ -26,15 +26,14 @@ test('get single record using preset', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
-      presets: [
-        {
+      },
+      presets: {
+        specificAccount: {
           instructions: {
             with: {
               account: {
@@ -42,9 +41,8 @@ test('get single record using preset', async () => {
               },
             },
           },
-          slug: 'specificAccount',
         },
-      ],
+      },
     },
   ];
 
@@ -96,38 +94,33 @@ test('get single record using preset containing field with condition', async () 
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-        {
-          slug: 'activeAt',
+        activeAt: {
           type: 'date',
         },
-      ],
+      },
     },
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-      ],
-      presets: [
-        {
+      },
+      presets: {
+        activeMember: {
           instructions: {
             with: {
               team: {
@@ -145,9 +138,8 @@ test('get single record using preset containing field with condition', async () 
               },
             },
           },
-          slug: 'activeMember',
         },
-      ],
+      },
     },
   ];
 
@@ -200,38 +192,33 @@ test('get single record using preset containing field without condition', async 
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-        {
-          slug: 'activeAt',
+        activeAt: {
           type: 'date',
         },
-      ],
+      },
     },
     {
       slug: 'product',
-      fields: [
-        {
-          slug: 'name',
+      fields: {
+        name: {
           type: 'string',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-      ],
-      presets: [
-        {
+      },
+      presets: {
+        activeMember: {
           instructions: {
             with: {
               team: {
@@ -247,9 +234,8 @@ test('get single record using preset containing field without condition', async 
               },
             },
           },
-          slug: 'activeMember',
         },
-      ],
+      },
     },
   ];
 
@@ -303,28 +289,25 @@ test('get single record using preset on existing object instruction', async () =
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-      ],
-      presets: [
-        {
+      },
+      presets: {
+        specificTeam: {
           instructions: {
             with: {
               team: 'tea_39h8fhe98hefah9j',
             },
           },
-          slug: 'specificTeam',
         },
-      ],
+      },
     },
   ];
 
@@ -376,26 +359,23 @@ test('get single record using preset on existing array instruction', async () =>
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-      ],
-      presets: [
-        {
+      },
+      presets: {
+        selectedTeam: {
           instructions: {
             selecting: ['team'],
           },
-          slug: 'selectedTeam',
         },
-      ],
+      },
     },
   ];
 
@@ -436,36 +416,32 @@ test('get single record using preset for including all link fields', async () =>
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'locations',
+      fields: {
+        locations: {
           type: 'json',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-        {
-          slug: 'team',
+        team: {
           type: 'link',
           target: 'team',
         },
-      ],
+      },
     },
   ];
 
@@ -533,14 +509,13 @@ test('get single record including parent record (many-to-one)', async () => {
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
           kind: 'one',
         },
-      ],
+      },
     },
   ];
 
@@ -591,24 +566,24 @@ test('get single record including child records (one-to-many, defined manually)'
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        { slug: 'handle', type: 'string' },
-        {
-          slug: 'firstName',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+        firstName: {
+          type: 'string',
+        },
+      },
     },
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'visitors',
+      fields: {
+        visitors: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -661,34 +636,37 @@ test('get single record including child records (one-to-many, defined manually, 
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        { slug: 'handle', type: 'string' },
-        {
-          slug: 'firstName',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+        firstName: {
+          type: 'string',
+        },
+      },
     },
     {
       slug: 'team',
-      fields: [{ slug: 'locations', type: 'json' }],
+      fields: {
+        locations: {
+          type: 'json',
+        },
+      },
     },
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'visitors',
+      fields: {
+        visitors: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-        {
-          slug: 'volleyballTeams',
+        volleyballTeams: {
           type: 'link',
           target: 'team',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -753,34 +731,37 @@ test('get single record including child records that are partially not found (on
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        { slug: 'handle', type: 'string' },
-        {
-          slug: 'firstName',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+        firstName: {
+          type: 'string',
+        },
+      },
     },
     {
       slug: 'team',
-      fields: [{ slug: 'locations', type: 'json' }],
+      fields: {
+        locations: {
+          type: 'json',
+        },
+      },
     },
     {
       slug: 'beach',
-      fields: [
-        {
-          slug: 'visitors',
+      fields: {
+        visitors: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-        {
-          slug: 'soccerTeams',
+        soccerTeams: {
           type: 'link',
           target: 'team',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -835,22 +816,20 @@ test('get single record including child records (one-to-many, defined automatica
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
+      },
     },
   ];
 

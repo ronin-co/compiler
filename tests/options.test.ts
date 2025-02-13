@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
-import { type Model, type ModelField, type Query, Transaction } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 import { getSystemFields } from '@/src/model';
 import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
@@ -22,16 +22,14 @@ test('inline statement parameters', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'emails',
+        emails: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -58,10 +56,9 @@ test('inline statement parameters', async () => {
 });
 
 test('inline statement parameters containing serialized expression', async () => {
-  const newField: ModelField = {
-    slug: 'activeAt',
+  const newField = {
     name: 'Active At',
-    type: 'date',
+    type: 'date' as const,
     defaultValue: {
       [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
     },
@@ -72,7 +69,7 @@ test('inline statement parameters containing serialized expression', async () =>
       create: {
         model: {
           slug: 'account',
-          fields: [newField],
+          fields: { activeAt: newField },
           // Ensure that the ID in the asserted output stays stable.
           id: 'mod_1f052f8432bc861b',
         },
@@ -93,7 +90,7 @@ test('inline statement parameters containing serialized expression', async () =>
       params: [],
     },
     {
-      statement: `INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES ('account', json('{"id":{"name":"ID","type":"string","defaultValue":{"__RONIN_EXPRESSION":"''acc_'' || lower(substr(hex(randomblob(12)), 1, 16))"}},"ronin.createdAt":{"name":"RONIN - Created At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}},"ronin.createdBy":{"name":"RONIN - Created By","type":"string"},"ronin.updatedAt":{"name":"RONIN - Updated At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}},"ronin.updatedBy":{"name":"RONIN - Updated By","type":"string"},"activeAt":{"name":"Active At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}}}'), 'mod_1f052f8432bc861b', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'id', 'id') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES ('account', json('{"id":{"name":"ID","type":"string","slug":"id","defaultValue":{"__RONIN_EXPRESSION":"''acc_'' || lower(substr(hex(randomblob(12)), 1, 16))"}},"ronin.createdAt":{"name":"RONIN - Created At","type":"date","slug":"ronin.createdAt","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}},"ronin.createdBy":{"name":"RONIN - Created By","type":"string","slug":"ronin.createdBy"},"ronin.updatedAt":{"name":"RONIN - Updated At","type":"date","slug":"ronin.updatedAt","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}},"ronin.updatedBy":{"name":"RONIN - Updated By","type":"string","slug":"ronin.updatedBy"},"activeAt":{"name":"Active At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}}}'), 'mod_1f052f8432bc861b', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'id', 'id') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
       params: [],
       returning: true,
     },
@@ -103,7 +100,7 @@ test('inline statement parameters containing serialized expression', async () =>
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
-    fields: [...getSystemFields('acc'), newField],
+    fields: { ...getSystemFields('acc'), activeAt: newField },
   });
 });
 
@@ -123,12 +120,11 @@ test('inline statement parameters containing boolean', async () => {
   const models: Array<Model> = [
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'pending',
+      fields: {
+        pending: {
           type: 'boolean',
         },
-      ],
+      },
     },
   ];
 
@@ -170,16 +166,14 @@ test('inline default values', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'emails',
+        emails: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
@@ -222,13 +216,12 @@ test('provide models containing default fields', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
+      fields: {
         ...getSystemFields('acc'),
-        {
-          slug: 'handle',
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -268,25 +261,22 @@ test('provide models containing default presets', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
     {
       slug: 'member',
-      fields: [
-        {
-          slug: 'account',
+      fields: {
+        account: {
           type: 'link',
           target: 'account',
         },
-      ],
-      presets: [
-        {
-          slug: 'account',
+      },
+      presets: {
+        account: {
           instructions: {
             with: {
               account: {
@@ -295,7 +285,7 @@ test('provide models containing default presets', async () => {
             },
           },
         },
-      ],
+      },
     },
   ];
 

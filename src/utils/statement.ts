@@ -83,7 +83,10 @@ export const filterSelectedFields = (
   model: Model,
   instruction: CombinedInstructions['selecting'],
 ): Array<ModelField> => {
-  if (!instruction) return model.fields;
+  const mappedFields = Object.entries(model.fields).map(
+    ([fieldSlug, field]) => ({ slug: fieldSlug, ...field }) as ModelField,
+  );
+  if (!instruction) return mappedFields;
 
   let selectedFields: Array<ModelField> = [];
 
@@ -92,7 +95,7 @@ export const filterSelectedFields = (
     const cleanPattern = isNegative ? pattern.slice(1) : pattern;
 
     const matchedFields = matchSelectedFields(
-      isNegative ? selectedFields : model.fields,
+      isNegative ? selectedFields : mappedFields,
       cleanPattern,
     );
 
@@ -328,7 +331,7 @@ export const composeConditions = (
   // potential object value in a special way, instead of just iterating over the nested
   // fields and trying to assert the column for each one.
   if (options.fieldSlug) {
-    const childField = model.fields.some(({ slug }) => {
+    const childField = Object.keys(model.fields).some((slug) => {
       return slug.includes('.') && slug.split('.')[0] === options.fieldSlug;
     });
 
