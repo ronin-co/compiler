@@ -125,6 +125,8 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
   if (isNew && !copiedModel.id) copiedModel.id = getModelIdentifier();
 
   for (const [setting, base, generator] of modelAttributes) {
+    if (!isNew && setting !== 'pluralSlug' && setting !== 'table') continue;
+
     // If a custom value was provided for the setting, or the setting from which the current
     // one can be generated is not available, skip the generation.
     if (copiedModel[setting] || !copiedModel[base]) continue;
