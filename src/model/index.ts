@@ -722,8 +722,15 @@ export const transformMetaQuery = (
             },
           };
 
+          // Create a temporary list of models on which `transformMetaQuery` will operate,
+          // which ensures that `modelWithPresets` is not modified in place.
+          const tempModels: Array<Model> = [
+            ...models.filter((model) => model.slug !== modelWithPresets.slug),
+            { slug: modelWithPresets.slug, fields: modelWithPresets.fields } as Model,
+          ];
+
           // The `dependencyStatements` array is modified in place.
-          transformMetaQuery(models, dependencyStatements, null, query);
+          transformMetaQuery(tempModels, dependencyStatements, null, query);
         }
       }
 

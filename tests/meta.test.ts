@@ -16,6 +16,7 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import { getSystemFields } from '@/src/model';
+import { slugToName } from '@/src/model/defaults';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
@@ -127,10 +128,18 @@ test('create new model', () => {
         'INSERT INTO "ronin_schema" ("slug", "fields", "indexes", "triggers", "presets", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
       params: [
         'account',
-        { ...getSystemFields('acc'), ...fields },
-        indexes,
-        triggers,
-        presets,
+        JSON.stringify({
+          ...getSystemFields('acc'),
+          ...Object.fromEntries(
+            Object.entries(fields).map(([fieldSlug, rest]) => [
+              fieldSlug,
+              { ...rest, name: slugToName(fieldSlug) },
+            ]),
+          ),
+        }),
+        JSON.stringify(indexes),
+        JSON.stringify(triggers),
+        JSON.stringify(presets),
         expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
         'Account',
