@@ -218,30 +218,25 @@ export const getSystemFields = (idPrefix: Model['idPrefix']): Model['fields'] =>
   id: {
     name: 'ID',
     type: 'string',
-    slug: 'id',
     defaultValue: ID_EXPRESSION(idPrefix),
   },
   'ronin.createdAt': {
     name: 'RONIN - Created At',
     type: 'date',
-    slug: 'ronin.createdAt',
     defaultValue: CURRENT_TIME_EXPRESSION,
   },
   'ronin.createdBy': {
     name: 'RONIN - Created By',
     type: 'string',
-    slug: 'ronin.createdBy',
   },
   'ronin.updatedAt': {
     name: 'RONIN - Updated At',
     type: 'date',
-    slug: 'ronin.updatedAt',
     defaultValue: CURRENT_TIME_EXPRESSION,
   },
   'ronin.updatedBy': {
     name: 'RONIN - Updated By',
     type: 'string',
-    slug: 'ronin.updatedBy',
   },
 });
 
