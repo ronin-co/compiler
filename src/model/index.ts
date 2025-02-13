@@ -1054,8 +1054,19 @@ export const transformMetaQuery = (
       if (jsonValue?.slug && jsonValue.slug !== slug) {
         const { slug: newSlug, ...entityValue } = jsonValue as ModelEntity;
 
+        // Change the name of the property inside the object. Doing it like this instead
+        // of adding a new property and removing the old one ensures that the property
+        // order is preserved.
+        //
+        // This is important, because `handleSystemModels` relies on the order of fields
+        // in order to know whether an existing field has changed, since it cannot rely
+        // on the attributes of fields, because all of them might change.
+        Object.defineProperty(
+          targetEntities,
+          newSlug,
+          Object.getOwnPropertyDescriptor(targetEntities, slug)!,
+        );
         delete targetEntities[slug];
-        targetEntities[newSlug] = entityValue;
 
         const value = prepareStatementValue(statementParams, entityValue);
         json = `json_insert(json_remove(${field}, '$.${slug}'), '$.${newSlug}', ${value})`;
