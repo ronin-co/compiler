@@ -1,11 +1,5 @@
 import { getModelBySlug, getSystemFields } from '@/src/model';
-import type {
-  Model,
-  ModelEntityList,
-  ModelField,
-  ModelPreset,
-  PartialModel,
-} from '@/src/types/model';
+import type { Model, ModelField, ModelPreset, PartialModel } from '@/src/types/model';
 import { QUERY_SYMBOLS, convertToSnakeCase } from '@/src/utils/helpers';
 import title from 'title';
 
@@ -215,7 +209,7 @@ export const addDefaultModelFields = (model: Model, isNew: boolean): Model => {
  * @returns The model with default presets added.
  */
 export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model => {
-  const defaultPresets: ModelEntityList<ModelPreset> = {};
+  const defaultPresets: Model['presets'] = {};
 
   // Add default presets, which people can overwrite if they want to. Presets are
   // used to provide concise ways of writing advanced queries, by allowing for defining
