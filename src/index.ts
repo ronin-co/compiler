@@ -378,7 +378,7 @@ class Transaction {
         // Allows the client to format fields whose type cannot be serialized in JSON,
         // which is the format in which the compiler output is sent to the client.
         const modelFields = Object.fromEntries(
-          model.fields.map((field) => [field.slug, field.type]),
+          Object.entries(model.fields).map(([slug, rest]) => [slug, rest.type]),
         );
 
         // The query is expected to count records.

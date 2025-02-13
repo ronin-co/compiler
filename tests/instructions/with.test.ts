@@ -1294,10 +1294,8 @@ test('get single record with one of nested field values', async () => {
     {
       slug: 'team',
       fields: {
-        billing: {
-          currency: {
-            type: 'string',
-          },
+        'billing.currency': {
+          type: 'string',
         },
       },
     },
@@ -1341,10 +1339,8 @@ test('get single record with one of nested field values (empty list)', async () 
     {
       slug: 'team',
       fields: {
-        billing: {
-          currency: {
-            type: 'string',
-          },
+        'billing.currency': {
+          type: 'string',
         },
       },
     },

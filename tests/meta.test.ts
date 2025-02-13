@@ -16,9 +16,6 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import { getSystemFields } from '@/src/model';
-import { slugToName } from '@/src/model/defaults';
-import type { ModelEntity } from '@/src/types/model';
-import type { ModelEntityType } from '@/src/types/query';
 import type { MultipleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS, RoninError } from '@/src/utils/helpers';
 
@@ -51,8 +48,8 @@ test('create new model', () => {
     },
   };
 
-  const triggers: Model['triggers'] = [
-    {
+  const triggers: Model['triggers'] = {
+    triggerSlug: {
       when: 'AFTER',
       action: 'INSERT',
       effects: [
@@ -67,10 +64,10 @@ test('create new model', () => {
         },
       ],
     },
-  ];
+  };
 
-  const indexes: Model['indexes'] = [
-    {
+  const indexes: Model['indexes'] = {
+    indexSlug: {
       fields: [
         {
           slug: 'handle',
@@ -78,11 +75,10 @@ test('create new model', () => {
       ],
       unique: true,
     },
-  ];
+  };
 
-  const presets: Model['presets'] = [
-    {
-      slug: 'companyEmployees',
+  const presets: Model['presets'] = {
+    companyEmployees: {
       instructions: {
         with: {
           email: {
@@ -91,7 +87,7 @@ test('create new model', () => {
         },
       },
     },
-  ];
+  };
 
   const queries: Array<Query> = [
     {
@@ -104,32 +100,11 @@ test('create new model', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
   ];
-
-  const mapItems = (type: ModelEntityType, items: Array<ModelEntity>): string => {
-    return JSON.stringify(
-      Object.fromEntries(
-        items.map(({ slug: defaultSlug, ...rest }) => {
-          const slug = defaultSlug || `${type}Slug`;
-
-          return [
-            slug,
-            {
-              ...rest,
-              name:
-                type === 'field'
-                  ? 'name' in rest
-                    ? rest.name
-                    : slugToName(slug)
-                  : undefined,
-            },
-          ];
-        }),
-      ),
-    );
-  };
 
   const transaction = new Transaction(queries, { models });
 
@@ -152,10 +127,10 @@ test('create new model', () => {
         'INSERT INTO "ronin_schema" ("slug", "fields", "indexes", "triggers", "presets", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
       params: [
         'account',
-        mapItems('field', [...getSystemFields('acc'), ...fields]),
-        mapItems('index', indexes),
-        mapItems('trigger', triggers),
-        mapItems('preset', presets),
+        { ...getSystemFields('acc'), ...fields },
+        indexes,
+        triggers,
+        presets,
         expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
         'Account',
@@ -283,12 +258,11 @@ test('get existing models', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-      ],
+      },
     },
   ];
 
@@ -327,14 +301,13 @@ test('get existing models', async () => {
         slug: 'id',
       },
       table: 'accounts',
-      fields: [
+      fields: {
         ...getSystemFields('acc'),
-        {
+        slug: {
           name: 'Handle',
-          slug: 'handle',
           type: 'string',
         },
-      ],
+      },
       indexes: [],
       triggers: [],
       presets: [],
@@ -397,14 +370,13 @@ test('alter existing model (slug) that has system models associated with it', ()
     },
     {
       slug: 'user',
-      fields: [
-        {
-          slug: 'likes',
+      fields: {
+        likes: {
           type: 'link',
           target: 'post',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -503,14 +475,13 @@ test('drop existing model that has system models associated with it', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'followers',
+      fields: {
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -774,7 +745,9 @@ test('alter existing field (slug)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -815,14 +788,13 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'followers',
+      fields: {
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -864,7 +836,9 @@ test('alter existing field (name)', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -894,7 +868,9 @@ test('drop existing field', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -937,7 +913,13 @@ test('drop existing field that has system models associated with it', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [field],
+      fields: {
+        followers: {
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+        },
+      },
     },
   ];
 
@@ -973,20 +955,18 @@ test('drop existing field on model with other many-cardinality fields', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'followers',
+      fields: {
+        followers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-        {
-          slug: 'subscribers',
+        subscribers: {
           type: 'link',
           target: 'account',
           kind: 'many',
         },
-      ],
+      },
     },
   ];
 
@@ -1021,7 +1001,9 @@ test('create new index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1068,7 +1050,9 @@ test('create new index with filter', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1110,16 +1094,10 @@ test('create new index with field expressions', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'firstName',
-          type: 'string',
-        },
-        {
-          slug: 'lastName',
-          type: 'string',
-        },
-      ],
+      fields: {
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+      },
     },
   ];
 
@@ -1163,7 +1141,9 @@ test('create new index with ordered and collated fields', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1206,7 +1186,9 @@ test('create new unique index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1240,13 +1222,14 @@ test('drop existing index', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
-      indexes: [
-        {
-          slug: 'indexSlug',
+      fields: {
+        email: { type: 'string' },
+      },
+      indexes: {
+        indexSlug: {
           fields: [{ slug: 'email' }],
         },
-      ],
+      },
     },
   ];
 
@@ -1296,7 +1279,9 @@ test('create new trigger for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
@@ -1354,11 +1339,15 @@ test('create new trigger for creating records with targeted fields', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1417,11 +1406,15 @@ test('create new trigger for creating records with multiple effects', () => {
   const models: Array<Model> = [
     {
       slug: 'candidate',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',
@@ -1478,20 +1471,17 @@ test('create new per-record trigger for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'createdBy',
-          type: 'string',
-        },
-      ],
+      fields: {
+        createdBy: { type: 'string' },
+      },
     },
     {
       slug: 'member',
-      fields: [
-        { slug: 'account', type: 'string' },
-        { slug: 'role', type: 'string' },
-        { slug: 'pending', type: 'boolean' },
-      ],
+      fields: {
+        account: { type: 'string' },
+        role: { type: 'string' },
+        pending: { type: 'boolean' },
+      },
     },
   ];
 
@@ -1543,20 +1533,17 @@ test('create new per-record trigger for removing records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        {
-          slug: 'createdBy',
-          type: 'string',
-        },
-      ],
+      fields: {
+        createdBy: { type: 'string' },
+      },
     },
     {
       slug: 'member',
-      fields: [
-        { slug: 'account', type: 'string' },
-        { slug: 'role', type: 'string' },
-        { slug: 'pending', type: 'boolean' },
-      ],
+      fields: {
+        account: { type: 'string' },
+        role: { type: 'string' },
+        pending: { type: 'boolean' },
+      },
     },
   ];
 
@@ -1616,18 +1603,18 @@ test('create new per-record trigger with filters for creating records', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      fields: [
-        { slug: 'handle', type: 'string' },
-        { slug: 'createdBy', type: 'string' },
-      ],
+      fields: {
+        handle: { type: 'string' },
+        createdBy: { type: 'string' },
+      },
     },
     {
       slug: 'member',
-      fields: [
-        { slug: 'account', type: 'string' },
-        { slug: 'role', type: 'string' },
-        { slug: 'pending', type: 'boolean' },
-      ],
+      fields: {
+        account: { type: 'string' },
+        role: { type: 'string' },
+        pending: { type: 'boolean' },
+      },
     },
   ];
 
@@ -1661,9 +1648,8 @@ test('drop existing trigger', () => {
   const models: Array<Model> = [
     {
       slug: 'team',
-      triggers: [
-        {
-          slug: 'triggerSlug',
+      triggers: {
+        triggerSlug: {
           when: 'AFTER',
           action: 'INSERT',
           effects: [
@@ -1672,7 +1658,7 @@ test('drop existing trigger', () => {
             },
           ],
         },
-      ],
+      },
     },
   ];
 
@@ -1717,7 +1703,9 @@ test('create new preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
+      fields: {
+        email: { type: 'string' },
+      },
     },
   ];
 
@@ -1758,13 +1746,14 @@ test('alter existing preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
-      presets: [
-        {
-          slug: 'companyEmployees',
+      fields: {
+        email: { type: 'string' },
+      },
+      presets: {
+        companyEmployees: {
           instructions: { with: { email: 'test@site.org' } },
         },
-      ],
+      },
     },
   ];
 
@@ -1794,13 +1783,14 @@ test('drop existing preset', () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [{ slug: 'email', type: 'string' }],
-      presets: [
-        {
-          slug: 'companyEmployees',
+      fields: {
+        email: { type: 'string' },
+      },
+      presets: {
+        companyEmployees: {
           instructions: { with: { email: 'test' } },
         },
-      ],
+      },
     },
   ];
 
@@ -2021,7 +2011,9 @@ test('try to create new trigger with targeted fields and wrong action', () => {
   const models: Array<Model> = [
     {
       slug: 'signup',
-      fields: [{ slug: 'year', type: 'number' }],
+      fields: {
+        year: { type: 'number' },
+      },
     },
     {
       slug: 'account',

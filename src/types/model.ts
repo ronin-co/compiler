@@ -200,9 +200,9 @@ export type ModelPreset = {
 
 export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
 
-type ModelEntityList<T extends { slug?: string }> = Record<
+export type ModelEntityList<T extends { slug?: string }> = Record<
   NonNullable<T['slug']>,
-  Omit<T, 'slug'>
+  Partial<T>
 >;
 
 export interface Model<

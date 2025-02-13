@@ -1,4 +1,4 @@
-import type { Model } from '@/src/types/model';
+import type { Model, ModelPreset } from '@/src/types/model';
 import type { Instructions, SetInstructions } from '@/src/types/query';
 import { QUERY_SYMBOLS, RoninError, findInObject, isObject } from '@/src/utils/helpers';
 
@@ -25,9 +25,9 @@ export const handleUsing = (
   // If a preset with the slug `links` is being requested, add the presets of all link
   // fields separately.
   if ('links' in normalizedUsing) {
-    for (const field of model.fields) {
+    for (const [fieldSlug, field] of Object.entries(model.fields)) {
       if (field.type !== 'link' || field.kind === 'many') continue;
-      normalizedUsing[field.slug] = null;
+      normalizedUsing[fieldSlug] = null;
     }
   }
 
@@ -36,7 +36,7 @@ export const handleUsing = (
     if (!Object.hasOwn(normalizedUsing, presetSlug) || presetSlug === 'links') continue;
 
     const arg = normalizedUsing[presetSlug];
-    const preset = model.presets?.find((preset) => preset.slug === presetSlug);
+    const preset = model.presets?.[presetSlug];
 
     if (!preset) {
       throw new RoninError({
@@ -45,7 +45,9 @@ export const handleUsing = (
       });
     }
 
-    const replacedUsingFilter = structuredClone(preset.instructions);
+    const replacedUsingFilter = structuredClone(
+      preset.instructions,
+    ) as ModelPreset['instructions'];
 
     // If an argument was provided for the preset, find the respective placeholders
     // inside the preset and replace them with the value of the actual argument.

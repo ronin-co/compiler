@@ -45,10 +45,10 @@ const prefillDatabase = async (
       const formattedData = data.map((row) => {
         const newRow: Record<string, unknown> = {};
 
-        for (const field of createdModel.fields || []) {
-          const match = getProperty(row, field.slug);
+        for (const fieldSlug of Object.keys(createdModel.fields)) {
+          const match = getProperty(row, fieldSlug);
           if (typeof match === 'undefined') continue;
-          setProperty(newRow, field.slug, match);
+          setProperty(newRow, fieldSlug, match);
         }
 
         return newRow;

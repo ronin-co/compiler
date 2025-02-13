@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
-import { type Model, type ModelField, type Query, Transaction } from '@/src/index';
+import { type Model, type Query, Transaction } from '@/src/index';
 import { getSystemFields } from '@/src/model';
 import type { SingleRecordResult } from '@/src/types/result';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
@@ -57,12 +57,10 @@ test('inline statement parameters', async () => {
 
 test('inline statement parameters containing serialized expression', async () => {
   const newField = {
-    activeAt: {
-      name: 'Active At',
-      type: 'date' as const,
-      defaultValue: {
-        [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
-      },
+    name: 'Active At',
+    type: 'date' as const,
+    defaultValue: {
+      [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
     },
   };
 
@@ -71,7 +69,7 @@ test('inline statement parameters containing serialized expression', async () =>
       create: {
         model: {
           slug: 'account',
-          fields: newField,
+          fields: { activeAt: newField },
           // Ensure that the ID in the asserted output stays stable.
           id: 'mod_1f052f8432bc861b',
         },
@@ -102,7 +100,7 @@ test('inline statement parameters containing serialized expression', async () =>
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({
-    fields: [...getSystemFields('acc'), newField],
+    fields: { ...getSystemFields('acc'), activeAt: newField },
   });
 });
 
@@ -169,7 +167,7 @@ test('provide models containing default fields', async () => {
     {
       slug: 'account',
       fields: {
-        ...Object.fromEntries(getSystemFields('acc').map(f => [f.slug, f])),
+        ...getSystemFields('acc'),
         handle: {
           type: 'string',
         },
@@ -227,9 +225,8 @@ test('provide models containing default presets', async () => {
           target: 'account',
         },
       },
-      presets: [
-        {
-          slug: 'account',
+      presets: {
+        account: {
           instructions: {
             with: {
               account: {
@@ -238,7 +235,7 @@ test('provide models containing default presets', async () => {
             },
           },
         },
-      ],
+      },
     },
   ];
 

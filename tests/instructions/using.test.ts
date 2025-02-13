@@ -32,8 +32,8 @@ test('get single record using preset', async () => {
           target: 'account',
         },
       },
-      presets: [
-        {
+      presets: {
+        specificAccount: {
           instructions: {
             with: {
               account: {
@@ -41,9 +41,8 @@ test('get single record using preset', async () => {
               },
             },
           },
-          slug: 'specificAccount',
         },
-      ],
+      },
     },
   ];
 
@@ -120,8 +119,8 @@ test('get single record using preset containing field with condition', async () 
           target: 'team',
         },
       },
-      presets: [
-        {
+      presets: {
+        activeMember: {
           instructions: {
             with: {
               team: {
@@ -139,9 +138,8 @@ test('get single record using preset containing field with condition', async () 
               },
             },
           },
-          slug: 'activeMember',
         },
-      ],
+      },
     },
   ];
 
@@ -219,8 +217,8 @@ test('get single record using preset containing field without condition', async 
           target: 'team',
         },
       },
-      presets: [
-        {
+      presets: {
+        activeMember: {
           instructions: {
             with: {
               team: {
@@ -236,9 +234,8 @@ test('get single record using preset containing field without condition', async 
               },
             },
           },
-          slug: 'activeMember',
         },
-      ],
+      },
     },
   ];
 
@@ -302,16 +299,15 @@ test('get single record using preset on existing object instruction', async () =
           target: 'team',
         },
       },
-      presets: [
-        {
+      presets: {
+        specificTeam: {
           instructions: {
             with: {
               team: 'tea_39h8fhe98hefah9j',
             },
           },
-          slug: 'specificTeam',
         },
-      ],
+      },
     },
   ];
 
@@ -373,14 +369,13 @@ test('get single record using preset on existing array instruction', async () =>
           target: 'team',
         },
       },
-      presets: [
-        {
+      presets: {
+        selectedTeam: {
           instructions: {
             selecting: ['team'],
           },
-          slug: 'selectedTeam',
         },
-      ],
+      },
     },
   ];
 
@@ -589,7 +584,7 @@ test('get single record including child records (one-to-many, defined manually)'
           kind: 'many',
         },
       },
-    }
+    },
   ];
 
   const transaction = new Transaction(queries, { models });
