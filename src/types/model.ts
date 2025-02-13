@@ -147,7 +147,7 @@ export type ModelIndex<
   /**
    * The identifier of the index.
    */
-  slug?: string;
+  slug: string;
   /**
    * Whether only one record with a unique value for the provided fields will be allowed.
    */
@@ -172,10 +172,8 @@ export type ModelTriggerField<
 export type ModelTrigger<
   T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
 > = {
-  /**
-   * The identifier of the trigger.
-   */
-  slug?: string;
+  /** The identifier of the trigger. */
+  slug: string;
   /** The type of query for which the trigger should fire. */
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   /** When the trigger should fire in the case that a matching query is executed. */
@@ -200,7 +198,7 @@ export type ModelPreset = {
 
 export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
 
-export type ModelEntityList<T extends { slug?: string }> = Record<
+export type ModelEntityList<T extends { slug: string }> = Record<
   NonNullable<T['slug']>,
   Partial<T>
 >;
