@@ -38,6 +38,8 @@ export const handleUsing = (
     const arg = normalizedUsing[presetSlug];
     const preset = model.presets?.[presetSlug];
 
+    console.log('PRESETSS', model.presets);
+
     if (!preset) {
       throw new RoninError({
         message: `Preset "${presetSlug}" does not exist in model "${model.name}".`,

@@ -220,7 +220,7 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // used to provide concise ways of writing advanced queries, by allowing for defining
   // complex queries inside the model definitions and re-using them across many
   // different queries in the codebase of an application.
-  for (const [fieldSlug, field] of Object.entries(model.fields)) {
+  for (const [fieldSlug, field] of Object.entries(model.fields || {})) {
     if (field.type === 'link' && !fieldSlug.startsWith('ronin.')) {
       const targetModel = getModelBySlug(list, field.target as string);
 

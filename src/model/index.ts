@@ -307,7 +307,7 @@ export const ROOT_MODEL_WITH_ATTRIBUTES = addDefaultModelAttributes(ROOT_MODEL, 
 export const getSystemModels = (models: Array<Model>, model: Model): Array<Model> => {
   const addedModels: Array<PartialModel> = [];
 
-  for (const [fieldSlug, rest] of Object.entries(model.fields)) {
+  for (const [fieldSlug, rest] of Object.entries(model.fields || {})) {
     const field = { slug: fieldSlug, ...rest } as ModelField;
 
     if (field.type === 'link' && !fieldSlug.startsWith('ronin.')) {
@@ -455,28 +455,6 @@ const PLURAL_MODEL_ENTITIES = {
 } as const;
 
 export const PLURAL_MODEL_ENTITIES_VALUES = Object.values(PLURAL_MODEL_ENTITIES);
-
-/**
- * Converts an array of model entites (such as fields) to an object where the keys are
- * the slugs of the entities and the values are their attributes.
- *
- * @param type The type of model entity to be processed.
- * @param entities The list of the actual entities.
- *
- * @returns An object composed of the provided model entities.
- */
-const formatModelEntity = (
-  type: ModelEntityType,
-  entities?: Array<ModelEntity>,
-): Record<string, unknown> => {
-  const entries = entities?.map((entity) => {
-    const { slug, ...rest } =
-      'slug' in entity ? entity : { slug: `${type}Slug`, ...entity };
-    return [slug, rest];
-  });
-
-  return entries ? Object.fromEntries(entries) : undefined;
-};
 
 /**
  * Composes an SQL statement for creating, altering, or dropping a system model.
@@ -665,8 +643,7 @@ export const transformMetaQuery = (
           query.alter.create as unknown as Record<ModelEntityType, ModelIndex>
         )[entity as ModelEntityType] as Partial<ModelIndex>;
 
-        slug = item.slug || `${entity}Slug`;
-        jsonValue = { slug, ...item };
+        jsonValue = { slug: item.slug, ...item };
       }
 
       if ('alter' in query.alter && query.alter.alter) jsonValue = query.alter.alter.to;
@@ -717,16 +694,6 @@ export const transformMetaQuery = (
         )
         .filter(Boolean);
 
-      // A list of all model entities, in the form of an object.
-      const entities = Object.fromEntries(
-        Object.entries(PLURAL_MODEL_ENTITIES).map(([type, pluralType]) => {
-          const list = modelWithPresets[pluralType as keyof Model] as
-            | Array<ModelEntity>
-            | undefined;
-          return [pluralType, formatModelEntity(type as ModelEntityType, list)];
-        }),
-      );
-
       // Add the newly created model to the list of models.
       models.push(modelWithPresets);
 
@@ -759,14 +726,7 @@ export const transformMetaQuery = (
         }
       }
 
-      const modelWithObjects: Model = Object.assign({}, modelWithPresets);
-
-      for (const entity in entities) {
-        if (!Object.hasOwn(entities, entity)) continue;
-        Object.defineProperty(modelWithObjects, entity, { value: entities[entity] });
-      }
-
-      queryTypeDetails = { with: modelWithObjects };
+      queryTypeDetails = { with: modelWithPresets };
 
       // Add any system models that might be needed by the model.
       getSystemModels(models, modelWithPresets).map((systemModel) => {
@@ -1078,6 +1038,7 @@ export const transformMetaQuery = (
       json = `json_insert(${field}, '$.${slug}', ${value})`;
 
       // Add the newly created entity to the model.
+      if (!existingModel[pluralType]) existingModel[pluralType] = {};
       (existingModel[pluralType] as ModelEntityList<ModelEntity>)[slug] =
         jsonValue as ModelEntity;
 
