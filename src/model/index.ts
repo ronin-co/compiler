@@ -744,7 +744,7 @@ export const transformMetaQuery = (
           // which ensures that `modelWithPresets` is not modified in place.
           const tempModels: Array<Model> = [
             ...models.filter((model) => model.slug !== modelWithPresets.slug),
-            { slug: modelWithPresets.slug, fields: modelWithPresets.fields } as Model,
+            { ...modelWithPresets, indexes: {}, triggers: {} } as Model,
           ];
 
           // The `dependencyStatements` array is modified in place.
