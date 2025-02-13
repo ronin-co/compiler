@@ -36,6 +36,10 @@ interface TransactionOptions {
    * separating them out into a dedicated `params` array.
    */
   inlineParams?: boolean;
+  /**
+   * Whether to compute default field values as part of the generated statement.
+   */
+  inlineDefaults?: boolean;
 }
 
 class Transaction {
@@ -108,6 +112,9 @@ class Transaction {
         query,
         modelsWithPresets,
         options?.inlineParams ? null : [],
+
+        // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+        { inlineDefaults: options?.inlineDefaults || false },
       );
 
       // Every query can only produce one main statement (which can return output), but

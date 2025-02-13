@@ -127,7 +127,12 @@ new Transaction(queries, {
   // Instead of returning an array of parameters for every statement (which allows for
   // preventing SQL injections), all parameters are inlined directly into the SQL strings.
   // This option should only be used if the generated SQL will be manually verified.
-  inlineParams: true
+  inlineParams: true,
+
+  // By default, the compiler relies on dynamic column default values for computing the
+  // values of all meta fields (such as `id`, `ronin.createdAt`, etc). In order to compute
+  // those values at the time of insertion instead, use this option.
+  inlineDefaults: true
 });
 ```
 

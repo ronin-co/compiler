@@ -43,7 +43,11 @@ export const handleSelecting = (
   options: {
     /** The path on which the selected fields should be mounted in the final record. */
     mountingPath?: InternalModelField['mountingPath'];
-  } = {},
+    /**
+     * Whether to compute default field values as part of the generated statement.
+     */
+    inlineDefaults: boolean;
+  } = { inlineDefaults: false },
 ): { columns: string; isJoining: boolean; selectedFields: Array<InternalModelField> } => {
   let isJoining = false;
 
@@ -104,6 +108,7 @@ export const handleSelecting = (
         if (queryType === 'count') {
           const subSelect = compileQueryInput(symbol.value, models, statementParams, {
             parentModel: { ...model, tableAlias: model.table },
+            inlineDefaults: options.inlineDefaults,
           });
 
           selectedFields.push({

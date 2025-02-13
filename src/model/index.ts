@@ -25,6 +25,7 @@ import type {
 } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
+  ID_EXPRESSION,
   MODEL_ENTITY_ERROR_CODES,
   QUERY_SYMBOLS,
   RoninError,
@@ -218,12 +219,7 @@ export const getSystemFields = (idPrefix: Model['idPrefix']): Model['fields'] =>
     name: 'ID',
     type: 'string',
     slug: 'id',
-    defaultValue: {
-      // Since default values in SQLite cannot rely on other columns, we unfortunately
-      // cannot rely on the `idPrefix` column here. Instead, we need to inject it directly
-      // into the expression as a static string.
-      [QUERY_SYMBOLS.EXPRESSION]: `'${idPrefix}_' || lower(substr(hex(randomblob(12)), 1, 16))`,
-    },
+    defaultValue: ID_EXPRESSION(idPrefix),
   },
   'ronin.createdAt': {
     name: 'RONIN - Created At',
@@ -471,6 +467,7 @@ const handleSystemModel = (
   models: Array<Model>,
   dependencyStatements: Array<InternalDependencyStatement>,
   action: 'create' | 'alter' | 'drop',
+  inlineDefaults: boolean,
   systemModel: PartialModel,
   newModel?: PartialModel,
 ): void => {
@@ -486,7 +483,7 @@ const handleSystemModel = (
     query.alter.to = newModelClean;
   }
 
-  const statement = compileQueryInput(query, models, []);
+  const statement = compileQueryInput(query, models, [], { inlineDefaults });
 
   dependencyStatements.push(...statement.dependencies);
 };
@@ -508,6 +505,7 @@ const handleSystemModels = (
   dependencyStatements: Array<InternalDependencyStatement>,
   previousModel: Model,
   newModel: Model,
+  inlineDefaults: boolean,
 ): void => {
   const currentSystemModels = models.filter(({ system }) => {
     return system?.model === newModel.id;
@@ -558,12 +556,19 @@ const handleSystemModels = (
       // Determine if the slug of the system model has changed. If so, alter the
       // respective table.
       if (exists.slug !== systemModel.slug) {
-        handleSystemModel(models, dependencyStatements, 'alter', systemModel, exists);
+        handleSystemModel(
+          models,
+          dependencyStatements,
+          'alter',
+          inlineDefaults,
+          systemModel,
+          exists,
+        );
       }
       continue;
     }
 
-    handleSystemModel(models, dependencyStatements, 'drop', systemModel);
+    handleSystemModel(models, dependencyStatements, 'drop', inlineDefaults, systemModel);
   }
 
   // Add any new system models that don't yet exist.
@@ -572,7 +577,13 @@ const handleSystemModels = (
     const exists = currentSystemModels.find(matchSystemModels.bind(null, systemModel));
     if (exists) continue;
 
-    handleSystemModel(models, dependencyStatements, 'create', systemModel);
+    handleSystemModel(
+      models,
+      dependencyStatements,
+      'create',
+      inlineDefaults,
+      systemModel,
+    );
   }
 };
 
@@ -586,6 +597,7 @@ const handleSystemModels = (
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
  * @param query - The query that should potentially be transformed.
+ * @param options - Additional options for customizing the behavior of the function.
  *
  * @returns The transformed query or `null` if no further query processing should happen.
  */
@@ -594,6 +606,12 @@ export const transformMetaQuery = (
   dependencyStatements: Array<InternalDependencyStatement>,
   statementParams: Array<unknown> | null,
   query: Query,
+  options: {
+    /**
+     * Whether to compute default field values as part of the generated statement.
+     */
+    inlineDefaults: boolean;
+  },
 ): Query | null => {
   const { queryType } = splitQuery(query);
   const subAltering = 'alter' in query && query.alter && !('to' in query.alter);
@@ -730,7 +748,9 @@ export const transformMetaQuery = (
           ];
 
           // The `dependencyStatements` array is modified in place.
-          transformMetaQuery(tempModels, dependencyStatements, null, query);
+          transformMetaQuery(tempModels, dependencyStatements, null, query, {
+            inlineDefaults: options.inlineDefaults,
+          });
         }
       }
 
@@ -740,7 +760,13 @@ export const transformMetaQuery = (
       getSystemModels(models, modelWithPresets).map((systemModel) => {
         // Compose the SQL statement for adding the system model.
         // This modifies the original `models` array and adds the system model to it.
-        return handleSystemModel(models, dependencyStatements, 'create', systemModel);
+        return handleSystemModel(
+          models,
+          dependencyStatements,
+          'create',
+          options.inlineDefaults,
+          systemModel,
+        );
       });
     }
 
@@ -773,7 +799,13 @@ export const transformMetaQuery = (
         to: modelWithPresets,
       };
 
-      handleSystemModels(models, dependencyStatements, modelBeforeUpdate, model);
+      handleSystemModels(
+        models,
+        dependencyStatements,
+        modelBeforeUpdate,
+        model,
+        options.inlineDefaults,
+      );
     }
 
     if (action === 'drop' && model) {
@@ -790,7 +822,13 @@ export const transformMetaQuery = (
         .map((systemModel) => {
           // Compose the SQL statement for removing the system model.
           // This modifies the original `models` array and removes the system model from it.
-          return handleSystemModel(models, dependencyStatements, 'drop', systemModel);
+          return handleSystemModel(
+            models,
+            dependencyStatements,
+            'drop',
+            options.inlineDefaults,
+            systemModel,
+          );
         });
     }
 
@@ -1023,6 +1061,7 @@ export const transformMetaQuery = (
         return compileQueryInput(effectQuery, models, null, {
           returning: false,
           parentModel: existingModel,
+          inlineDefaults: options.inlineDefaults,
         }).main.statement;
       });
 
@@ -1097,7 +1136,13 @@ export const transformMetaQuery = (
     }
   }
 
-  handleSystemModels(models, dependencyStatements, modelBeforeUpdate, existingModel);
+  handleSystemModels(
+    models,
+    dependencyStatements,
+    modelBeforeUpdate,
+    existingModel,
+    options.inlineDefaults,
+  );
 
   return {
     set: {
