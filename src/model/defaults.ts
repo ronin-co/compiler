@@ -308,7 +308,8 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
       // Do not assign default presets for associative models.
       if (subModel.system?.associationSlug) return null;
 
-      const field = Object.entries(subModel.fields).find(([_, field]) => {
+      const field = Object.entries(subModel.fields).find(([fieldSlug, rest]) => {
+        const field = { slug: fieldSlug, ...rest } as ModelField;
         return field.type === 'link' && field.target === model.slug;
       });
 

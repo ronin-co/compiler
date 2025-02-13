@@ -200,7 +200,7 @@ export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
 
 export type ModelEntityList<T extends { slug: string }> = Record<
   NonNullable<T['slug']>,
-  Partial<T>
+  Omit<T, 'slug'>
 >;
 
 export interface Model<

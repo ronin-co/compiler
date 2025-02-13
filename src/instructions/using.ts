@@ -1,4 +1,4 @@
-import type { Model, ModelPreset } from '@/src/types/model';
+import type { Model, ModelField, ModelPreset } from '@/src/types/model';
 import type { Instructions, SetInstructions } from '@/src/types/query';
 import { QUERY_SYMBOLS, RoninError, findInObject, isObject } from '@/src/utils/helpers';
 
@@ -25,7 +25,8 @@ export const handleUsing = (
   // If a preset with the slug `links` is being requested, add the presets of all link
   // fields separately.
   if ('links' in normalizedUsing) {
-    for (const [fieldSlug, field] of Object.entries(model.fields)) {
+    for (const [fieldSlug, rest] of Object.entries(model.fields)) {
+      const field = { slug: fieldSlug, ...rest } as ModelField;
       if (field.type !== 'link' || field.kind === 'many') continue;
       normalizedUsing[fieldSlug] = null;
     }
