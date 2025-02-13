@@ -2,6 +2,7 @@ import { getModelBySlug, getSystemFields } from '@/src/model';
 import type {
   Model,
   ModelEntityList,
+  ModelField,
   ModelPreset,
   PartialModel,
 } from '@/src/types/model';
@@ -220,9 +221,11 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
   // used to provide concise ways of writing advanced queries, by allowing for defining
   // complex queries inside the model definitions and re-using them across many
   // different queries in the codebase of an application.
-  for (const [fieldSlug, field] of Object.entries(model.fields || {})) {
+  for (const [fieldSlug, rest] of Object.entries(model.fields || {})) {
+    const field = { slug: fieldSlug, ...rest } as ModelField;
+
     if (field.type === 'link' && !fieldSlug.startsWith('ronin.')) {
-      const targetModel = getModelBySlug(list, field.target as string);
+      const targetModel = getModelBySlug(list, field.target);
 
       if (field.kind === 'many') {
         const systemModel = list.find(({ system }) => {

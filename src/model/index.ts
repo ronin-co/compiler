@@ -643,7 +643,8 @@ export const transformMetaQuery = (
           query.alter.create as unknown as Record<ModelEntityType, ModelIndex>
         )[entity as ModelEntityType] as Partial<ModelIndex>;
 
-        jsonValue = { slug: item.slug, ...item };
+        slug = item.slug as string;
+        jsonValue = { slug, ...item };
       }
 
       if ('alter' in query.alter && query.alter.alter) jsonValue = query.alter.alter.to;

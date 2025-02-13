@@ -303,14 +303,14 @@ test('get existing models', async () => {
       table: 'accounts',
       fields: {
         ...getSystemFields('acc'),
-        slug: {
+        handle: {
           name: 'Handle',
           type: 'string',
         },
       },
-      indexes: [],
-      triggers: [],
-      presets: [],
+      indexes: {},
+      triggers: {},
+      presets: {},
     },
   ]);
 });
