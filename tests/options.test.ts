@@ -166,16 +166,14 @@ test('inline default values', async () => {
   const models: Array<Model> = [
     {
       slug: 'account',
-      fields: [
-        {
-          slug: 'handle',
+      fields: {
+        handle: {
           type: 'string',
         },
-        {
-          slug: 'emails',
+        emails: {
           type: 'json',
         },
-      ],
+      },
     },
   ];
 
