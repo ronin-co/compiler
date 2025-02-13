@@ -759,8 +759,8 @@ test('alter existing field (slug)', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(newFieldDetails), 'account'],
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.email'), '$.emailAddress', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      params: [JSON.stringify({ name: 'Email Address' }), 'account'],
       returning: true,
     },
   ]);
@@ -807,8 +807,8 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.followers', json_patch(json_extract("fields", '$.followers'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(newFieldDetails), 'account'],
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.followers'), '$.subscribers', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      params: [JSON.stringify({ name: 'Subscribers' }), 'account'],
       returning: true,
     },
   ]);

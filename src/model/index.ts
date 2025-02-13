@@ -1046,12 +1046,27 @@ export const transformMetaQuery = (
       break;
     }
     case 'alter': {
-      const value = prepareStatementValue(statementParams, jsonValue);
-      json = `json_set(${field}, '$.${slug}', json_patch(json_extract(${field}, '$.${slug}'), ${value}))`;
-
       // Update the existing entity in the model.
       const targetEntities = existingModel[pluralType] as ModelEntityList<ModelEntity>;
-      Object.assign(targetEntities[slug], jsonValue);
+
+      // If the slug of a model entity has changed, we need to remove the property with
+      // the name of the old slug and insert a new one with the new slug.
+      if (jsonValue?.slug && jsonValue.slug !== slug) {
+        const { slug: newSlug, ...entityValue } = jsonValue as ModelEntity;
+
+        delete targetEntities[slug];
+        targetEntities[newSlug] = entityValue;
+
+        const value = prepareStatementValue(statementParams, entityValue);
+        json = `json_insert(json_remove(${field}, '$.${slug}'), '$.${newSlug}', ${value})`;
+      }
+      // Otherwise, just update the existing property.
+      else {
+        Object.assign(targetEntities[slug], jsonValue);
+
+        const value = prepareStatementValue(statementParams, jsonValue);
+        json = `json_set(${field}, '$.${slug}', json_patch(json_extract(${field}, '$.${slug}'), ${value}))`;
+      }
 
       break;
     }
