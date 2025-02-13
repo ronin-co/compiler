@@ -86,13 +86,23 @@ type ComposableSettings =
  * should be used to generate the new setting.
  */
 const modelAttributes: Array<
-  [ComposableSettings, ComposableSettings, (arg: string) => string]
+  [
+    // The target attribute that is being generated.
+    ComposableSettings,
+    // The base attribute from which the aforementioned attribute is generated.
+    ComposableSettings,
+    // The transformation function for generating the new attribute.
+    (arg: string) => string,
+    // Whether the target attribute must be re-generated when the base attribute changes
+    // during the altering of a model.
+    boolean,
+  ]
 > = [
-  ['pluralSlug', 'slug', pluralize],
-  ['name', 'slug', slugToName],
-  ['pluralName', 'pluralSlug', slugToName],
-  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3).toLowerCase()],
-  ['table', 'pluralSlug', convertToSnakeCase],
+  ['pluralSlug', 'slug', pluralize, true],
+  ['name', 'slug', slugToName, false],
+  ['pluralName', 'pluralSlug', slugToName, false],
+  ['idPrefix', 'slug', (slug: string) => slug.slice(0, 3).toLowerCase(), false],
+  ['table', 'pluralSlug', convertToSnakeCase, true],
 ];
 
 /**
@@ -124,11 +134,13 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
   // internal comparisons, before the resulting statements hit the database.
   if (isNew && !copiedModel.id) copiedModel.id = getModelIdentifier();
 
-  for (const [setting, base, generator] of modelAttributes) {
-    if (!isNew && setting !== 'pluralSlug' && setting !== 'table') continue;
+  for (const [setting, base, generator, mustRegenerate] of modelAttributes) {
+    // If an existing model is being altered, check whether the attribute must even be
+    // re-generated from its base attribute, or whether it should stay outdated.
+    if (!(isNew || mustRegenerate)) continue;
 
-    // If a custom value was provided for the setting, or the setting from which the current
-    // one can be generated is not available, skip the generation.
+    // If a custom value was provided for the setting, or the setting from which the
+    // current one can be generated is not available, skip the generation.
     if (copiedModel[setting] || !copiedModel[base]) continue;
 
     // Otherwise, if possible, generate the setting.
