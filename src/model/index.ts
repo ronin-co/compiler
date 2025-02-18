@@ -1053,11 +1053,18 @@ export const transformMetaQuery = (
 
       // Compile the effect queries into SQL statements.
       const effectStatements = trigger.effects.map((effectQuery) => {
-        return compileQueryInput(effectQuery, models, null, {
-          returning: false,
-          parentModel: existingModel,
-          inlineDefaults: options.inlineDefaults,
-        }).main.statement;
+        return compileQueryInput(
+          QUERY_SYMBOLS.QUERY in effectQuery
+            ? (effectQuery[QUERY_SYMBOLS.QUERY] as Query)
+            : (effectQuery as Query),
+          models,
+          null,
+          {
+            returning: false,
+            parentModel: existingModel,
+            inlineDefaults: options.inlineDefaults,
+          },
+        ).main.statement;
       });
 
       statementParts.push('BEGIN');
