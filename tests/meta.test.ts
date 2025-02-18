@@ -2067,6 +2067,7 @@ test('try to create new index without fields', () => {
           index: {
             slug: 'indexSlug',
             unique: true,
+            // @ts-expect-error This property already includes a strict type guard
             fields: [],
           },
         },

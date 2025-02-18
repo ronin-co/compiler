@@ -143,7 +143,7 @@ export type ModelIndex<
   /**
    * The list of fields in the model for which the index should be created.
    */
-  fields: Array<ModelIndexField<T>>;
+  fields: [ModelIndexField<T>, ...Array<ModelIndexField<T>>];
   /**
    * The identifier of the index.
    */
