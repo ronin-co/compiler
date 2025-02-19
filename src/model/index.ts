@@ -1076,7 +1076,9 @@ export const transformMetaQuery = (
 
   switch (action) {
     case 'create': {
-      const value = prepareStatementValue(statementParams, jsonValue);
+      const { slug, ...entityValue } = jsonValue as ModelEntity;
+      const value = prepareStatementValue(statementParams, entityValue);
+
       json = `json_insert(${field}, '$.${slug}', ${value})`;
 
       // Add the newly created entity to the model.
