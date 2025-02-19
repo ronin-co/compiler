@@ -4,6 +4,7 @@ import type {
   Query,
   WithInstruction,
 } from '@/src/types/query';
+import type { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
 
@@ -179,7 +180,7 @@ export type ModelTrigger<
   /** When the trigger should fire in the case that a matching query is executed. */
   when: 'BEFORE' | 'DURING' | 'AFTER';
   /** A list of queries that should be executed when the trigger fires. */
-  effects: Array<Query>;
+  effects: Array<Record<typeof QUERY_SYMBOLS.QUERY, Query>>;
   /** A list of field slugs for which the trigger should fire. */
   fields?: Array<ModelTriggerField<T>>;
   /**

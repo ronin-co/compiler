@@ -55,10 +55,12 @@ test('create new model', () => {
       action: 'INSERT',
       effects: [
         {
-          add: {
-            signup: {
-              with: {
-                year: 2000,
+          [QUERY_SYMBOLS.QUERY]: {
+            add: {
+              signup: {
+                with: {
+                  year: 2000,
+                },
               },
             },
           },
@@ -1269,10 +1271,12 @@ test('create new trigger for creating records', () => {
     action: 'INSERT',
     effects: [
       {
-        add: {
-          signup: {
-            with: {
-              year: 2000,
+        [QUERY_SYMBOLS.QUERY]: {
+          add: {
+            signup: {
+              with: {
+                year: 2000,
+              },
             },
           },
         },
@@ -1325,10 +1329,12 @@ test('create new trigger for creating records with targeted fields', () => {
     action: 'UPDATE',
     effects: [
       {
-        add: {
-          signup: {
-            with: {
-              year: 2000,
+        [QUERY_SYMBOLS.QUERY]: {
+          add: {
+            signup: {
+              with: {
+                year: 2000,
+              },
             },
           },
         },
@@ -1389,19 +1395,23 @@ test('create new trigger for creating records with multiple effects', () => {
     action: 'INSERT',
     effects: [
       {
-        add: {
-          signup: {
-            with: {
-              year: 2000,
+        [QUERY_SYMBOLS.QUERY]: {
+          add: {
+            signup: {
+              with: {
+                year: 2000,
+              },
             },
           },
         },
       },
       {
-        add: {
-          candidate: {
-            with: {
-              year: 2020,
+        [QUERY_SYMBOLS.QUERY]: {
+          add: {
+            candidate: {
+              with: {
+                year: 2020,
+              },
             },
           },
         },
@@ -1460,14 +1470,16 @@ test('create new per-record trigger for creating records', () => {
     action: 'INSERT',
     effects: [
       {
-        add: {
-          member: {
-            with: {
-              account: {
-                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+        [QUERY_SYMBOLS.QUERY]: {
+          add: {
+            member: {
+              with: {
+                account: {
+                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+                },
+                role: 'owner',
+                pending: false,
               },
-              role: 'owner',
-              pending: false,
             },
           },
         },
@@ -1525,11 +1537,13 @@ test('create new per-record trigger for removing records', () => {
     action: 'DELETE',
     effects: [
       {
-        remove: {
-          members: {
-            with: {
-              account: {
-                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
+        [QUERY_SYMBOLS.QUERY]: {
+          remove: {
+            members: {
+              with: {
+                account: {
+                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
+                },
               },
             },
           },
@@ -1589,14 +1603,16 @@ test('create new per-record trigger with filters for creating records', () => {
     action: 'INSERT',
     effects: [
       {
-        add: {
-          member: {
-            with: {
-              account: {
-                [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+        [QUERY_SYMBOLS.QUERY]: {
+          add: {
+            member: {
+              with: {
+                account: {
+                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
+                },
+                role: 'owner',
+                pending: false,
               },
-              role: 'owner',
-              pending: false,
             },
           },
         },
@@ -1674,7 +1690,9 @@ test('drop existing trigger', () => {
           action: 'INSERT',
           effects: [
             {
-              add: { member: { with: { account: 'test' } } },
+              [QUERY_SYMBOLS.QUERY]: {
+                add: { member: { with: { account: 'test' } } },
+              },
             },
           ],
         },
@@ -2000,12 +2018,14 @@ test('try to drop a system field', () => {
 });
 
 test('try to create new trigger with targeted fields and wrong action', () => {
-  const effectQueries = [
+  const effectQueries: ModelTrigger['effects'] = [
     {
-      add: {
-        signup: {
-          with: {
-            year: 2000,
+      [QUERY_SYMBOLS.QUERY]: {
+        add: {
+          signup: {
+            with: {
+              year: 2000,
+            },
           },
         },
       },
