@@ -642,7 +642,10 @@ test('create new field', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.email', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ type: 'string', name: 'Email' }), 'account'],
+      params: [
+        JSON.stringify({ ...omit(field, ['slug']), type: 'string', name: 'Email' }),
+        'account',
+      ],
       returning: true,
     },
   ]);
