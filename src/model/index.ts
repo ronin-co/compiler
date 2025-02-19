@@ -1107,9 +1107,14 @@ export const transformMetaQuery = (
           newSlug,
           Object.getOwnPropertyDescriptor(targetEntities, slug)!,
         );
+
+        // Assign the newly generated attributes to the new entity.
+        Object.assign(targetEntities[newSlug], entityValue);
+
+        // Remove the old entity.
         delete targetEntities[slug];
 
-        const value = prepareStatementValue(statementParams, entityValue);
+        const value = prepareStatementValue(statementParams, targetEntities[newSlug]);
         json = `json_insert(json_remove(${field}, '$.${slug}'), '$.${newSlug}', ${value})`;
       }
       // Otherwise, just update the existing property.

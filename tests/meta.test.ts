@@ -771,7 +771,7 @@ test('alter existing field (slug)', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.email'), '$.emailAddress', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ name: 'Email Address' }), 'account'],
+      params: [JSON.stringify({ type: 'string', name: 'Email Address' }), 'account'],
       returning: true,
     },
   ]);
@@ -819,7 +819,15 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.followers'), '$.subscribers', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify({ name: 'Subscribers' }), 'account'],
+      params: [
+        JSON.stringify({
+          type: 'link',
+          target: 'account',
+          kind: 'many',
+          name: 'Subscribers',
+        }),
+        'account',
+      ],
       returning: true,
     },
   ]);
