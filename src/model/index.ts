@@ -850,7 +850,7 @@ export const transformMetaQuery = (
 
   // Entities can only be created, altered, or dropped on existing models, so the model
   // is guaranteed to exist.
-  const modelBeforeUpdate = structuredClone(model as Model);
+  const modelBeforeUpdate = structuredClone(JSON.parse(JSON.stringify(model)) as Model);
   const existingModel = model as Model;
 
   const pluralType = PLURAL_MODEL_ENTITIES[entity];
