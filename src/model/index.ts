@@ -1054,9 +1054,8 @@ export const transformMetaQuery = (
       // Compile the effect queries into SQL statements.
       const effectStatements = trigger.effects.map((effectQuery) => {
         return compileQueryInput(
-          QUERY_SYMBOLS.QUERY in effectQuery
-            ? (effectQuery[QUERY_SYMBOLS.QUERY] as Query)
-            : (effectQuery as Query),
+          // @ts-expect-error - The query is always wrapped in a `QUERY_SYMBOLS.QUERY` object.
+          effectQuery[QUERY_SYMBOLS.QUERY],
           models,
           null,
           {
