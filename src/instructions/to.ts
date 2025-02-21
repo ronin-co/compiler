@@ -63,7 +63,7 @@ export const handleTo = (
       ? {
           // If records are being created, set their creation time.
           ...(queryType === 'add' && { createdAt: currentTime }),
-          // If records are being updated or craeted, bump their update time.
+          // If records are being updated or created, bump their update time.
           updatedAt: currentTime,
           // Allow for overwriting the default values provided above.
           ...(toInstruction.ronin as object),
