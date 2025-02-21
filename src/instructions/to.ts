@@ -50,26 +50,30 @@ export const handleTo = (
 ): string => {
   const { with: withInstruction, to: toInstruction } = instructions;
   const defaultFields: Record<string, unknown> = {};
-
-  const inlineDefaultInsertionFields = queryType === 'add' && options?.inlineDefaults;
+  const currentTime = new Date().toISOString();
 
   // If records are being created, assign a default ID to them, unless a custom ID was
   // already provided in the query.
-  if (inlineDefaultInsertionFields) {
+  if (queryType === 'add' && options?.inlineDefaults) {
     defaultFields.id = toInstruction.id || getRecordIdentifier(model.idPrefix);
   }
 
   if (queryType === 'add' || queryType === 'set' || toInstruction.ronin) {
-    const defaults = {
-      // If records are being created, set their creation time.
-      ...(inlineDefaultInsertionFields ? { createdAt: CURRENT_TIME_EXPRESSION } : {}),
-      // If records are being updated, bump their update time.
-      ...(queryType === 'set' || inlineDefaultInsertionFields
-        ? { updatedAt: CURRENT_TIME_EXPRESSION }
-        : {}),
-      // Allow for overwriting the default values provided above.
-      ...(toInstruction.ronin as object),
-    };
+    const defaults = options?.inlineDefaults
+      ? {
+          // If records are being created, set their creation time.
+          ...(queryType === 'add' && { createdAt: currentTime }),
+          // If records are being updated or craeted, bump their update time.
+          updatedAt: currentTime,
+          // Allow for overwriting the default values provided above.
+          ...(toInstruction.ronin as object),
+        }
+      : {
+          // If records are being updated, bump their update time.
+          ...(queryType === 'set' ? { updatedAt: CURRENT_TIME_EXPRESSION } : {}),
+          // Allow for overwriting the default values provided above.
+          ...(toInstruction.ronin as object),
+        };
 
     if (Object.keys(defaults).length > 0) defaultFields.ronin = defaults;
   }
