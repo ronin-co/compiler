@@ -3,6 +3,7 @@ import {
   getFieldFromModel,
   getModelBySlug,
 } from '@/src/model';
+import { getRecordIdentifier } from '@/src/model/defaults';
 import type { Model } from '@/src/types/model';
 import type {
   FieldValue,
@@ -11,7 +12,6 @@ import type {
 } from '@/src/types/query';
 import {
   CURRENT_TIME_EXPRESSION,
-  ID_EXPRESSION,
   flatten,
   getQuerySymbol,
   isObject,
@@ -56,7 +56,7 @@ export const handleTo = (
   // If records are being created, assign a default ID to them, unless a custom ID was
   // already provided in the query.
   if (inlineDefaultInsertionFields) {
-    defaultFields.id = toInstruction.id || ID_EXPRESSION(model.idPrefix);
+    defaultFields.id = toInstruction.id || getRecordIdentifier(model.idPrefix);
   }
 
   if (queryType === 'add' || queryType === 'set' || toInstruction.ronin) {
