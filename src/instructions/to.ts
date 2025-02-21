@@ -70,6 +70,7 @@ export const handleTo = (
         }
       : {
           // If records are being updated, bump their update time.
+          // The creation time is already set using a default value in the DB.
           ...(queryType === 'set' ? { updatedAt: CURRENT_TIME_EXPRESSION } : {}),
           // Allow for overwriting the default values provided above.
           ...(toInstruction.ronin as object),
