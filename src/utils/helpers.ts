@@ -54,15 +54,6 @@ export const CURRENT_TIME_EXPRESSION = {
   [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
 };
 
-export const ID_EXPRESSION = (
-  idPrefix: string,
-): Record<typeof QUERY_SYMBOLS.EXPRESSION, string> => ({
-  // Since default values in SQLite cannot rely on other columns, we unfortunately
-  // cannot rely on the `idPrefix` column here. Instead, we need to inject it directly
-  // into the expression as a static string.
-  [QUERY_SYMBOLS.EXPRESSION]: `'${idPrefix}_' || lower(substr(hex(randomblob(12)), 1, 16))`,
-});
-
 // A regular expression for splitting up the components of a field mounting path, meaning
 // the path within a record under which a particular field's value should be mounted.
 const MOUNTING_PATH_SUFFIX = /(.*?)(\{(\d+)\})?$/;

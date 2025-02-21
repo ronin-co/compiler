@@ -1,5 +1,9 @@
 import { expect, test } from 'bun:test';
-import { queryEphemeralDatabase } from '@/fixtures/utils';
+import {
+  RECORD_ID_REGEX,
+  RECORD_TIMESTAMP_REGEX,
+  queryEphemeralDatabase,
+} from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
 import { getSystemFields } from '@/src/model';
 import type { SingleRecordResult } from '@/src/types/result';
@@ -184,8 +188,14 @@ test('inline default values', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, 'acc_' || lower(substr(hex(randomblob(12)), 1, 16)), strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z', strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
-      params: ['elaine', '["test@site.co","elaine@site.com"]'],
+      statement: `INSERT INTO "accounts" ("handle", "emails", "id", "ronin.createdAt", "ronin.updatedAt") VALUES (?1, ?2, ?3, ?4, ?5) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
+      params: [
+        'elaine',
+        '["test@site.co","elaine@site.com"]',
+        expect.stringMatching(RECORD_ID_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+        expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      ],
       returning: true,
     },
   ]);

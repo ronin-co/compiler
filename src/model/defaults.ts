@@ -106,12 +106,12 @@ const modelAttributes: Array<
 ];
 
 /**
- * Generates a unique identifier for a newly created model.
+ * Generates a unique identifier for a newly created record.
  *
  * @returns A string containing the ID.
  */
-const getModelIdentifier = (): string => {
-  return `mod_${Array.from(crypto.getRandomValues(new Uint8Array(12)))
+export const getRecordIdentifier = (prefix: string): string => {
+  return `${prefix}_${Array.from(crypto.getRandomValues(new Uint8Array(12)))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
     .slice(0, 16)
@@ -132,7 +132,7 @@ export const addDefaultModelAttributes = (model: PartialModel, isNew: boolean): 
   // Generate a unique identifier for the model. We are generating these identifiers
   // within the compiler instead of the database because the compiler needs it for
   // internal comparisons, before the resulting statements hit the database.
-  if (isNew && !copiedModel.id) copiedModel.id = getModelIdentifier();
+  if (isNew && !copiedModel.id) copiedModel.id = getRecordIdentifier('mod');
 
   for (const [setting, base, generator, mustRegenerate] of modelAttributes) {
     // If an existing model is being altered, check whether the attribute must even be
