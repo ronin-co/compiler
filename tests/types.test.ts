@@ -302,6 +302,82 @@ test('get all records of all models', async () => {
   });
 });
 
+test('get all records of all models with instructions', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        all: {
+          limitedTo: 1,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'team',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 2`,
+      params: [],
+      returning: true,
+    },
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams" ORDER BY "ronin.createdAt" DESC LIMIT 2`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0];
+
+  expect(result).toMatchObject({
+    models: {
+      accounts: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+      },
+      teams: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+      },
+    },
+  });
+});
+
 test('get all records of linked models', async () => {
   const queries: Array<Query> = [
     {
