@@ -199,10 +199,10 @@ export type QueryPaginationOptions = {
 
 export type Query = {
   get?: GetQuery | GetAllQuery;
-  set?: SetQuery | CountAllQuery;
+  set?: SetQuery;
   add?: AddQuery;
   remove?: RemoveQuery;
-  count?: CountQuery;
+  count?: CountQuery | CountAllQuery;
 
   create?: CreateQuery;
   alter?: AlterQuery;
