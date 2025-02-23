@@ -14,7 +14,12 @@ import type {
   Model as PrivateModel,
   PublicModel,
 } from '@/src/types/model';
-import type { InternalStatement, Query, Statement } from '@/src/types/query';
+import type {
+  AllQueryInstructions,
+  InternalStatement,
+  Query,
+  Statement,
+} from '@/src/types/query';
 import type {
   ExpandedResult,
   MultipleRecordResult,
@@ -96,7 +101,8 @@ class Transaction {
         // If the model defined in the query is called `all`, that means we need to expand
         // the query into multiple queries: One for each model.
         if (queryModel === 'all') {
-          const { for: forInstruction, ...restInstructions } = queryInstructions || {};
+          const { for: forInstruction, ...restInstructions } = (queryInstructions ||
+            {}) as AllQueryInstructions;
 
           let modelList = modelsWithAttributes;
 
