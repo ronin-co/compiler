@@ -103,7 +103,7 @@ export type InstructionSchema =
   | 'limitedTo'
   | 'using';
 
-// Query Types
+// DML Query Types
 export type GetQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
 export type SetQuery = Record<
   string,
@@ -116,7 +116,14 @@ export type AddQuery = Record<
 export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
 export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
 
-// Individual Instructions
+// DML Query Types — Addressing all models
+export type AllQueryInstructions = { for?: string };
+export type AllQuery = { all: AllQueryInstructions | null };
+
+export type GetAllQuery = AllQuery;
+export type CountAllQuery = AllQuery;
+
+// DML Query Types — Individual Instructions
 export type GetInstructions = Omit<CombinedInstructions, 'to'>;
 export type SetInstructions = Omit<CombinedInstructions, 'to'> & { to: FieldSelector };
 export type AddInstructions = Omit<CombinedInstructions, 'with' | 'using'> & {
@@ -131,6 +138,7 @@ export type Instructions =
   | RemoveInstructions
   | CountInstructions;
 
+// DDL Query Types - Individual Instructions
 export type CreateQuery = {
   model: string | PublicModel;
   to?: PublicModel;
@@ -171,7 +179,7 @@ export type DropQuery = {
   model: string;
 };
 
-// Model Queries
+// DDL Query Types
 export type ModelQuery =
   | {
       create: CreateQuery;
@@ -190,11 +198,11 @@ export type QueryPaginationOptions = {
 };
 
 export type Query = {
-  get?: GetQuery;
+  get?: GetQuery | GetAllQuery;
   set?: SetQuery;
   add?: AddQuery;
   remove?: RemoveQuery;
-  count?: CountQuery;
+  count?: CountQuery | CountAllQuery;
 
   create?: CreateQuery;
   alter?: AlterQuery;

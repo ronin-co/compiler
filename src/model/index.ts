@@ -632,7 +632,9 @@ export const transformMetaQuery = (
   let slug =
     entity === 'model' && action === 'create'
       ? null
-      : (query[queryType]!.model as string);
+      : query[queryType] && 'model' in query[queryType]
+        ? (query[queryType].model as string)
+        : null;
   let modelSlug = slug;
 
   let jsonValue: Record<string, unknown> | undefined;
