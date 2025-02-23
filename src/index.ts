@@ -96,10 +96,30 @@ class Transaction {
         // If the model defined in the query is called `all`, that means we need to expand
         // the query into multiple queries: One for each model.
         if (queryModel === 'all') {
-          return modelsWithAttributes.map((model) => {
+          const { for: forInstruction, ...restInstructions } = queryInstructions || {};
+
+          let modelList = modelsWithAttributes;
+
+          // If a `for` instruction was provided, that means we only want to select the
+          // related models of the model that was provided in `for`, instead of selecting
+          // all models at once.
+          if (forInstruction) {
+            const mainModel = getModelBySlug(modelsWithAttributes, forInstruction);
+
+            modelList = Object.values(mainModel.fields || {})
+              .filter((field) => field.type === 'link')
+              .map((field) => {
+                return modelsWithAttributes.find(
+                  (model) => model.slug === field.target,
+                ) as PrivateModel;
+              });
+          }
+
+          return modelList.map((model) => {
             const query: Query = {
-              [queryType]: { [model.pluralSlug]: queryInstructions },
+              [queryType]: { [model.pluralSlug]: restInstructions },
             };
+
             return { query, expansionIndex };
           });
         }
