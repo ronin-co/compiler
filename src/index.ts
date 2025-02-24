@@ -58,7 +58,12 @@ class Transaction {
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
 
-    this.#internalQueries = queries.map((query) => ({ query, selectedFields: [] }));
+    this.#internalQueries = queries.map((query) => ({
+      query,
+      selectedFields: [],
+      models: [],
+    }));
+
     this.#compileQueries(models, options);
   }
 
@@ -105,18 +110,20 @@ class Transaction {
           const { for: forInstruction, ...restInstructions } = (queryInstructions ||
             {}) as AllQueryInstructions;
 
-          let modelList = modelsWithAttributes;
+          let modelList = modelsWithPresets.filter((model) => {
+            return model.slug !== ROOT_MODEL.slug;
+          });
 
           // If a `for` instruction was provided, that means we only want to select the
           // related models of the model that was provided in `for`, instead of selecting
           // all models at once.
           if (forInstruction) {
-            const mainModel = getModelBySlug(modelsWithAttributes, forInstruction);
+            const mainModel = getModelBySlug(modelList, forInstruction);
 
             modelList = Object.values(mainModel.fields || {})
               .filter((field) => field.type === 'link')
               .map((field) => {
-                return modelsWithAttributes.find(
+                return modelList.find(
                   (model) => model.slug === field.target,
                 ) as PrivateModel;
               });
@@ -124,9 +131,7 @@ class Transaction {
 
           // Track which models are being addressed by the query, in order to ensure that
           // its results are being formatted correctly.
-          this.#internalQueries[index].affectedModels = modelList.map(
-            (model) => model.slug,
-          );
+          this.#internalQueries[index].models = modelList;
 
           return modelList.map((model) => {
             const query: Query = {
@@ -141,7 +146,7 @@ class Transaction {
       });
 
     for (const { query, index } of expandedQueries) {
-      const { dependencies, main, selectedFields } = compileQueryInput(
+      const { dependencies, main, selectedFields, model } = compileQueryInput(
         query,
         modelsWithPresets,
         options?.inlineParams ? null : [],
@@ -168,6 +173,10 @@ class Transaction {
 
       // Update the internal query with additional information.
       this.#internalQueries[index].selectedFields = selectedFields;
+
+      if (this.#internalQueries[index].models.length === 0) {
+        this.#internalQueries[index].models = [model];
+      }
     }
 
     this.models = modelsWithPresets;
@@ -431,7 +440,7 @@ class Transaction {
 
     return this.#internalQueries.reduce(
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
-        const { query, selectedFields, affectedModels } = internalQuery;
+        const { query, selectedFields, models: affectedModels } = internalQuery;
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the provided results are raw (rows being arrays of values, which is the most
@@ -457,14 +466,10 @@ class Transaction {
               });
             }) as Array<Array<Array<RawRow>>>);
 
-        if (queryModel === 'all' && affectedModels) {
-          const modelList = affectedModels.map((slug) => {
-            return getModelBySlug(this.models, slug);
-          });
-
+        if (queryModel === 'all') {
           const models: ExpandedResult<RecordType>['models'] = {};
 
-          for (const model of modelList) {
+          for (const model of affectedModels) {
             const result = this.formatIndividualResult<RecordType>(
               queryType,
               queryInstructions,
@@ -479,7 +484,7 @@ class Transaction {
 
           finalResults.push({ models });
         } else {
-          const model = getModelBySlug(this.models, queryModel);
+          const model = affectedModels[0];
 
           const result = this.formatIndividualResult<RecordType>(
             queryType,

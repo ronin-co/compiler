@@ -4,6 +4,7 @@ import type {
   ModelIndex,
   ModelPreset,
   ModelTrigger,
+  Model as PrivateModel,
   PublicModel,
 } from '@/src/types/model';
 import { QUERY_SYMBOLS } from '@/src/utils/helpers';
@@ -227,11 +228,8 @@ export interface InternalQuery {
   query: Query;
   /** The RONIN model fields that were selected for the SQL statement. */
   selectedFields: Array<InternalModelField>;
-  /**
-   * If the query addresses multiple models at once, this contains the list of models
-   * that are being addressed.
-   */
-  affectedModels?: Array<PublicModel['slug']>;
+  /** The RONIN models that are being affected by the query. */
+  models: Array<PrivateModel>;
 }
 
 export interface InternalDependencyStatement extends Statement {
