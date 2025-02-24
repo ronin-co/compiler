@@ -6,7 +6,11 @@ import { handleSelecting } from '@/src/instructions/selecting';
 import { handleTo } from '@/src/instructions/to';
 import { handleUsing } from '@/src/instructions/using';
 import { handleWith } from '@/src/instructions/with';
-import { getModelBySlug, transformMetaQuery } from '@/src/model';
+import {
+  ROOT_MODEL_WITH_ATTRIBUTES,
+  getModelBySlug,
+  transformMetaQuery,
+} from '@/src/model';
 import type { InternalModelField, Model } from '@/src/types/model';
 import type {
   CombinedInstructions,
@@ -57,6 +61,7 @@ export const compileQueryInput = (
   dependencies: Array<InternalDependencyStatement>;
   main: Statement;
   selectedFields: Array<InternalModelField>;
+  model: Model;
 } => {
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -83,6 +88,7 @@ export const compileQueryInput = (
       dependencies: [],
       main: dependencyStatements[0],
       selectedFields: [],
+      model: ROOT_MODEL_WITH_ATTRIBUTES,
     };
 
   // Split out the individual components of the query.
@@ -334,5 +340,6 @@ export const compileQueryInput = (
     dependencies: dependencyStatements,
     main: mainStatement,
     selectedFields,
+    model,
   };
 };
