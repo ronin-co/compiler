@@ -419,35 +419,37 @@ class Transaction {
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
         const { query, selectedFields } = internalQuery;
 
-        const { queryModel } = splitQuery(query);
+        const { queryType, queryModel } = splitQuery(query);
+
+        // If the provided results are raw (rows being arrays of values, which is the most
+        // ideal format in terms of performance, since the driver doesn't need to format
+        // the rows in that case), we can already continue processing them further.
+        //
+        // If the provided results were already formatted by the driver (rows being
+        // objects), we need to normalize them into the raw format first, before they can
+        // be processed, since the object format provided by the driver does not match
+        // the RONIN record format expected by developers.
+        const absoluteResults = raw
+          ? (cleanResults as Array<Array<Array<RawRow>>>)
+          : (cleanResults.map((rows) => {
+              return rows.map((row) => {
+                // If the row is already an array, return it as-is.
+                if (Array.isArray(row)) return row;
+
+                // If the row is the result of a `count` query, return its amount result.
+                if (queryType === 'count') return [row.amount];
+
+                // If the row is an object, return its values as an array.
+                return Object.values(row);
+              });
+            }) as Array<Array<Array<RawRow>>>);
 
         if (queryModel === 'all') {
           const modelList = this.models.filter((model) => model.slug !== ROOT_MODEL.slug);
           const models: ExpandedResult<RecordType>['models'] = {};
 
           for (const model of modelList) {
-            const defaultRows = cleanResults[resultIndex++];
-
-            // If the provided results are raw (rows being arrays of values, which is the most
-            // ideal format in terms of performance, since the driver doesn't need to format
-            // the rows in that case), we can already continue processing them further.
-            //
-            // If the provided results were already formatted by the driver (rows being
-            // objects), we need to normalize them into the raw format first, before they can
-            // be processed, since the object format provided by the driver does not match
-            // the RONIN record format expected by developers.
-            const rows = raw
-              ? (defaultRows as Array<Array<RawRow>>)
-              : (defaultRows.map((row) => {
-                  // If the row is already an array, return it as-is.
-                  if (Array.isArray(row)) return row;
-
-                  // If the row is the result of a `count` query, return its amount result.
-                  if (query.count) return [row.amount];
-
-                  // If the row is an object, return its values as an array.
-                  return Object.values(row);
-                }) as Array<Array<RawRow>>);
+            const rows = absoluteResults[resultIndex++];
 
             const result = this.formatSingleResult<RecordType>(
               query,
@@ -462,28 +464,7 @@ class Transaction {
 
           finalResults.push({ models });
         } else {
-          const defaultRows = cleanResults[resultIndex++];
-
-          // If the provided results are raw (rows being arrays of values, which is the most
-          // ideal format in terms of performance, since the driver doesn't need to format
-          // the rows in that case), we can already continue processing them further.
-          //
-          // If the provided results were already formatted by the driver (rows being
-          // objects), we need to normalize them into the raw format first, before they can
-          // be processed, since the object format provided by the driver does not match
-          // the RONIN record format expected by developers.
-          const rows = raw
-            ? (defaultRows as Array<Array<RawRow>>)
-            : (defaultRows.map((row) => {
-                // If the row is already an array, return it as-is.
-                if (Array.isArray(row)) return row;
-
-                // If the row is the result of a `count` query, return its amount result.
-                if (query.count) return [row.amount];
-
-                // If the row is an object, return its values as an array.
-                return Object.values(row);
-              }) as Array<Array<RawRow>>);
+          const rows = absoluteResults[resultIndex++];
 
           const model = getModelBySlug(this.models, queryModel);
 
