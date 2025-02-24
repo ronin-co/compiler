@@ -457,7 +457,7 @@ class Transaction {
               false,
             );
 
-            models[model.slug] = result;
+            models[model.pluralSlug] = result;
           }
 
           finalResults.push({ models });
