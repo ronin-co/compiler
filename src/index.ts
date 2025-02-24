@@ -340,10 +340,10 @@ class Transaction {
         // ideal format in terms of performance, since the driver doesn't need to format
         // the rows in that case), we can already continue processing them further.
         //
-        // If the provided results were already formatted by the driver (rows being objects),
-        // we need to normalize them into the raw format first, before they can be processed,
-        // since the object format provided by the driver does not match the RONIN record
-        // format expected by developers.
+        // If the provided results were already formatted by the driver (rows being
+        // objects), we need to normalize them into the raw format first, before they can
+        // be processed, since the object format provided by the driver does not match
+        // the RONIN record format expected by developers.
         const rows = raw
           ? (defaultRows as Array<Array<RawRow>>)
           : (defaultRows.map((row) => {
