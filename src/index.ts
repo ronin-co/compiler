@@ -16,8 +16,10 @@ import type {
 } from '@/src/types/model';
 import type {
   AllQueryInstructions,
-  InternalStatement,
+  CombinedInstructions,
+  InternalQuery,
   Query,
+  QueryType,
   Statement,
 } from '@/src/types/query';
 import type {
@@ -51,25 +53,24 @@ class Transaction {
   statements: Array<Statement> = [];
   models: Array<PrivateModel> = [];
 
-  #internalStatements: Array<InternalStatement> = [];
+  #internalQueries: Array<InternalQuery> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
 
-    this.#compileQueries(queries, models, options);
+    this.#internalQueries = queries.map((query) => ({ query, selectedFields: [] }));
+    this.#compileQueries(models, options);
   }
 
   /**
    * Composes SQL statements for the provided RONIN queries.
    *
-   * @param queries - The RONIN queries for which SQL statements should be composed.
    * @param models - A list of models.
    * @param options - Additional options to adjust the behavior of the statement generation.
    *
    * @returns The composed SQL statements.
    */
   #compileQueries = (
-    queries: Array<Query>,
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
@@ -95,7 +96,7 @@ class Transaction {
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
     const expandedQueries: Array<{ query: Query; expansionIndex?: number }> =
-      queries.flatMap((query, expansionIndex) => {
+      this.#internalQueries.flatMap(({ query }, expansionIndex) => {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the model defined in the query is called `all`, that means we need to expand
@@ -121,6 +122,12 @@ class Transaction {
               });
           }
 
+          // Track which models are being addressed by the query, in order to ensure that
+          // its results are being formatted correctly.
+          this.#internalQueries[expansionIndex].affectedModels = modelList.map(
+            (model) => model.slug,
+          );
+
           return modelList.map((model) => {
             const query: Query = {
               [queryType]: { [model.pluralSlug]: restInstructions },
@@ -133,7 +140,9 @@ class Transaction {
         return { query };
       });
 
-    for (const { query, expansionIndex } of expandedQueries) {
+    for (let index = 0; index < expandedQueries.length; index++) {
+      const { query, expansionIndex } = expandedQueries[index];
+
       const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
@@ -159,15 +168,12 @@ class Transaction {
       // These statements will be made publicly available (outside the compiler).
       this.statements.push(...subStatements);
 
-      // These statements will be used internally to format the results.
-      this.#internalStatements.push(
-        ...subStatements.map((statement) => ({
-          ...statement,
-          query,
-          selectedFields,
-          expansionIndex,
-        })),
-      );
+      // Update the internal query with additional information.
+      //
+      // In the case that an expansion index is available, we want to update the original
+      // query from which the current query was derived/expanded.
+      const queryIndex = typeof expansionIndex === 'undefined' ? index : expansionIndex;
+      this.#internalQueries[queryIndex].selectedFields = selectedFields;
     }
 
     this.models = modelsWithPresets;
@@ -307,6 +313,98 @@ class Transaction {
     return single ? (records[0] as RecordType) : (records as Array<RecordType>);
   }
 
+  /**
+   * Formats an individual result of a query (each query has one individual result).
+   *
+   * @param queryType - The type of query that is being executed.
+   * @param queryInstructions - The instructions of the query that is being executed.
+   * @param model - The model for which the query is being executed.
+   * @param rows - The rows that were returned from the database for the query (in the
+   * form of an array containing arrays that contain strings).
+   * @param selectedFields - The model fields that were selected by the query.
+   * @param single - Whether a single or multiple records are being affected by the query.
+   *
+   * @returns A formatted RONIN result for a particular query.
+   */
+  formatIndividualResult<RecordType>(
+    queryType: QueryType,
+    queryInstructions: CombinedInstructions,
+    model: PrivateModel,
+    rows: Array<Array<RawRow>>,
+    selectedFields: Array<InternalModelField>,
+    single: boolean,
+  ): RegularResult<RecordType> {
+    // Allows the client to format fields whose type cannot be serialized in JSON,
+    // which is the format in which the compiler output is sent to the client.
+    const modelFields = Object.fromEntries(
+      Object.entries(model.fields).map(([slug, rest]) => [slug, rest.type]),
+    );
+
+    // The query is expected to count records.
+    if (queryType === 'count') {
+      return { amount: rows[0][0] as unknown as number };
+    }
+
+    // The query is targeting a single record.
+    if (single) {
+      return {
+        record: rows[0] ? this.#formatRows<RecordType>(selectedFields, rows, true) : null,
+        modelFields,
+      };
+    }
+
+    const pageSize = queryInstructions?.limitedTo;
+
+    // The query is targeting multiple records.
+    const result: MultipleRecordResult<RecordType> = {
+      records: this.#formatRows<RecordType>(selectedFields, rows, false),
+      modelFields,
+    };
+
+    // If the amount of records was limited to a specific amount, that means pagination
+    // should be activated. This is only possible if the query matched any records.
+    if (pageSize && result.records.length > 0) {
+      // Pagination cursor for the next page.
+      if (result.records.length > pageSize) {
+        // Remove one record from the list, because we always load one too much, in
+        // order to see if there are more records available.
+        if (queryInstructions?.before) {
+          result.records.shift();
+        } else {
+          result.records.pop();
+        }
+
+        const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
+        const lastRecord = result.records.at(
+          direction === 'moreAfter' ? -1 : 0,
+        ) as ResultRecord;
+
+        result[direction] = generatePaginationCursor(
+          model,
+          queryInstructions.orderedBy,
+          lastRecord,
+        );
+      }
+
+      // Pagination cursor for the previous page. Only available if an existing
+      // cursor was provided in the query instructions.
+      if (queryInstructions?.before || queryInstructions?.after) {
+        const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
+        const firstRecord = result.records.at(
+          direction === 'moreAfter' ? -1 : 0,
+        ) as ResultRecord;
+
+        result[direction] = generatePaginationCursor(
+          model,
+          queryInstructions.orderedBy,
+          firstRecord,
+        );
+      }
+    }
+
+    return result;
+  }
+
   formatResults<RecordType>(
     results: Array<Array<ObjectRow>>,
     raw?: false,
@@ -332,133 +430,76 @@ class Transaction {
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = false,
   ): Array<Result<RecordType>> {
-    // If the provided results are raw (rows being arrays of values, which is the most
-    // ideal format in terms of performance, since the driver doesn't need to format
-    // the rows in that case), we can already continue processing them further.
-    //
-    // If the provided results were already formatted by the driver (rows being objects),
-    // we need to normalize them into the raw format first, before they can be processed,
-    // since the object format provided by the driver does not match the RONIN record
-    // format expected by developers.
-    const normalizedResults: Array<Array<RawRow>> = raw
-      ? (results as Array<Array<RawRow>>)
-      : results.map((rows, index) => {
-          const { query } = this.#internalStatements[index];
+    // Only retain the results of SQL statements that are expected to return data.
+    const cleanResults = results.filter((_, index) => this.statements[index].returning);
 
-          return rows.map((row) => {
-            // If the row is already an array, return it as-is.
-            if (Array.isArray(row)) return row;
+    let resultIndex = 0;
 
-            // If the row is the result of a `count` query, return its amount result.
-            if (query.count) return [row.amount];
-
-            // If the row is an object, return its values as an array.
-            return Object.values(row);
-          });
-        });
-
-    return normalizedResults.reduce(
-      (finalResults, rows, index) => {
-        const { returning, query, selectedFields, expansionIndex } =
-          this.#internalStatements[index];
-
-        // If the statement is not expected to return any data, there is no need to format
-        // any results, so we can return early.
-        if (!returning) return finalResults;
-
-        const addResult = (
-          result: RegularResult<RecordType>,
-        ): Array<Result<RecordType>> => {
-          if (typeof expansionIndex !== 'undefined') {
-            let match = finalResults[expansionIndex] as
-              | ExpandedResult<RecordType>
-              | undefined;
-            if (!match) match = finalResults[expansionIndex] = { models: {} };
-            match.models[queryModel] = result;
-          } else {
-            finalResults.push(result);
-          }
-
-          return finalResults;
-        };
-
+    return this.#internalQueries.reduce(
+      (finalResults: Array<Result<RecordType>>, internalQuery) => {
+        const { query, selectedFields, affectedModels } = internalQuery;
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
-        const model = getModelBySlug(this.models, queryModel);
 
-        // Allows the client to format fields whose type cannot be serialized in JSON,
-        // which is the format in which the compiler output is sent to the client.
-        const modelFields = Object.fromEntries(
-          Object.entries(model.fields).map(([slug, rest]) => [slug, rest.type]),
-        );
+        // If the provided results are raw (rows being arrays of values, which is the most
+        // ideal format in terms of performance, since the driver doesn't need to format
+        // the rows in that case), we can already continue processing them further.
+        //
+        // If the provided results were already formatted by the driver (rows being
+        // objects), we need to normalize them into the raw format first, before they can
+        // be processed, since the object format provided by the driver does not match
+        // the RONIN record format expected by developers.
+        const absoluteResults = raw
+          ? (cleanResults as Array<Array<Array<RawRow>>>)
+          : (cleanResults.map((rows) => {
+              return rows.map((row) => {
+                // If the row is already an array, return it as-is.
+                if (Array.isArray(row)) return row;
 
-        // The query is expected to count records.
-        if (queryType === 'count') {
-          return addResult({ amount: rows[0][0] as number });
-        }
+                // If the row is the result of a `count` query, return its amount result.
+                if (queryType === 'count') return [row.amount];
 
-        // Whether the query will interact with a single record, or multiple at the same time.
-        const single = queryModel !== model.pluralSlug;
+                // If the row is an object, return its values as an array.
+                return Object.values(row);
+              });
+            }) as Array<Array<Array<RawRow>>>);
 
-        // The query is targeting a single record.
-        if (single) {
-          return addResult({
-            record: rows[0]
-              ? this.#formatRows<RecordType>(selectedFields, rows, true)
-              : null,
-            modelFields,
+        if (queryModel === 'all' && affectedModels) {
+          const modelList = affectedModels.map((slug) => {
+            return getModelBySlug(this.models, slug);
           });
-        }
 
-        const pageSize = queryInstructions?.limitedTo;
+          const models: ExpandedResult<RecordType>['models'] = {};
 
-        // The query is targeting multiple records.
-        const result: MultipleRecordResult<RecordType> = {
-          records: this.#formatRows<RecordType>(selectedFields, rows, false),
-          modelFields,
-        };
-
-        // If the amount of records was limited to a specific amount, that means pagination
-        // should be activated. This is only possible if the query matched any records.
-        if (pageSize && result.records.length > 0) {
-          // Pagination cursor for the next page.
-          if (result.records.length > pageSize) {
-            // Remove one record from the list, because we always load one too much, in
-            // order to see if there are more records available.
-            if (queryInstructions?.before) {
-              result.records.shift();
-            } else {
-              result.records.pop();
-            }
-
-            const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
-            const lastRecord = result.records.at(
-              direction === 'moreAfter' ? -1 : 0,
-            ) as ResultRecord;
-
-            result[direction] = generatePaginationCursor(
+          for (const model of modelList) {
+            const result = this.formatIndividualResult<RecordType>(
+              queryType,
+              queryInstructions,
               model,
-              queryInstructions.orderedBy,
-              lastRecord,
+              absoluteResults[resultIndex++],
+              selectedFields,
+              false,
             );
+
+            models[model.pluralSlug] = result;
           }
 
-          // Pagination cursor for the previous page. Only available if an existing
-          // cursor was provided in the query instructions.
-          if (queryInstructions?.before || queryInstructions?.after) {
-            const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
-            const firstRecord = result.records.at(
-              direction === 'moreAfter' ? -1 : 0,
-            ) as ResultRecord;
+          finalResults.push({ models });
+        } else {
+          const model = getModelBySlug(this.models, queryModel);
 
-            result[direction] = generatePaginationCursor(
-              model,
-              queryInstructions.orderedBy,
-              firstRecord,
-            );
-          }
+          const result = this.formatIndividualResult<RecordType>(
+            queryType,
+            queryInstructions,
+            model,
+            absoluteResults[resultIndex++],
+            selectedFields,
+            queryModel !== model.pluralSlug,
+          );
+
+          finalResults.push(result);
         }
 
-        return addResult(result);
+        return finalResults;
       },
       [] as Array<Result<RecordType>>,
     );

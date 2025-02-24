@@ -222,16 +222,16 @@ export interface Statement {
   returning?: boolean;
 }
 
-export interface InternalStatement extends Statement {
+export interface InternalQuery {
   /** The RONIN query for which the SQL statement was generated. */
   query: Query;
   /** The RONIN model fields that were selected for the SQL statement. */
   selectedFields: Array<InternalModelField>;
   /**
-   * If the associated RONIN query was automatically generated because a different
-   * RONIN query was expanded, this contains the index of the original query.
+   * If the query addresses multiple models at once, this contains the list of models
+   * that are being addressed.
    */
-  expansionIndex?: number;
+  affectedModels?: Array<PublicModel['slug']>;
 }
 
 export interface InternalDependencyStatement extends Statement {

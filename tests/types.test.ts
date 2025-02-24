@@ -493,6 +493,29 @@ test('get all records of linked models', async () => {
   });
 });
 
+test('get all records of all models with no models available', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        all: null,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0];
+
+  expect(result).toMatchObject({
+    models: {},
+  });
+});
+
 test('count all records of all models', async () => {
   const queries: Array<Query> = [
     {
@@ -538,5 +561,28 @@ test('count all records of all models', async () => {
         amount: 4,
       },
     },
+  });
+});
+
+test('count all records of all models with no models available', async () => {
+  const queries: Array<Query> = [
+    {
+      count: {
+        all: null,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0];
+
+  expect(result).toMatchObject({
+    models: {},
   });
 });
