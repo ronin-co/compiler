@@ -329,14 +329,12 @@ class Transaction {
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = false,
   ): Array<Result<RecordType>> {
-    const cleanResults = results.filter((_rows, index) => {
-      const { returning } = this.statements[index];
-      return returning;
-    });
+    const cleanResults = results.filter((_, index) => this.statements[index].returning);
 
-    return cleanResults.reduce(
-      (finalResults: Array<Result<RecordType>>, defaultRows, index) => {
-        const { query, selectedFields, expansionIndex } = this.#internalQueries[index];
+    return this.#internalQueries.reduce(
+      (finalResults: Array<Result<RecordType>>, internalQuery, index) => {
+        const { query, selectedFields, expansionIndex } = internalQuery;
+        const defaultRows = cleanResults[index];
 
         // If the provided results are raw (rows being arrays of values, which is the most
         // ideal format in terms of performance, since the driver doesn't need to format
