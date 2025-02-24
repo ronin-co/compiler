@@ -101,6 +101,8 @@ test('inline statement parameters containing serialized expression', async () =>
   ]);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+
+  console.log('RAW RESULTS', rawResults);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toMatchObject({

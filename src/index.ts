@@ -52,6 +52,7 @@ class Transaction {
   models: Array<PrivateModel> = [];
 
   #internalStatements: Array<InternalStatement> = [];
+  #internalQueries: Array<Query> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
@@ -168,6 +169,8 @@ class Transaction {
           expansionIndex,
         })),
       );
+
+      this.#internalQueries.push(query);
     }
 
     this.models = modelsWithPresets;
@@ -332,6 +335,11 @@ class Transaction {
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = false,
   ): Array<Result<RecordType>> {
+    const cleanResults = results.filter((_rows, index) => {
+      const { returning } = this.#internalStatements[index];
+      return returning;
+    });
+
     // If the provided results are raw (rows being arrays of values, which is the most
     // ideal format in terms of performance, since the driver doesn't need to format
     // the rows in that case), we can already continue processing them further.
@@ -341,9 +349,9 @@ class Transaction {
     // since the object format provided by the driver does not match the RONIN record
     // format expected by developers.
     const normalizedResults: Array<Array<RawRow>> = raw
-      ? (results as Array<Array<RawRow>>)
-      : results.map((rows, index) => {
-          const { query } = this.#internalStatements[index];
+      ? (cleanResults as Array<Array<RawRow>>)
+      : cleanResults.map((rows, index) => {
+          const query = this.#internalQueries[index];
 
           return rows.map((row) => {
             // If the row is already an array, return it as-is.
@@ -359,12 +367,7 @@ class Transaction {
 
     return normalizedResults.reduce(
       (finalResults, rows, index) => {
-        const { returning, query, selectedFields, expansionIndex } =
-          this.#internalStatements[index];
-
-        // If the statement is not expected to return any data, there is no need to format
-        // any results, so we can return early.
-        if (!returning) return finalResults;
+        const { query, selectedFields, expansionIndex } = this.#internalStatements[index];
 
         const addResult = (
           result: RegularResult<RecordType>,
