@@ -56,20 +56,19 @@ class Transaction {
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
 
-    this.#compileQueries(queries, models, options);
+    this.#internalQueries = queries.map((query) => ({ query, selectedFields: [] }));
+    this.#compileQueries(models, options);
   }
 
   /**
    * Composes SQL statements for the provided RONIN queries.
    *
-   * @param queries - The RONIN queries for which SQL statements should be composed.
    * @param models - A list of models.
    * @param options - Additional options to adjust the behavior of the statement generation.
    *
    * @returns The composed SQL statements.
    */
   #compileQueries = (
-    queries: Array<Query>,
     models: Array<PublicModel>,
     options?: Omit<TransactionOptions, 'models'>,
   ): Array<Statement> => {
@@ -95,7 +94,7 @@ class Transaction {
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
     const expandedQueries: Array<{ query: Query; expansionIndex?: number }> =
-      queries.flatMap((query, expansionIndex) => {
+      this.#internalQueries.flatMap(({ query }, expansionIndex) => {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the model defined in the query is called `all`, that means we need to expand
@@ -133,7 +132,9 @@ class Transaction {
         return { query };
       });
 
-    for (const { query, expansionIndex } of expandedQueries) {
+    for (let index = 0; index < expandedQueries.length; index++) {
+      const { query, expansionIndex } = expandedQueries[index];
+
       const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
@@ -159,12 +160,12 @@ class Transaction {
       // These statements will be made publicly available (outside the compiler).
       this.statements.push(...subStatements);
 
-      // These queries will be used internally to format the results.
-      this.#internalQueries.push({
-        query,
-        selectedFields,
-        expansionIndex,
-      });
+      // Update the internal query with additional information.
+      //
+      // In the case that a expension index is available, we want to update the original
+      // query from which the current query was derived/expanded.
+      const queryIndex = typeof expansionIndex === 'undefined' ? index : expansionIndex;
+      this.#internalQueries[queryIndex].selectedFields = selectedFields;
     }
 
     this.models = modelsWithPresets;
