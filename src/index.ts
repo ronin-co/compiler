@@ -418,7 +418,6 @@ class Transaction {
     return this.#internalQueries.reduce(
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
         const { query, selectedFields } = internalQuery;
-
         const { queryType, queryModel } = splitQuery(query);
 
         // If the provided results are raw (rows being arrays of values, which is the most
@@ -464,15 +463,12 @@ class Transaction {
         } else {
           const model = getModelBySlug(this.models, queryModel);
 
-          // Whether the query will interact with a single record, or multiple at the same time.
-          const single = queryModel !== model.pluralSlug;
-
           const result = this.formatSingleResult<RecordType>(
             query,
             model,
             absoluteResults[resultIndex++],
             selectedFields,
-            single,
+            queryModel !== model.pluralSlug,
           );
 
           finalResults.push(result);
