@@ -16,8 +16,10 @@ import type {
 } from '@/src/types/model';
 import type {
   AllQueryInstructions,
+  CombinedInstructions,
   InternalQuery,
   Query,
+  QueryType,
   Statement,
 } from '@/src/types/query';
 import type {
@@ -306,14 +308,13 @@ class Transaction {
   }
 
   formatSingleResult<RecordType>(
-    query: Query,
+    queryType: QueryType,
+    queryInstructions: CombinedInstructions,
     model: PrivateModel,
     rows: Array<Array<RawRow>>,
     selectedFields: Array<InternalModelField>,
     single: boolean,
   ): RegularResult<RecordType> {
-    const { queryType, queryInstructions } = splitQuery(query);
-
     // Allows the client to format fields whose type cannot be serialized in JSON,
     // which is the format in which the compiler output is sent to the client.
     const modelFields = Object.fromEntries(
@@ -418,7 +419,7 @@ class Transaction {
     return this.#internalQueries.reduce(
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
         const { query, selectedFields } = internalQuery;
-        const { queryType, queryModel } = splitQuery(query);
+        const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the provided results are raw (rows being arrays of values, which is the most
         // ideal format in terms of performance, since the driver doesn't need to format
@@ -449,7 +450,8 @@ class Transaction {
 
           for (const model of modelList) {
             const result = this.formatSingleResult<RecordType>(
-              query,
+              queryType,
+              queryInstructions,
               model,
               absoluteResults[resultIndex++],
               selectedFields,
@@ -464,7 +466,8 @@ class Transaction {
           const model = getModelBySlug(this.models, queryModel);
 
           const result = this.formatSingleResult<RecordType>(
-            query,
+            queryType,
+            queryInstructions,
             model,
             absoluteResults[resultIndex++],
             selectedFields,
