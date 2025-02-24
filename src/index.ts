@@ -95,8 +95,8 @@ class Transaction {
 
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
-    const expandedQueries: Array<{ query: Query; expansionIndex?: number }> =
-      this.#internalQueries.flatMap(({ query }, expansionIndex) => {
+    const expandedQueries: Array<{ query: Query; index: number }> =
+      this.#internalQueries.flatMap(({ query }, index) => {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the model defined in the query is called `all`, that means we need to expand
@@ -124,7 +124,7 @@ class Transaction {
 
           // Track which models are being addressed by the query, in order to ensure that
           // its results are being formatted correctly.
-          this.#internalQueries[expansionIndex].affectedModels = modelList.map(
+          this.#internalQueries[index].affectedModels = modelList.map(
             (model) => model.slug,
           );
 
@@ -133,16 +133,14 @@ class Transaction {
               [queryType]: { [model.pluralSlug]: restInstructions },
             };
 
-            return { query, expansionIndex };
+            return { query, index };
           });
         }
 
-        return { query, expansionIndex };
+        return { query, index };
       });
 
-    for (let index = 0; index < expandedQueries.length; index++) {
-      const { query, expansionIndex } = expandedQueries[index];
-
+    for (const { query, index } of expandedQueries) {
       const { dependencies, main, selectedFields } = compileQueryInput(
         query,
         modelsWithPresets,
@@ -169,11 +167,7 @@ class Transaction {
       this.statements.push(...subStatements);
 
       // Update the internal query with additional information.
-      //
-      // In the case that an expansion index is available, we want to update the original
-      // query from which the current query was derived/expanded.
-      const queryIndex = typeof expansionIndex === 'undefined' ? index : expansionIndex;
-      this.#internalQueries[queryIndex].selectedFields = selectedFields;
+      this.#internalQueries[index].selectedFields = selectedFields;
     }
 
     this.models = modelsWithPresets;
