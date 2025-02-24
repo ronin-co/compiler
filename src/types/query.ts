@@ -227,6 +227,11 @@ export interface InternalQuery {
   query: Query;
   /** The RONIN model fields that were selected for the SQL statement. */
   selectedFields: Array<InternalModelField>;
+  /**
+   * If the query addresses multiple models at once, this contains the list of models
+   * that are being addressed.
+   */
+  affectedModels?: Array<PublicModel['slug']>;
 }
 
 export interface InternalDependencyStatement extends Statement {

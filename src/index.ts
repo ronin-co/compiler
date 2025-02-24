@@ -122,6 +122,12 @@ class Transaction {
               });
           }
 
+          // Track which models are being addressed by the query, in order to ensure that
+          // its results are being formatted correctly.
+          this.#internalQueries[expansionIndex].affectedModels = modelList.map(
+            (model) => model.slug,
+          );
+
           return modelList.map((model) => {
             const query: Query = {
               [queryType]: { [model.pluralSlug]: restInstructions },
@@ -307,7 +313,7 @@ class Transaction {
     return single ? (records[0] as RecordType) : (records as Array<RecordType>);
   }
 
-  formatSingleResult<RecordType>(
+  formatIndividualResult<RecordType>(
     queryType: QueryType,
     queryInstructions: CombinedInstructions,
     model: PrivateModel,
@@ -418,7 +424,7 @@ class Transaction {
 
     return this.#internalQueries.reduce(
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
-        const { query, selectedFields } = internalQuery;
+        const { query, selectedFields, affectedModels } = internalQuery;
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the provided results are raw (rows being arrays of values, which is the most
@@ -444,12 +450,15 @@ class Transaction {
               });
             }) as Array<Array<Array<RawRow>>>);
 
-        if (queryModel === 'all') {
-          const modelList = this.models.filter((model) => model.slug !== ROOT_MODEL.slug);
+        if (queryModel === 'all' && affectedModels) {
+          const modelList = affectedModels.map((slug) => {
+            return getModelBySlug(this.models, slug);
+          });
+
           const models: ExpandedResult<RecordType>['models'] = {};
 
           for (const model of modelList) {
-            const result = this.formatSingleResult<RecordType>(
+            const result = this.formatIndividualResult<RecordType>(
               queryType,
               queryInstructions,
               model,
@@ -465,7 +474,7 @@ class Transaction {
         } else {
           const model = getModelBySlug(this.models, queryModel);
 
-          const result = this.formatSingleResult<RecordType>(
+          const result = this.formatIndividualResult<RecordType>(
             queryType,
             queryInstructions,
             model,
