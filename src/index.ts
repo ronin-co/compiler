@@ -422,9 +422,10 @@ class Transaction {
         const { queryModel } = splitQuery(query);
 
         if (queryModel === 'all') {
+          const modelList = this.models.filter((model) => model.slug !== ROOT_MODEL.slug);
           const models: ExpandedResult<RecordType>['models'] = {};
 
-          for (const model of this.models) {
+          for (const model of modelList) {
             const defaultRows = cleanResults[resultIndex];
 
             // If the provided results are raw (rows being arrays of values, which is the most
