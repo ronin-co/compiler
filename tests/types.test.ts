@@ -493,6 +493,7 @@ test('get all records of linked models', async () => {
   });
 });
 
+// Ensure that the query results are correctly grouped together.
 test('get all records of linked models between other queries', async () => {
   const queries: Array<Query> = [
     {
