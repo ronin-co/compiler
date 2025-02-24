@@ -493,6 +493,132 @@ test('get all records of linked models', async () => {
   });
 });
 
+test('get all records of linked models between other queries', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          limitedTo: 2,
+        },
+      },
+    },
+    {
+      get: {
+        all: {
+          for: 'member',
+        },
+      },
+    },
+    {
+      get: {
+        products: {
+          limitedTo: 2,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'team',
+    },
+    {
+      slug: 'member',
+      fields: {
+        account: {
+          type: 'link',
+          target: 'account',
+        },
+        team: {
+          type: 'link',
+          target: 'team',
+        },
+      },
+    },
+    {
+      slug: 'beach',
+    },
+    {
+      slug: 'product',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements[1]).toEqual({
+    statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts"`,
+    params: [],
+    returning: true,
+  });
+
+  expect(transaction.statements[2]).toEqual({
+    statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams"`,
+    params: [],
+    returning: true,
+  });
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[1];
+
+  expect(result).toMatchObject({
+    models: {
+      accounts: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+      },
+      teams: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+      },
+    },
+  });
+});
+
 test('get all records of all models with no models available', async () => {
   const queries: Array<Query> = [
     {

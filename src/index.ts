@@ -137,7 +137,7 @@ class Transaction {
           });
         }
 
-        return { query };
+        return { query, expansionIndex };
       });
 
     for (let index = 0; index < expandedQueries.length; index++) {
