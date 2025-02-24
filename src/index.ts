@@ -305,6 +305,86 @@ class Transaction {
     return single ? (records[0] as RecordType) : (records as Array<RecordType>);
   }
 
+  formatSingleResult<RecordType>(
+    query: Query,
+    model: PrivateModel,
+    rows: Array<Array<RawRow>>,
+    selectedFields: Array<InternalModelField>,
+    single: boolean,
+  ): RegularResult<RecordType> {
+    const { queryType, queryInstructions } = splitQuery(query);
+
+    // Allows the client to format fields whose type cannot be serialized in JSON,
+    // which is the format in which the compiler output is sent to the client.
+    const modelFields = Object.fromEntries(
+      Object.entries(model.fields).map(([slug, rest]) => [slug, rest.type]),
+    );
+
+    // The query is expected to count records.
+    if (queryType === 'count') {
+      return { amount: rows[0][0] as unknown as number };
+    }
+
+    // The query is targeting a single record.
+    if (single) {
+      return {
+        record: rows[0] ? this.#formatRows<RecordType>(selectedFields, rows, true) : null,
+        modelFields,
+      };
+    }
+
+    const pageSize = queryInstructions?.limitedTo;
+
+    // The query is targeting multiple records.
+    const result: MultipleRecordResult<RecordType> = {
+      records: this.#formatRows<RecordType>(selectedFields, rows, false),
+      modelFields,
+    };
+
+    // If the amount of records was limited to a specific amount, that means pagination
+    // should be activated. This is only possible if the query matched any records.
+    if (pageSize && result.records.length > 0) {
+      // Pagination cursor for the next page.
+      if (result.records.length > pageSize) {
+        // Remove one record from the list, because we always load one too much, in
+        // order to see if there are more records available.
+        if (queryInstructions?.before) {
+          result.records.shift();
+        } else {
+          result.records.pop();
+        }
+
+        const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
+        const lastRecord = result.records.at(
+          direction === 'moreAfter' ? -1 : 0,
+        ) as ResultRecord;
+
+        result[direction] = generatePaginationCursor(
+          model,
+          queryInstructions.orderedBy,
+          lastRecord,
+        );
+      }
+
+      // Pagination cursor for the previous page. Only available if an existing
+      // cursor was provided in the query instructions.
+      if (queryInstructions?.before || queryInstructions?.after) {
+        const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
+        const firstRecord = result.records.at(
+          direction === 'moreAfter' ? -1 : 0,
+        ) as ResultRecord;
+
+        result[direction] = generatePaginationCursor(
+          model,
+          queryInstructions.orderedBy,
+          firstRecord,
+        );
+      }
+    }
+
+    return result;
+  }
+
   formatResults<RecordType>(
     results: Array<Array<ObjectRow>>,
     raw?: false,
@@ -333,125 +413,96 @@ class Transaction {
     // Only retain the results of SQL statements that are expected to return data.
     const cleanResults = results.filter((_, index) => this.statements[index].returning);
 
+    let resultIndex = 0;
+
     return this.#internalQueries.reduce(
-      (finalResults: Array<Result<RecordType>>, internalQuery, index) => {
-        const { query, selectedFields, expansionIndex } = internalQuery;
-        const defaultRows = cleanResults[index];
+      (finalResults: Array<Result<RecordType>>, internalQuery) => {
+        const { query, selectedFields } = internalQuery;
 
-        // If the provided results are raw (rows being arrays of values, which is the most
-        // ideal format in terms of performance, since the driver doesn't need to format
-        // the rows in that case), we can already continue processing them further.
-        //
-        // If the provided results were already formatted by the driver (rows being
-        // objects), we need to normalize them into the raw format first, before they can
-        // be processed, since the object format provided by the driver does not match
-        // the RONIN record format expected by developers.
-        const rows = raw
-          ? (defaultRows as Array<Array<RawRow>>)
-          : (defaultRows.map((row) => {
-              // If the row is already an array, return it as-is.
-              if (Array.isArray(row)) return row;
+        const { queryModel } = splitQuery(query);
 
-              // If the row is the result of a `count` query, return its amount result.
-              if (query.count) return [row.amount];
+        if (queryModel === 'all') {
+          const models: ExpandedResult<RecordType>['models'] = {};
 
-              // If the row is an object, return its values as an array.
-              return Object.values(row);
-            }) as Array<Array<RawRow>>);
+          for (const model of this.models) {
+            const defaultRows = cleanResults[resultIndex];
 
-        const addResult = (
-          result: RegularResult<RecordType>,
-        ): Array<Result<RecordType>> => {
-          if (typeof expansionIndex !== 'undefined') {
-            let match = finalResults[expansionIndex] as
-              | ExpandedResult<RecordType>
-              | undefined;
-            if (!match) match = finalResults[expansionIndex] = { models: {} };
-            match.models[queryModel] = result;
-          } else {
-            finalResults.push(result);
-          }
+            // If the provided results are raw (rows being arrays of values, which is the most
+            // ideal format in terms of performance, since the driver doesn't need to format
+            // the rows in that case), we can already continue processing them further.
+            //
+            // If the provided results were already formatted by the driver (rows being
+            // objects), we need to normalize them into the raw format first, before they can
+            // be processed, since the object format provided by the driver does not match
+            // the RONIN record format expected by developers.
+            const rows = raw
+              ? (defaultRows as Array<Array<RawRow>>)
+              : (defaultRows.map((row) => {
+                  // If the row is already an array, return it as-is.
+                  if (Array.isArray(row)) return row;
 
-          return finalResults;
-        };
+                  // If the row is the result of a `count` query, return its amount result.
+                  if (query.count) return [row.amount];
 
-        const { queryType, queryModel, queryInstructions } = splitQuery(query);
-        const model = getModelBySlug(this.models, queryModel);
+                  // If the row is an object, return its values as an array.
+                  return Object.values(row);
+                }) as Array<Array<RawRow>>);
 
-        // Allows the client to format fields whose type cannot be serialized in JSON,
-        // which is the format in which the compiler output is sent to the client.
-        const modelFields = Object.fromEntries(
-          Object.entries(model.fields).map(([slug, rest]) => [slug, rest.type]),
-        );
-
-        // The query is expected to count records.
-        if (queryType === 'count') {
-          return addResult({ amount: rows[0][0] as unknown as number });
-        }
-
-        // Whether the query will interact with a single record, or multiple at the same time.
-        const single = queryModel !== model.pluralSlug;
-
-        // The query is targeting a single record.
-        if (single) {
-          return addResult({
-            record: rows[0]
-              ? this.#formatRows<RecordType>(selectedFields, rows, true)
-              : null,
-            modelFields,
-          });
-        }
-
-        const pageSize = queryInstructions?.limitedTo;
-
-        // The query is targeting multiple records.
-        const result: MultipleRecordResult<RecordType> = {
-          records: this.#formatRows<RecordType>(selectedFields, rows, false),
-          modelFields,
-        };
-
-        // If the amount of records was limited to a specific amount, that means pagination
-        // should be activated. This is only possible if the query matched any records.
-        if (pageSize && result.records.length > 0) {
-          // Pagination cursor for the next page.
-          if (result.records.length > pageSize) {
-            // Remove one record from the list, because we always load one too much, in
-            // order to see if there are more records available.
-            if (queryInstructions?.before) {
-              result.records.shift();
-            } else {
-              result.records.pop();
-            }
-
-            const direction = queryInstructions?.before ? 'moreBefore' : 'moreAfter';
-            const lastRecord = result.records.at(
-              direction === 'moreAfter' ? -1 : 0,
-            ) as ResultRecord;
-
-            result[direction] = generatePaginationCursor(
+            const result = this.formatSingleResult<RecordType>(
+              query,
               model,
-              queryInstructions.orderedBy,
-              lastRecord,
+              rows,
+              selectedFields,
+              false,
             );
+
+            resultIndex++;
+            models[model.slug] = result;
           }
 
-          // Pagination cursor for the previous page. Only available if an existing
-          // cursor was provided in the query instructions.
-          if (queryInstructions?.before || queryInstructions?.after) {
-            const direction = queryInstructions?.before ? 'moreAfter' : 'moreBefore';
-            const firstRecord = result.records.at(
-              direction === 'moreAfter' ? -1 : 0,
-            ) as ResultRecord;
+          finalResults.push({ models });
+        } else {
+          const defaultRows = cleanResults[resultIndex];
 
-            result[direction] = generatePaginationCursor(
-              model,
-              queryInstructions.orderedBy,
-              firstRecord,
-            );
-          }
+          // If the provided results are raw (rows being arrays of values, which is the most
+          // ideal format in terms of performance, since the driver doesn't need to format
+          // the rows in that case), we can already continue processing them further.
+          //
+          // If the provided results were already formatted by the driver (rows being
+          // objects), we need to normalize them into the raw format first, before they can
+          // be processed, since the object format provided by the driver does not match
+          // the RONIN record format expected by developers.
+          const rows = raw
+            ? (defaultRows as Array<Array<RawRow>>)
+            : (defaultRows.map((row) => {
+                // If the row is already an array, return it as-is.
+                if (Array.isArray(row)) return row;
+
+                // If the row is the result of a `count` query, return its amount result.
+                if (query.count) return [row.amount];
+
+                // If the row is an object, return its values as an array.
+                return Object.values(row);
+              }) as Array<Array<RawRow>>);
+
+          const model = getModelBySlug(this.models, queryModel);
+
+          // Whether the query will interact with a single record, or multiple at the same time.
+          const single = queryModel !== model.pluralSlug;
+
+          const result = this.formatSingleResult<RecordType>(
+            query,
+            model,
+            rows,
+            selectedFields,
+            single,
+          );
+
+          resultIndex++;
+          finalResults.push(result);
         }
 
-        return addResult(result);
+        return finalResults;
       },
       [] as Array<Result<RecordType>>,
     );

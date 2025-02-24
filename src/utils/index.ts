@@ -79,7 +79,11 @@ export const compileQueryInput = (
 
   // If no further query processing should happen, we need to return early.
   if (query === null)
-    return { dependencies: [], main: dependencyStatements[0], selectedFields: [] };
+    return {
+      dependencies: [],
+      main: dependencyStatements[0],
+      selectedFields: [],
+    };
 
   // Split out the individual components of the query.
   const parsedQuery = splitQuery(query);

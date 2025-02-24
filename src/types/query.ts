@@ -227,11 +227,6 @@ export interface InternalQuery {
   query: Query;
   /** The RONIN model fields that were selected for the SQL statement. */
   selectedFields: Array<InternalModelField>;
-  /**
-   * If the associated RONIN query was automatically generated because a different
-   * RONIN query was expanded, this contains the index of the original query.
-   */
-  expansionIndex?: number;
 }
 
 export interface InternalDependencyStatement extends Statement {
