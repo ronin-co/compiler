@@ -170,7 +170,7 @@ class Transaction {
 
       // Update the internal query with additional information.
       //
-      // In the case that a expension index is available, we want to update the original
+      // In the case that an expansion index is available, we want to update the original
       // query from which the current query was derived/expanded.
       const queryIndex = typeof expansionIndex === 'undefined' ? index : expansionIndex;
       this.#internalQueries[queryIndex].selectedFields = selectedFields;
@@ -317,7 +317,7 @@ class Transaction {
    * Formats an individual result of a query (each query has one individual result).
    *
    * @param queryType - The type of query that is being executed.
-   * @param queryInstructions - The instructions if the query that is being executed.
+   * @param queryInstructions - The instructions of the query that is being executed.
    * @param model - The model for which the query is being executed.
    * @param rows - The rows that were returned from the database for the query (in the
    * form of an array containing arrays that contain strings).
