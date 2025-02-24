@@ -426,7 +426,7 @@ class Transaction {
           const models: ExpandedResult<RecordType>['models'] = {};
 
           for (const model of modelList) {
-            const defaultRows = cleanResults[resultIndex];
+            const defaultRows = cleanResults[resultIndex++];
 
             // If the provided results are raw (rows being arrays of values, which is the most
             // ideal format in terms of performance, since the driver doesn't need to format
@@ -457,13 +457,12 @@ class Transaction {
               false,
             );
 
-            resultIndex++;
             models[model.slug] = result;
           }
 
           finalResults.push({ models });
         } else {
-          const defaultRows = cleanResults[resultIndex];
+          const defaultRows = cleanResults[resultIndex++];
 
           // If the provided results are raw (rows being arrays of values, which is the most
           // ideal format in terms of performance, since the driver doesn't need to format
@@ -499,7 +498,6 @@ class Transaction {
             single,
           );
 
-          resultIndex++;
           finalResults.push(result);
         }
 
