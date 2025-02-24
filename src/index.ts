@@ -329,6 +329,7 @@ class Transaction {
     results: Array<Array<RawRow>> | Array<Array<ObjectRow>>,
     raw = false,
   ): Array<Result<RecordType>> {
+    // Only retain the results of SQL statements that are expected to return data.
     const cleanResults = results.filter((_, index) => this.statements[index].returning);
 
     return this.#internalQueries.reduce(
