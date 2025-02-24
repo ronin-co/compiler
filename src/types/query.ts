@@ -222,7 +222,7 @@ export interface Statement {
   returning?: boolean;
 }
 
-export interface InternalStatement extends Statement {
+export interface InternalQuery {
   /** The RONIN query for which the SQL statement was generated. */
   query: Query;
   /** The RONIN model fields that were selected for the SQL statement. */

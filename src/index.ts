@@ -16,7 +16,7 @@ import type {
 } from '@/src/types/model';
 import type {
   AllQueryInstructions,
-  InternalStatement,
+  InternalQuery,
   Query,
   Statement,
 } from '@/src/types/query';
@@ -51,8 +51,7 @@ class Transaction {
   statements: Array<Statement> = [];
   models: Array<PrivateModel> = [];
 
-  #internalStatements: Array<InternalStatement> = [];
-  #internalQueries: Array<Query> = [];
+  #internalQueries: Array<InternalQuery> = [];
 
   constructor(queries: Array<Query>, options?: TransactionOptions) {
     const models = options?.models || [];
@@ -160,17 +159,12 @@ class Transaction {
       // These statements will be made publicly available (outside the compiler).
       this.statements.push(...subStatements);
 
-      // These statements will be used internally to format the results.
-      this.#internalStatements.push(
-        ...subStatements.map((statement) => ({
-          ...statement,
-          query,
-          selectedFields,
-          expansionIndex,
-        })),
-      );
-
-      this.#internalQueries.push(query);
+      // These queries will be used internally to format the results.
+      this.#internalQueries.push({
+        query,
+        selectedFields,
+        expansionIndex,
+      });
     }
 
     this.models = modelsWithPresets;
@@ -336,7 +330,7 @@ class Transaction {
     raw = false,
   ): Array<Result<RecordType>> {
     const cleanResults = results.filter((_rows, index) => {
-      const { returning } = this.#internalStatements[index];
+      const { returning } = this.statements[index];
       return returning;
     });
 
@@ -351,7 +345,7 @@ class Transaction {
     const normalizedResults: Array<Array<RawRow>> = raw
       ? (cleanResults as Array<Array<RawRow>>)
       : cleanResults.map((rows, index) => {
-          const query = this.#internalQueries[index];
+          const { query } = this.#internalQueries[index];
 
           return rows.map((row) => {
             // If the row is already an array, return it as-is.
@@ -367,7 +361,7 @@ class Transaction {
 
     return normalizedResults.reduce(
       (finalResults, rows, index) => {
-        const { query, selectedFields, expansionIndex } = this.#internalStatements[index];
+        const { query, selectedFields, expansionIndex } = this.#internalQueries[index];
 
         const addResult = (
           result: RegularResult<RecordType>,
