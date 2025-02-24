@@ -334,34 +334,30 @@ class Transaction {
       return returning;
     });
 
-    // If the provided results are raw (rows being arrays of values, which is the most
-    // ideal format in terms of performance, since the driver doesn't need to format
-    // the rows in that case), we can already continue processing them further.
-    //
-    // If the provided results were already formatted by the driver (rows being objects),
-    // we need to normalize them into the raw format first, before they can be processed,
-    // since the object format provided by the driver does not match the RONIN record
-    // format expected by developers.
-    const normalizedResults: Array<Array<RawRow>> = raw
-      ? (cleanResults as Array<Array<RawRow>>)
-      : cleanResults.map((rows, index) => {
-          const { query } = this.#internalQueries[index];
-
-          return rows.map((row) => {
-            // If the row is already an array, return it as-is.
-            if (Array.isArray(row)) return row;
-
-            // If the row is the result of a `count` query, return its amount result.
-            if (query.count) return [row.amount];
-
-            // If the row is an object, return its values as an array.
-            return Object.values(row);
-          });
-        });
-
-    return normalizedResults.reduce(
-      (finalResults, rows, index) => {
+    return cleanResults.reduce(
+      (finalResults, defaultRows, index) => {
         const { query, selectedFields, expansionIndex } = this.#internalQueries[index];
+
+        // If the provided results are raw (rows being arrays of values, which is the most
+        // ideal format in terms of performance, since the driver doesn't need to format
+        // the rows in that case), we can already continue processing them further.
+        //
+        // If the provided results were already formatted by the driver (rows being objects),
+        // we need to normalize them into the raw format first, before they can be processed,
+        // since the object format provided by the driver does not match the RONIN record
+        // format expected by developers.
+        const rows = raw
+          ? (defaultRows as Array<Array<RawRow>>)
+          : (defaultRows.map((row) => {
+              // If the row is already an array, return it as-is.
+              if (Array.isArray(row)) return row;
+
+              // If the row is the result of a `count` query, return its amount result.
+              if (query.count) return [row.amount];
+
+              // If the row is an object, return its values as an array.
+              return Object.values(row);
+            }) as Array<Array<RawRow>>);
 
         const addResult = (
           result: RegularResult<RecordType>,
