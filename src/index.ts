@@ -449,12 +449,10 @@ class Transaction {
           const models: ExpandedResult<RecordType>['models'] = {};
 
           for (const model of modelList) {
-            const rows = absoluteResults[resultIndex++];
-
             const result = this.formatSingleResult<RecordType>(
               query,
               model,
-              rows,
+              absoluteResults[resultIndex++],
               selectedFields,
               false,
             );
@@ -464,8 +462,6 @@ class Transaction {
 
           finalResults.push({ models });
         } else {
-          const rows = absoluteResults[resultIndex++];
-
           const model = getModelBySlug(this.models, queryModel);
 
           // Whether the query will interact with a single record, or multiple at the same time.
@@ -474,7 +470,7 @@ class Transaction {
           const result = this.formatSingleResult<RecordType>(
             query,
             model,
-            rows,
+            absoluteResults[resultIndex++],
             selectedFields,
             single,
           );
