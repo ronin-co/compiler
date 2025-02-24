@@ -313,6 +313,19 @@ class Transaction {
     return single ? (records[0] as RecordType) : (records as Array<RecordType>);
   }
 
+  /**
+   * Formats an individual result of a query (each query has one individual result).
+   *
+   * @param queryType - The type of query that is being executed.
+   * @param queryInstructions - The instructions if the query that is being executed.
+   * @param model - The model for which the query is being executed.
+   * @param rows - The rows that were returned from the database for the query (in the
+   * form of an array containing arrays that contain strings).
+   * @param selectedFields - The model fields that were selected by the query.
+   * @param single - Whether a single or multiple records are being affected by the query.
+   *
+   * @returns A formatted RONIN result for a particular query.
+   */
   formatIndividualResult<RecordType>(
     queryType: QueryType,
     queryInstructions: CombinedInstructions,
