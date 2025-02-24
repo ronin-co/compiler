@@ -335,7 +335,7 @@ class Transaction {
     });
 
     return cleanResults.reduce(
-      (finalResults, defaultRows, index) => {
+      (finalResults: Array<Result<RecordType>>, defaultRows, index) => {
         const { query, selectedFields, expansionIndex } = this.#internalQueries[index];
 
         // If the provided results are raw (rows being arrays of values, which is the most
@@ -386,7 +386,7 @@ class Transaction {
 
         // The query is expected to count records.
         if (queryType === 'count') {
-          return addResult({ amount: rows[0][0] as number });
+          return addResult({ amount: rows[0][0] as unknown as number });
         }
 
         // Whether the query will interact with a single record, or multiple at the same time.
