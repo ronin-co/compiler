@@ -132,10 +132,6 @@ class Transaction {
               });
           }
 
-          // Track which models are being addressed by the query, in order to ensure that
-          // its results are being formatted correctly.
-          this.#internalQueries[index].models = modelList;
-
           return modelList.map((model) => {
             const instructions = Object.assign(
               {},
@@ -182,10 +178,7 @@ class Transaction {
 
       // Update the internal query with additional information.
       this.#internalQueries[index].selectedFields.push(selectedFields);
-
-      if (this.#internalQueries[index].models.length === 0) {
-        this.#internalQueries[index].models.push(model);
-      }
+      this.#internalQueries[index].models.push(model);
     }
 
     this.models = modelsWithPresets;
