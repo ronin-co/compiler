@@ -181,10 +181,10 @@ class Transaction {
       this.statements.push(...subStatements);
 
       // Update the internal query with additional information.
-      this.#internalQueries[index].selectedFields = selectedFields;
+      this.#internalQueries[index].selectedFields.push(selectedFields);
 
       if (this.#internalQueries[index].models.length === 0) {
-        this.#internalQueries[index].models = [model];
+        this.#internalQueries[index].models.push(model);
       }
     }
 
@@ -481,7 +481,10 @@ class Transaction {
           const { on: onInstruction, ...restInstructions } = (queryInstructions ||
             {}) as AllQueryInstructions;
 
-          for (const model of affectedModels) {
+          for (let index = 0; index < affectedModels.length; index++) {
+            const model = affectedModels[index];
+            const fields = selectedFields[index];
+
             const instructions = Object.assign(
               {},
               restInstructions,
@@ -493,7 +496,7 @@ class Transaction {
               instructions,
               model,
               absoluteResults[resultIndex++],
-              selectedFields,
+              fields,
               false,
             );
 
@@ -503,13 +506,14 @@ class Transaction {
           finalResults.push({ models });
         } else {
           const model = affectedModels[0];
+          const fields = selectedFields[0];
 
           const result = this.formatIndividualResult<RecordType>(
             queryType,
             queryInstructions,
             model,
             absoluteResults[resultIndex++],
-            selectedFields,
+            fields,
             queryModel !== model.pluralSlug,
           );
 
