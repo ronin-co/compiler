@@ -238,7 +238,7 @@ export interface InternalQuery {
   /** The RONIN query for which the SQL statement was generated. */
   query: Query;
   /** The RONIN model fields that were selected for the SQL statement. */
-  selectedFields: Array<InternalModelField>;
+  selectedFields: Array<Array<InternalModelField>>;
   /** The RONIN models that are being affected by the query. */
   models: Array<PrivateModel>;
 }
