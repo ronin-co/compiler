@@ -119,7 +119,14 @@ export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>
 
 // DML Query Types — Addressing all models
 export type AllQueryInstructions = {
-  for?: string;
+  /**
+   * Limit the list of models for which queries should be generated to only the models
+   * that the provided model links to.
+   */
+  for?: PublicModel['slug'];
+  /**
+   * Provide query instructions for specific models.
+   */
   on?: Record<PublicModel['slug'], Omit<CombinedInstructions, 'to'> | null>;
 };
 
