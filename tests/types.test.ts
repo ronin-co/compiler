@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import {
+  PAGINATION_CURSOR_REGEX,
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
@@ -357,6 +358,7 @@ test('get all records of all models with instructions', async () => {
         modelFields: expect.objectContaining({
           id: 'string',
         }),
+        moreAfter: expect.stringMatching(PAGINATION_CURSOR_REGEX),
       },
       teams: {
         records: [
@@ -370,6 +372,87 @@ test('get all records of all models with instructions', async () => {
             },
           },
         ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+        moreAfter: expect.stringMatching(PAGINATION_CURSOR_REGEX),
+      },
+    },
+  });
+});
+
+test('get all records of all models with model-specific instructions', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        all: {
+          limitedTo: 1,
+          on: {
+            teams: {
+              limitedTo: 10,
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+    {
+      slug: 'team',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" ORDER BY "ronin.createdAt" DESC LIMIT 2`,
+      params: [],
+      returning: true,
+    },
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams" ORDER BY "ronin.createdAt" DESC LIMIT 11`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0];
+
+  expect(result).toMatchObject({
+    models: {
+      accounts: {
+        records: [
+          {
+            id: expect.stringMatching(RECORD_ID_REGEX),
+            ronin: {
+              createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              createdBy: null,
+              updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+              updatedBy: null,
+            },
+          },
+        ],
+        modelFields: expect.objectContaining({
+          id: 'string',
+        }),
+        moreAfter: expect.stringMatching(PAGINATION_CURSOR_REGEX),
+      },
+      teams: {
+        records: new Array(2).fill({
+          id: expect.stringMatching(RECORD_ID_REGEX),
+          ronin: {
+            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            createdBy: null,
+            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+            updatedBy: null,
+          },
+        }),
         modelFields: expect.objectContaining({
           id: 'string',
         }),
