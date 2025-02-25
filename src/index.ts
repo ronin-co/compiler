@@ -478,8 +478,8 @@ class Transaction {
         if (queryModel === 'all') {
           const models: ExpandedResult<RecordType>['models'] = {};
 
-          const { on: onInstruction, ...restInstructions } =
-            queryInstructions || ({} as AllQueryInstructions);
+          const { on: onInstruction, ...restInstructions } = (queryInstructions ||
+            {}) as AllQueryInstructions;
 
           for (const model of affectedModels) {
             const instructions = Object.assign(
