@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import {
+  PAGINATION_CURSOR_REGEX,
   RECORD_ID_REGEX,
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
@@ -357,6 +358,7 @@ test('get all records of all models with instructions', async () => {
         modelFields: expect.objectContaining({
           id: 'string',
         }),
+        moreAfter: expect.stringMatching(PAGINATION_CURSOR_REGEX),
       },
       teams: {
         records: [
@@ -373,6 +375,7 @@ test('get all records of all models with instructions', async () => {
         modelFields: expect.objectContaining({
           id: 'string',
         }),
+        moreAfter: expect.stringMatching(PAGINATION_CURSOR_REGEX),
       },
     },
   });
