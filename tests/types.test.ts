@@ -390,6 +390,9 @@ test('get all records of all models with model-specific instructions', async () 
           on: {
             teams: {
               limitedTo: 10,
+              // It is important to test an instruction here that is not already present
+              // in the global instructions, to make sure it is working correctly.
+              selecting: ['id'],
             },
           },
         },
@@ -415,7 +418,7 @@ test('get all records of all models with model-specific instructions', async () 
       returning: true,
     },
     {
-      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "teams" ORDER BY "ronin.createdAt" DESC LIMIT 11`,
+      statement: `SELECT "id" FROM "teams" ORDER BY "ronin.createdAt" DESC LIMIT 11`,
       params: [],
       returning: true,
     },
@@ -446,12 +449,6 @@ test('get all records of all models with model-specific instructions', async () 
       teams: {
         records: new Array(2).fill({
           id: expect.stringMatching(RECORD_ID_REGEX),
-          ronin: {
-            createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            createdBy: null,
-            updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
-            updatedBy: null,
-          },
         }),
         modelFields: expect.objectContaining({
           id: 'string',
