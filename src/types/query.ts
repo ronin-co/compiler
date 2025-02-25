@@ -118,7 +118,11 @@ export type RemoveQuery = Record<string, Omit<CombinedInstructions, 'to'>>;
 export type CountQuery = Record<string, Omit<CombinedInstructions, 'to'> | null>;
 
 // DML Query Types — Addressing all models
-export type AllQueryInstructions = { for?: string };
+export type AllQueryInstructions = {
+  for?: string;
+  on?: Record<PublicModel['slug'], Omit<CombinedInstructions, 'to'> | null>;
+};
+
 export type AllQuery = { all: AllQueryInstructions | null };
 
 export type GetAllQuery = AllQuery;

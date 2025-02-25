@@ -107,8 +107,11 @@ class Transaction {
         // If the model defined in the query is called `all`, that means we need to expand
         // the query into multiple queries: One for each model.
         if (queryModel === 'all') {
-          const { for: forInstruction, ...restInstructions } = (queryInstructions ||
-            {}) as AllQueryInstructions;
+          const {
+            for: forInstruction,
+            on: onInstruction,
+            ...restInstructions
+          } = (queryInstructions || {}) as AllQueryInstructions;
 
           let modelList = modelsWithPresets.filter((model) => {
             return model.slug !== ROOT_MODEL.slug;
@@ -134,8 +137,14 @@ class Transaction {
           this.#internalQueries[index].models = modelList;
 
           return modelList.map((model) => {
+            const instructions = Object.assign(
+              {},
+              restInstructions,
+              onInstruction?.[model.pluralSlug],
+            );
+
             const query: Query = {
-              [queryType]: { [model.pluralSlug]: restInstructions },
+              [queryType]: { [model.pluralSlug]: instructions },
             };
 
             return { query, index };
@@ -469,10 +478,19 @@ class Transaction {
         if (queryModel === 'all') {
           const models: ExpandedResult<RecordType>['models'] = {};
 
+          const { on: onInstruction, ...restInstructions } =
+            queryInstructions || ({} as AllQueryInstructions);
+
           for (const model of affectedModels) {
+            const instructions = Object.assign(
+              {},
+              restInstructions,
+              onInstruction?.[model.pluralSlug],
+            );
+
             const result = this.formatIndividualResult<RecordType>(
               queryType,
-              queryInstructions,
+              instructions,
               model,
               absoluteResults[resultIndex++],
               selectedFields,
