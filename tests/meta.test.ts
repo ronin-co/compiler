@@ -5,8 +5,10 @@ import {
   type ModelIndex,
   type ModelPreset,
   type ModelTrigger,
+  QUERY_SYMBOLS,
   type Query,
   ROOT_MODEL,
+  RoninError,
   Transaction,
 } from '@/src/index';
 
@@ -18,7 +20,7 @@ import {
 import { getSystemFields } from '@/src/model';
 import { slugToName } from '@/src/model/defaults';
 import type { MultipleRecordResult } from '@/src/types/result';
-import { QUERY_SYMBOLS, RoninError, omit } from '@/src/utils/helpers';
+import { omit } from '@/src/utils/helpers';
 
 test('create new model', () => {
   const fields: Model['fields'] = {

@@ -578,5 +578,14 @@ const CLEAN_ROOT_MODEL = omit(ROOT_MODEL, ['system']) as PublicModel;
 // Expose the main `Transaction` entrypoint and the root model
 export { Transaction, CLEAN_ROOT_MODEL as ROOT_MODEL };
 
-// Expose the main error class and query symbols
-export { RoninError, QUERY_SYMBOLS, getQuerySymbol } from '@/src/utils/helpers';
+// Expose the main error class and helper functions
+export { RoninError, getQuerySymbol } from '@/src/utils/helpers';
+
+// Expose constants
+export {
+  QUERY_SYMBOLS,
+  DML_READ_QUERY_TYPES,
+  DML_WRITE_QUERY_TYPES,
+  DML_QUERY_TYPES,
+  DDL_QUERY_TYPES,
+} from '@/src/utils/constants';

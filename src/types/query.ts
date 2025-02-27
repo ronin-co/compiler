@@ -7,11 +7,15 @@ import type {
   Model as PrivateModel,
   PublicModel,
 } from '@/src/types/model';
-import { QUERY_SYMBOLS } from '@/src/utils/helpers';
+import {
+  type DDL_QUERY_TYPES,
+  type DML_QUERY_TYPES,
+  QUERY_SYMBOLS,
+} from '@/src/utils/constants';
 
 // Query Types
-export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';
-export type ModelQueryTypeEnum = 'create' | 'alter' | 'drop';
+export type QueryTypeEnum = (typeof DML_QUERY_TYPES)[number];
+export type ModelQueryTypeEnum = (typeof DDL_QUERY_TYPES)[number];
 export type ModelEntityEnum = 'field' | 'index' | 'trigger' | 'preset';
 
 // Field and Expressions

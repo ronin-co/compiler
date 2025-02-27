@@ -10,13 +10,8 @@ import type {
   InternalDependencyStatement,
   SetInstructions,
 } from '@/src/types/query';
-import {
-  CURRENT_TIME_EXPRESSION,
-  flatten,
-  getQuerySymbol,
-  isObject,
-  splitQuery,
-} from '@/src/utils/helpers';
+import { CURRENT_TIME_EXPRESSION } from '@/src/utils/constants';
+import { flatten, getQuerySymbol, isObject, splitQuery } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 import { composeConditions, filterSelectedFields } from '@/src/utils/statement';
 

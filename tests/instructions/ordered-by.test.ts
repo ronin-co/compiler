@@ -1,8 +1,7 @@
 import { expect, test } from 'bun:test';
 import { queryEphemeralDatabase } from '@/fixtures/utils';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type Model, QUERY_SYMBOLS, type Query, Transaction } from '@/src/index';
 import type { MultipleRecordResult } from '@/src/types/result';
-import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('get multiple records ordered by field', async () => {
   const queries: Array<Query> = [

@@ -2,10 +2,8 @@ import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions } from '@/src/types/query';
 import { compileQueryInput } from '@/src/utils';
+import { QUERY_SYMBOLS, RAW_FIELD_TYPES, type RawFieldType } from '@/src/utils/constants';
 import {
-  QUERY_SYMBOLS,
-  RAW_FIELD_TYPES,
-  type RawFieldType,
   composeMountingPath,
   flatten,
   getQuerySymbol,

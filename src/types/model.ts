@@ -4,7 +4,7 @@ import type {
   Query,
   WithInstruction,
 } from '@/src/types/query';
-import type { QUERY_SYMBOLS } from '@/src/utils/helpers';
+import type { QUERY_SYMBOLS } from '@/src/utils/constants';
 
 type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
 

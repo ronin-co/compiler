@@ -20,7 +20,8 @@ import type {
   SetInstructions,
   Statement,
 } from '@/src/types/query';
-import { QUERY_SYMBOLS, RoninError, isObject, splitQuery } from '@/src/utils/helpers';
+import { DML_WRITE_QUERY_TYPES, QUERY_SYMBOLS } from '@/src/utils/constants';
+import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -321,7 +322,7 @@ export const compileQueryInput = (
 
   // For queries that modify records, we want to make sure that the modified record is
   // returned after the modification has been performed.
-  if (['add', 'set', 'remove'].includes(queryType) && returning) {
+  if ((DML_WRITE_QUERY_TYPES as ReadonlyArray<string>).includes(queryType) && returning) {
     statement += `RETURNING ${columns}`;
   }
 
