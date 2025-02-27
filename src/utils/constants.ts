@@ -13,6 +13,9 @@ export const DML_QUERY_TYPES = [
 /** Query types used for interacting with the database schema. */
 export const DDL_QUERY_TYPES = ['create', 'alter', 'drop'] as const;
 
+/** All query types. */
+export const QUERY_TYPES = [...DML_QUERY_TYPES, ...DDL_QUERY_TYPES] as const;
+
 /**
  * A list of placeholders that can be located inside queries after those queries were
  * serialized into JSON objects.

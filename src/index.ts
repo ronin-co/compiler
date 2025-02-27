@@ -584,8 +584,9 @@ export { RoninError, getQuerySymbol } from '@/src/utils/helpers';
 // Expose constants
 export {
   QUERY_SYMBOLS,
+  QUERY_TYPES,
+  DML_QUERY_TYPES,
   DML_READ_QUERY_TYPES,
   DML_WRITE_QUERY_TYPES,
-  DML_QUERY_TYPES,
   DDL_QUERY_TYPES,
 } from '@/src/utils/constants';
