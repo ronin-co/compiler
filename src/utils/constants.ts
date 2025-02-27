@@ -5,7 +5,10 @@ export const DML_READ_QUERY_TYPES = ['get', 'count'] as const;
 export const DML_WRITE_QUERY_TYPES = ['set', 'add', 'remove'] as const;
 
 /** Query types used for interacting with data. */
-export const DML_QUERY_TYPES = [...DML_READ_QUERY_TYPES, ...DML_WRITE_QUERY_TYPES] as const;
+export const DML_QUERY_TYPES = [
+  ...DML_READ_QUERY_TYPES,
+  ...DML_WRITE_QUERY_TYPES,
+] as const;
 
 /** Query types used for interacting with the database schema. */
 export const DDL_QUERY_TYPES = ['create', 'alter', 'drop'] as const;

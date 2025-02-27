@@ -23,7 +23,11 @@ import type {
   Query,
   QueryInstructionType,
 } from '@/src/types/query';
-import { CURRENT_TIME_EXPRESSION, QUERY_SYMBOLS } from '@/src/utils/constants';
+import {
+  CURRENT_TIME_EXPRESSION,
+  type DDL_QUERY_TYPES,
+  QUERY_SYMBOLS,
+} from '@/src/utils/constants';
 import {
   MODEL_ENTITY_ERROR_CODES,
   RoninError,
@@ -469,7 +473,7 @@ export const PLURAL_MODEL_ENTITIES_VALUES = Object.values(PLURAL_MODEL_ENTITIES)
 const handleSystemModel = (
   models: Array<Model>,
   dependencyStatements: Array<InternalDependencyStatement>,
-  action: 'create' | 'alter' | 'drop',
+  action: (typeof DDL_QUERY_TYPES)[number],
   inlineDefaults: boolean,
   systemModel: PartialModel,
   newModel?: PartialModel,
