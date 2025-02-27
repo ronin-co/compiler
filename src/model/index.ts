@@ -223,24 +223,29 @@ export const getSystemFields = (idPrefix: Model['idPrefix']): Model['fields'] =>
       // directly into the expression as a static string.
       [QUERY_SYMBOLS.EXPRESSION]: `'${idPrefix}_' || lower(substr(hex(randomblob(12)), 1, 16))`,
     },
+    system: true,
   },
   'ronin.createdAt': {
     name: 'RONIN - Created At',
     type: 'date',
     defaultValue: CURRENT_TIME_EXPRESSION,
+    system: true,
   },
   'ronin.createdBy': {
     name: 'RONIN - Created By',
     type: 'string',
+    system: true,
   },
   'ronin.updatedAt': {
     name: 'RONIN - Updated At',
     type: 'date',
     defaultValue: CURRENT_TIME_EXPRESSION,
+    system: true,
   },
   'ronin.updatedBy': {
     name: 'RONIN - Updated By',
     type: 'string',
+    system: true,
   },
 });
 

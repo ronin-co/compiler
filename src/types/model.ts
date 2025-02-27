@@ -48,6 +48,8 @@ type ModelFieldBasics = {
   };
   /** An expression that gets evaluated every time a value is provided for the field. */
   check?: Expression;
+  /** Whether the field was automatically added by RONIN. */
+  system?: boolean;
 };
 
 // We have to list the types separately, in order for `Extract` to work.
@@ -197,7 +199,7 @@ export type ModelPreset = {
   slug: string;
   /** The query instructions that should be applied when the preset is used. */
   instructions: GetInstructions;
-  /** Whether the preset was automatically created by RONIN. */
+  /** Whether the preset was automatically added by RONIN. */
   system?: boolean;
 };
 
