@@ -280,6 +280,8 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
               },
             },
           },
+          name: slugToName(fieldSlug),
+          system: true,
         };
 
         defaultPresets[fieldSlug] = preset;
@@ -308,6 +310,8 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
             },
           },
         },
+        name: slugToName(fieldSlug),
+        system: true,
       };
 
       defaultPresets[fieldSlug] = preset;
@@ -356,6 +360,8 @@ export const addDefaultModelPresets = (list: Array<Model>, model: Model): Model 
           },
         },
       },
+      name: slugToName(presetSlug),
+      system: true,
     };
 
     defaultPresets[presetSlug] = preset;

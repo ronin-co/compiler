@@ -162,27 +162,27 @@ export type AlterQuery = {
     Omit<PublicModel, 'fields' | 'indexes' | 'triggers' | 'presets' | 'idPrefix'>
   >;
   create?: {
-    field?: ModelField;
-    index?: ModelIndex;
-    trigger?: ModelTrigger;
-    preset?: ModelPreset;
+    field?: Omit<ModelField, 'system'>;
+    index?: Omit<ModelIndex, 'system'>;
+    trigger?: Omit<ModelTrigger, 'system'>;
+    preset?: Omit<ModelPreset, 'system'>;
   };
   alter?:
     | {
         field?: string;
-        to?: Partial<ModelField>;
+        to?: Partial<Omit<ModelField, 'system'>>;
       }
     | {
         index?: string;
-        to?: Partial<ModelIndex>;
+        to?: Partial<Omit<ModelIndex, 'system'>>;
       }
     | {
         trigger?: string;
-        to?: Partial<ModelTrigger>;
+        to?: Omit<ModelTrigger, 'system'>;
       }
     | {
         preset?: string;
-        to?: Partial<ModelPreset>;
+        to?: Omit<ModelPreset, 'system'>;
       };
   drop?: Partial<Record<ModelEntityEnum, string>>;
 };
