@@ -191,10 +191,14 @@ export type ModelTrigger<
 };
 
 export type ModelPreset = {
+  /** The visual display name of the preset. */
+  name: string;
   /** The identifier that can be used for adding the preset to a query. */
   slug: string;
   /** The query instructions that should be applied when the preset is used. */
   instructions: GetInstructions;
+  /** Whether the preset was automatically created by RONIN. */
+  system?: boolean;
 };
 
 export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
