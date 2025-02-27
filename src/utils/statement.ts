@@ -18,13 +18,8 @@ import type {
   SetInstructions,
   WithInstruction,
 } from '@/src/types/query';
-import {
-  QUERY_SYMBOLS,
-  RONIN_MODEL_FIELD_REGEX,
-  RoninError,
-  getQuerySymbol,
-  isObject,
-} from '@/src/utils/helpers';
+import { QUERY_SYMBOLS, RONIN_MODEL_FIELD_REGEX } from '@/src/utils/constants';
+import { RoninError, getQuerySymbol, isObject } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 
 /**

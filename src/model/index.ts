@@ -23,10 +23,9 @@ import type {
   Query,
   QueryInstructionType,
 } from '@/src/types/query';
+import { CURRENT_TIME_EXPRESSION, QUERY_SYMBOLS } from '@/src/utils/constants';
 import {
-  CURRENT_TIME_EXPRESSION,
   MODEL_ENTITY_ERROR_CODES,
-  QUERY_SYMBOLS,
   RoninError,
   convertToCamelCase,
   convertToSnakeCase,

@@ -1,6 +1,7 @@
 import type { Model, ModelField, ModelPreset } from '@/src/types/model';
 import type { Instructions, SetInstructions } from '@/src/types/query';
-import { QUERY_SYMBOLS, RoninError, findInObject, isObject } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/constants';
+import { RoninError, findInObject, isObject } from '@/src/utils/helpers';
 
 /**
  * Generates the SQL syntax for the `using` query instruction, which allows for quickly

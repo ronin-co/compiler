@@ -4,9 +4,8 @@ import {
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type Model, type Query, RoninError, Transaction } from '@/src/index';
 import type { AmountResult, MultipleRecordResult } from '@/src/types/result';
-import { RoninError } from '@/src/utils/helpers';
 import { CURSOR_NULL_PLACEHOLDER } from '@/src/utils/pagination';
 
 test('get multiple records before cursor', async () => {

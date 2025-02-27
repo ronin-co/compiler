@@ -7,7 +7,7 @@ import type {
   Model as PrivateModel,
   PublicModel,
 } from '@/src/types/model';
-import { QUERY_SYMBOLS } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/constants';
 
 // Query Types
 export type QueryTypeEnum = 'get' | 'set' | 'add' | 'remove' | 'count';

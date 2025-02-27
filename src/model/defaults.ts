@@ -1,6 +1,7 @@
 import { getModelBySlug, getSystemFields } from '@/src/model';
 import type { Model, ModelField, ModelPreset, PartialModel } from '@/src/types/model';
-import { QUERY_SYMBOLS, convertToSnakeCase } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/constants';
+import { convertToSnakeCase } from '@/src/utils/helpers';
 import title from 'title';
 
 /**

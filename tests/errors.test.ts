@@ -1,7 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, Transaction } from '@/src/index';
-
-import { RoninError } from '@/src/utils/helpers';
+import { type Model, type Query, RoninError, Transaction } from '@/src/index';
 
 test('get single record with non-existing field', () => {
   const queries: Array<Query> = [

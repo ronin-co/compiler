@@ -4,10 +4,9 @@ import {
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
-import { type Model, type Query, Transaction } from '@/src/index';
+import { type Model, QUERY_SYMBOLS, type Query, Transaction } from '@/src/index';
 import { getSystemFields } from '@/src/model';
 import type { SingleRecordResult } from '@/src/types/result';
-import { QUERY_SYMBOLS } from '@/src/utils/helpers';
 
 test('inline statement parameters', async () => {
   const queries: Array<Query> = [

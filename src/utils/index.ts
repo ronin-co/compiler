@@ -20,7 +20,8 @@ import type {
   SetInstructions,
   Statement,
 } from '@/src/types/query';
-import { QUERY_SYMBOLS, RoninError, isObject, splitQuery } from '@/src/utils/helpers';
+import { QUERY_SYMBOLS } from '@/src/utils/constants';
+import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
