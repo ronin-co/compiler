@@ -1,17 +1,20 @@
 /** Query types used for reading data. */
-export const DML_READ_QUERY_TYPES = ['get', 'count'] as const;
+export const DML_QUERY_TYPES_READ = ['get', 'count'] as const;
 
 /** Query types used for writing data. */
-export const DML_WRITE_QUERY_TYPES = ['set', 'add', 'remove'] as const;
+export const DML_QUERY_TYPES_WRITE = ['set', 'add', 'remove'] as const;
 
 /** Query types used for interacting with data. */
 export const DML_QUERY_TYPES = [
-  ...DML_READ_QUERY_TYPES,
-  ...DML_WRITE_QUERY_TYPES,
+  ...DML_QUERY_TYPES_READ,
+  ...DML_QUERY_TYPES_WRITE,
 ] as const;
 
 /** Query types used for interacting with the database schema. */
 export const DDL_QUERY_TYPES = ['create', 'alter', 'drop'] as const;
+
+/** All query types. */
+export const QUERY_TYPES = [...DML_QUERY_TYPES, ...DDL_QUERY_TYPES] as const;
 
 /**
  * A list of placeholders that can be located inside queries after those queries were
