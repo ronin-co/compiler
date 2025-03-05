@@ -121,20 +121,6 @@ export const prepareStatementValue = (
   // rather a representation of the absence of a value. We can just inline it.
   if (value === null) return 'NULL';
 
-  // If no list of statement values is available, that means we should inline the value,
-  // which is desired in cases where there is no risk of SQL injection and where the
-  // values must be plainly visible for manual human inspection.
-  if (!statementParams) {
-    if (typeof value === 'string') return `'${value}'`;
-
-    const valueString =
-      typeof value === 'object'
-        ? `json('${JSON.stringify(value, replaceJSON)}')`
-        : value!.toString();
-
-    return valueString;
-  }
-
   let formattedValue = value;
 
   if (Array.isArray(value) || isObject(value)) {
@@ -142,6 +128,14 @@ export const prepareStatementValue = (
   } else if (typeof value === 'boolean') {
     // When binding statement values, SQLite requires booleans as integers.
     formattedValue = value ? 1 : 0;
+  }
+
+  // If no list of statement values is available, that means we should inline the value,
+  // which is desired in cases where there is no risk of SQL injection and where the
+  // values must be plainly visible for manual human inspection.
+  if (!statementParams) {
+    if (typeof formattedValue === 'string') return `'${formattedValue}'`;
+    return formattedValue!.toString();
   }
 
   const index = statementParams.push(formattedValue);

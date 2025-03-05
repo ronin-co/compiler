@@ -1560,7 +1560,7 @@ test('create new per-record trigger for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', false); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 0); END`,
       params: [],
     },
     {
@@ -1699,7 +1699,7 @@ test('create new per-record trigger with filters for creating records', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN (NEW."handle" LIKE '%_hidden') BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', false); END`,
+      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN (NEW."handle" LIKE '%_hidden') BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 0); END`,
       params: [],
     },
     {

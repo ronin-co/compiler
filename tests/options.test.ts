@@ -4,9 +4,16 @@ import {
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
-import { type Model, QUERY_SYMBOLS, type Query, Transaction } from '@/src/index';
+import {
+  type Model,
+  type ModelField,
+  QUERY_SYMBOLS,
+  type Query,
+  Transaction,
+} from '@/src/index';
 import { getSystemFields } from '@/src/model';
 import type { SingleRecordResult } from '@/src/types/result';
+import { omit } from '@/src/utils/helpers';
 
 test('inline statement parameters', async () => {
   const queries: Array<Query> = [
@@ -43,7 +50,7 @@ test('inline statement parameters', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `INSERT INTO "accounts" ("handle", "emails") VALUES ('elaine', json('["test@site.co","elaine@site.com"]')) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
+      statement: `INSERT INTO "accounts" ("handle", "emails") VALUES ('elaine', '["test@site.co","elaine@site.com"]') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
       params: [],
       returning: true,
     },
@@ -58,11 +65,12 @@ test('inline statement parameters', async () => {
   });
 });
 
-test('inline statement parameters containing serialized expression', async () => {
-  const newField = {
+test('inline statement parameters when creating model', async () => {
+  const newField: Partial<ModelField> = {
     name: 'Active At',
     type: 'date' as const,
     defaultValue: {
+      // Assert whether inline expressions are formatted correctly.
       [QUERY_SYMBOLS.EXPRESSION]: `strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'`,
     },
   };
@@ -93,7 +101,7 @@ test('inline statement parameters containing serialized expression', async () =>
       params: [],
     },
     {
-      statement: `INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES ('account', json('{"id":{"name":"ID","type":"string","defaultValue":{"__RONIN_EXPRESSION":"''acc_'' || lower(substr(hex(randomblob(12)), 1, 16))"},"system":true},"ronin.createdAt":{"name":"RONIN - Created At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"},"system":true},"ronin.createdBy":{"name":"RONIN - Created By","type":"string","system":true},"ronin.updatedAt":{"name":"RONIN - Updated At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"},"system":true},"ronin.updatedBy":{"name":"RONIN - Updated By","type":"string","system":true},"activeAt":{"name":"Active At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}}}'), 'mod_1f052f8432bc861b', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'id', 'id') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `INSERT INTO "ronin_schema" ("slug", "fields", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES ('account', '{"id":{"name":"ID","type":"string","defaultValue":{"__RONIN_EXPRESSION":"''acc_'' || lower(substr(hex(randomblob(12)), 1, 16))"},"system":true},"ronin.createdAt":{"name":"RONIN - Created At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"},"system":true},"ronin.createdBy":{"name":"RONIN - Created By","type":"string","system":true},"ronin.updatedAt":{"name":"RONIN - Updated At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"},"system":true},"ronin.updatedBy":{"name":"RONIN - Updated By","type":"string","system":true},"activeAt":{"name":"Active At","type":"date","defaultValue":{"__RONIN_EXPRESSION":"strftime(''%Y-%m-%dT%H:%M:%f'', ''now'') || ''Z''"}}}', 'mod_1f052f8432bc861b', 'accounts', 'Account', 'Accounts', 'acc', 'accounts', 'id', 'id') RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
       params: [],
       returning: true,
     },
@@ -102,8 +110,59 @@ test('inline statement parameters containing serialized expression', async () =>
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  expect(result.record).toMatchObject({
-    fields: { ...getSystemFields('acc'), activeAt: newField },
+  expect(result.record).toHaveProperty('fields', {
+    ...getSystemFields('acc'),
+    activeAt: newField,
+  });
+});
+
+test('inline statement parameters when creating model entity', async () => {
+  const newField: ModelField = {
+    slug: 'activeAt',
+    name: 'Active At',
+    type: 'date',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field: newField,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const transaction = new Transaction(queries, {
+    models,
+    inlineParams: true,
+  });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `ALTER TABLE "accounts" ADD COLUMN "activeAt" DATETIME`,
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.activeAt', json('{"name":"Active At","type":"date"}')), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = 'account' RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('fields', {
+    ...getSystemFields('acc'),
+    activeAt: omit(newField, ['slug']),
   });
 });
 
@@ -138,7 +197,7 @@ test('inline statement parameters containing boolean', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE "pending" = false LIMIT 1`,
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "pending" FROM "members" WHERE "pending" = 0 LIMIT 1`,
       params: [],
       returning: true,
     },

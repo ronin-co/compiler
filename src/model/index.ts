@@ -1138,6 +1138,10 @@ export const transformMetaQuery = (
         Object.assign(targetEntities[slug], jsonValue);
 
         const value = prepareStatementValue(statementParams, jsonValue);
+
+        // We're not using a wrapping `json()` function for the JSON value here, since
+        // the `json_patch` function already automatically parses its arguments as JSON,
+        // so an extra wrapping `json()` function would be unnecessary.
         json = `json_set(${field}, '$.${slug}', json_patch(json_extract(${field}, '$.${slug}'), ${value}))`;
       }
 
