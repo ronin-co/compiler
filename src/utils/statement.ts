@@ -117,6 +117,11 @@ export const prepareStatementValue = (
   statementParams: Array<unknown> | null,
   value: unknown,
 ): string => {
+  // If no list of statement values is available, that means we should inline the value,
+  // which is desired in cases where there is no risk of SQL injection and where the
+  // values must be plainly visible for manual human inspection.
+  const inlineParams = !statementParams;
+
   // We don't need to register `null` as a statement value, because it's not a value, but
   // rather a representation of the absence of a value. We can just inline it.
   if (value === null) return 'NULL';
@@ -124,15 +129,12 @@ export const prepareStatementValue = (
   let formattedValue = value;
 
   if (Array.isArray(value) || isObject(value)) {
-    formattedValue = JSON.stringify(value);
+    formattedValue = JSON.stringify(value, inlineParams ? replaceJSON : undefined);
   } else if (typeof value === 'boolean') {
     // When binding statement values, SQLite requires booleans as integers.
     formattedValue = value ? 1 : 0;
   }
 
-  // If no list of statement values is available, that means we should inline the value,
-  // which is desired in cases where there is no risk of SQL injection and where the
-  // values must be plainly visible for manual human inspection.
   if (!statementParams) {
     if (typeof formattedValue === 'string') return `'${formattedValue}'`;
     return formattedValue!.toString();
