@@ -1093,7 +1093,7 @@ export const transformMetaQuery = (
       const { slug, ...entityValue } = jsonValue as ModelEntity;
       const value = prepareStatementValue(statementParams, entityValue);
 
-      json = `json_insert(${field}, '$.${slug}', ${value})`;
+      json = `json_insert(${field}, '$.${slug}', json(${value}))`;
 
       // Add the newly created entity to the model.
       if (!existingModel[pluralType]) existingModel[pluralType] = {};
@@ -1131,7 +1131,7 @@ export const transformMetaQuery = (
         delete targetEntities[slug];
 
         const value = prepareStatementValue(statementParams, targetEntities[newSlug]);
-        json = `json_insert(json_remove(${field}, '$.${slug}'), '$.${newSlug}', ${value})`;
+        json = `json_insert(json_remove(${field}, '$.${slug}'), '$.${newSlug}', json(${value}))`;
       }
       // Otherwise, just update the existing property.
       else {
