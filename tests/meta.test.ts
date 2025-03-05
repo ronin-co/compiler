@@ -1296,7 +1296,7 @@ test('drop existing index', () => {
   ]);
 });
 
-test('create new trigger for creating records', async () => {
+test('create new trigger', async () => {
   const trigger: ModelTrigger = {
     slug: 'triggerSlug',
     when: 'AFTER',
@@ -1363,7 +1363,7 @@ test('create new trigger for creating records', async () => {
   });
 });
 
-test('create new trigger for creating records with targeted fields', () => {
+test('create new trigger with targeted fields', () => {
   const trigger: ModelTrigger = {
     slug: 'triggerSlug',
     when: 'AFTER',
@@ -1429,7 +1429,7 @@ test('create new trigger for creating records with targeted fields', () => {
   ]);
 });
 
-test('create new trigger for creating records with multiple effects', () => {
+test('create new trigger with multiple effects', () => {
   const trigger: ModelTrigger = {
     slug: 'triggerSlug',
     when: 'AFTER',
