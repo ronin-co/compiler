@@ -19,7 +19,7 @@ import {
 } from '@/fixtures/utils';
 import { getSystemFields } from '@/src/model';
 import { slugToName } from '@/src/model/defaults';
-import type { MultipleRecordResult } from '@/src/types/result';
+import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 import { omit } from '@/src/utils/helpers';
 
 test('create new model', () => {
@@ -612,7 +612,7 @@ test('query a model that was just dropped', () => {
   expect(error).toHaveProperty('code', 'MODEL_NOT_FOUND');
 });
 
-test('create new field', () => {
+test('create new field', async () => {
   // Fields don't need to have a type when being created. The default type is "string".
   const field: ModelField = {
     slug: 'email',
@@ -637,6 +637,8 @@ test('create new field', () => {
 
   const transaction = new Transaction(queries, { models });
 
+  const finalField = { ...omit(field, ['slug']), type: 'string', name: 'Email' };
+
   expect(transaction.statements).toEqual([
     {
       statement: 'ALTER TABLE "accounts" ADD COLUMN "email" TEXT',
@@ -644,13 +646,18 @@ test('create new field', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.email', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [
-        JSON.stringify({ ...omit(field, ['slug']), type: 'string', name: 'Email' }),
-        'account',
-      ],
+      params: [JSON.stringify(finalField), 'account'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('fields', {
+    ...getSystemFields('acc'),
+    email: finalField,
+  });
 });
 
 test('create new field with options', () => {
@@ -1005,7 +1012,7 @@ test('drop existing field on model with other many-cardinality fields', () => {
   });
 });
 
-test('create new index', () => {
+test('create new index', async () => {
   const index: ModelIndex = {
     slug: 'indexSlug',
     fields: [
@@ -1037,6 +1044,8 @@ test('create new index', () => {
 
   const transaction = new Transaction(queries, { models });
 
+  const finalIndex = omit(index, ['slug']);
+
   expect(transaction.statements).toEqual([
     {
       statement: 'CREATE INDEX "index_slug" ON "accounts" ("email")',
@@ -1044,10 +1053,17 @@ test('create new index', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(index, ['slug'])), 'account'],
+      params: [JSON.stringify(finalIndex), 'account'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('indexes', {
+    indexSlug: finalIndex,
+  });
 });
 
 test('create new index with filter', () => {
@@ -1280,7 +1296,7 @@ test('drop existing index', () => {
   ]);
 });
 
-test('create new trigger for creating records', () => {
+test('create new trigger for creating records', async () => {
   const trigger: ModelTrigger = {
     slug: 'triggerSlug',
     when: 'AFTER',
@@ -1325,6 +1341,8 @@ test('create new trigger for creating records', () => {
 
   const transaction = new Transaction(queries, { models });
 
+  const finalTrigger = omit(trigger, ['slug']);
+
   expect(transaction.statements).toEqual([
     {
       statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END`,
@@ -1332,10 +1350,17 @@ test('create new trigger for creating records', () => {
     },
     {
       statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(trigger, ['slug'])), 'account'],
+      params: [JSON.stringify(finalTrigger), 'account'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('triggers', {
+    triggerSlug: finalTrigger,
+  });
 });
 
 test('create new trigger for creating records with targeted fields', () => {
@@ -1731,7 +1756,7 @@ test('drop existing trigger', () => {
   ]);
 });
 
-test('create new preset', () => {
+test('create new preset', async () => {
   const preset: ModelPreset = {
     slug: 'companyEmployees',
     instructions: {
@@ -1765,13 +1790,22 @@ test('create new preset', () => {
 
   const transaction = new Transaction(queries, { models });
 
+  const finalPreset = omit(preset, ['slug']);
+
   expect(transaction.statements).toEqual([
     {
       statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', ?1), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(preset, ['slug'])), 'account'],
+      params: [JSON.stringify(finalPreset), 'account'],
       returning: true,
     },
   ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('presets', {
+    companyEmployees: finalPreset,
+  });
 });
 
 test('alter existing preset', () => {
