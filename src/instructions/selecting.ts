@@ -164,6 +164,15 @@ export const handleSelecting = (
         mountedValue = prepareStatementValue(statementParams, value);
       }
 
+      // If a field with the same slug already exists, remove the previous field, since
+      // only one field per slug should remain in the final list of selected fields.
+      //
+      // This might happen, for example, if a field is provided while adding a record,
+      // but a field with the same slug is also provided in the `including` instruction,
+      // which should overwrite the former.
+      const existingField = selectedFields.findIndex((field) => field.slug === key);
+      if (existingField > -1) selectedFields.splice(existingField, 1);
+
       selectedFields.push({
         slug: key,
         mountingPath: key,

@@ -1523,6 +1523,107 @@ test('get single record including ephemeral field containing expression', async 
   });
 });
 
+test('get single record including ephemeral field that overwrites stored field', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        team: {
+          including: {
+            name: 'Another Name',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: {
+        name: {
+          type: 'string',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", ?1 as "name" FROM "teams" LIMIT 1`,
+      params: ['Another Name'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: 'Another Name',
+    ronin: {
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
+});
+
+test('add single record including ephemeral field that overwrites stored field', async () => {
+  const queries: Array<Query> = [
+    {
+      add: {
+        team: {
+          with: {
+            name: 'First Name',
+          },
+          including: {
+            name: 'Second Name',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: {
+        name: {
+          type: 'string',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `INSERT INTO "teams" ("name") VALUES (?2) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", ?1 as "name"`,
+      params: ['Second Name', 'First Name'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    name: 'Second Name',
+    ronin: {
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+  });
+});
+
 test('get single record including deeply nested ephemeral field', async () => {
   const queries: Array<Query> = [
     {
