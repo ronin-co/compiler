@@ -2208,3 +2208,43 @@ test('try to create new index with non-existent field', () => {
   );
   expect(error).toHaveProperty('code', 'FIELD_NOT_FOUND');
 });
+
+test('get records with pagination', () => {
+  const queries = [
+    {
+      get: {
+        users: {
+          using: ['links'],
+          limitedTo: 50,
+          selecting: ['id', 'name'],
+          after: 'RONIN_NULL',
+          orderedBy: {
+            ascending: [],
+            descending: ['ronin.createdAt'],
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'user',
+      fields: {
+        id: { type: 'number' },
+        name: { type: 'string' },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      returning: true,
+      statement:
+        'SELECT "id", "name" FROM "users" WHERE (TODO) ORDER BY "ronin.createdAt" DESC LIMIT 51',
+      params: [],
+    },
+  ]);
+});
