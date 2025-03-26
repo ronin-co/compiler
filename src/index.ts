@@ -407,17 +407,54 @@ class Transaction {
       }
     }
 
-    const createdAtDrop = selectedFields.some(
+    const fieldsToDrop = selectedFields.filter(
       (field) =>
         // @ts-expect-error - This is a valid field but not in the types atm.
-        field.slug === 'ronin.createdAt' && field.drop === true,
+        field.drop === true,
     );
-    if (createdAtDrop) {
-      for (const record of result.records) {
+
+    // Helper function to delete nested property
+    const deleteNestedProperty = (obj: RecordType, path: string): void => {
+      const parts = path.split('.');
+      const lastPart = parts.pop()!;
+      let current = obj;
+
+      // Navigate to the parent object
+      for (const part of parts) {
+        if (!current || typeof current !== 'object') return;
+        const currentAsRecord = current as Record<string, unknown>;
+        if (!(part in currentAsRecord)) return;
         // @ts-expect-error - This is a valid field but not in the types atm.
-        if (record.ronin) {
-          // @ts-expect-error - This is a valid field but not in the types atm.
-          record.ronin = undefined;
+        current = currentAsRecord[part];
+      }
+      // Delete the property
+      if (typeof current === 'object' && current !== null) {
+        delete (current as Record<string, unknown>)[lastPart];
+      }
+
+      // If parent object is now empty, set it to undefined
+      if (
+        parts.length > 0 &&
+        typeof current === 'object' &&
+        current !== null &&
+        Object.keys(current as object).length === 0
+      ) {
+        let temp = obj as Record<string, unknown>;
+        for (let i = 0; i < parts.length - 1; i++) {
+          temp = temp[parts[i]] as Record<string, unknown>;
+        }
+        // Use the last part from parts array instead of parts.at(-1) which can return undefined
+        const lastPart = parts.at(-1);
+        if (lastPart) {
+          delete temp[lastPart];
+        }
+      }
+    };
+
+    if (fieldsToDrop.length > 0) {
+      for (const record of result.records) {
+        for (const field of fieldsToDrop) {
+          deleteNestedProperty(record, field.slug);
         }
       }
     }

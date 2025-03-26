@@ -190,7 +190,7 @@ export const handleSelecting = (
   // Only consider get queries that target a single record, because we don't want to
   // include the `ronin.createdAt` field for subqueries.
   // TODO: This is a bit of a hack, and should be fixed in the future. Because what if
-  // we do a get query with limit 1?
+  // we run a get query with limit 1?
   if (
     queryType === 'get' &&
     !single &&
