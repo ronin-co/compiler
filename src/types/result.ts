@@ -5,15 +5,17 @@ export type ObjectRow = Record<string, unknown>;
 
 export type Row = RawRow | ObjectRow;
 
-export type ResultRecord = Record<string, unknown> & {
+export type ResultRecordBase<T extends Date | string = string> = {
   id: string;
   ronin: {
-    createdAt: string;
+    createdAt: T;
     createdBy: string | null;
-    updatedAt: string;
+    updatedAt: T;
     updatedBy: string | null;
   };
 };
+
+export type ResultRecord = Record<string, unknown> & ResultRecordBase;
 
 export type SingleRecordResult<T = ResultRecord> = {
   record: T | null;
