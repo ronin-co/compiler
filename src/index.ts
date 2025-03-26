@@ -336,7 +336,7 @@ class Transaction {
     queryInstructions: CombinedInstructions,
     model: PrivateModel,
     rows: Array<Array<RawRow>>,
-    selectedFields: Array<InternalModelField>,
+    selectedFields: Array<InternalModelField & { drop?: boolean }>,
     single: boolean,
   ): RegularResult<RecordType> {
     // Allows the client to format fields whose type cannot be serialized in JSON,
@@ -407,11 +407,7 @@ class Transaction {
       }
     }
 
-    const fieldsToDrop = selectedFields.filter(
-      (field) =>
-        // @ts-expect-error - This is a valid field but not in the types atm.
-        field.drop === true,
-    );
+    const fieldsToDrop = selectedFields.filter((field) => field.drop === true);
 
     // Helper function to delete nested property
     const deleteNestedProperty = (obj: RecordType, path: string): void => {

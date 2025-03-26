@@ -52,25 +52,23 @@ export const handleSelecting = (
 
   // If specific fields were provided in the `selecting` instruction, select only the
   // columns of those fields. Otherwise, select all columns.
-  const selectedFields: Array<InternalModelField> = filterSelectedFields(
-    model,
-    instructions.selecting,
-  )
-    .filter((field: ModelField) => !(field.type === 'link' && field.kind === 'many'))
-    .map((field) => {
-      const newField: InternalModelField = { ...field, mountingPath: field.slug };
+  const selectedFields: Array<InternalModelField & { drop?: boolean }> =
+    filterSelectedFields(model, instructions.selecting)
+      .filter((field: ModelField) => !(field.type === 'link' && field.kind === 'many'))
+      .map((field) => {
+        const newField: InternalModelField = { ...field, mountingPath: field.slug };
 
-      if (options.mountingPath && options.mountingPath !== 'ronin_root') {
-        // Remove all occurrences of `{n}`, which are used to indicate the index of a join
-        // that is being performed on the same nesting level of a record. Meaning if, for
-        // example, multiple different tables are being joined and their outputs must all
-        // be mounted on the same property of a record, `{n}` contains the index of the
-        // join (whether it is the first join, the second one, or so on).
-        newField.mountingPath = `${options.mountingPath.replace(/\{\d+\}/g, '')}.${field.slug}`;
-      }
+        if (options.mountingPath && options.mountingPath !== 'ronin_root') {
+          // Remove all occurrences of `{n}`, which are used to indicate the index of a join
+          // that is being performed on the same nesting level of a record. Meaning if, for
+          // example, multiple different tables are being joined and their outputs must all
+          // be mounted on the same property of a record, `{n}` contains the index of the
+          // join (whether it is the first join, the second one, or so on).
+          newField.mountingPath = `${options.mountingPath.replace(/\{\d+\}/g, '')}.${field.slug}`;
+        }
 
-      return newField;
-    });
+        return newField;
+      });
 
   const joinedSelectedFields: Array<InternalModelField> = [];
   const joinedColumns: Array<string> = [];
@@ -199,7 +197,6 @@ export const handleSelecting = (
     selectedFields.push({
       ...(getSystemFields(model.idPrefix)['ronin.createdAt'] as InternalModelField),
       slug: 'ronin.createdAt',
-      // @ts-expect-error - This is a valid field but not in the types atm.
       drop: true,
       mountingPath: 'ronin.createdAt',
     });
