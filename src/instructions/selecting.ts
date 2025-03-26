@@ -1,6 +1,6 @@
-import { getFieldFromModel, getModelBySlug } from '@/src/model';
+import { getFieldFromModel, getModelBySlug, getSystemFields } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
-import type { Instructions } from '@/src/types/query';
+import type { Instructions, QueryType } from '@/src/types/query';
 import { compileQueryInput } from '@/src/utils';
 import { QUERY_SYMBOLS, RAW_FIELD_TYPES, type RawFieldType } from '@/src/utils/constants';
 import {
@@ -38,6 +38,7 @@ export const handleSelecting = (
     selecting: Instructions['selecting'];
     including: Instructions['including'];
   },
+  queryType: QueryType,
   options: {
     /** The path on which the selected fields should be mounted in the final record. */
     mountingPath?: InternalModelField['mountingPath'];
@@ -147,6 +148,7 @@ export const handleSelecting = (
               selecting: queryInstructions?.selecting,
               including: queryInstructions?.including,
             },
+            queryType,
             { ...options, mountingPath: subMountingPath },
           );
 
@@ -182,6 +184,25 @@ export const handleSelecting = (
         mountedValue,
       });
     }
+  }
+
+  // Ensure `ronin.createdAt` is always included for get queries.
+  // Only consider get queries that target a single record, because we don't want to
+  // include the `ronin.createdAt` field for subqueries.
+  // TODO: This is a bit of a hack, and should be fixed in the future. Because what if
+  // we do a get query with limit 1?
+  if (
+    queryType === 'get' &&
+    !single &&
+    !selectedFields.some((field) => field.slug === 'ronin.createdAt')
+  ) {
+    selectedFields.push({
+      ...(getSystemFields(model.idPrefix)['ronin.createdAt'] as InternalModelField),
+      slug: 'ronin.createdAt',
+      // @ts-expect-error - This is a valid field but not in the types atm.
+      drop: true,
+      mountingPath: 'ronin.createdAt',
+    });
   }
 
   const columns = selectedFields.map((selectedField) => {

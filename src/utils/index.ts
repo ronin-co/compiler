@@ -126,6 +126,38 @@ export const compileQueryInput = (
     });
   }
 
+  // If a `limitedTo` instruction was provided, that means the amount of records returned
+  // by the query will be limited to a specific amount, which, in turn, means that
+  // pagination is activated automatically, so a cursor will be provided to the client
+  // that can be used to retrieve the next page of records.
+  //
+  // Since `limitedTo` automatically activates pagination, we have to make sure that, if
+  // the instruction is provided, we also automatically provide an `orderedBy`
+  // instruction, as pagination requires the records to be ordered by at least one
+  // specific column, otherwise the cursor wouldn't work, since the order of the rows
+  // might differ between pages.
+  if (
+    !single &&
+    ((queryType === 'get' && instructions?.limitedTo) ||
+      (queryType === 'count' && (instructions?.before || instructions?.after)))
+  ) {
+    instructions = instructions || {};
+    instructions.orderedBy = instructions.orderedBy || {};
+    instructions.orderedBy.ascending = instructions.orderedBy.ascending || [];
+    instructions.orderedBy.descending = instructions.orderedBy.descending || [];
+
+    if (
+      ![
+        ...instructions.orderedBy.ascending,
+        ...instructions.orderedBy.descending,
+      ].includes('ronin.createdAt')
+    ) {
+      // It's extremely important that the item is added to the end of the array,
+      // otherwise https://linear.app/ronin/issue/RON-1084 would occur.
+      instructions.orderedBy.descending.push('ronin.createdAt');
+    }
+  }
+
   // A list of columns that should be selected when querying records.
   const { columns, isJoining, selectedFields } = handleSelecting(
     models,
@@ -136,7 +168,7 @@ export const compileQueryInput = (
       selecting: instructions?.selecting,
       including: instructions?.including,
     },
-
+    queryType,
     // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
     { inlineDefaults: options?.inlineDefaults || false },
   );
@@ -233,38 +265,6 @@ export const compileQueryInput = (
     );
 
     if (withStatement.length > 0) conditions.push(withStatement);
-  }
-
-  // If a `limitedTo` instruction was provided, that means the amount of records returned
-  // by the query will be limited to a specific amount, which, in turn, means that
-  // pagination is activated automatically, so a cursor will be provided to the client
-  // that can be used to retrieve the next page of records.
-  //
-  // Since `limitedTo` automatically activates pagination, we have to make sure that, if
-  // the instruction is provided, we also automatically provide an `orderedBy`
-  // instruction, as pagination requires the records to be ordered by at least one
-  // specific column, otherwise the cursor wouldn't work, since the order of the rows
-  // might differ between pages.
-  if (
-    !single &&
-    ((queryType === 'get' && instructions?.limitedTo) ||
-      (queryType === 'count' && (instructions?.before || instructions?.after)))
-  ) {
-    instructions = instructions || {};
-    instructions.orderedBy = instructions.orderedBy || {};
-    instructions.orderedBy.ascending = instructions.orderedBy.ascending || [];
-    instructions.orderedBy.descending = instructions.orderedBy.descending || [];
-
-    if (
-      ![
-        ...instructions.orderedBy.ascending,
-        ...instructions.orderedBy.descending,
-      ].includes('ronin.createdAt')
-    ) {
-      // It's extremely important that the item is added to the end of the array,
-      // otherwise https://linear.app/ronin/issue/RON-1084 would occur.
-      instructions.orderedBy.descending.push('ronin.createdAt');
-    }
   }
 
   if (

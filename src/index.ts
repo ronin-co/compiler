@@ -407,6 +407,21 @@ class Transaction {
       }
     }
 
+    const createdAtDrop = selectedFields.some(
+      (field) =>
+        // @ts-expect-error - This is a valid field but not in the types atm.
+        field.slug === 'ronin.createdAt' && field.drop === true,
+    );
+    if (createdAtDrop) {
+      for (const record of result.records) {
+        // @ts-expect-error - This is a valid field but not in the types atm.
+        if (record.ronin) {
+          // @ts-expect-error - This is a valid field but not in the types atm.
+          record.ronin = undefined;
+        }
+      }
+    }
+
     return result;
   }
 
@@ -443,6 +458,7 @@ class Transaction {
     return this.#internalQueries.reduce(
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
         const { query, selectedFields, models: affectedModels } = internalQuery;
+
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the provided results are raw (rows being arrays of values, which is the most
