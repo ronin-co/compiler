@@ -37,6 +37,7 @@ export const handleSelecting = (
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];
+    limitedTo: Instructions['limitedTo'];
   },
   queryType: QueryType,
   options: {
@@ -145,6 +146,7 @@ export const handleSelecting = (
             {
               selecting: queryInstructions?.selecting,
               including: queryInstructions?.including,
+              limitedTo: instructions.limitedTo,
             },
             queryType,
             { ...options, mountingPath: subMountingPath },
@@ -192,7 +194,8 @@ export const handleSelecting = (
   if (
     queryType === 'get' &&
     !single &&
-    !selectedFields.some((field) => field.slug === 'ronin.createdAt')
+    !selectedFields.some((field) => field.slug === 'ronin.createdAt') &&
+    instructions.limitedTo
   ) {
     selectedFields.push({
       ...(getSystemFields(model.idPrefix)['ronin.createdAt'] as InternalModelField),
