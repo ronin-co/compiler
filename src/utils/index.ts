@@ -167,6 +167,7 @@ export const compileQueryInput = (
     {
       selecting: instructions?.selecting,
       including: instructions?.including,
+      limitedTo: instructions?.limitedTo,
     },
     queryType,
     // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
