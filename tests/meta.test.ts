@@ -651,7 +651,7 @@ test('create new field', async () => {
     },
   ]);
 
-  // Assert that the internally stored models were updated correctly.
+  // Assert that the models within the transaction (in memory) were updated correctly.
   expect(transaction.models[1].fields).toHaveProperty('email', finalField);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
