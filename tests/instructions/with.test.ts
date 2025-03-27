@@ -929,6 +929,48 @@ test('get single record with json field (empty)', async () => {
   expect(result.record).toHaveProperty('someEmptyField', null);
 });
 
+test('get single record with json field (default value)', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        team: null,
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'team',
+      fields: {
+        // We're purposefully using a field that does not exist in the fixtures.
+        someSpecialField: {
+          type: 'json',
+          defaultValue: {
+            special: 'value',
+          },
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "someSpecialField" FROM "teams" LIMIT 1`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('someSpecialField', {
+    special: 'value',
+  });
+});
+
 test('get single record with blob field', async () => {
   const queries: Array<Query> = [
     {
