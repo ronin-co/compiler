@@ -652,14 +652,14 @@ test('create new field', async () => {
   ]);
 
   // Assert that the models within the transaction (in memory) were updated correctly.
-  expect(transaction.models[1].fields).toHaveProperty('email', finalField);
+  expect(transaction.models[1].fields).toHaveProperty(field.slug, finalField);
 
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
   expect(result.record).toHaveProperty('fields', {
     ...getSystemFields('acc'),
-    email: finalField,
+    [field.slug]: finalField,
   });
 });
 
@@ -750,6 +750,61 @@ test('create new field with many-cardinality relationship', () => {
       returning: true,
     },
   ]);
+});
+
+// Assert that objects are being accepted as default values of JSON fields.
+test('create new field with default value (json)', async () => {
+  const field: ModelField = {
+    type: 'json',
+    slug: 'settings',
+    defaultValue: {
+      theme: 'light',
+    },
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  const finalField = { ...omit(field, ['slug']), name: 'Settings' };
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `ALTER TABLE "accounts" ADD COLUMN "settings" TEXT DEFAULT '{"theme":"light"}'`,
+      params: [],
+    },
+    {
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.settings', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      params: [JSON.stringify(finalField), 'account'],
+      returning: true,
+    },
+  ]);
+
+  // Assert that the models within the transaction (in memory) were updated correctly.
+  expect(transaction.models[1].fields).toHaveProperty(field.slug, finalField);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record).toHaveProperty('fields', {
+    ...getSystemFields('acc'),
+    [field.slug]: finalField,
+  });
 });
 
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
