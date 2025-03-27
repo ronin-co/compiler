@@ -1098,7 +1098,7 @@ export const transformMetaQuery = (
       // Add the newly created entity to the model.
       if (!existingModel[pluralType]) existingModel[pluralType] = {};
       (existingModel[pluralType] as ModelEntityList<ModelEntity>)[slug] =
-        jsonValue as ModelEntity;
+        entityValue as ModelEntity;
 
       break;
     }
