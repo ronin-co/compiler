@@ -120,6 +120,8 @@ export type InternalModelField = ModelField & {
   mountingPath: string;
   /** A custom value that was provided in the query, which is not stored in the DB. */
   mountedValue?: unknown;
+  /** Indicator if the field should be excluded from the final records. */
+  excluded?: boolean;
 };
 
 export type ModelIndexField<

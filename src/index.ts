@@ -336,7 +336,7 @@ class Transaction {
     queryInstructions: CombinedInstructions,
     model: PrivateModel,
     rows: Array<Array<RawRow>>,
-    selectedFields: Array<InternalModelField & { drop?: boolean }>,
+    selectedFields: Array<InternalModelField>,
     single: boolean,
   ): RegularResult<RecordType> {
     // Allows the client to format fields whose type cannot be serialized in JSON,
@@ -407,28 +407,27 @@ class Transaction {
       }
     }
 
-    const fieldsToDrop = selectedFields.filter((field) => field.drop === true);
+    const fieldsToDrop = selectedFields.filter((field) => field.excluded === true);
 
-    // Helper function to delete nested property
+    // Helper function to delete nested property from slugs with dot notation, like
+    // `ronin.createdAt`.
     const deleteNestedProperty = (obj: RecordType, path: string): void => {
       const parts = path.split('.');
       const lastPart = parts.pop()!;
       let current = obj;
 
-      // Navigate to the parent object
       for (const part of parts) {
         if (!current || typeof current !== 'object') return;
         const currentAsRecord = current as Record<string, unknown>;
         if (!(part in currentAsRecord)) return;
-        // @ts-expect-error - This is a valid field but not in the types atm.
+        // @ts-expect-error - This is a valid field.
         current = currentAsRecord[part];
       }
-      // Delete the property
+
       if (typeof current === 'object' && current !== null) {
         delete (current as Record<string, unknown>)[lastPart];
       }
 
-      // If parent object is now empty, set it to undefined
       if (
         parts.length > 0 &&
         typeof current === 'object' &&
@@ -439,7 +438,6 @@ class Transaction {
         for (let i = 0; i < parts.length - 1; i++) {
           temp = temp[parts[i]] as Record<string, unknown>;
         }
-        // Use the last part from parts array instead of parts.at(-1) which can return undefined
         const lastPart = parts.at(-1);
         if (lastPart) {
           delete temp[lastPart];
@@ -491,7 +489,6 @@ class Transaction {
     return this.#internalQueries.reduce(
       (finalResults: Array<Result<RecordType>>, internalQuery) => {
         const { query, selectedFields, models: affectedModels } = internalQuery;
-
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
         // If the provided results are raw (rows being arrays of values, which is the most
