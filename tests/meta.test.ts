@@ -752,6 +752,7 @@ test('create new field with many-cardinality relationship', () => {
   ]);
 });
 
+// Assert that objects are being accepted as default values of JSON fields.
 test('create new field with default value (json)', async () => {
   const field: ModelField = {
     type: 'json',
