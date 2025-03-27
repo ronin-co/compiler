@@ -5,15 +5,33 @@ export type ObjectRow = Record<string, unknown>;
 
 export type Row = RawRow | ObjectRow;
 
-export type ResultRecord = Record<string, unknown> & {
+export type ResultRecordBase<T extends Date | string = string> = {
+  /**
+   * The unique identifier of the record.
+   */
   id: string;
+
   ronin: {
-    createdAt: string;
+    /**
+     * The timestamp of when the record was created.
+     */
+    createdAt: T;
+    /**
+     * The ID of the user who created the record.
+     */
     createdBy: string | null;
-    updatedAt: string;
+    /**
+     * The timestamp of the last time the record was updated.
+     */
+    updatedAt: T;
+    /**
+     * The ID of the user who last updated the record.
+     */
     updatedBy: string | null;
   };
 };
+
+export type ResultRecord = Record<string, unknown> & ResultRecordBase;
 
 export type SingleRecordResult<T = ResultRecord> = {
   record: T | null;
