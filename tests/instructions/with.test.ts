@@ -929,6 +929,7 @@ test('get single record with json field (empty)', async () => {
   expect(result.record).toHaveProperty('someEmptyField', null);
 });
 
+// Assert that default values of JSON fields are being formatted correctly.
 test('get single record with json field (default value)', async () => {
   const queries: Array<Query> = [
     {
