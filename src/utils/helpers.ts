@@ -388,3 +388,43 @@ export const splitQuery = (
 
   return { queryType, queryModel, queryInstructions };
 };
+
+/**
+ * Deletes a nested property from an object using dot notation path (e.g., 'ronin.createdAt')
+ * @param obj - The object to modify
+ * @param path - The path to the property using dot notation
+ */
+export function deleteNestedProperty<T>(obj: T, path: string): void {
+  const parts = path.split('.');
+  const lastPart = parts.pop()!;
+  let current = obj;
+
+  for (const part of parts) {
+    if (!current || typeof current !== 'object') return;
+    const currentAsRecord = current as Record<string, unknown>;
+    if (!(part in currentAsRecord)) return;
+    // @ts-expect-error - This is valid.
+    current = currentAsRecord[part];
+  }
+
+  if (typeof current === 'object' && current !== null) {
+    delete (current as Record<string, unknown>)[lastPart];
+  }
+
+  // Clean up empty parent objects
+  if (
+    parts.length > 0 &&
+    typeof current === 'object' &&
+    current !== null &&
+    Object.keys(current as object).length === 0
+  ) {
+    let temp = obj as Record<string, unknown>;
+    for (let i = 0; i < parts.length - 1; i++) {
+      temp = temp[parts[i]] as Record<string, unknown>;
+    }
+    const lastPart = parts.at(-1);
+    if (lastPart) {
+      delete temp[lastPart];
+    }
+  }
+}
