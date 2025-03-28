@@ -418,7 +418,7 @@ test('get all records of all models with model-specific instructions', async () 
       returning: true,
     },
     {
-      statement: `SELECT "id" FROM "teams" ORDER BY "ronin.createdAt" DESC LIMIT 11`,
+      statement: `SELECT "id", "ronin.createdAt" FROM "teams" ORDER BY "ronin.createdAt" DESC LIMIT 11`,
       params: [],
       returning: true,
     },

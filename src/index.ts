@@ -32,7 +32,13 @@ import type {
   ResultRecord,
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
-import { getProperty, omit, setProperty, splitQuery } from '@/src/utils/helpers';
+import {
+  deleteNestedProperty,
+  getProperty,
+  omit,
+  setProperty,
+  splitQuery,
+} from '@/src/utils/helpers';
 import { generatePaginationCursor } from '@/src/utils/pagination';
 
 interface TransactionOptions {
@@ -404,6 +410,16 @@ class Transaction {
           queryInstructions.orderedBy,
           firstRecord,
         );
+      }
+    }
+
+    const fieldsToDrop = selectedFields.filter((field) => field.excluded === true);
+
+    if (fieldsToDrop.length > 0) {
+      for (const record of result.records) {
+        for (const field of fieldsToDrop) {
+          deleteNestedProperty(record as Record<string, unknown>, field.slug);
+        }
       }
     }
 
