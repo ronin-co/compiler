@@ -167,6 +167,7 @@ export const compileQueryInput = (
     {
       selecting: instructions?.selecting,
       including: instructions?.including,
+      orderedBy: instructions?.orderedBy,
       limitedTo: instructions?.limitedTo,
     },
     queryType,

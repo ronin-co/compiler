@@ -1,4 +1,4 @@
-import { getFieldFromModel, getModelBySlug, getSystemFields } from '@/src/model';
+import { getFieldFromModel, getModelBySlug } from '@/src/model';
 import type { InternalModelField, Model, ModelField } from '@/src/types/model';
 import type { Instructions, QueryType } from '@/src/types/query';
 import { compileQueryInput } from '@/src/utils';
@@ -37,6 +37,7 @@ export const handleSelecting = (
   instructions: {
     selecting: Instructions['selecting'];
     including: Instructions['including'];
+    orderedBy: Instructions['orderedBy'];
     limitedTo: Instructions['limitedTo'];
   },
   queryType: QueryType,
@@ -148,6 +149,7 @@ export const handleSelecting = (
             {
               selecting: queryInstructions?.selecting,
               including: queryInstructions?.including,
+              orderedBy: queryInstructions?.orderedBy,
               limitedTo: instructions.limitedTo,
             },
             queryType,
@@ -188,23 +190,30 @@ export const handleSelecting = (
     }
   }
 
-  // Ensure `ronin.createdAt` is always included for get queries.
-  // Only consider get queries that target a single record, because we don't want to
-  // include the `ronin.createdAt` field for subqueries.
-  // TODO: This is a bit of a hack, and should be fixed in the future. Because what if
-  // we run a get query with limit 1?
-  if (
-    queryType === 'get' &&
-    !single &&
-    !selectedFields.some((field) => field.slug === 'ronin.createdAt') &&
-    instructions.limitedTo
-  ) {
-    selectedFields.push({
-      ...(getSystemFields(model.idPrefix)['ronin.createdAt'] as InternalModelField),
-      slug: 'ronin.createdAt',
-      excluded: true,
-      mountingPath: 'ronin.createdAt',
+  // Ensure that any fields used for ordering are always selected in the SQL statement,
+  // if pagination is desired, because the pagination cursor that is constructed during
+  // formatting of the records requires the values of all ordered fields.
+  if (queryType === 'get' && !single && typeof instructions.limitedTo !== 'undefined') {
+    // Compose a list of all the fields that were used for ordering.
+    const orderedFields = (
+      Object.values(instructions.orderedBy || {}).flat() as Array<string>
+    ).map((fieldSlug) => {
+      return getFieldFromModel(model, fieldSlug, { instructionName: 'orderedBy' });
     });
+
+    for (const orderedField of orderedFields) {
+      const { field } = orderedField;
+
+      // Filter out ordered fields that were already selected.
+      if (selectedFields.some(({ slug }) => slug === field.slug)) continue;
+
+      // Add the field to the list of selected fields.
+      selectedFields.push({
+        slug: field.slug,
+        mountingPath: field.slug,
+        excluded: true,
+      });
+    }
   }
 
   const columns = selectedFields.map((selectedField) => {
