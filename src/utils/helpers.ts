@@ -378,6 +378,7 @@ export const deleteProperty = <Object = NestedObject>(
 
   const _delete = (node: NestedObject, segs: Array<string>): boolean => {
     const key = segs[0];
+
     if (segs.length === 1) {
       // Delete the final property.
       delete node[key];
@@ -387,7 +388,8 @@ export const deleteProperty = <Object = NestedObject>(
       // If the child object is now empty, delete it.
       if (shouldCleanup) delete node[key];
     }
-    // Return true if this node is an object and now empty.
+
+    // Return `true` if this node is an object and now empty.
     return Object.keys(node).length === 0;
   };
 
