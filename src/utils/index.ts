@@ -163,6 +163,7 @@ export const compileQueryInput = (
     models,
     model,
     statementParams,
+    queryType,
     single,
     {
       selecting: instructions?.selecting,
@@ -170,7 +171,6 @@ export const compileQueryInput = (
       orderedBy: instructions?.orderedBy,
       limitedTo: instructions?.limitedTo,
     },
-    queryType,
     // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
     { inlineDefaults: options?.inlineDefaults || false },
   );

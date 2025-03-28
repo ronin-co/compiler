@@ -24,6 +24,7 @@ import {
  * @param single - Whether a single or multiple records are being queried.
  * @param statementParams - A collection of values that will automatically be
  * inserted into the query by SQLite.
+ * @param queryType - The type of query that is being executed.
  * @param instructions - The instructions associated with the current query.
  * @param options - Additional options for customizing the behavior of the function.
  *
@@ -33,6 +34,7 @@ export const handleSelecting = (
   models: Array<Model>,
   model: Model,
   statementParams: Array<unknown> | null,
+  queryType: QueryType,
   single: boolean,
   instructions: {
     selecting: Instructions['selecting'];
@@ -40,7 +42,6 @@ export const handleSelecting = (
     orderedBy: Instructions['orderedBy'];
     limitedTo: Instructions['limitedTo'];
   },
-  queryType: QueryType,
   options: {
     /** The path on which the selected fields should be mounted in the final record. */
     mountingPath?: InternalModelField['mountingPath'];
@@ -145,14 +146,14 @@ export const handleSelecting = (
             models,
             { ...subQueryModel, tableAlias: `including_${subMountingPath}` },
             statementParams,
+            queryType,
             subSingle,
             {
               selecting: queryInstructions?.selecting,
               including: queryInstructions?.including,
               orderedBy: queryInstructions?.orderedBy,
-              limitedTo: instructions.limitedTo,
+              limitedTo: queryInstructions?.limitedTo,
             },
-            queryType,
             { ...options, mountingPath: subMountingPath },
           );
 
