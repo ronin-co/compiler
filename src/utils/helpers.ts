@@ -327,6 +327,17 @@ export const getProperty = (obj: NestedObject, path: string): unknown => {
 };
 
 /**
+ * Splits a path string into an array of path segments.
+ *
+ * @param path - The path string (supports both dot and bracket notation).
+ *
+ * @returns An array of path segments.
+ */
+export const getPathSegments = (path: string): Array<string> => {
+  return path.split(/[.[\]]/g).filter((segment) => segment.trim().length > 0);
+};
+
+/**
  * Sets a property on an object by mutating the object in place.
  *
  * @param obj - The object on which the property should be set.
@@ -340,7 +351,7 @@ export const setProperty = <Object = NestedObject>(
   path: string,
   value: unknown,
 ): void => {
-  const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
+  const segments = getPathSegments(path);
 
   const _set = (node: NestedObject): void => {
     if (segments.length > 1) {
@@ -374,7 +385,7 @@ export const deleteProperty = <Object = NestedObject>(
   obj: Object,
   path: string,
 ): void => {
-  const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
+  const segments = getPathSegments(path);
 
   const _delete = (node: NestedObject, segs: Array<string>): boolean => {
     const key = segs[0];
