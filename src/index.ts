@@ -33,7 +33,7 @@ import type {
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import {
-  deleteNestedProperty,
+  deleteProperty,
   getProperty,
   omit,
   setProperty,
@@ -418,7 +418,7 @@ class Transaction {
     if (fieldsToDrop.length > 0) {
       for (const record of result.records) {
         for (const field of fieldsToDrop) {
-          deleteNestedProperty(record as Record<string, unknown>, field.slug);
+          deleteProperty(record as Record<string, unknown>, field.slug);
         }
       }
     }

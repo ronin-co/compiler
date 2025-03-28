@@ -362,6 +362,39 @@ export const setProperty = <Object = NestedObject>(
 };
 
 /**
+ * Deletes a property from an object by mutating the object in place. Additionally, if
+ * after deletion any parent objects become empty, those empty objects are also deleted.
+ *
+ * @param obj - The object from which the property should be deleted.
+ * @param path - The path at which the property should be deleted.
+ *
+ * @returns Nothing.
+ */
+export const deleteProperty = <Object = NestedObject>(
+  obj: Object,
+  path: string,
+): void => {
+  const segments = path.split(/[.[\]]/g).filter((x) => !!x.trim());
+
+  const _delete = (node: NestedObject, segs: Array<string>): boolean => {
+    const key = segs[0];
+    if (segs.length === 1) {
+      // Delete the final property.
+      delete node[key];
+    } else if (node[key] && typeof node[key] === 'object' && node[key] !== null) {
+      // Recurse down the path.
+      const shouldCleanup = _delete(node[key] as NestedObject, segs.slice(1));
+      // If the child object is now empty, delete it.
+      if (shouldCleanup) delete node[key];
+    }
+    // Return true if this node is an object and now empty.
+    return Object.keys(node).length === 0;
+  };
+
+  _delete(obj as NestedObject, segments);
+};
+
+/**
  * Splits a query into its type, model, and instructions.
  *
  * @param query - The query to split.
@@ -388,43 +421,3 @@ export const splitQuery = (
 
   return { queryType, queryModel, queryInstructions };
 };
-
-/**
- * Deletes a nested property from an object using dot notation path (e.g., 'ronin.createdAt')
- * @param obj - The object to modify
- * @param path - The path to the property using dot notation
- */
-export function deleteNestedProperty<T>(obj: T, path: string): void {
-  const parts = path.split('.');
-  const lastPart = parts.pop()!;
-  let current = obj;
-
-  for (const part of parts) {
-    if (!current || typeof current !== 'object') return;
-    const currentAsRecord = current as Record<string, unknown>;
-    if (!(part in currentAsRecord)) return;
-    // @ts-expect-error - This is valid.
-    current = currentAsRecord[part];
-  }
-
-  if (typeof current === 'object' && current !== null) {
-    delete (current as Record<string, unknown>)[lastPart];
-  }
-
-  // Clean up empty parent objects
-  if (
-    parts.length > 0 &&
-    typeof current === 'object' &&
-    current !== null &&
-    Object.keys(current as object).length === 0
-  ) {
-    let temp = obj as Record<string, unknown>;
-    for (let i = 0; i < parts.length - 1; i++) {
-      temp = temp[parts[i]] as Record<string, unknown>;
-    }
-    const lastPart = parts.at(-1);
-    if (lastPart) {
-      delete temp[lastPart];
-    }
-  }
-}
