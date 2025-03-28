@@ -74,6 +74,61 @@ test('get multiple records before cursor', async () => {
   expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
 });
 
+// Assert that the `ronin.createdAt` field is being selected in the SQL statement, since
+// it is needed for the pagination cursor.
+test('get multiple records before cursor while selecting fields', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          before: '1733654878079',
+          limitedTo: 2,
+          selecting: ['name'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: {
+        name: {
+          type: 'string',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "name", "ronin.createdAt" FROM "beaches" WHERE (("ronin.createdAt" > '2024-12-08T10:47:58.079Z')) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      name: 'Manly',
+    },
+    {
+      name: 'Coogee',
+    },
+  ]);
+
+  expect(result.moreBefore).toBe(firstRecordTime.getTime().toString());
+  expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
+});
+
 test('get multiple records before cursor ordered by string field', async () => {
   const queries: Array<Query> = [
     {
