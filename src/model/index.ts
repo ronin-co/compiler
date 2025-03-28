@@ -285,10 +285,10 @@ export const ROOT_MODEL: PartialModel = {
     // Providing an empty object as a default value allows us to use `json_insert`
     // without needing to fall back to an empty object in the insertion statement,
     // which makes the statement shorter.
-    fields: { type: 'json', defaultValue: '{}' },
-    indexes: { type: 'json', defaultValue: '{}' },
-    triggers: { type: 'json', defaultValue: '{}' },
-    presets: { type: 'json', defaultValue: '{}' },
+    fields: { type: 'json', defaultValue: {} },
+    indexes: { type: 'json', defaultValue: {} },
+    triggers: { type: 'json', defaultValue: {} },
+    presets: { type: 'json', defaultValue: {} },
   },
 };
 
@@ -397,6 +397,7 @@ const getFieldStatement = (
         ? `'${field.defaultValue}'`
         : field.defaultValue;
     if (symbol) value = `(${parseFieldExpression(model, 'to', symbol.value as string)})`;
+    if (field.type === 'json') value = `'${JSON.stringify(field.defaultValue)}'`;
 
     statement += ` DEFAULT ${value}`;
   }
@@ -1098,7 +1099,7 @@ export const transformMetaQuery = (
       // Add the newly created entity to the model.
       if (!existingModel[pluralType]) existingModel[pluralType] = {};
       (existingModel[pluralType] as ModelEntityList<ModelEntity>)[slug] =
-        jsonValue as ModelEntity;
+        entityValue as ModelEntity;
 
       break;
     }
