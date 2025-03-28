@@ -5,7 +5,11 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import { type Model, type Query, RoninError, Transaction } from '@/src/index';
-import type { AmountResult, MultipleRecordResult } from '@/src/types/result';
+import type {
+  AmountResult,
+  MultipleRecordResult,
+  ResultRecord,
+} from '@/src/types/result';
 import { CURSOR_NULL_PLACEHOLDER } from '@/src/utils/pagination';
 
 test('get multiple records before cursor', async () => {
@@ -69,6 +73,61 @@ test('get multiple records before cursor', async () => {
       name: 'Coogee',
     },
   ]);
+
+  expect(result.moreBefore).toBe(firstRecordTime.getTime().toString());
+  expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
+});
+
+// Assert that the `ronin.createdAt` field is being selected in the SQL statement, since
+// it is needed for the pagination cursor.
+test('get multiple records before cursor while selecting fields', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          before: '1733654878079',
+          limitedTo: 2,
+          selecting: ['name'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: {
+        name: {
+          type: 'string',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "name", "ronin.createdAt" FROM "beaches" WHERE (("ronin.createdAt" > '2024-12-08T10:47:58.079Z')) ORDER BY "ronin.createdAt" DESC LIMIT 3`,
+      params: [],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  const firstRecordTime = new Date('2024-12-10T10:47:58.079Z');
+  const lastRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      name: 'Manly',
+    },
+    {
+      name: 'Coogee',
+    },
+  ] as unknown as Array<ResultRecord>);
 
   expect(result.moreBefore).toBe(firstRecordTime.getTime().toString());
   expect(result.moreAfter).toBe(lastRecordTime.getTime().toString());
@@ -141,6 +200,71 @@ test('get multiple records before cursor ordered by string field', async () => {
       name: lastRecordName,
     },
   ]);
+
+  expect(result.moreBefore).toBe(`${firstRecordName},${firstRecordTime.getTime()}`);
+  expect(result.moreAfter).toBe(`${lastRecordName},${lastRecordTime.getTime()}`);
+});
+
+// Assert that the `name` field and the `ronin.createdAt` field are being selected in the
+// SQL statement, since they are needed for the pagination cursor.
+test('get multiple records before cursor ordered by string field, while selecting fields', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          before: 'Manly,1733827678079',
+          orderedBy: {
+            ascending: ['name'],
+          },
+          limitedTo: 2,
+          // Here, we must select a field that is *not* used for ordering.
+          selecting: ['division'],
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: {
+        name: {
+          type: 'string',
+        },
+        division: {
+          type: 'string',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `SELECT "division", "name", "ronin.createdAt" FROM "beaches" WHERE ((IFNULL("name", -1e999) < ?1 COLLATE NOCASE) OR ("name" = ?1 AND ("ronin.createdAt" > '2024-12-10T10:47:58.079Z'))) ORDER BY "name" COLLATE NOCASE ASC, "ronin.createdAt" DESC LIMIT 3`,
+      params: ['Manly'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  const firstRecordName = 'Coogee';
+  const firstRecordTime = new Date('2024-12-09T10:47:58.079Z');
+
+  const lastRecordName = 'Cronulla';
+  const lastRecordTime = new Date('2024-12-08T10:47:58.079Z');
+
+  expect(result.records).toEqual([
+    {
+      division: 'Kingsford',
+    },
+    {
+      division: 'Cook',
+    },
+  ] as unknown as Array<ResultRecord>);
 
   expect(result.moreBefore).toBe(`${firstRecordName},${firstRecordTime.getTime()}`);
   expect(result.moreAfter).toBe(`${lastRecordName},${lastRecordTime.getTime()}`);

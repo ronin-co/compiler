@@ -33,7 +33,7 @@ import type {
 } from '@/src/types/result';
 import { compileQueryInput } from '@/src/utils';
 import {
-  deleteNestedProperty,
+  deleteProperty,
   getProperty,
   omit,
   setProperty,
@@ -413,13 +413,12 @@ class Transaction {
       }
     }
 
-    const fieldsToDrop = selectedFields.filter((field) => field.excluded === true);
+    // Remove any fields that are marked as `excluded` from the result.
+    for (const field of selectedFields) {
+      if (!field.excluded) continue;
 
-    if (fieldsToDrop.length > 0) {
       for (const record of result.records) {
-        for (const field of fieldsToDrop) {
-          deleteNestedProperty(record as Record<string, unknown>, field.slug);
-        }
+        deleteProperty(record, field.slug);
       }
     }
 
