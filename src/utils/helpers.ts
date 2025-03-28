@@ -374,7 +374,7 @@ export const setProperty = <Object = NestedObject>(
 
 /**
  * Deletes a property from an object by mutating the object in place. Additionally, if
- * after deletion any parent objects become empty, those empty objects are also deleted.
+ * after deletion, any parent objects become empty, those empty objects are also deleted.
  *
  * @param obj - The object from which the property should be deleted.
  * @param path - The path at which the property should be deleted.
