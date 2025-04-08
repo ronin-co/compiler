@@ -257,12 +257,15 @@ export const getSystemFields = (idPrefix: Model['idPrefix']): Model['fields'] =>
  * equivalent to the native `sqlite_schema` table provided by SQLite.
  */
 export const ROOT_MODEL: PartialModel = {
-  slug: 'model',
+  slug: 'roninModel',
 
   identifiers: {
     name: 'name',
     slug: 'slug',
   },
+
+  // The default ID prefix would be `ron_` based on the slug, but we want `mod_`.
+  idPrefix: 'mod',
 
   // This name mimics the `sqlite_schema` table in SQLite.
   table: 'ronin_schema',
@@ -650,10 +653,10 @@ export const transformMetaQuery = (
 
   if ('list' in query && query.list) {
     if (slug) {
-      return { get: { model: { with: { slug } } } };
+      return { get: { roninModel: { with: { slug } } } };
     }
 
-    return { get: { models: {} } };
+    return { get: { roninModels: {} } };
   }
 
   if ('create' in query && query.create) {
@@ -859,14 +862,14 @@ export const transformMetaQuery = (
 
     // If the root model is being created or dropped, altering the `ronin_schema` table
     // is not necessary, since that table is created precisely for that model.
-    if (modelSlug === 'model') return null;
+    if (modelSlug === 'roninModel') return null;
 
     const queryTypeAction =
       action === 'create' ? 'add' : action === 'alter' ? 'set' : 'remove';
 
     return {
       [queryTypeAction]: {
-        model: queryTypeDetails,
+        roninModel: queryTypeDetails,
       },
     };
   }
@@ -1175,7 +1178,7 @@ export const transformMetaQuery = (
 
   return {
     set: {
-      model: {
+      roninModel: {
         with: { slug: modelSlug },
         to: {
           [pluralType]: { [QUERY_SYMBOLS.EXPRESSION]: json },

@@ -106,65 +106,69 @@ class Transaction {
 
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
-    const expandedQueries: Array<{ query: Query; index: number }> =
-      this.#internalQueries.flatMap(({ query }, index) => {
-        const { queryType, queryModel, queryInstructions } = splitQuery(query);
+    const expandedQueries: Array<{
+      query: Query;
+      index: number;
+      resultingFromExpansion?: boolean;
+    }> = this.#internalQueries.flatMap(({ query }, index) => {
+      const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
-        // If the model defined in the query is called `all`, that means we need to expand
-        // the query into multiple queries: One for each model.
-        if (queryModel === 'all') {
-          const {
-            for: forInstruction,
-            on: onInstruction,
-            ...restInstructions
-          } = (queryInstructions || {}) as AllQueryInstructions;
+      // If the model defined in the query is called `all`, that means we need to expand
+      // the query into multiple queries: One for each model.
+      if (queryModel === 'all') {
+        const {
+          for: forInstruction,
+          on: onInstruction,
+          ...restInstructions
+        } = (queryInstructions || {}) as AllQueryInstructions;
 
-          let modelList = modelsWithPresets.filter((model) => {
-            return model.slug !== ROOT_MODEL.slug;
-          });
+        let modelList = modelsWithPresets.filter((model) => {
+          return model.slug !== ROOT_MODEL.slug;
+        });
 
-          // If a `for` instruction was provided, that means we only want to select the
-          // related models of the model that was provided in `for`, instead of selecting
-          // all models at once.
-          if (forInstruction) {
-            const mainModel = getModelBySlug(modelList, forInstruction);
+        // If a `for` instruction was provided, that means we only want to select the
+        // related models of the model that was provided in `for`, instead of selecting
+        // all models at once.
+        if (forInstruction) {
+          const mainModel = getModelBySlug(modelList, forInstruction);
 
-            modelList = Object.values(mainModel.fields || {})
-              .filter((field) => field.type === 'link')
-              .map((field) => {
-                return modelList.find(
-                  (model) => model.slug === field.target,
-                ) as PrivateModel;
-              });
-          }
-
-          return modelList.map((model) => {
-            const instructions = Object.assign(
-              {},
-              restInstructions,
-              onInstruction?.[model.pluralSlug],
-            );
-
-            const query: Query = {
-              [queryType]: { [model.pluralSlug]: instructions },
-            };
-
-            return { query, index };
-          });
+          modelList = Object.values(mainModel.fields || {})
+            .filter((field) => field.type === 'link')
+            .map((field) => {
+              return modelList.find(
+                (model) => model.slug === field.target,
+              ) as PrivateModel;
+            });
         }
 
-        return { query, index };
-      });
+        return modelList.map((model) => {
+          const instructions = Object.assign(
+            {},
+            restInstructions,
+            onInstruction?.[model.pluralSlug],
+          );
 
-    for (const { query, index } of expandedQueries) {
-      const { dependencies, main, selectedFields, model } = compileQueryInput(
-        query,
-        modelsWithPresets,
-        options?.inlineParams ? null : [],
+          const query: Query = {
+            [queryType]: { [model.pluralSlug]: instructions },
+          };
 
-        // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
-        { inlineDefaults: options?.inlineDefaults || false },
-      );
+          return { query, index, resultingFromExpansion: true };
+        });
+      }
+
+      return { query, index };
+    });
+
+    for (const { query, index, resultingFromExpansion } of expandedQueries) {
+      const { dependencies, main, selectedFields, model, updatedQuery } =
+        compileQueryInput(
+          query,
+          modelsWithPresets,
+          options?.inlineParams ? null : [],
+
+          // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+          { inlineDefaults: options?.inlineDefaults || false },
+        );
 
       // Every query can only produce one main statement (which can return output), but
       // multiple dependency statements (which must be executed either before or after
@@ -185,6 +189,12 @@ class Transaction {
       // Update the internal query with additional information.
       this.#internalQueries[index].selectedFields.push(selectedFields);
       this.#internalQueries[index].models.push(model);
+
+      // Unless the query is the result of expanding a query that addresses multiple
+      // models, we need to update the query to reflect any potential changes that might
+      // have been applied to it during its compilation. For example, this happens when
+      // DDL (Data Definition Language) queries are compiled internally.
+      if (!resultingFromExpansion) this.#internalQueries[index].query = updatedQuery;
     }
 
     this.models = modelsWithPresets;
