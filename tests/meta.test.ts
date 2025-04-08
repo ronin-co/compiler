@@ -262,7 +262,7 @@ test('create new model that references itself', () => {
 test('get existing models', async () => {
   const queries: Array<Query> = [
     {
-      get: {
+      list: {
         models: null,
       },
     },
@@ -331,7 +331,7 @@ test('get existing models', async () => {
 test('get existing model', async () => {
   const queries: Array<Query> = [
     {
-      get: {
+      list: {
         model: 'account',
       },
     },

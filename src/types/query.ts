@@ -155,6 +155,8 @@ export type Instructions =
   | CountInstructions;
 
 // DDL Query Types - Individual Instructions
+export type ListQuery = { models?: null } | { model: string };
+
 export type CreateQuery = {
   model: string | PublicModel;
   to?: PublicModel;
@@ -220,6 +222,7 @@ export type Query = {
   remove?: RemoveQuery;
   count?: CountQuery | CountAllQuery;
 
+  list?: ListQuery;
   create?: CreateQuery;
   alter?: AlterQuery;
   drop?: DropQuery;

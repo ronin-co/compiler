@@ -648,6 +648,14 @@ export const transformMetaQuery = (
 
   let jsonValue: Record<string, unknown> | undefined;
 
+  if ('list' in query && query.list) {
+    if (slug) {
+      return { get: { model: { with: { slug } } } };
+    }
+
+    return { get: { models: {} } };
+  }
+
   if ('create' in query && query.create) {
     const init = query.create.model;
     jsonValue =
@@ -677,10 +685,6 @@ export const transformMetaQuery = (
 
       if ('alter' in query.alter && query.alter.alter) jsonValue = query.alter.alter.to;
     }
-  }
-
-  if ('get' in query && query.get && slug) {
-    return { get: { model: { with: { slug } } } };
   }
 
   if (!(modelSlug && slug)) return query;
