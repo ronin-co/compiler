@@ -200,6 +200,9 @@ export type DropQuery = {
 // DDL Query Types
 export type ModelQuery =
   | {
+      list: ListQuery;
+    }
+  | {
       create: CreateQuery;
     }
   | {
@@ -216,12 +219,14 @@ export type QueryPaginationOptions = {
 };
 
 export type Query = {
+  // DML Query Types
   get?: GetQuery | GetAllQuery;
   set?: SetQuery;
   add?: AddQuery;
   remove?: RemoveQuery;
   count?: CountQuery | CountAllQuery;
 
+  // DDL Query Types
   list?: ListQuery;
   create?: CreateQuery;
   alter?: AlterQuery;

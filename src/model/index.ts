@@ -1098,7 +1098,7 @@ export const transformMetaQuery = (
 
   const field = `${QUERY_SYMBOLS.FIELD}${pluralType}`;
 
-  let json: string;
+  let json: string | undefined;
 
   switch (action) {
     case 'create': {
