@@ -259,7 +259,7 @@ test('create new model that references itself', () => {
   });
 });
 
-test('get existing models', async () => {
+test('list existing models', async () => {
   const queries: Array<Query> = [
     {
       list: {
@@ -328,7 +328,7 @@ test('get existing models', async () => {
   ]);
 });
 
-test('get existing model', async () => {
+test('list existing model', async () => {
   const queries: Array<Query> = [
     {
       list: {
