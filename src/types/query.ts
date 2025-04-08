@@ -155,6 +155,8 @@ export type Instructions =
   | CountInstructions;
 
 // DDL Query Types - Individual Instructions
+export type ListQuery = { models?: null } | { model: string };
+
 export type CreateQuery = {
   model: string | PublicModel;
   to?: PublicModel;
@@ -198,6 +200,9 @@ export type DropQuery = {
 // DDL Query Types
 export type ModelQuery =
   | {
+      list: ListQuery;
+    }
+  | {
       create: CreateQuery;
     }
   | {
@@ -214,12 +219,15 @@ export type QueryPaginationOptions = {
 };
 
 export type Query = {
+  // DML Query Types
   get?: GetQuery | GetAllQuery;
   set?: SetQuery;
   add?: AddQuery;
   remove?: RemoveQuery;
   count?: CountQuery | CountAllQuery;
 
+  // DDL Query Types
+  list?: ListQuery;
   create?: CreateQuery;
   alter?: AlterQuery;
   drop?: DropQuery;

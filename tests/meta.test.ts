@@ -259,10 +259,10 @@ test('create new model that references itself', () => {
   });
 });
 
-test('get existing models', async () => {
+test('list existing models', async () => {
   const queries: Array<Query> = [
     {
-      get: {
+      list: {
         models: null,
       },
     },
@@ -326,6 +326,73 @@ test('get existing models', async () => {
       presets: {},
     },
   ]);
+});
+
+test('list existing model', async () => {
+  const queries: Array<Query> = [
+    {
+      list: {
+        model: 'account',
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: {
+        handle: {
+          type: 'string',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries);
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets" FROM "ronin_schema" WHERE "slug" = ?1 LIMIT 1',
+      params: ['account'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  // Assert that the `fields`, `indexes`, `triggers`, and `presets` properties are
+  // formatted correctly, in order to match the `Model` type.
+  expect(result.record).toEqual({
+    id: expect.stringMatching(RECORD_ID_REGEX),
+    ronin: {
+      createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      createdBy: null,
+      updatedAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      updatedBy: null,
+    },
+    name: 'Account',
+    pluralName: 'Accounts',
+    slug: 'account',
+    pluralSlug: 'accounts',
+    idPrefix: 'acc',
+    identifiers: {
+      name: 'id',
+      slug: 'id',
+    },
+    table: 'accounts',
+    fields: {
+      ...getSystemFields('acc'),
+      handle: {
+        name: 'Handle',
+        type: 'string',
+      },
+    },
+    indexes: {},
+    triggers: {},
+    presets: {},
+  });
 });
 
 // Ensure that, if the `slug` of a model changes during an update, an `ALTER TABLE`

@@ -106,7 +106,7 @@ class Transaction {
 
     // Check if the list of queries contains any queries with the model `all`, as those
     // must be expanded into multiple queries.
-    const expandedQueries: Array<{ query: Query; index: number }> =
+    const expandedQueries: Array<{ query: Query; index: number; expansion?: boolean }> =
       this.#internalQueries.flatMap(({ query }, index) => {
         const { queryType, queryModel, queryInstructions } = splitQuery(query);
 
@@ -149,22 +149,23 @@ class Transaction {
               [queryType]: { [model.pluralSlug]: instructions },
             };
 
-            return { query, index };
+            return { query, index, expansion: true };
           });
         }
 
         return { query, index };
       });
 
-    for (const { query, index } of expandedQueries) {
-      const { dependencies, main, selectedFields, model } = compileQueryInput(
-        query,
-        modelsWithPresets,
-        options?.inlineParams ? null : [],
+    for (const { query, index, expansion } of expandedQueries) {
+      const { dependencies, main, selectedFields, model, updatedQuery } =
+        compileQueryInput(
+          query,
+          modelsWithPresets,
+          options?.inlineParams ? null : [],
 
-        // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
-        { inlineDefaults: options?.inlineDefaults || false },
-      );
+          // biome-ignore lint/complexity/useSimplifiedLogicExpression: This is needed.
+          { inlineDefaults: options?.inlineDefaults || false },
+        );
 
       // Every query can only produce one main statement (which can return output), but
       // multiple dependency statements (which must be executed either before or after
@@ -185,6 +186,12 @@ class Transaction {
       // Update the internal query with additional information.
       this.#internalQueries[index].selectedFields.push(selectedFields);
       this.#internalQueries[index].models.push(model);
+
+      // Unless the query is the result of expanding a query that addresses multiple
+      // models, we need to update the query to reflect any potential changes that might
+      // have been applied to it during its compilation. For example, this happens when
+      // DDL (Data Definition Language) queries are compiled internally.
+      if (!expansion) this.#internalQueries[index].query = updatedQuery;
     }
 
     this.models = modelsWithPresets;

@@ -63,6 +63,7 @@ export const compileQueryInput = (
   main: Statement;
   selectedFields: Array<InternalModelField>;
   model: Model;
+  updatedQuery: Query;
 } => {
   // A list of write statements that are required to be executed before the main read
   // statement. Their output is not relevant for the main statement, as they are merely
@@ -83,13 +84,15 @@ export const compileQueryInput = (
     },
   );
 
-  // If no further query processing should happen, we need to return early.
+  // If no further query processing should happen, we need to return early. This happens
+  // when the root model is created.
   if (query === null)
     return {
       dependencies: [],
       main: dependencyStatements[0],
       selectedFields: [],
       model: ROOT_MODEL_WITH_ATTRIBUTES,
+      updatedQuery: defaultQuery,
     };
 
   // Split out the individual components of the query.
@@ -344,5 +347,6 @@ export const compileQueryInput = (
     main: mainStatement,
     selectedFields,
     model,
+    updatedQuery: query,
   };
 };
