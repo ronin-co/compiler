@@ -574,6 +574,7 @@ export type {
   CountQuery,
   CountInstructions,
   CountInstructions as CountQueryInstructions,
+  ListQuery,
   CreateQuery,
   AlterQuery,
   DropQuery,
