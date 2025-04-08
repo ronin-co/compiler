@@ -149,7 +149,7 @@ class Transaction {
               [queryType]: { [model.pluralSlug]: instructions },
             };
 
-            return { query, index, resultingFromExpansion: true };
+            return { query, index, expansion: true };
           });
         }
 
