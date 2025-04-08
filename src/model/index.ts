@@ -679,6 +679,10 @@ export const transformMetaQuery = (
     }
   }
 
+  if ('get' in query && query.get && slug) {
+    return { get: { model: { with: { slug } } } };
+  }
+
   if (!(modelSlug && slug)) return query;
 
   const model =
