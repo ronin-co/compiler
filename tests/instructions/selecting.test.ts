@@ -5,7 +5,7 @@ import {
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
 import { type Model, type Query, Transaction } from '@/src/index';
-import type { SingleRecordResult } from '@/src/types/result';
+import type { MultipleRecordResult, SingleRecordResult } from '@/src/types/result';
 
 test('get single record with specific field', async () => {
   const queries: Array<Query> = [
@@ -422,4 +422,67 @@ test('get single record with specific fields (all levels, any suffix)', async ()
       createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
     },
   });
+});
+
+test('select same fields as preset does', async () => {
+  const queries: Array<Query> = [
+    {
+      get: {
+        beaches: {
+          using: ['links', 'preset'],
+          limitedTo: 50,
+          selecting: ['id', 'name', 'division', 'ronin.createdAt'],
+          with: { name: { containing: 'B' } },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'beach',
+      fields: {
+        name: {
+          type: 'string',
+        },
+        division: {
+          type: 'string',
+        },
+      },
+      presets: {
+        preset: {
+          name: 'Beaches',
+          instructions: {
+            selecting: ['id', 'name', 'division'],
+          },
+          system: true,
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement:
+        'SELECT "id", "name", "division", "ronin.createdAt" FROM "beaches" WHERE "name" LIKE ?1 ORDER BY "ronin.createdAt" DESC LIMIT 51',
+      params: ['%B%'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
+
+  expect(result.records).toMatchObject([
+    {
+      id: expect.stringMatching(RECORD_ID_REGEX),
+      name: expect.any(String),
+      division: expect.any(String),
+      ronin: {
+        createdAt: expect.stringMatching(RECORD_TIMESTAMP_REGEX),
+      },
+    },
+  ]);
 });
