@@ -71,10 +71,12 @@ export const handleUsing = (
         let newValue: unknown;
 
         if (Array.isArray(currentValue)) {
-          newValue = [
-            ...(replacedUsingFilter[instructionName] as Array<unknown>),
-            ...(currentValue as Array<unknown>),
-          ];
+          newValue = Array.from(
+            new Set([
+              ...(replacedUsingFilter[instructionName] as Array<unknown>),
+              ...(currentValue as Array<unknown>),
+            ]),
+          );
         } else if (isObject(currentValue)) {
           newValue = {
             ...(replacedUsingFilter[instructionName] as object),

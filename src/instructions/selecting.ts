@@ -41,6 +41,7 @@ export const handleSelecting = (
     including: Instructions['including'];
     orderedBy: Instructions['orderedBy'];
     limitedTo: Instructions['limitedTo'];
+    using: Instructions['using'];
   },
   options: {
     /** The path on which the selected fields should be mounted in the final record. */
