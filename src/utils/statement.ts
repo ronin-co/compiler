@@ -169,15 +169,6 @@ export const parseFieldExpression = (
     if (match.startsWith(QUERY_SYMBOLS.FIELD_PARENT)) {
       rootModel = parentModel as Model;
       toReplace = QUERY_SYMBOLS.FIELD_PARENT;
-
-      // If the old or new value of a field in the parent model is being referenced, we
-      // can't use the table name directly and instead have to resort to using special
-      // keywords such as `OLD` and `NEW` as the table names, which SQLite will handle.
-      if (match.startsWith(QUERY_SYMBOLS.FIELD_PARENT_OLD)) {
-        rootModel.tableAlias = toReplace = QUERY_SYMBOLS.FIELD_PARENT_OLD;
-      } else if (match.startsWith(QUERY_SYMBOLS.FIELD_PARENT_NEW)) {
-        rootModel.tableAlias = toReplace = QUERY_SYMBOLS.FIELD_PARENT_NEW;
-      }
     }
 
     const fieldSlug = match.replace(toReplace, '');

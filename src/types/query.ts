@@ -3,7 +3,6 @@ import type {
   ModelField,
   ModelIndex,
   ModelPreset,
-  ModelTrigger,
   Model as PrivateModel,
   PublicModel,
 } from '@/src/types/model';
@@ -16,7 +15,7 @@ import {
 // Query Types
 export type QueryTypeEnum = (typeof DML_QUERY_TYPES)[number];
 export type ModelQueryTypeEnum = (typeof DDL_QUERY_TYPES)[number];
-export type ModelEntityEnum = 'field' | 'index' | 'trigger' | 'preset';
+export type ModelEntityEnum = 'field' | 'index' | 'preset';
 
 // Field and Expressions
 export type FieldValue = string | number | boolean | null | unknown;
@@ -164,13 +163,10 @@ export type CreateQuery = {
 
 export type AlterQuery = {
   model: string;
-  to?: Partial<
-    Omit<PublicModel, 'fields' | 'indexes' | 'triggers' | 'presets' | 'idPrefix'>
-  >;
+  to?: Partial<Omit<PublicModel, 'fields' | 'indexes' | 'presets' | 'idPrefix'>>;
   create?: {
     field?: Omit<ModelField, 'system'>;
     index?: Omit<ModelIndex, 'system'>;
-    trigger?: Omit<ModelTrigger, 'system'>;
     preset?: Omit<ModelPreset, 'system'>;
   };
   alter?:
@@ -181,10 +177,6 @@ export type AlterQuery = {
     | {
         index?: string;
         to?: Partial<Omit<ModelIndex, 'system'>>;
-      }
-    | {
-        trigger?: string;
-        to?: Omit<ModelTrigger, 'system'>;
       }
     | {
         preset?: string;

@@ -4,7 +4,6 @@ import {
   type ModelField,
   type ModelIndex,
   type ModelPreset,
-  type ModelTrigger,
   QUERY_SYMBOLS,
   type Query,
   ROOT_MODEL,
@@ -51,26 +50,6 @@ test('create new model', () => {
     },
   };
 
-  const triggers: Model['triggers'] = {
-    triggerSlug: {
-      when: 'AFTER',
-      action: 'INSERT',
-      effects: [
-        {
-          [QUERY_SYMBOLS.QUERY]: {
-            add: {
-              signup: {
-                with: {
-                  year: 2000,
-                },
-              },
-            },
-          },
-        },
-      ],
-    },
-  };
-
   const indexes: Model['indexes'] = {
     indexSlug: {
       fields: [
@@ -97,7 +76,7 @@ test('create new model', () => {
   const queries: Array<Query> = [
     {
       create: {
-        model: { slug: 'account', fields, indexes, triggers, presets },
+        model: { slug: 'account', fields, indexes, presets },
       },
     },
   ];
@@ -123,13 +102,8 @@ test('create new model', () => {
       statement: 'CREATE UNIQUE INDEX "index_slug" ON "accounts" ("handle")',
     },
     {
-      params: [],
       statement:
-        'CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END',
-    },
-    {
-      statement:
-        'INSERT INTO "ronin_schema" ("slug", "fields", "indexes", "triggers", "presets", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
+        'INSERT INTO "ronin_schema" ("slug", "fields", "indexes", "presets", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"',
       params: [
         'account',
         JSON.stringify({
@@ -142,7 +116,6 @@ test('create new model', () => {
           ),
         }),
         JSON.stringify(indexes),
-        JSON.stringify(triggers),
         JSON.stringify(presets),
         expect.stringMatching(RECORD_ID_REGEX),
         'accounts',
@@ -284,7 +257,7 @@ test('list existing models', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets" FROM "ronin_schema"',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets" FROM "ronin_schema"',
       params: [],
       returning: true,
     },
@@ -293,8 +266,8 @@ test('list existing models', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as MultipleRecordResult;
 
-  // Assert that the `fields`, `indexes`, `triggers`, and `presets` properties are
-  // formatted correctly, in order to match the `Model` type.
+  // Assert that the `fields`, `indexes`, and `presets` properties are formatted
+  // correctly, in order to match the `Model` type.
   expect(result.records).toEqual([
     {
       id: expect.stringMatching(RECORD_ID_REGEX),
@@ -322,7 +295,6 @@ test('list existing models', async () => {
         },
       },
       indexes: {},
-      triggers: {},
       presets: {},
     },
   ]);
@@ -353,7 +325,7 @@ test('list existing model', async () => {
   expect(transaction.statements).toEqual([
     {
       statement:
-        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets" FROM "ronin_schema" WHERE "slug" = ?1 LIMIT 1',
+        'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets" FROM "ronin_schema" WHERE "slug" = ?1 LIMIT 1',
       params: ['account'],
       returning: true,
     },
@@ -362,8 +334,8 @@ test('list existing model', async () => {
   const rawResults = await queryEphemeralDatabase(models, transaction.statements);
   const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
 
-  // Assert that the `fields`, `indexes`, `triggers`, and `presets` properties are
-  // formatted correctly, in order to match the `Model` type.
+  // Assert that the `fields`, `indexes`, and `presets` properties are formatted
+  // correctly, in order to match the `Model` type.
   expect(result.record).toEqual({
     id: expect.stringMatching(RECORD_ID_REGEX),
     ronin: {
@@ -390,7 +362,6 @@ test('list existing model', async () => {
       },
     },
     indexes: {},
-    triggers: {},
     presets: {},
   });
 });
@@ -423,7 +394,7 @@ test('alter existing model (slug)', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "table" = ?3, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?4 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "table" = ?3, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?4 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['user', 'users', 'users', 'account'],
       returning: true,
     },
@@ -473,7 +444,7 @@ test('alter existing model (slug) that has system models associated with it', ()
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "table" = ?3, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?4 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "table" = ?3, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?4 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['account', 'accounts', 'accounts', 'user'],
       returning: true,
     },
@@ -504,7 +475,7 @@ test('alter existing model (plural name)', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "pluralName" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "pluralName" = ?1, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['Signups', 'account'],
       returning: true,
     },
@@ -535,7 +506,7 @@ test('drop existing model', () => {
     },
     {
       statement:
-        'DELETE FROM "ronin_schema" WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
+        'DELETE FROM "ronin_schema" WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"',
       params: ['account'],
       returning: true,
     },
@@ -602,10 +573,10 @@ test('query a model that was just created', () => {
   // order in which the queries are provided.
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
     `CREATE TABLE "accounts" ("id" TEXT PRIMARY KEY DEFAULT ('acc_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT)`,
-    'INSERT INTO "ronin_schema" ("slug", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
+    'INSERT INTO "ronin_schema" ("slug", "id", "pluralSlug", "name", "pluralName", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields") VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"',
     'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "accounts" LIMIT 1',
     'DROP TABLE "accounts"',
-    'DELETE FROM "ronin_schema" WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"',
+    'DELETE FROM "ronin_schema" WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"',
   ]);
 });
 
@@ -638,7 +609,7 @@ test('query a model that was just updated', () => {
   // order in which the queries are provided.
   expect(transaction.statements.map(({ statement }) => statement)).toEqual([
     'ALTER TABLE "accounts" RENAME TO "users"',
-    `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "table" = ?3, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?4 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+    `UPDATE "ronin_schema" SET "slug" = ?1, "pluralSlug" = ?2, "table" = ?3, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?4 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
     'SELECT "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy" FROM "users" LIMIT 1',
   ]);
 });
@@ -712,7 +683,7 @@ test('create new field', async () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.email', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.email', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(finalField), 'account'],
       returning: true,
     },
@@ -769,7 +740,7 @@ test('create new field with options', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.account', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify({ ...omit(field, ['slug']), name: 'Account' }), 'member'],
       returning: true,
     },
@@ -809,7 +780,7 @@ test('create new field with many-cardinality relationship', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.followers', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.followers', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [
         JSON.stringify({ ...omit(field, ['slug']), name: 'Followers' }),
         'account',
@@ -856,7 +827,7 @@ test('create new field with default value (json)', async () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.settings', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert("fields", '$.settings', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(finalField), 'account'],
       returning: true,
     },
@@ -910,7 +881,7 @@ test('alter existing field (slug)', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.email'), '$.emailAddress', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.email'), '$.emailAddress', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify({ type: 'string', name: 'Email Address' }), 'account'],
       returning: true,
     },
@@ -958,7 +929,7 @@ test('alter existing field (slug) with many-cardinality relationship', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.followers'), '$.subscribers', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_insert(json_remove("fields", '$.followers'), '$.subscribers', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [
         JSON.stringify({
           type: 'link',
@@ -1005,7 +976,7 @@ test('alter existing field (name)', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_set("fields", '$.email', json_patch(json_extract("fields", '$.email'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(newFieldDetails), 'account'],
       returning: true,
     },
@@ -1041,7 +1012,7 @@ test('drop existing field', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.email'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.email'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['account'],
       returning: true,
     },
@@ -1090,7 +1061,7 @@ test('drop existing field that has system models associated with it', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.followers'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "fields" = json_remove("fields", '$.followers'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['account'],
       returning: true,
     },
@@ -1177,7 +1148,7 @@ test('create new index', async () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(finalIndex), 'account'],
       returning: true,
     },
@@ -1234,7 +1205,7 @@ test('create new index with filter', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(omit(index, ['slug'])), 'account'],
       returning: true,
     },
@@ -1280,7 +1251,7 @@ test('create new index with field expressions', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(omit(index, ['slug'])), 'account'],
       returning: true,
     },
@@ -1327,7 +1298,7 @@ test('create new index with ordered and collated fields', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(omit(index, ['slug'])), 'account'],
       returning: true,
     },
@@ -1373,7 +1344,7 @@ test('create new unique index', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_insert("indexes", '$.indexSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(omit(index, ['slug'])), 'account'],
       returning: true,
     },
@@ -1414,468 +1385,8 @@ test('drop existing index', () => {
       params: [],
     },
     {
-      statement: `UPDATE "ronin_schema" SET "indexes" = json_remove("indexes", '$.indexSlug'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "indexes" = json_remove("indexes", '$.indexSlug'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['account'],
-      returning: true,
-    },
-  ]);
-});
-
-test('create new trigger', async () => {
-  const trigger: ModelTrigger = {
-    slug: 'triggerSlug',
-    when: 'AFTER',
-    action: 'INSERT',
-    effects: [
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          add: {
-            signup: {
-              with: {
-                year: 2000,
-              },
-            },
-          },
-        },
-      },
-    ],
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        create: {
-          trigger,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'signup',
-      fields: {
-        year: { type: 'number' },
-      },
-    },
-    {
-      slug: 'account',
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  const finalTrigger = omit(trigger, ['slug']);
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END`,
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(finalTrigger), 'account'],
-      returning: true,
-    },
-  ]);
-
-  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
-  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
-
-  expect(result.record).toHaveProperty('triggers', {
-    triggerSlug: finalTrigger,
-  });
-});
-
-test('create new trigger with targeted fields', () => {
-  const trigger: ModelTrigger = {
-    slug: 'triggerSlug',
-    when: 'AFTER',
-    action: 'UPDATE',
-    effects: [
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          add: {
-            signup: {
-              with: {
-                year: 2000,
-              },
-            },
-          },
-        },
-      },
-    ],
-    fields: [
-      {
-        slug: 'email',
-      },
-    ],
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        create: {
-          trigger,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'signup',
-      fields: {
-        year: { type: 'number' },
-      },
-    },
-    {
-      slug: 'account',
-      fields: {
-        email: { type: 'string' },
-      },
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER UPDATE OF ("email") ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); END`,
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(trigger, ['slug'])), 'account'],
-      returning: true,
-    },
-  ]);
-});
-
-test('create new trigger with multiple effects', () => {
-  const trigger: ModelTrigger = {
-    slug: 'triggerSlug',
-    when: 'AFTER',
-    action: 'INSERT',
-    effects: [
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          add: {
-            signup: {
-              with: {
-                year: 2000,
-              },
-            },
-          },
-        },
-      },
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          add: {
-            candidate: {
-              with: {
-                year: 2020,
-              },
-            },
-          },
-        },
-      },
-    ],
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        create: {
-          trigger,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'candidate',
-      fields: {
-        year: { type: 'number' },
-      },
-    },
-    {
-      slug: 'signup',
-      fields: {
-        year: { type: 'number' },
-      },
-    },
-    {
-      slug: 'account',
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "accounts" BEGIN INSERT INTO "signups" ("year") VALUES (2000); INSERT INTO "candidates" ("year") VALUES (2020); END`,
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(trigger, ['slug'])), 'account'],
-      returning: true,
-    },
-  ]);
-});
-
-test('create new per-record trigger for creating records', () => {
-  const trigger: ModelTrigger = {
-    slug: 'triggerSlug',
-    when: 'AFTER',
-    action: 'INSERT',
-    effects: [
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          add: {
-            member: {
-              with: {
-                account: {
-                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
-                },
-                role: 'owner',
-                pending: false,
-              },
-            },
-          },
-        },
-      },
-    ],
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'team',
-        create: {
-          trigger,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'team',
-      fields: {
-        createdBy: { type: 'string' },
-      },
-    },
-    {
-      slug: 'member',
-      fields: {
-        account: { type: 'string' },
-        role: { type: 'string' },
-        pending: { type: 'boolean' },
-      },
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 0); END`,
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(trigger, ['slug'])), 'team'],
-      returning: true,
-    },
-  ]);
-});
-
-test('create new per-record trigger for removing records', () => {
-  const trigger: ModelTrigger = {
-    slug: 'triggerSlug',
-    when: 'AFTER',
-    action: 'DELETE',
-    effects: [
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          remove: {
-            members: {
-              with: {
-                account: {
-                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_OLD}createdBy`,
-                },
-              },
-            },
-          },
-        },
-      },
-    ],
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'team',
-        create: {
-          trigger,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'team',
-      fields: {
-        createdBy: { type: 'string' },
-      },
-    },
-    {
-      slug: 'member',
-      fields: {
-        account: { type: 'string' },
-        role: { type: 'string' },
-        pending: { type: 'boolean' },
-      },
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement:
-        'CREATE TRIGGER "trigger_slug" AFTER DELETE ON "teams" FOR EACH ROW BEGIN DELETE FROM "members" WHERE "account" = OLD."createdBy"; END',
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(trigger, ['slug'])), 'team'],
-      returning: true,
-    },
-  ]);
-});
-
-test('create new per-record trigger with filters for creating records', () => {
-  const trigger: ModelTrigger = {
-    slug: 'triggerSlug',
-    when: 'AFTER',
-    action: 'INSERT',
-    effects: [
-      {
-        [QUERY_SYMBOLS.QUERY]: {
-          add: {
-            member: {
-              with: {
-                account: {
-                  [QUERY_SYMBOLS.EXPRESSION]: `${QUERY_SYMBOLS.FIELD_PARENT_NEW}createdBy`,
-                },
-                role: 'owner',
-                pending: false,
-              },
-            },
-          },
-        },
-      },
-    ],
-    filter: {
-      handle: {
-        endingWith: '_hidden',
-      },
-    },
-  };
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'team',
-        create: {
-          trigger,
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'team',
-      fields: {
-        handle: { type: 'string' },
-        createdBy: { type: 'string' },
-      },
-    },
-    {
-      slug: 'member',
-      fields: {
-        account: { type: 'string' },
-        role: { type: 'string' },
-        pending: { type: 'boolean' },
-      },
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: `CREATE TRIGGER "trigger_slug" AFTER INSERT ON "teams" FOR EACH ROW WHEN (NEW."handle" LIKE '%_hidden') BEGIN INSERT INTO "members" ("account", "role", "pending") VALUES (NEW."createdBy", 'owner', 0); END`,
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_insert("triggers", '$.triggerSlug', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: [JSON.stringify(omit(trigger, ['slug'])), 'team'],
-      returning: true,
-    },
-  ]);
-});
-
-test('drop existing trigger', () => {
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'team',
-        drop: {
-          trigger: 'triggerSlug',
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'team',
-      triggers: {
-        triggerSlug: {
-          when: 'AFTER',
-          action: 'INSERT',
-          effects: [
-            {
-              [QUERY_SYMBOLS.QUERY]: {
-                add: { member: { with: { account: 'test' } } },
-              },
-            },
-          ],
-        },
-      },
-    },
-  ];
-
-  const transaction = new Transaction(queries, { models });
-
-  expect(transaction.statements).toEqual([
-    {
-      statement: 'DROP TRIGGER "trigger_slug"',
-      params: [],
-    },
-    {
-      statement: `UPDATE "ronin_schema" SET "triggers" = json_remove("triggers", '$.triggerSlug'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
-      params: ['team'],
       returning: true,
     },
   ]);
@@ -1919,7 +1430,7 @@ test('create new preset', async () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_insert("presets", '$.companyEmployees', json(?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(finalPreset), 'account'],
       returning: true,
     },
@@ -1974,7 +1485,7 @@ test('alter existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.companyEmployees', json_patch(json_extract("presets", '$.companyEmployees'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_set("presets", '$.companyEmployees', json_patch(json_extract("presets", '$.companyEmployees'), ?1)), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?2 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: [JSON.stringify(newPresetDetails), 'account'],
       returning: true,
     },
@@ -2011,7 +1522,7 @@ test('drop existing preset', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "triggers", "presets"`,
+      statement: `UPDATE "ronin_schema" SET "presets" = json_remove("presets", '$.companyEmployees'), "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "slug" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "name", "pluralName", "slug", "pluralSlug", "idPrefix", "table", "identifiers.name", "identifiers.slug", "fields", "indexes", "presets"`,
       params: ['account'],
       returning: true,
     },
@@ -2034,7 +1545,7 @@ test('create the root model', () => {
 
   expect(transaction.statements).toEqual([
     {
-      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY DEFAULT ('mod_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "triggers" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
+      statement: `CREATE TABLE "ronin_schema" ("id" TEXT PRIMARY KEY DEFAULT ('mod_' || lower(substr(hex(randomblob(12)), 1, 16))), "ronin.createdAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.createdBy" TEXT, "ronin.updatedAt" DATETIME DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'), "ronin.updatedBy" TEXT, "name" TEXT, "pluralName" TEXT, "slug" TEXT, "pluralSlug" TEXT, "idPrefix" TEXT, "table" TEXT, "identifiers.name" TEXT, "identifiers.slug" TEXT, "fields" TEXT DEFAULT '{}', "indexes" TEXT DEFAULT '{}', "presets" TEXT DEFAULT '{}')`,
       params: [],
     },
   ]);
@@ -2190,67 +1701,6 @@ test('try to drop a system field', () => {
     'The field "id" is a system field and cannot be removed.',
   );
   expect(error).toHaveProperty('code', 'REQUIRED_MODEL_ENTITY');
-});
-
-test('try to create new trigger with targeted fields and wrong action', () => {
-  const effectQueries: ModelTrigger['effects'] = [
-    {
-      [QUERY_SYMBOLS.QUERY]: {
-        add: {
-          signup: {
-            with: {
-              year: 2000,
-            },
-          },
-        },
-      },
-    },
-  ];
-
-  const queries: Array<Query> = [
-    {
-      alter: {
-        model: 'account',
-        create: {
-          trigger: {
-            slug: 'triggerSlug',
-            when: 'AFTER',
-            action: 'INSERT',
-            fields: [{ slug: 'email' }],
-            effects: effectQueries,
-          },
-        },
-      },
-    },
-  ];
-
-  const models: Array<Model> = [
-    {
-      slug: 'signup',
-      fields: {
-        year: { type: 'number' },
-      },
-    },
-    {
-      slug: 'account',
-    },
-  ];
-
-  let error: Error | undefined;
-
-  try {
-    new Transaction(queries, { models });
-  } catch (err) {
-    error = err as Error;
-  }
-
-  expect(error).toBeInstanceOf(RoninError);
-  expect(error).toHaveProperty(
-    'message',
-    'When creating triggers, targeting specific fields requires the `UPDATE` action.',
-  );
-  expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
-  expect(error).toHaveProperty('fields', ['action']);
 });
 
 test('try to create new index without fields', () => {

@@ -547,7 +547,6 @@ export type {
   PublicModel as Model,
   ModelField,
   ModelIndex,
-  ModelTrigger,
   ModelPreset,
 } from '@/src/types/model';
 
