@@ -12,7 +12,6 @@ import type {
   ModelField,
   ModelFieldLinkAction,
   ModelIndex,
-  ModelTrigger,
   PartialModel,
   PublicModel,
 } from '@/src/types/model';
@@ -33,7 +32,6 @@ import {
   RoninError,
   convertToCamelCase,
   convertToSnakeCase,
-  findInObject,
   getQuerySymbol,
   splitQuery,
 } from '@/src/utils/helpers';
@@ -290,7 +288,6 @@ export const ROOT_MODEL: PartialModel = {
     // which makes the statement shorter.
     fields: { type: 'json', defaultValue: {} },
     indexes: { type: 'json', defaultValue: {} },
-    triggers: { type: 'json', defaultValue: {} },
     presets: { type: 'json', defaultValue: {} },
   },
 };
@@ -440,13 +437,13 @@ const getFieldStatement = (
 
     statement += ` REFERENCES ${targetTable}("id")`;
 
-    for (const trigger in actions) {
-      if (!Object.hasOwn(actions, trigger)) continue;
+    for (const cause in actions) {
+      if (!Object.hasOwn(actions, cause)) continue;
 
-      const triggerName = trigger.toUpperCase().slice(2);
-      const action = actions[trigger as keyof typeof actions] as ModelFieldLinkAction;
+      const causeName = cause.toUpperCase().slice(2);
+      const action = actions[cause as keyof typeof actions] as ModelFieldLinkAction;
 
-      statement += ` ON ${triggerName} ${action}`;
+      statement += ` ON ${causeName} ${action}`;
     }
   }
 
@@ -457,7 +454,6 @@ const getFieldStatement = (
 const PLURAL_MODEL_ENTITIES = {
   field: 'fields',
   index: 'indexes',
-  trigger: 'triggers',
   preset: 'presets',
 } as const;
 
@@ -743,36 +739,30 @@ export const transformMetaQuery = (
         params: [],
       });
 
-      // Compose the SQL statements for creating indexes and triggers.
-      for (const [modelEntity, pluralModelEntity] of [
-        ['index', 'indexes'],
-        ['trigger', 'triggers'],
-      ] as const) {
-        const entityList = modelWithPresets[pluralModelEntity];
-        if (!entityList) continue;
+      const entityList = modelWithPresets.indexes;
 
-        for (const [itemSlug, item] of Object.entries(entityList)) {
-          const query: Query = {
-            alter: {
-              model: modelWithPresets.slug,
-              create: {
-                [modelEntity]: { slug: itemSlug, ...item },
-              },
+      // Compose the SQL statements for creating indexes.
+      for (const [itemSlug, item] of Object.entries(entityList || {})) {
+        const query: Query = {
+          alter: {
+            model: modelWithPresets.slug,
+            create: {
+              index: { slug: itemSlug, ...item },
             },
-          };
+          },
+        };
 
-          // Create a temporary list of models on which `transformMetaQuery` will operate,
-          // which ensures that `modelWithPresets` is not modified in place.
-          const tempModels: Array<Model> = [
-            ...models.filter((model) => model.slug !== modelWithPresets.slug),
-            { ...modelWithPresets, indexes: {}, triggers: {} } as Model,
-          ];
+        // Create a temporary list of models on which `transformMetaQuery` will operate,
+        // which ensures that `modelWithPresets` is not modified in place.
+        const tempModels: Array<Model> = [
+          ...models.filter((model) => model.slug !== modelWithPresets.slug),
+          { ...modelWithPresets, indexes: {} } as Model,
+        ];
 
-          // The `dependencyStatements` array is modified in place.
-          transformMetaQuery(tempModels, dependencyStatements, null, query, {
-            inlineDefaults: options.inlineDefaults,
-          });
-        }
+        // The `dependencyStatements` array is modified in place.
+        transformMetaQuery(tempModels, dependencyStatements, null, query, {
+          inlineDefaults: options.inlineDefaults,
+        });
       }
 
       queryTypeDetails = { with: modelWithPresets };
@@ -1011,86 +1001,6 @@ export const transformMetaQuery = (
         const withStatement = handleWith(models, existingModel, null, index.filter);
         statement += ` WHERE (${withStatement})`;
       }
-    }
-
-    dependencyStatements.push({ statement, params: [] });
-  }
-
-  if (entity === 'trigger') {
-    const triggerName = convertToSnakeCase(slug);
-
-    let statement = `${statementAction} TRIGGER "${triggerName}"`;
-
-    if (action === 'create') {
-      const trigger = jsonValue as ModelTrigger;
-
-      // The different parts of the final statement.
-      const statementParts: Array<string> = [`${trigger.when} ${trigger.action}`];
-
-      if (trigger.fields) {
-        if (trigger.action !== 'UPDATE') {
-          throw new RoninError({
-            message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, targeting specific fields requires the \`UPDATE\` action.`,
-            code: 'INVALID_MODEL_VALUE',
-            fields: ['action'],
-          });
-        }
-
-        const fieldSelectors = trigger.fields.map((field) => {
-          return getFieldFromModel(existingModel, field.slug, {
-            modelEntityType: 'trigger',
-            modelEntityName: triggerName,
-          }).fieldSelector;
-        });
-
-        statementParts.push(`OF (${fieldSelectors.join(', ')})`);
-      }
-
-      statementParts.push('ON', `"${existingModel.table}"`);
-
-      // If filtering instructions were defined, or if the effect query references
-      // specific record fields, that means the trigger must be executed on a per-record
-      // basis, meaning "for each row", instead of on a per-query basis.
-      if (
-        trigger.filter ||
-        trigger.effects.some((query) => findInObject(query, QUERY_SYMBOLS.FIELD))
-      ) {
-        statementParts.push('FOR EACH ROW');
-      }
-
-      // If filtering instructions were defined, add them to the trigger. Those
-      // instructions will be validated for every row, and only if they match, the trigger
-      // will then be fired.
-      if (trigger.filter) {
-        const tableAlias =
-          trigger.action === 'DELETE'
-            ? QUERY_SYMBOLS.FIELD_PARENT_OLD
-            : QUERY_SYMBOLS.FIELD_PARENT_NEW;
-
-        const withStatement = handleWith(
-          models,
-          { ...existingModel, tableAlias: tableAlias },
-          null,
-          trigger.filter,
-        );
-
-        statementParts.push('WHEN', `(${withStatement})`);
-      }
-
-      // Compile the effect queries into SQL statements.
-      const effectStatements = trigger.effects.map((effectQuery) => {
-        return compileQueryInput(effectQuery[QUERY_SYMBOLS.QUERY], models, null, {
-          returning: false,
-          parentModel: existingModel,
-          inlineDefaults: options.inlineDefaults,
-        }).main.statement;
-      });
-
-      statementParts.push('BEGIN');
-      statementParts.push(`${effectStatements.join('; ')};`);
-      statementParts.push('END');
-
-      statement += ` ${statementParts.join(' ')}`;
     }
 
     dependencyStatements.push({ statement, params: [] });

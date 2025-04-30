@@ -1,10 +1,4 @@
-import type {
-  Expression,
-  GetInstructions,
-  Query,
-  WithInstruction,
-} from '@/src/types/query';
-import type { QUERY_SYMBOLS } from '@/src/utils/constants';
+import type { Expression, GetInstructions, WithInstruction } from '@/src/types/query';
 
 type ModelFieldCollation = 'BINARY' | 'NOCASE' | 'RTRIM';
 
@@ -164,36 +158,6 @@ export type ModelIndex<
   filter?: WithInstruction;
 };
 
-export type ModelTriggerField<
-  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
-> = {
-  /**
-   * The slug of the field that should cause the trigger to fire if the value of the
-   * field has changed.
-   */
-  slug: keyof T;
-};
-
-export type ModelTrigger<
-  T extends ModelEntityList<ModelField> = ModelEntityList<ModelField>,
-> = {
-  /** The identifier of the trigger. */
-  slug: string;
-  /** The type of query for which the trigger should fire. */
-  action: 'INSERT' | 'UPDATE' | 'DELETE';
-  /** When the trigger should fire in the case that a matching query is executed. */
-  when: 'BEFORE' | 'DURING' | 'AFTER';
-  /** A list of queries that should be executed when the trigger fires. */
-  effects: Array<Record<typeof QUERY_SYMBOLS.QUERY, Query>>;
-  /** A list of field slugs for which the trigger should fire. */
-  fields?: Array<ModelTriggerField<T>>;
-  /**
-   * An object containing query instructions used to determine whether the trigger should
-   * fire, or not.
-   */
-  filter?: WithInstruction;
-};
-
 export type ModelPreset = {
   /** The visual display name of the preset. */
   name?: string;
@@ -205,7 +169,7 @@ export type ModelPreset = {
   system?: boolean;
 };
 
-export type ModelEntity = ModelField | ModelIndex | ModelTrigger | ModelPreset;
+export type ModelEntity = ModelField | ModelIndex | ModelPreset;
 
 export type ModelEntityList<T extends { slug: string }> = Record<
   NonNullable<T['slug']>,
@@ -257,7 +221,6 @@ export interface Model<
   // add the default fields automatically, and those are enough to create a model.
   fields: T;
   indexes?: ModelEntityList<ModelIndex<T>>;
-  triggers?: ModelEntityList<ModelTrigger<T>>;
   presets?: ModelEntityList<ModelPreset>;
 }
 
