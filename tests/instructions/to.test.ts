@@ -115,6 +115,53 @@ test('set single record to new blob field', async () => {
   expect(result.record?.avatar).toMatchObject(storedObject);
 });
 
+test('set single record to new blob field with invalid value', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            avatar: 'storedObject',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: {
+        handle: {
+          type: 'string',
+        },
+        avatar: {
+          type: 'blob',
+        },
+      },
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'The provided field value is not a valid Blob reference.',
+  );
+  expect(error).toHaveProperty('code', 'INVALID_FIELD_VALUE');
+  expect(error).toHaveProperty('field', 'avatar');
+});
+
 test('set single record to new string field with expression referencing fields', async () => {
   const queries: Array<Query> = [
     {
@@ -550,6 +597,53 @@ test('set single record to new json field with object', async () => {
     site: 'elaine@site.co',
     hobby: 'dancer@dancing.co',
   });
+});
+
+test('set single record to new json field with invalid value', () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            emails: 'elaine@site.co',
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: {
+        handle: {
+          type: 'string',
+        },
+        emails: {
+          type: 'json',
+        },
+      },
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'The provided field value is not valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.',
+  );
+  expect(error).toHaveProperty('code', 'INVALID_FIELD_VALUE');
+  expect(error).toHaveProperty('field', 'emails');
 });
 
 test('set single record to new nested string field', async () => {
