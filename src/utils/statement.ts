@@ -329,15 +329,30 @@ export const composeConditions = (
       const { field: modelField } = fieldDetails || {};
 
       // If the `to` instruction is used, JSON should be written as-is.
-      const consumeJSON =
+      const fieldIsJSON =
         (modelField?.type === 'json' || modelField?.type === 'blob') &&
         instructionName === 'to';
 
-      if (
-        (modelField && !(isObject(value) || Array.isArray(value))) ||
-        getQuerySymbol(value) ||
-        consumeJSON
-      ) {
+      // Whether the value contains valid JSON. We are purposefully not considering any
+      // primitive value that could be serialized as JSON here (such as integers), since
+      // those should be stored in their dedicated primitive field types.
+      const valueIsJSON =
+        isObject(value) || (modelField?.type === 'blob' ? null : Array.isArray(value));
+
+      if (!valueIsJSON || getQuerySymbol(value) || fieldIsJSON) {
+        if (modelField && fieldIsJSON && !valueIsJSON) {
+          const message =
+            modelField.type === 'json'
+              ? 'The provided field value is not valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.'
+              : 'The provided field value is not a valid Blob reference.';
+
+          throw new RoninError({
+            message,
+            field: modelField?.slug,
+            code: 'INVALID_FIELD_VALUE',
+          });
+        }
+
         return composeFieldValues(
           models,
           model,
