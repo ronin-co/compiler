@@ -156,10 +156,10 @@ test('set single record to new blob field with invalid value', () => {
   expect(error).toBeInstanceOf(RoninError);
   expect(error).toHaveProperty(
     'message',
-    'The provided field value is not valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.',
+    'The provided field value is not a valid Blob reference.',
   );
   expect(error).toHaveProperty('code', 'INVALID_FIELD_VALUE');
-  expect(error).toHaveProperty('field', 'emails');
+  expect(error).toHaveProperty('field', 'avatar');
 });
 
 test('set single record to new string field with expression referencing fields', async () => {
