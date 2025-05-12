@@ -341,10 +341,11 @@ export const composeConditions = (
 
       if (!valueIsJSON || getQuerySymbol(value) || fieldIsJSON) {
         if (modelField && fieldIsJSON && !valueIsJSON) {
+          const messagePrefix = 'The provided field value is not';
           const message =
             modelField.type === 'json'
-              ? 'The provided field value is not valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.'
-              : 'The provided field value is not a valid Blob reference.';
+              ? `${messagePrefix} valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.`
+              : `${messagePrefix} a valid Blob reference.`;
 
           throw new RoninError({
             message,
