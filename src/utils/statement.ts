@@ -340,7 +340,7 @@ export const composeConditions = (
         isObject(value) || (modelField?.type === 'blob' ? null : Array.isArray(value));
 
       if (!valueIsJSON || getQuerySymbol(value) || fieldIsJSON) {
-        if (modelField && fieldIsJSON && !valueIsJSON) {
+        if (modelField && fieldIsJSON && !valueIsJSON && value !== null) {
           const messagePrefix = 'The provided field value is not';
           const message =
             modelField.type === 'json'

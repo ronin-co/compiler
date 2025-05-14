@@ -162,6 +162,52 @@ test('set single record to new blob field with invalid value', () => {
   expect(error).toHaveProperty('field', 'avatar');
 });
 
+test('set single record to new blob field with empty value', async () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            avatar: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: {
+        handle: {
+          type: 'string',
+        },
+        avatar: {
+          type: 'blob',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "avatar" = NULL, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "avatar"`,
+      params: ['elaine'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.avatar).toBeNull();
+});
+
 test('set single record to new string field with expression referencing fields', async () => {
   const queries: Array<Query> = [
     {
@@ -644,6 +690,52 @@ test('set single record to new json field with invalid value', () => {
   );
   expect(error).toHaveProperty('code', 'INVALID_FIELD_VALUE');
   expect(error).toHaveProperty('field', 'emails');
+});
+
+test('set single record to new json field with empty value', async () => {
+  const queries: Array<Query> = [
+    {
+      set: {
+        account: {
+          with: {
+            handle: 'elaine',
+          },
+          to: {
+            emails: null,
+          },
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+      fields: {
+        handle: {
+          type: 'string',
+        },
+        emails: {
+          type: 'json',
+        },
+      },
+    },
+  ];
+
+  const transaction = new Transaction(queries, { models });
+
+  expect(transaction.statements).toEqual([
+    {
+      statement: `UPDATE "accounts" SET "emails" = NULL, "ronin.updatedAt" = strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z' WHERE "handle" = ?1 RETURNING "id", "ronin.createdAt", "ronin.createdBy", "ronin.updatedAt", "ronin.updatedBy", "handle", "emails"`,
+      params: ['elaine'],
+      returning: true,
+    },
+  ]);
+
+  const rawResults = await queryEphemeralDatabase(models, transaction.statements);
+  const result = transaction.formatResults(rawResults)[0] as SingleRecordResult;
+
+  expect(result.record?.emails).toBeNull();
 });
 
 test('set single record to new nested string field', async () => {
