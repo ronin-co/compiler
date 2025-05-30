@@ -256,7 +256,17 @@ export const getSystemFields = (idPrefix: Model['idPrefix']): Model['fields'] =>
  * equivalent to the native `sqlite_schema` table provided by SQLite.
  */
 export const ROOT_MODEL: PartialModel = {
+  // Provide the ID ahead of time, because certain runtime environments (e.g. Cloudflare
+  // Workers) do not support the `crypto` module running in global scope, which would
+  // happen when generating the default attributes of the root model.
+  id: 'mod_26cedf5fc602c3ba',
+
+  // While the `slug` is required, we are providing the other attributes in order to
+  // avoid needing to generate them at runtime.
   slug: 'roninModel',
+  pluralSlug: 'roninModels',
+  name: 'Ronin Model',
+  pluralName: 'Ronin Models',
 
   identifiers: {
     name: 'name',
