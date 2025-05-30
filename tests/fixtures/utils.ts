@@ -1,10 +1,10 @@
 import fixtureData from '@/fixtures/data.json';
 import { type Model, type Query, ROOT_MODEL, Transaction } from '@/src/index';
 import { convertToSnakeCase, getProperty, setProperty } from '@/src/utils/helpers';
-import { type Database, Engine } from '@ronin/engine';
+import { Engine } from '@ronin/engine';
 import { BunDriver } from '@ronin/engine/drivers/bun';
 import { MemoryResolver } from '@ronin/engine/resolvers/memory';
-import type { Row, Statement } from '@ronin/engine/types';
+import type { Database, Row, Statement } from '@ronin/engine/resources';
 
 /** A regex for asserting RONIN record IDs. */
 export const RECORD_ID_REGEX = /[a-z]{3}_[a-z0-9]{16}/;
@@ -72,8 +72,8 @@ const prefillDatabase = async (
 };
 
 const ENGINE = new Engine({
-  resolvers: [(engine) => new MemoryResolver(engine)],
-  driver: new BunDriver(),
+  driver: (engine): BunDriver => new BunDriver({ engine }),
+  resolvers: [(engine) => new MemoryResolver({ engine })],
 });
 
 /**
