@@ -35,6 +35,6 @@
     "typescript": "5.7.2"
   },
   "peerDependencies": {
-    "@ronin/engine": ">=0.1.23"
+    "@ronin/engine": "0.0.27"
   }
 }
