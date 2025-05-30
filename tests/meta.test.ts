@@ -845,6 +845,48 @@ test('create new field with default value (json)', async () => {
   });
 });
 
+// Assert that invalid objects are being rejected as default values of JSON fields.
+test('create new field with default value (invalid json)', () => {
+  const field: ModelField = {
+    type: 'json',
+    slug: 'settings',
+    defaultValue: 'test',
+  };
+
+  const queries: Array<Query> = [
+    {
+      alter: {
+        model: 'account',
+        create: {
+          field,
+        },
+      },
+    },
+  ];
+
+  const models: Array<Model> = [
+    {
+      slug: 'account',
+    },
+  ];
+
+  let error: Error | undefined;
+
+  try {
+    new Transaction(queries, { models });
+  } catch (err) {
+    error = err as Error;
+  }
+
+  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toHaveProperty(
+    'message',
+    'The default value of JSON field "settings" must be an object.',
+  );
+  expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
+  expect(error).toHaveProperty('field', 'fields');
+});
+
 // Ensure that, if the `slug` of a field changes during a model update, an `ALTER TABLE`
 // statement is generated for it.
 test('alter existing field (slug)', () => {
@@ -1740,6 +1782,7 @@ test('try to create new index without fields', () => {
     'When creating indexes, at least one field must be provided.',
   );
   expect(error).toHaveProperty('code', 'INVALID_MODEL_VALUE');
+  expect(error).toHaveProperty('field', 'indexes');
 });
 
 test('try to create new index with non-existent field', () => {
