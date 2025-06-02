@@ -14,8 +14,6 @@ type ModelFieldBasics = {
   name?: string;
   /** Allows for addressing the field programmatically. */
   slug: string;
-  /** How the field should be displayed visually on the RONIN dashboard. */
-  displayAs?: string;
   /**
    * If set, only one record of the same model will be allowed to exist with a given
    * value for the field.
