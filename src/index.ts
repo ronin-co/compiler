@@ -608,8 +608,12 @@ export { RoninError, getQuerySymbol } from '@/src/utils/helpers';
 export {
   QUERY_SYMBOLS,
   QUERY_TYPES,
+  QUERY_TYPES_READ,
+  QUERY_TYPES_WRITE,
   DML_QUERY_TYPES,
   DML_QUERY_TYPES_READ,
   DML_QUERY_TYPES_WRITE,
   DDL_QUERY_TYPES,
+  DDL_QUERY_TYPES_READ,
+  DDL_QUERY_TYPES_WRITE,
 } from '@/src/utils/constants';
