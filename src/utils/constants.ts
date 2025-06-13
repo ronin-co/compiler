@@ -22,6 +22,18 @@ export const DDL_QUERY_TYPES = [
   ...DDL_QUERY_TYPES_WRITE,
 ] as const;
 
+/** All read query types. */
+export const QUERY_TYPES_READ = [
+  ...DML_QUERY_TYPES_READ,
+  ...DDL_QUERY_TYPES_READ,
+] as const;
+
+/** All write query types. */
+export const QUERY_TYPES_WRITE = [
+  ...DML_QUERY_TYPES_WRITE,
+  ...DDL_QUERY_TYPES_WRITE,
+] as const;
+
 /** All query types. */
 export const QUERY_TYPES = [...DML_QUERY_TYPES, ...DDL_QUERY_TYPES] as const;
 
