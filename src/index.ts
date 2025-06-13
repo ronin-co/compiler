@@ -612,4 +612,6 @@ export {
   DML_QUERY_TYPES_READ,
   DML_QUERY_TYPES_WRITE,
   DDL_QUERY_TYPES,
+  DDL_QUERY_TYPES_READ,
+  DDL_QUERY_TYPES_WRITE,
 } from '@/src/utils/constants';

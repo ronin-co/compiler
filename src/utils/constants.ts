@@ -10,8 +10,17 @@ export const DML_QUERY_TYPES = [
   ...DML_QUERY_TYPES_WRITE,
 ] as const;
 
+/** Query types used for reading the database schema. */
+export const DDL_QUERY_TYPES_READ = ['list'] as const;
+
+/** Query types used for writing the database schema. */
+export const DDL_QUERY_TYPES_WRITE = ['create', 'alter', 'drop'] as const;
+
 /** Query types used for interacting with the database schema. */
-export const DDL_QUERY_TYPES = ['list', 'create', 'alter', 'drop'] as const;
+export const DDL_QUERY_TYPES = [
+  ...DDL_QUERY_TYPES_READ,
+  ...DDL_QUERY_TYPES_WRITE,
+] as const;
 
 /** All query types. */
 export const QUERY_TYPES = [...DML_QUERY_TYPES, ...DDL_QUERY_TYPES] as const;
