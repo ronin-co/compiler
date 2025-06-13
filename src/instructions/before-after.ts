@@ -1,7 +1,7 @@
 import { getFieldFromModel } from '@/src/model';
 import type { Model } from '@/src/types/model';
 import type { GetInstructions, QueryType } from '@/src/types/query';
-import { RoninError } from '@/src/utils/helpers';
+import { CompilerError } from '@/src/utils/helpers';
 import { CURSOR_NULL_PLACEHOLDER, CURSOR_SEPARATOR } from '@/src/utils/pagination';
 import { prepareStatementValue } from '@/src/utils/statement';
 
@@ -34,14 +34,14 @@ export const handleBeforeOrAfter = (
   },
 ): string => {
   if (!(instructions.before || instructions.after)) {
-    throw new RoninError({
+    throw new CompilerError({
       message: 'The `before` or `after` instruction must not be empty.',
       code: 'MISSING_INSTRUCTION',
     });
   }
 
   if (instructions.before && instructions.after) {
-    throw new RoninError({
+    throw new CompilerError({
       message: 'The `before` and `after` instructions cannot co-exist. Choose one.',
       code: 'MUTUALLY_EXCLUSIVE_INSTRUCTIONS',
     });
@@ -52,7 +52,7 @@ export const handleBeforeOrAfter = (
     message += ' instruction, a `limitedTo` instruction must be provided as well, to';
     message += ' define the page size.';
 
-    throw new RoninError({
+    throw new CompilerError({
       message,
       code: 'MISSING_INSTRUCTION',
     });

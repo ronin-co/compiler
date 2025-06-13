@@ -32,7 +32,7 @@ export const composeMountingPath = (
   return `${mountingPath ? `${mountingPath}.` : ''}${single ? key : `${key}[0]`}`;
 };
 
-type RoninErrorCode =
+type CompilerErrorCode =
   | 'MODEL_NOT_FOUND'
   | 'FIELD_NOT_FOUND'
   | 'INDEX_NOT_FOUND'
@@ -64,14 +64,14 @@ interface Issue {
 
 interface Details {
   message: string;
-  code: RoninErrorCode;
+  code: CompilerErrorCode;
   field?: string;
   fields?: Array<string>;
   issues?: Array<Issue>;
   queries?: Array<Query> | null;
 }
 
-export class RoninError extends Error {
+export class CompilerError extends Error {
   code: Details['code'];
   field?: Details['field'];
   fields?: Details['fields'];
@@ -81,7 +81,7 @@ export class RoninError extends Error {
   constructor(details: Details) {
     super(details.message);
 
-    this.name = 'RoninError';
+    this.name = 'CompilerError';
     this.code = details.code;
     this.field = details.field;
     this.fields = details.fields;

@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test';
 import {
+  CompilerError,
   type Model,
   QUERY_SYMBOLS,
   type Query,
-  RoninError,
   type StoredObject,
   Transaction,
 } from '@/src/index';
@@ -153,7 +153,7 @@ test('set single record to new blob field with invalid value', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The provided field value is not a valid Blob reference.',
@@ -683,7 +683,7 @@ test('set single record to new json field with invalid value', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The provided field value is not valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.',
@@ -1308,7 +1308,7 @@ test('try to add multiple records with nested sub query including non-existent f
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'Field "nonExistingField" defined for `to` does not exist in model "New Account".',

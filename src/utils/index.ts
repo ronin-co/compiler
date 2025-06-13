@@ -21,7 +21,7 @@ import type {
   Statement,
 } from '@/src/types/query';
 import { DML_QUERY_TYPES_WRITE, QUERY_SYMBOLS } from '@/src/utils/constants';
-import { RoninError, isObject, splitQuery } from '@/src/utils/helpers';
+import { CompilerError, isObject, splitQuery } from '@/src/utils/helpers';
 import { formatIdentifiers } from '@/src/utils/statement';
 
 /**
@@ -236,7 +236,7 @@ export const compileQueryInput = (
       !(instructionValue && isObject(instructionValue)) ||
       Object.keys(instructionValue).length === 0
     ) {
-      throw new RoninError({
+      throw new CompilerError({
         message: `When using a \`${queryType}\` query, the \`${instructionName}\` instruction must be a non-empty object.`,
         code: instructionName === 'to' ? 'INVALID_TO_VALUE' : 'INVALID_WITH_VALUE',
         queries: [query],
@@ -278,7 +278,7 @@ export const compileQueryInput = (
       typeof instructions.after !== 'undefined')
   ) {
     if (single) {
-      throw new RoninError({
+      throw new CompilerError({
         message:
           'The `before` and `after` instructions are not supported when querying for a single record.',
         code: 'INVALID_BEFORE_OR_AFTER_INSTRUCTION',
