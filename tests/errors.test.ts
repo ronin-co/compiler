@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { type Model, type Query, RoninError, Transaction } from '@/src/index';
+import { CompilerError, type Model, type Query, Transaction } from '@/src/index';
 
 test('get single record with non-existing field', () => {
   const queries: Array<Query> = [
@@ -28,7 +28,7 @@ test('get single record with non-existing field', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'Field "handle" defined for `with` does not exist in model "Account".',
@@ -59,7 +59,7 @@ test('get single record with non-existing model', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'No matching model with either Slug or Plural Slug of "account" could be found.',
@@ -99,7 +99,7 @@ test('get single record with empty `with` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The `with` instruction must not contain an empty field. The following fields are empty: `handle`. If you meant to query by an empty field, try using `null` instead.',
@@ -135,7 +135,7 @@ test('set single record with empty `to` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'When using a `set` query, the `to` instruction must be a non-empty object.',
@@ -168,7 +168,7 @@ test('add single record with empty `with` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'When using a `add` query, the `with` instruction must be a non-empty object.',
@@ -201,7 +201,7 @@ test('get single record with `before` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The `before` and `after` instructions are not supported when querying for a single record.',
@@ -234,7 +234,7 @@ test('get single record with `after` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The `before` and `after` instructions are not supported when querying for a single record.',
@@ -268,7 +268,7 @@ test('get multiple records with `before` and `after` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The `before` and `after` instructions cannot co-exist. Choose one.',
@@ -301,7 +301,7 @@ test('get multiple records with empty `before` instruction', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The `before` or `after` instruction must not be empty.',

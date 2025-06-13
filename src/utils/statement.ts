@@ -19,7 +19,7 @@ import type {
   WithInstruction,
 } from '@/src/types/query';
 import { QUERY_SYMBOLS, RONIN_MODEL_FIELD_REGEX } from '@/src/utils/constants';
-import { RoninError, getQuerySymbol, isObject } from '@/src/utils/helpers';
+import { CompilerError, getQuerySymbol, isObject } from '@/src/utils/helpers';
 import { compileQueryInput } from '@/src/utils/index';
 
 /**
@@ -347,7 +347,7 @@ export const composeConditions = (
               ? `${messagePrefix} valid JSON. Only objects and arrays should be provided. Other types of values should be stored in their respective primitive field types.`
               : `${messagePrefix} a valid Blob reference.`;
 
-          throw new RoninError({
+          throw new CompilerError({
             message,
             field: modelField?.slug,
             code: 'INVALID_FIELD_VALUE',
@@ -460,7 +460,7 @@ export const composeConditions = (
   // If the provided value could not be matched against any of the allowed value types,
   // that means the provided value is empty, which is not allowed. To inform the
   // developer, we are therefore throwing an error.
-  throw new RoninError({
+  throw new CompilerError({
     message: `The \`with\` instruction must not contain an empty field. The following fields are empty: \`${options.fieldSlug}\`. If you meant to query by an empty field, try using \`null\` instead.`,
     code: 'INVALID_WITH_VALUE',
     queries: null,

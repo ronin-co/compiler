@@ -28,8 +28,8 @@ import {
   QUERY_SYMBOLS,
 } from '@/src/utils/constants';
 import {
+  CompilerError,
   MODEL_ENTITY_ERROR_CODES,
-  RoninError,
   convertToCamelCase,
   convertToSnakeCase,
   getQuerySymbol,
@@ -56,7 +56,7 @@ export const getModelBySlug = <T extends Model | PublicModel>(
   });
 
   if (!model) {
-    throw new RoninError({
+    throw new CompilerError({
       message: `No matching model with either Slug or Plural Slug of "${slug}" could be found.`,
       code: 'MODEL_NOT_FOUND',
     });
@@ -199,7 +199,7 @@ export function getFieldFromModel(
 
   if (!modelField) {
     if (shouldThrow) {
-      throw new RoninError({
+      throw new CompilerError({
         message: `${errorPrefix} does not exist in model "${model.name}".`,
         code: 'FIELD_NOT_FOUND',
         field: fieldPath,
@@ -410,7 +410,7 @@ const getFieldStatement = (
     if (symbol) value = `(${parseFieldExpression(model, 'to', symbol.value as string)})`;
     if (field.type === 'json') {
       if (!isObject(field.defaultValue)) {
-        throw new RoninError({
+        throw new CompilerError({
           message: `The default value of JSON field "${field.slug}" must be an object.`,
           code: 'INVALID_MODEL_VALUE',
           field: 'fields',
@@ -896,14 +896,14 @@ export const transformMetaQuery = (
 
   // Throw an error if the entity that was targeted is not available in the model.
   if ((action === 'alter' || action === 'drop') && !existingEntity) {
-    throw new RoninError({
+    throw new CompilerError({
       message: `No ${entity} with slug "${slug}" defined in model "${existingModel.name}".`,
       code: MODEL_ENTITY_ERROR_CODES[entity],
     });
   }
 
   if (action === 'create' && existingEntity) {
-    throw new RoninError({
+    throw new CompilerError({
       message: `A ${entity} with the slug "${slug}" already exists.`,
       code: 'EXISTING_MODEL_ENTITY',
       fields: ['slug'],
@@ -959,7 +959,7 @@ export const transformMetaQuery = (
       const isSystemField = slug in systemFields;
 
       if (isSystemField) {
-        throw new RoninError({
+        throw new CompilerError({
           message: `The ${entity} "${slug}" is a system ${entity} and cannot be removed.`,
           code: 'REQUIRED_MODEL_ENTITY',
         });
@@ -982,7 +982,7 @@ export const transformMetaQuery = (
 
     if (action === 'create') {
       if (!Array.isArray(index.fields) || index.fields.length === 0) {
-        throw new RoninError({
+        throw new CompilerError({
           message: `When ${actionReadable} ${PLURAL_MODEL_ENTITIES[entity]}, at least one field must be provided.`,
           code: 'INVALID_MODEL_VALUE',
           field: PLURAL_MODEL_ENTITIES[entity],

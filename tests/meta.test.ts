@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import {
+  CompilerError,
   type Model,
   type ModelField,
   type ModelIndex,
@@ -7,7 +8,6 @@ import {
   QUERY_SYMBOLS,
   type Query,
   ROOT_MODEL,
-  RoninError,
   Transaction,
 } from '@/src/index';
 
@@ -642,7 +642,7 @@ test('query a model that was just dropped', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'No matching model with either Slug or Plural Slug of "account" could be found.',
@@ -878,7 +878,7 @@ test('create new field with default value (invalid json)', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The default value of JSON field "settings" must be an object.',
@@ -1636,7 +1636,7 @@ test('try to alter existing model that does not exist', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'No matching model with either Slug or Plural Slug of "account" could be found.',
@@ -1670,7 +1670,7 @@ test('try to alter existing model entity that does not exist', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'No field with slug "email" defined in model "Account".',
@@ -1706,7 +1706,7 @@ test('try to create new entity with slug of existing entity', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty('message', 'A field with the slug "id" already exists.');
   expect(error).toHaveProperty('code', 'EXISTING_MODEL_ENTITY');
 });
@@ -1737,7 +1737,7 @@ test('try to drop a system field', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'The field "id" is a system field and cannot be removed.',
@@ -1776,7 +1776,7 @@ test('try to create new index without fields', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'When creating indexes, at least one field must be provided.',
@@ -1819,7 +1819,7 @@ test('try to create new index with non-existent field', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'Field "handle" defined for index "index_slug" does not exist in model "Account".',

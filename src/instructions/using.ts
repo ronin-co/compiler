@@ -1,7 +1,7 @@
 import type { Model, ModelField, ModelPreset } from '@/src/types/model';
 import type { Instructions, SetInstructions } from '@/src/types/query';
 import { QUERY_SYMBOLS } from '@/src/utils/constants';
-import { RoninError, findInObject, isObject } from '@/src/utils/helpers';
+import { CompilerError, findInObject, isObject } from '@/src/utils/helpers';
 
 /**
  * Generates the SQL syntax for the `using` query instruction, which allows for quickly
@@ -41,7 +41,7 @@ export const handleUsing = (
     const preset = model.presets?.[presetSlug];
 
     if (!preset) {
-      throw new RoninError({
+      throw new CompilerError({
         message: `Preset "${presetSlug}" does not exist in model "${model.name}".`,
         code: 'PRESET_NOT_FOUND',
       });

@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test';
 import {
+  CompilerError,
   type Model,
   QUERY_SYMBOLS,
   type Query,
-  RoninError,
   Transaction,
 } from '@/src/index';
 
@@ -915,7 +915,7 @@ test('try get single record with non-existing preset', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'Preset "activeMember" does not exist in model "Account".',

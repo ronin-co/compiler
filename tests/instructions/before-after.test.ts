@@ -4,7 +4,7 @@ import {
   RECORD_TIMESTAMP_REGEX,
   queryEphemeralDatabase,
 } from '@/fixtures/utils';
-import { type Model, type Query, RoninError, Transaction } from '@/src/index';
+import { CompilerError, type Model, type Query, Transaction } from '@/src/index';
 import type {
   AmountResult,
   MultipleRecordResult,
@@ -864,7 +864,7 @@ test('get multiple records before cursor without limit', () => {
     error = err as Error;
   }
 
-  expect(error).toBeInstanceOf(RoninError);
+  expect(error).toBeInstanceOf(CompilerError);
   expect(error).toHaveProperty(
     'message',
     'When providing a pagination cursor in the `before` or `after` instruction, a `limitedTo` instruction must be provided as well, to define the page size.',
